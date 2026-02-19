@@ -16,30 +16,112 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- MenuBar -->
+        <MenuBar Grid.Row="0">
+            <MenuBarItem Title="File">
+                <MenuFlyoutItem Text="New" Icon="Document" Click="New_Click" />
+                <MenuFlyoutItem Text="Open..." Icon="OpenFile" Click="Open_Click" />
+                <MenuFlyoutItem Text="Save" Icon="Save" Click="Save_Click" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Exit" Click="Exit_Click" />
+            </MenuBarItem>
+            <MenuBarItem Title="Edit">
+                <MenuFlyoutItem Text="Cut" Icon="Cut" Click="Cut_Click" />
+                <MenuFlyoutItem Text="Copy" Icon="Copy" Click="Copy_Click" />
+                <MenuFlyoutItem Text="Paste" Icon="Paste" Click="Paste_Click" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Select All" Click="SelectAll_Click" />
+            </MenuBarItem>
+            <MenuBarItem Title="View">
+                <MenuFlyoutItem Text="Zoom In" Icon="ZoomIn" Click="ZoomIn_Click" />
+                <MenuFlyoutItem Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click" />
+                <MenuFlyoutSeparator />
+                <ToggleMenuFlyoutItem Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
+            </MenuBarItem>
+        </MenuBar>
+
         <!-- Ribbon / CommandBar -->
-        <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
-            <AppBarButton Icon="Document" Label="New" Click="New_Click" />
-            <AppBarButton Icon="OpenFile" Label="Open" Click="Open_Click" />
-            <AppBarButton Icon="Save" Label="Save" Click="Save_Click" />
-            <AppBarSeparator />
-            <AppBarButton Icon="Cut" Label="Cut" Click="Cut_Click" />
-            <AppBarButton Icon="Copy" Label="Copy" Click="Copy_Click" />
-            <AppBarButton Icon="Paste" Label="Paste" Click="Paste_Click" />
-            <AppBarSeparator />
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
+            <CommandBar.Content>
+                <StackPanel Orientation="Horizontal" Margin="10,0,0,0" Spacing="5">
+                    <ComboBox x:Name="FontFamilyComboBox" Width="150" SelectionChanged="FontFamilyComboBox_SelectionChanged" />
+                    <ComboBox x:Name="FontSizeComboBox" Width="70" SelectionChanged="FontSizeComboBox_SelectionChanged" IsEditable="True" />
+                </StackPanel>
+            </CommandBar.Content>
             <AppBarButton Icon="Bold" Label="Bold" Click="Bold_Click" />
             <AppBarButton Icon="Italic" Label="Italic" Click="Italic_Click" />
             <AppBarButton Icon="Underline" Label="Underline" Click="Underline_Click" />
+            <AppBarButton Icon="Strikethrough" Label="Strikethrough" Click="Strikethrough_Click" />
+            <AppBarButton Icon="FontDecrease" Label="Subscript" Click="Subscript_Click" />
+            <AppBarButton Icon="FontIncrease" Label="Superscript" Click="Superscript_Click" />
+            <AppBarSeparator />
+            <AppBarButton Icon="AlignLeft" Label="Align Left" Click="AlignLeft_Click" />
+            <AppBarButton Icon="AlignCenter" Label="Center" Click="AlignCenter_Click" />
+            <AppBarButton Icon="AlignRight" Label="Align Right" Click="AlignRight_Click" />
+            <AppBarButton Icon="AlignJustify" Label="Justify" Click="AlignJustify_Click" />
+            <AppBarSeparator />
+            <AppBarButton Icon="DecreaseIndent" Label="Decrease Indent" Click="DecreaseIndent_Click" />
+            <AppBarButton Icon="IncreaseIndent" Label="Increase Indent" Click="IncreaseIndent_Click" />
+            <AppBarButton Icon="List" Label="Bullets" Click="Bullets_Click" />
+            <AppBarSeparator />
+            <AppBarButton Icon="FontColor" Label="Text Color">
+                <AppBarButton.Flyout>
+                    <Flyout>
+                        <StackPanel>
+                            <ColorPicker x:Name="TextColorPicker" ColorChanged="TextColorPicker_ColorChanged" />
+                        </StackPanel>
+                    </Flyout>
+                </AppBarButton.Flyout>
+            </AppBarButton>
+            <AppBarButton Icon="Highlight" Label="Highlight">
+                <AppBarButton.Flyout>
+                    <Flyout>
+                        <StackPanel>
+                            <ColorPicker x:Name="HighlightColorPicker" ColorChanged="HighlightColorPicker_ColorChanged" />
+                        </StackPanel>
+                    </Flyout>
+                </AppBarButton.Flyout>
+            </AppBarButton>
+            <AppBarSeparator />
+            <AppBarButton Icon="Pictures" Label="Insert Picture" Click="InsertPicture_Click" />
+            <AppBarButton Icon="Calendar" Label="Date/Time" Click="InsertDateTime_Click" />
+            <AppBarSeparator />
+            <AppBarButton Icon="Find" Label="Find">
+                <AppBarButton.Flyout>
+                    <Flyout>
+                        <StackPanel Spacing="5" Width="250">
+                            <TextBox x:Name="FindTextBox" PlaceholderText="Find what..." />
+                            <Button Content="Find Next" Click="FindNext_Click" HorizontalAlignment="Right" />
+                        </StackPanel>
+                    </Flyout>
+                </AppBarButton.Flyout>
+            </AppBarButton>
+            <AppBarButton Icon="Replace" Label="Replace">
+                <AppBarButton.Flyout>
+                    <Flyout>
+                        <StackPanel Spacing="5" Width="250">
+                            <TextBox x:Name="ReplaceFindTextBox" PlaceholderText="Find what..." />
+                            <TextBox x:Name="ReplaceWithTextBox" PlaceholderText="Replace with..." />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                                <Button Content="Replace" Click="Replace_Click" />
+                                <Button Content="Replace All" Click="ReplaceAll_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Flyout>
+                </AppBarButton.Flyout>
+            </AppBarButton>
         </CommandBar>
 
         <!-- Editor -->
-        <RichEditBox x:Name="Editor" Grid.Row="1" Margin="10" AcceptsReturn="True" TextWrapping="Wrap" />
+        <RichEditBox x:Name="Editor" Grid.Row="2" Margin="10" AcceptsReturn="True" TextWrapping="Wrap" />
 
         <!-- Status Bar -->
-        <Grid Grid.Row="2" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,5">
+        <Grid Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,5">
             <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" />
         </Grid>
     </Grid>
