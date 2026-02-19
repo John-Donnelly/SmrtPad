@@ -11,6 +11,17 @@
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
+            <Style TargetType="local:NativeRichEditHost" xmlns:local="using:SmrtPad.Controls">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="local:NativeRichEditHost">
+                            <Border Background="{TemplateBinding Background}">
+                                <ContentPresenter x:Name="PART_Host" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

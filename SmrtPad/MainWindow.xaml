@@ -56,8 +56,16 @@
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xEDE0;" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Icon="FontDecrease" Label="Subscript" Click="Subscript_Click" />
-            <AppBarButton Icon="FontIncrease" Label="Superscript" Click="Superscript_Click" />
+            <AppBarButton Label="Subscript" Click="Subscript_Click">
+                <AppBarButton.Icon>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70B;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="Superscript" Click="Superscript_Click">
+                <AppBarButton.Icon>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70A;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
             <AppBarSeparator />
             <AppBarButton Icon="AlignLeft" Label="Align Left" Click="AlignLeft_Click" />
             <AppBarButton Icon="AlignCenter" Label="Center" Click="AlignCenter_Click" />
@@ -102,30 +110,6 @@
             <AppBarButton Icon="Pictures" Label="Insert Picture" Click="InsertPicture_Click" />
             <AppBarButton Icon="Calendar" Label="Date/Time" Click="InsertDateTime_Click" />
             <AppBarSeparator />
-            <!-- Image controls (visible when an inserted image is selected) -->
-            <AppBarSeparator x:Name="ImageControlsSeparator" Visibility="Collapsed" />
-            <AppBarButton x:Name="RemoveImageButton" Icon="Delete" Label="Remove Image" Click="RemoveImage_Click" Visibility="Collapsed" />
-            <AppBarButton x:Name="ImageRotateLeftButton" Icon="Rotate" Label="Rotate Left" Click="RotateImageLeft_Click" Visibility="Collapsed" />
-            <AppBarButton x:Name="ImageRotateRightButton" Icon="Rotate" Label="Rotate Right" Click="RotateImageRight_Click" Visibility="Collapsed" />
-            <AppBarButton x:Name="ImageAlignLeftButton" Icon="AlignLeft" Label="Image Left" Click="ImageAlignLeft_Click" Visibility="Collapsed" />
-            <AppBarButton x:Name="ImageAlignCenterButton" Icon="AlignCenter" Label="Image Center" Click="ImageAlignCenter_Click" Visibility="Collapsed" />
-            <AppBarButton x:Name="ImageAlignRightButton" Icon="AlignRight" Label="Image Right" Click="ImageAlignRight_Click" Visibility="Collapsed" />
-            <AppBarButton x:Name="ImageSetSizeButton" Label="Size" Visibility="Collapsed">
-                <AppBarButton.Icon>
-                    <SymbolIcon Symbol="Crop" />
-                </AppBarButton.Icon>
-                <AppBarButton.Flyout>
-                    <Flyout Placement="Bottom">
-                        <StackPanel Spacing="8" Width="220">
-                            <TextBlock Text="Width" />
-                            <NumberBox x:Name="ImageWidthBox" Minimum="1" Maximum="10000" SmallChange="10" SpinButtonPlacementMode="Inline" ValueChanged="ImageSizeBox_ValueChanged" />
-                            <TextBlock Text="Height" />
-                            <NumberBox x:Name="ImageHeightBox" Minimum="1" Maximum="10000" SmallChange="10" SpinButtonPlacementMode="Inline" ValueChanged="ImageSizeBox_ValueChanged" />
-                            <ToggleSwitch x:Name="ImageLockAspectToggle" Header="Lock aspect" IsOn="True" Toggled="ImageLockAspectToggle_Toggled" />
-                        </StackPanel>
-                    </Flyout>
-                </AppBarButton.Flyout>
-            </AppBarButton>
             <AppBarButton Icon="Find" Label="Find">
                 <AppBarButton.Flyout>
                     <Flyout>
@@ -155,13 +139,9 @@
             </AppBarButton>
         </CommandBar>
 
-        <!-- Main surface: editor + attachment layer + File backstage (WordPad-style) -->
+        <!-- Main surface: editor + File backstage (WordPad-style) -->
         <Grid Grid.Row="2" Margin="10">
-            <Grid>
-                <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
-                <!-- Attachment layer used to host images as real UI elements -->
-                <Canvas x:Name="AttachmentLayer" IsHitTestVisible="True" />
-            </Grid>
+            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
 
             <views:FileBackstageView x:Name="FileBackstage" Visibility="Collapsed" />
         </Grid>
