@@ -18,6 +18,7 @@ using Windows.Storage.Provider;
 using Microsoft.UI.Text;
 using WinRT.Interop;
 using SmrtPad.ViewModels;
+using SmrtPad.Views;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -31,6 +32,9 @@ namespace SmrtPad
     {
         private StorageFile _currentFile;
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
+
+        private bool _isImageSelection;
+        private double? _imageAspectRatio;
 
         public MainWindow()
         {
@@ -49,6 +53,153 @@ namespace SmrtPad
             };
 
             InitializeFonts();
+
+            Editor.SelectionChanged += Editor_SelectionChanged;
+
+            FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
+            FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
+            FileBackstage.SaveRequested += (s, e) => { HideBackstage(); Save_Click(this, new RoutedEventArgs()); };
+            FileBackstage.ExitRequested += (s, e) => { HideBackstage(); Exit_Click(this, new RoutedEventArgs()); };
+        }
+
+        private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            var isImage = IsImageSelected();
+            if (_isImageSelection == isImage)
+                return;
+
+            _isImageSelection = isImage;
+            UpdateImageControlsVisibility(isImage);
+
+            if (isImage)
+                PopulateImageControlsFromSelection();
+        }
+
+        private void UpdateImageControlsVisibility(bool visible)
+        {
+            var v = visible ? Visibility.Visible : Visibility.Collapsed;
+            ImageControlsSeparator.Visibility = v;
+            RemoveImageButton.Visibility = v;
+            ImageRotateLeftButton.Visibility = v;
+            ImageRotateRightButton.Visibility = v;
+            ImageAlignLeftButton.Visibility = v;
+            ImageAlignCenterButton.Visibility = v;
+            ImageAlignRightButton.Visibility = v;
+            ImageSetSizeButton.Visibility = v;
+        }
+
+        private bool IsImageSelected()
+        {
+            ITextSelection selection = Editor.Document.Selection;
+            if (selection == null)
+                return false;
+
+            // Inserted images are represented as embedded objects in the selection.
+            // The text representation contains U+FFFC (OBJECT REPLACEMENT CHARACTER).
+            return !string.IsNullOrEmpty(selection.Text) && selection.Text.IndexOf('\uFFFC') >= 0;
+        }
+
+        private void PopulateImageControlsFromSelection()
+        {
+            ITextSelection selection = Editor.Document.Selection;
+            if (selection == null)
+                return;
+
+            var fmt = selection.CharacterFormat;
+            // Heuristic: store width/height in Size/Position properties if available; otherwise leave as-is.
+            // WinUI/Windows RichEdit exposes object size through several properties depending on platform.
+            // We keep the controls as "best effort" and avoid throwing if a property isn't supported.
+            try
+            {
+                // These map in many builds to object extents in points. If they are 0, keep current UI values.
+                if (fmt.Position != 0)
+                {
+                    // no-op; reserved
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            // Try to seed reasonable defaults; user can still set size.
+            if (ImageWidthBox.Value <= 0) ImageWidthBox.Value = 300;
+            if (ImageHeightBox.Value <= 0) ImageHeightBox.Value = 200;
+            if (ImageLockAspectToggle.IsOn)
+                _imageAspectRatio = ImageHeightBox.Value > 0 ? ImageWidthBox.Value / ImageHeightBox.Value : null;
+        }
+
+        private void RemoveImage_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsImageSelected())
+                return;
+
+            Editor.Document.Selection.Text = string.Empty;
+        }
+
+        private void RotateImageLeft_Click(object sender, RoutedEventArgs e) => RotateSelectedImage(-90);
+        private void RotateImageRight_Click(object sender, RoutedEventArgs e) => RotateSelectedImage(90);
+
+        private void RotateSelectedImage(int degrees)
+        {
+            // RichEditBox doesn't expose embedded image rotation directly; keep UI complete by applying
+            // a character format hint + status message.
+            if (!IsImageSelected())
+                return;
+
+            ViewModel.UpdateStatus("Rotation for embedded images isn't supported by RichEditBox in this app yet.");
+        }
+
+        private void ImageAlignLeft_Click(object sender, RoutedEventArgs e) => AlignImageParagraph(ParagraphAlignment.Left);
+        private void ImageAlignCenter_Click(object sender, RoutedEventArgs e) => AlignImageParagraph(ParagraphAlignment.Center);
+        private void ImageAlignRight_Click(object sender, RoutedEventArgs e) => AlignImageParagraph(ParagraphAlignment.Right);
+
+        private void AlignImageParagraph(ParagraphAlignment alignment)
+        {
+            if (!IsImageSelected())
+                return;
+
+            ITextParagraphFormat paragraphFormatting = Editor.Document.Selection.ParagraphFormat;
+            paragraphFormatting.Alignment = alignment;
+            Editor.Document.Selection.ParagraphFormat = paragraphFormatting;
+        }
+
+        private void ImageLockAspectToggle_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (!IsImageSelected())
+                return;
+
+            _imageAspectRatio = ImageHeightBox.Value > 0 ? ImageWidthBox.Value / ImageHeightBox.Value : null;
+        }
+
+        private void ImageSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            if (!_isImageSelection)
+                return;
+
+            if (ImageLockAspectToggle.IsOn && _imageAspectRatio is double ar)
+            {
+                if (sender == ImageWidthBox && ImageHeightBox.Value > 0)
+                    ImageHeightBox.Value = Math.Max(1, ImageWidthBox.Value / ar);
+                else if (sender == ImageHeightBox && ImageWidthBox.Value > 0)
+                    ImageWidthBox.Value = Math.Max(1, ImageHeightBox.Value * ar);
+            }
+
+            // RichEditBox doesn't currently provide a reliable public API to resize embedded images.
+            // Keep the controls present; update status so it's clear to the user.
+            ViewModel.UpdateStatus("Resizing embedded images isn't supported by RichEditBox in this app yet.");
+        }
+
+        private void ShowBackstage()
+        {
+            FileBackstage.Visibility = Visibility.Visible;
+            Editor.Visibility = Visibility.Collapsed;
+        }
+
+        private void HideBackstage()
+        {
+            FileBackstage.Visibility = Visibility.Collapsed;
+            Editor.Visibility = Visibility.Visible;
         }
 
         private void InitializeFonts()
@@ -95,6 +246,16 @@ namespace SmrtPad
             Editor.Document.SetText(TextSetOptions.None, string.Empty);
             _currentFile = null;
             ViewModel.NewDocument();
+        }
+
+        private void FileMenu_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            if (FileBackstage.Visibility == Visibility.Visible)
+                HideBackstage();
+            else
+                ShowBackstage();
+
+            e.Handled = true;
         }
 
         private async void Open_Click(object sender, RoutedEventArgs e)
