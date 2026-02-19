@@ -121,14 +121,12 @@ namespace SmrtPad
             ViewModel.NewDocument();
         }
 
-        private void FileMenu_Tapped(object sender, TappedRoutedEventArgs e)
+        private void FileMenu_Tapped(object sender, RoutedEventArgs e)
         {
             if (FileBackstage.Visibility == Visibility.Visible)
                 HideBackstage();
             else
                 ShowBackstage();
-
-            e.Handled = true;
         }
 
         private async void Open_Click(object sender, RoutedEventArgs e)
@@ -515,9 +513,42 @@ namespace SmrtPad
         private void WordWrap_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleMenuFlyoutItem toggleItem)
-            {
                 Editor.TextWrapping = toggleItem.IsChecked ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        }
+
+        private void GrowFont_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selection = Editor.Document.Selection;
+            if (selection != null)
+            {
+                float current = selection.CharacterFormat.Size;
+                if (current is float.NaN or <= 0) current = 11f;
+                selection.CharacterFormat.Size = current + 1f;
+                FontSizeComboBox.Text = ((int)(current + 1f)).ToString();
             }
+        }
+
+        private void ShrinkFont_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selection = Editor.Document.Selection;
+            if (selection != null)
+            {
+                float current = selection.CharacterFormat.Size;
+                if (current is float.NaN or <= 1) current = 12f;
+                float next = Math.Max(1f, current - 1f);
+                selection.CharacterFormat.Size = next;
+                FontSizeComboBox.Text = ((int)next).ToString();
+            }
+        }
+
+        private void Undo_Click(object sender, RoutedEventArgs e)
+        {
+            Editor.Document.Undo();
+        }
+
+        private void Redo_Click(object sender, RoutedEventArgs e)
+        {
+            Editor.Document.Redo();
         }
     }
 }
