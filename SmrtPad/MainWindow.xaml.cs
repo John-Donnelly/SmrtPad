@@ -36,6 +36,11 @@ namespace SmrtPad
         private bool _isImageSelection;
         private double? _imageAspectRatio;
 
+        private const string ImageTokenPrefix = "[IMG:";
+        private const string ImageTokenSuffix = "]";
+        private readonly Dictionary<string, HostedImage> _hostedImages = new();
+        private HostedImage? _selectedHostedImage;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -55,6 +60,7 @@ namespace SmrtPad
             InitializeFonts();
 
             Editor.SelectionChanged += Editor_SelectionChanged;
+            Editor.TextChanged += Editor_TextChanged;
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
@@ -62,9 +68,38 @@ namespace SmrtPad
             FileBackstage.ExitRequested += (s, e) => { HideBackstage(); Exit_Click(this, new RoutedEventArgs()); };
         }
 
+        private void Editor_TextChanged(object sender, RoutedEventArgs e)
+        {
+            // If a user deletes the placeholder token, remove the hosted image.
+            // This is a lightweight consistency pass.
+            Editor.Document.GetText(TextGetOptions.NoHidden, out var text);
+            var existingIds = new HashSet<string>(StringComparer.Ordinal);
+
+            var idx = 0;
+            while (idx < text.Length)
+            {
+                var start = text.IndexOf(ImageTokenPrefix, idx, StringComparison.Ordinal);
+                if (start < 0)
+                    break;
+                var end = text.IndexOf(ImageTokenSuffix, start + ImageTokenPrefix.Length, StringComparison.Ordinal);
+                if (end < 0)
+                    break;
+
+                var id = text.Substring(start + ImageTokenPrefix.Length, end - (start + ImageTokenPrefix.Length));
+                if (!string.IsNullOrWhiteSpace(id))
+                    existingIds.Add(id);
+
+                idx = end + 1;
+            }
+
+            var toRemove = _hostedImages.Keys.Where(id => !existingIds.Contains(id)).ToList();
+            foreach (var id in toRemove)
+                RemoveHostedImage(id, updateText: false);
+        }
+
         private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
         {
-            var isImage = IsImageSelected();
+            var isImage = IsHostedImageSelected(out var imageId);
             if (_isImageSelection == isImage)
                 return;
 
@@ -72,7 +107,9 @@ namespace SmrtPad
             UpdateImageControlsVisibility(isImage);
 
             if (isImage)
-                PopulateImageControlsFromSelection();
+                PopulateImageControlsFromSelection(imageId);
+            else
+                SelectHostedImage(null);
         }
 
         private void UpdateImageControlsVisibility(bool visible)
@@ -88,53 +125,57 @@ namespace SmrtPad
             ImageSetSizeButton.Visibility = v;
         }
 
-        private bool IsImageSelected()
+        private bool IsHostedImageSelected(out string? imageId)
         {
+            imageId = null;
             ITextSelection selection = Editor.Document.Selection;
             if (selection == null)
                 return false;
 
-            // Inserted images are represented as embedded objects in the selection.
-            // The text representation contains U+FFFC (OBJECT REPLACEMENT CHARACTER).
-            return !string.IsNullOrEmpty(selection.Text) && selection.Text.IndexOf('\uFFFC') >= 0;
+            var text = selection.Text;
+            if (string.IsNullOrEmpty(text))
+                return false;
+
+            // In this model, images are represented in the document as "[IMG:{id}]".
+            var start = text.IndexOf(ImageTokenPrefix, StringComparison.Ordinal);
+            if (start < 0)
+                return false;
+            var end = text.IndexOf(ImageTokenSuffix, start + ImageTokenPrefix.Length, StringComparison.Ordinal);
+            if (end < 0)
+                return false;
+
+            imageId = text.Substring(start + ImageTokenPrefix.Length, end - (start + ImageTokenPrefix.Length));
+            return !string.IsNullOrWhiteSpace(imageId) && _hostedImages.ContainsKey(imageId);
         }
 
-        private void PopulateImageControlsFromSelection()
+        private void PopulateImageControlsFromSelection(string? imageId)
         {
-            ITextSelection selection = Editor.Document.Selection;
-            if (selection == null)
+            if (imageId is null || !_hostedImages.TryGetValue(imageId, out var hosted))
                 return;
 
-            var fmt = selection.CharacterFormat;
-            // Heuristic: store width/height in Size/Position properties if available; otherwise leave as-is.
-            // WinUI/Windows RichEdit exposes object size through several properties depending on platform.
-            // We keep the controls as "best effort" and avoid throwing if a property isn't supported.
-            try
-            {
-                // These map in many builds to object extents in points. If they are 0, keep current UI values.
-                if (fmt.Position != 0)
-                {
-                    // no-op; reserved
-                }
-            }
-            catch
-            {
-                // ignore
-            }
+            SelectHostedImage(hosted);
 
-            // Try to seed reasonable defaults; user can still set size.
-            if (ImageWidthBox.Value <= 0) ImageWidthBox.Value = 300;
-            if (ImageHeightBox.Value <= 0) ImageHeightBox.Value = 200;
-            if (ImageLockAspectToggle.IsOn)
-                _imageAspectRatio = ImageHeightBox.Value > 0 ? ImageWidthBox.Value / ImageHeightBox.Value : null;
+            ImageWidthBox.Value = hosted.Width;
+            ImageHeightBox.Value = hosted.Height;
+            _imageAspectRatio = hosted.Height > 0 ? hosted.Width / hosted.Height : null;
+        }
+
+        private void SelectHostedImage(HostedImage? hosted)
+        {
+            if (_selectedHostedImage != null)
+                _selectedHostedImage.SetSelected(false);
+
+            _selectedHostedImage = hosted;
+            if (_selectedHostedImage != null)
+                _selectedHostedImage.SetSelected(true);
         }
 
         private void RemoveImage_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsImageSelected())
+            if (!_isImageSelection || _selectedHostedImage == null)
                 return;
 
-            Editor.Document.Selection.Text = string.Empty;
+            RemoveHostedImage(_selectedHostedImage.Id, updateText: true);
         }
 
         private void RotateImageLeft_Click(object sender, RoutedEventArgs e) => RotateSelectedImage(-90);
@@ -142,12 +183,11 @@ namespace SmrtPad
 
         private void RotateSelectedImage(int degrees)
         {
-            // RichEditBox doesn't expose embedded image rotation directly; keep UI complete by applying
-            // a character format hint + status message.
-            if (!IsImageSelected())
+            if (!_isImageSelection || _selectedHostedImage == null)
                 return;
 
-            ViewModel.UpdateStatus("Rotation for embedded images isn't supported by RichEditBox in this app yet.");
+            _selectedHostedImage.RotationDegrees = (_selectedHostedImage.RotationDegrees + degrees) % 360;
+            _selectedHostedImage.ApplyTransforms();
         }
 
         private void ImageAlignLeft_Click(object sender, RoutedEventArgs e) => AlignImageParagraph(ParagraphAlignment.Left);
@@ -156,7 +196,7 @@ namespace SmrtPad
 
         private void AlignImageParagraph(ParagraphAlignment alignment)
         {
-            if (!IsImageSelected())
+            if (!_isImageSelection)
                 return;
 
             ITextParagraphFormat paragraphFormatting = Editor.Document.Selection.ParagraphFormat;
@@ -166,7 +206,7 @@ namespace SmrtPad
 
         private void ImageLockAspectToggle_Toggled(object sender, RoutedEventArgs e)
         {
-            if (!IsImageSelected())
+            if (!_isImageSelection || _selectedHostedImage == null)
                 return;
 
             _imageAspectRatio = ImageHeightBox.Value > 0 ? ImageWidthBox.Value / ImageHeightBox.Value : null;
@@ -174,7 +214,7 @@ namespace SmrtPad
 
         private void ImageSizeBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
         {
-            if (!_isImageSelection)
+            if (!_isImageSelection || _selectedHostedImage == null)
                 return;
 
             if (ImageLockAspectToggle.IsOn && _imageAspectRatio is double ar)
@@ -185,9 +225,145 @@ namespace SmrtPad
                     ImageWidthBox.Value = Math.Max(1, ImageHeightBox.Value * ar);
             }
 
-            // RichEditBox doesn't currently provide a reliable public API to resize embedded images.
-            // Keep the controls present; update status so it's clear to the user.
-            ViewModel.UpdateStatus("Resizing embedded images isn't supported by RichEditBox in this app yet.");
+            _selectedHostedImage.Width = ImageWidthBox.Value;
+            _selectedHostedImage.Height = ImageHeightBox.Value;
+            _selectedHostedImage.ApplySize();
+        }
+
+        private static string NewImageId() => Guid.NewGuid().ToString("N");
+
+        private async System.Threading.Tasks.Task AddHostedImageAsync(StorageFile file)
+        {
+            var id = NewImageId();
+
+            var bmp = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
+            using (var stream = await file.OpenAsync(FileAccessMode.Read))
+            {
+                await bmp.SetSourceAsync(stream);
+            }
+
+            var image = new Microsoft.UI.Xaml.Controls.Image
+            {
+                Source = bmp,
+                Stretch = Stretch.Uniform,
+                Width = 320,
+                Height = 200,
+            };
+
+            var border = new Border
+            {
+                Child = image,
+                BorderThickness = new Thickness(2),
+                BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                CornerRadius = new CornerRadius(4)
+            };
+
+            var thumb = new Thumb
+            {
+                Width = border.Width,
+                Height = border.Height,
+                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent)
+            };
+
+            // Container used for hit testing + transforms
+            var container = new Grid
+            {
+                Width = border.Width,
+                Height = border.Height,
+                RenderTransformOrigin = new Point(0.5, 0.5)
+            };
+            container.Children.Add(border);
+
+            // A resize handle in bottom-right
+            var resizeHandle = new Thumb
+            {
+                Width = 14,
+                Height = 14,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Margin = new Thickness(0, 0, -7, -7),
+                Background = new SolidColorBrush(Microsoft.UI.Colors.White),
+                BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                BorderThickness = new Thickness(1)
+            };
+            container.Children.Add(resizeHandle);
+
+            var hosted = new HostedImage(id, file.Path, container, border, resizeHandle);
+            _hostedImages[id] = hosted;
+
+            hosted.Tapped += (s, e) =>
+            {
+                SelectTokenInEditor(hosted.Id);
+                SelectHostedImage(hosted);
+                _isImageSelection = true;
+                UpdateImageControlsVisibility(true);
+                PopulateImageControlsFromSelection(hosted.Id);
+            };
+
+            hosted.DragDelta += (s, e) =>
+            {
+                Canvas.SetLeft(container, Canvas.GetLeft(container) + e.HorizontalChange);
+                Canvas.SetTop(container, Canvas.GetTop(container) + e.VerticalChange);
+            };
+
+            hosted.ResizeDelta += (s, e) =>
+            {
+                var newW = Math.Max(10, container.Width + e.HorizontalChange);
+                var newH = Math.Max(10, container.Height + e.VerticalChange);
+                hosted.Width = newW;
+                hosted.Height = newH;
+                hosted.ApplySize();
+                ImageWidthBox.Value = newW;
+                ImageHeightBox.Value = newH;
+            };
+
+            // Initial position near the caret
+            Canvas.SetLeft(container, 20);
+            Canvas.SetTop(container, 20);
+            AttachmentLayer.Children.Add(container);
+
+            // Insert placeholder token into text
+            Editor.Document.Selection.Text = $"{ImageTokenPrefix}{id}{ImageTokenSuffix}";
+
+            ViewModel.UpdateStatus($"Inserted image {file.Name}");
+        }
+
+        private void RemoveHostedImage(string id, bool updateText)
+        {
+            if (!_hostedImages.TryGetValue(id, out var hosted))
+                return;
+
+            AttachmentLayer.Children.Remove(hosted.Container);
+            _hostedImages.Remove(id);
+
+            if (_selectedHostedImage?.Id == id)
+                SelectHostedImage(null);
+
+            if (updateText)
+                RemoveTokenFromEditor(id);
+        }
+
+        private void RemoveTokenFromEditor(string id)
+        {
+            var token = $"{ImageTokenPrefix}{id}{ImageTokenSuffix}";
+            Editor.Document.GetText(TextGetOptions.NoHidden, out var text);
+            var idx = text.IndexOf(token, StringComparison.Ordinal);
+            if (idx < 0)
+                return;
+
+            Editor.Document.Selection.SetRange(idx, idx + token.Length);
+            Editor.Document.Selection.Text = string.Empty;
+        }
+
+        private void SelectTokenInEditor(string id)
+        {
+            var token = $"{ImageTokenPrefix}{id}{ImageTokenSuffix}";
+            Editor.Document.GetText(TextGetOptions.NoHidden, out var text);
+            var idx = text.IndexOf(token, StringComparison.Ordinal);
+            if (idx < 0)
+                return;
+
+            Editor.Document.Selection.SetRange(idx, idx + token.Length);
         }
 
         private void ShowBackstage()
@@ -587,10 +763,79 @@ namespace SmrtPad
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
-                using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+                await AddHostedImageAsync(file);
+            }
+        }
+
+        private sealed class HostedImage
+        {
+            public string Id { get; }
+            public string SourcePath { get; }
+            public Grid Container { get; }
+            private readonly Border _chrome;
+            private readonly Thumb _resizeThumb;
+
+            public double Width
+            {
+                get => Container.Width;
+                set => Container.Width = value;
+            }
+
+            public double Height
+            {
+                get => Container.Height;
+                set => Container.Height = value;
+            }
+
+            public int RotationDegrees { get; set; }
+
+            public event TappedEventHandler? Tapped;
+            public event DragDeltaEventHandler? DragDelta;
+            public event DragDeltaEventHandler? ResizeDelta;
+
+            public HostedImage(string id, string sourcePath, Grid container, Border chrome, Thumb resizeThumb)
+            {
+                Id = id;
+                SourcePath = sourcePath;
+                Container = container;
+                _chrome = chrome;
+                _resizeThumb = resizeThumb;
+
+                Container.Tapped += (s, e) => Tapped?.Invoke(s, e);
+                Container.PointerPressed += (s, e) =>
                 {
-                    Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, randAccStream);
-                }
+                    // allow dragging by holding anywhere except resize handle
+                    if (e.OriginalSource == _resizeThumb)
+                        return;
+                    Container.CapturePointer(e.Pointer);
+                };
+
+                var dragThumb = new Thumb { Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent) };
+                dragThumb.DragDelta += (s, e) => DragDelta?.Invoke(s, e);
+                container.Children.Insert(0, dragThumb);
+
+                _resizeThumb.DragDelta += (s, e) => ResizeDelta?.Invoke(s, e);
+
+                ApplySize();
+                ApplyTransforms();
+            }
+
+            public void ApplySize()
+            {
+                _chrome.Width = Container.Width;
+                _chrome.Height = Container.Height;
+            }
+
+            public void ApplyTransforms()
+            {
+                Container.RenderTransform = new RotateTransform { Angle = RotationDegrees };
+            }
+
+            public void SetSelected(bool selected)
+            {
+                _chrome.BorderBrush = selected
+                    ? new SolidColorBrush(Microsoft.UI.Colors.DodgerBlue)
+                    : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
             }
         }
 

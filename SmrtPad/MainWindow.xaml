@@ -155,9 +155,14 @@
             </AppBarButton>
         </CommandBar>
 
-        <!-- Main surface: editor + File backstage (WordPad-style) -->
+        <!-- Main surface: editor + attachment layer + File backstage (WordPad-style) -->
         <Grid Grid.Row="2" Margin="10">
-            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
+            <Grid>
+                <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
+                <!-- Attachment layer used to host images as real UI elements -->
+                <Canvas x:Name="AttachmentLayer" IsHitTestVisible="True" />
+            </Grid>
+
             <views:FileBackstageView x:Name="FileBackstage" Visibility="Collapsed" />
         </Grid>
 
