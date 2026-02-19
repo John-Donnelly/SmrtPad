@@ -14,6 +14,33 @@
     </Window.SystemBackdrop>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
+        <!-- Ribbon / CommandBar -->
+        <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
+            <AppBarButton Icon="Document" Label="New" Click="New_Click" />
+            <AppBarButton Icon="OpenFile" Label="Open" Click="Open_Click" />
+            <AppBarButton Icon="Save" Label="Save" Click="Save_Click" />
+            <AppBarSeparator />
+            <AppBarButton Icon="Cut" Label="Cut" Click="Cut_Click" />
+            <AppBarButton Icon="Copy" Label="Copy" Click="Copy_Click" />
+            <AppBarButton Icon="Paste" Label="Paste" Click="Paste_Click" />
+            <AppBarSeparator />
+            <AppBarButton Icon="Bold" Label="Bold" Click="Bold_Click" />
+            <AppBarButton Icon="Italic" Label="Italic" Click="Italic_Click" />
+            <AppBarButton Icon="Underline" Label="Underline" Click="Underline_Click" />
+        </CommandBar>
+
+        <!-- Editor -->
+        <RichEditBox x:Name="Editor" Grid.Row="1" Margin="10" AcceptsReturn="True" TextWrapping="Wrap" />
+
+        <!-- Status Bar -->
+        <Grid Grid.Row="2" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,5">
+            <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" />
+        </Grid>
     </Grid>
 </Window>
