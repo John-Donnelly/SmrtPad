@@ -47,6 +47,18 @@ namespace SmrtPad.ViewModels
         [ObservableProperty]
         private bool _isBullets = false;
 
+        [ObservableProperty]
+        private bool _isWordWrap = true;
+
+        [ObservableProperty]
+        private double _zoomLevel = 100.0;
+
+        [ObservableProperty]
+        private string _listType = "None";
+
+        [ObservableProperty]
+        private double _lineSpacing = 1.0;
+
         public EditorViewModel()
         {
         }
@@ -67,6 +79,10 @@ namespace SmrtPad.ViewModels
             IsSuperscript = false;
             Alignment = "Left";
             IsBullets = false;
+            IsWordWrap = true;
+            ZoomLevel = 100.0;
+            ListType = "None";
+            LineSpacing = 1.0;
         }
 
         [RelayCommand]
@@ -123,6 +139,37 @@ namespace SmrtPad.ViewModels
         public void ToggleBullets()
         {
             IsBullets = !IsBullets;
+        }
+
+        [RelayCommand]
+        public void ToggleWordWrap()
+        {
+            IsWordWrap = !IsWordWrap;
+        }
+
+        [RelayCommand]
+        public void SetListType(string listType)
+        {
+            ListType = listType;
+            IsBullets = listType != "None";
+        }
+
+        [RelayCommand]
+        public void SetLineSpacing(double spacing)
+        {
+            LineSpacing = spacing;
+        }
+
+        [RelayCommand]
+        public void ZoomIn()
+        {
+            ZoomLevel = Math.Min(500.0, ZoomLevel + 10.0);
+        }
+
+        [RelayCommand]
+        public void ZoomOut()
+        {
+            ZoomLevel = Math.Max(10.0, ZoomLevel - 10.0);
         }
     }
 }

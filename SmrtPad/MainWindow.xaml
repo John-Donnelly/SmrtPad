@@ -22,7 +22,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- ═══ MENU / QUICK-ACCESS TOOLBAR ═══ -->
+        <!-- ═══ MENU BAR / QUICK-ACCESS TOOLBAR ═══ -->
         <Grid Grid.Row="0"
               Background="{ThemeResource LayerFillColorDefaultBrush}"
               BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
@@ -36,11 +36,30 @@
                 <!-- Edit / View menus -->
                 <MenuBar VerticalAlignment="Center" Background="Transparent" Padding="0">
                     <MenuBarItem Title="Edit">
-                        <MenuFlyoutItem Text="Cut"      Icon="Cut"   Click="Cut_Click" />
-                        <MenuFlyoutItem Text="Copy"     Icon="Copy"  Click="Copy_Click" />
-                        <MenuFlyoutItem Text="Paste"    Icon="Paste" Click="Paste_Click" />
+                        <MenuFlyoutItem Text="Cut" Click="Cut_Click">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C6;"/></MenuFlyoutItem.Icon>
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="X" Modifiers="Control"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Copy" Click="Copy_Click">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;"/></MenuFlyoutItem.Icon>
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="C" Modifiers="Control"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Paste" Click="Paste_Click">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="V" Modifiers="Control"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem Text="Select All" Click="SelectAll_Click" />
+                        <MenuFlyoutItem Text="Select All" Click="SelectAll_Click">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="A" Modifiers="Control"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                     </MenuBarItem>
                     <MenuBarItem Title="View">
                         <MenuFlyoutItem Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click" />
@@ -49,19 +68,20 @@
                         <ToggleMenuFlyoutItem Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
                     </MenuBarItem>
                 </MenuBar>
-                <!-- Quick-access icons -->
+                <!-- Quick-access separator -->
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
+                <!-- Quick-access toolbar buttons -->
                 <Button Click="Save_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Save (Ctrl+S)">
-                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE74E;" FontSize="14"/>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE74E;" FontSize="14"/>
                 </Button>
                 <Button Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New">
-                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8A5;" FontSize="14"/>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8A5;" FontSize="14"/>
                 </Button>
                 <Button Click="Undo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Undo (Ctrl+Z)">
-                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE7A7;" FontSize="14"/>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A7;" FontSize="14"/>
                 </Button>
                 <Button Click="Redo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Redo (Ctrl+Y)">
-                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE7A6;" FontSize="14"/>
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A6;" FontSize="14"/>
                 </Button>
             </StackPanel>
         </Grid>
@@ -70,69 +90,143 @@
         <Border Grid.Row="1"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                BorderThickness="0,0,0,1">
+                BorderThickness="0,0,0,1"
+                Padding="4"
+                Height="100">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*"    />
+                    <ColumnDefinition Width="Auto" />  <!-- Clipboard -->
+                    <ColumnDefinition Width="Auto" />  <!-- Sep -->
+                    <ColumnDefinition Width="Auto" />  <!-- Font -->
+                    <ColumnDefinition Width="Auto" />  <!-- Sep -->
+                    <ColumnDefinition Width="Auto" />  <!-- Paragraph -->
+                    <ColumnDefinition Width="Auto" />  <!-- Sep -->
+                    <ColumnDefinition Width="Auto" />  <!-- Insert -->
+                    <ColumnDefinition Width="Auto" />  <!-- Sep -->
+                    <ColumnDefinition Width="*"    />  <!-- Editing -->
                 </Grid.ColumnDefinitions>
 
-                <!-- ── FONT ── -->
-                <Grid Grid.Column="0" Padding="6,4,6,0">
+                <!-- ══ CLIPBOARD ══ -->
+                <Grid Grid.Column="0" Padding="6,0,6,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="18"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Large Paste button -->
+                        <Button Grid.Column="0" Click="Paste_Click" Width="48" Height="56" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paste (Ctrl+V)"
+                                VerticalAlignment="Top" Margin="0,2,4,0">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE77F;" FontSize="24"/>
+                                <TextBlock Text="Paste" FontSize="10" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Cut / Copy stacked -->
+                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Top" Margin="0,4,0,0">
+                            <Button Click="Cut_Click" Height="26" Padding="6,2" CornerRadius="4"
+                                    Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Cut (Ctrl+X)"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8C6;" FontSize="13"/>
+                                    <TextBlock Text="Cut" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Click="Copy_Click" Height="26" Padding="6,2" CornerRadius="4"
+                                    Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Copy (Ctrl+C)"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8C8;" FontSize="13"/>
+                                    <TextBlock Text="Copy" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Grid.Row="1" Text="Clipboard" FontSize="10" HorizontalAlignment="Center"
+                               VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Grid>
+
+                <Rectangle Grid.Column="1" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,6" VerticalAlignment="Stretch"/>
+
+                <!-- ══ FONT ══ -->
+                <Grid Grid.Column="2" Padding="6,4,6,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="18"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Row 1: family · size · grow · shrink -->
+                    <!-- Row 1: font family · font size · grow · shrink -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="3" Margin="0,0,0,3">
-                        <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="26" FontSize="12"
+                        <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
-                                  PlaceholderText="Font"/>
-                        <ComboBox x:Name="FontSizeComboBox" Width="52" Height="26" FontSize="12"
+                                  PlaceholderText="Font" IsEditable="True"/>
+                        <ComboBox x:Name="FontSizeComboBox" Width="56" Height="28" FontSize="12"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
                                   IsEditable="True"/>
-                        <Button Click="GrowFont_Click"   Width="26" Height="26" Padding="0" CornerRadius="4"
+                        <Button Click="GrowFont_Click" Width="28" Height="28" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Grow Font">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8E8;" FontSize="12"/>
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="13"/>
                         </Button>
-                        <Button Click="ShrinkFont_Click" Width="26" Height="26" Padding="0" CornerRadius="4"
+                        <Button Click="ShrinkFont_Click" Width="28" Height="28" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Shrink Font">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8E7;" FontSize="12"/>
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E7;" FontSize="13"/>
                         </Button>
                     </StackPanel>
 
-                    <!-- Row 2: B I U S x₂ x² A Ā -->
+                    <!-- Row 2: B  I  U  S  x₂  x²  FontColor  Highlight -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
-                        <Button Click="Bold_Click"          Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Bold (Ctrl+B)">
-                            <TextBlock Text="B" FontWeight="Bold" FontSize="13"/>
-                        </Button>
-                        <Button Click="Italic_Click"        Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Italic (Ctrl+I)">
-                            <TextBlock Text="I" FontStyle="Italic" FontSize="13"/>
-                        </Button>
-                        <Button Click="Underline_Click"     Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Underline (Ctrl+U)">
-                            <TextBlock Text="U" TextDecorations="Underline" FontSize="13"/>
-                        </Button>
-                        <Button Click="Strikethrough_Click" Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Strikethrough">
-                            <TextBlock Text="S" TextDecorations="Strikethrough" FontSize="13"/>
-                        </Button>
-                        <Button Click="Subscript_Click"     Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Subscript">
+                        <ToggleButton x:Name="BoldToggle" Click="Bold_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Bold (Ctrl+B)">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DD;" FontSize="16"/>
+                        </ToggleButton>
+                        <ToggleButton x:Name="ItalicToggle" Click="Italic_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Italic (Ctrl+I)">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DB;" FontSize="16"/>
+                        </ToggleButton>
+                        <ToggleButton x:Name="UnderlineToggle" Click="Underline_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Underline (Ctrl+U)">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DC;" FontSize="16"/>
+                        </ToggleButton>
+                        <ToggleButton x:Name="StrikethroughToggle" Click="Strikethrough_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Strikethrough">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xEDE0;" FontSize="16"/>
+                        </ToggleButton>
+                        <ToggleButton x:Name="SubscriptToggle" Click="Subscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Subscript">
                             <TextBlock FontSize="13" Text="x&#x2082;"/>
-                        </Button>
-                        <Button Click="Superscript_Click"   Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
+                        </ToggleButton>
+                        <ToggleButton x:Name="SuperscriptToggle" Click="Superscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
                             <TextBlock FontSize="13" Text="x&#xB2;"/>
-                        </Button>
-                        <!-- Font colour — A with coloured underbar -->
-                        <Button Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Font Colour">
+                        </ToggleButton>
+                        <!-- Font Color with swatch grid -->
+                        <Button Padding="4,3" MinWidth="32" Height="32" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                ToolTipService.ToolTip="Font Color">
                             <Button.Flyout>
                                 <Flyout>
-                                    <ColorPicker x:Name="TextColorPicker" ColorChanged="TextColorPicker_ColorChanged"/>
+                                    <StackPanel Spacing="8">
+                                        <VariableSizedWrapGrid MaximumRowsOrColumns="6" Orientation="Horizontal" ItemWidth="28" ItemHeight="28">
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#000000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#000000" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#333333" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#333333" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#666666" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#666666" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#a5a5a5" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#a5a5a5" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#ffffff" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#ffffff" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#ff0000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#ff0000" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#ffc000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#ffc000" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#ffff00" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#ffff00" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#00b050" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#00b050" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#004dbb" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#004dbb" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#9b00d3" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#9b00d3" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="TextColorSwatchButton_Click" Tag="#c0504d" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#c0504d" RadiusX="12" RadiusY="12"/></Border></Button>
+                                        </VariableSizedWrapGrid>
+                                        <Button Content="More colors..." Click="TextColorMoreColors_Click" HorizontalAlignment="Stretch"/>
+                                        <ColorPicker x:Name="TextColorPicker" ColorChanged="TextColorPicker_ColorChanged" Visibility="Collapsed"/>
+                                    </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
                             <Grid>
@@ -140,15 +234,30 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="3"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="A" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center"/>
-                                <Rectangle Grid.Row="1" Fill="#E81123" RadiusX="1" RadiusY="1" Margin="1,0"/>
+                                <TextBlock Text="A" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
+                                <Rectangle x:Name="FontColorIndicator" Grid.Row="1" Fill="#E81123" RadiusX="1" RadiusY="1" Margin="1,0"/>
                             </Grid>
                         </Button>
-                        <!-- Highlight colour — A with yellow underbar -->
-                        <Button Padding="5,3" MinWidth="28" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Highlight Colour">
+                        <!-- Highlight Color -->
+                        <Button Padding="4,3" MinWidth="32" Height="32" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                ToolTipService.ToolTip="Text Highlight Color">
                             <Button.Flyout>
                                 <Flyout>
-                                    <ColorPicker x:Name="HighlightColorPicker" ColorChanged="HighlightColorPicker_ColorChanged"/>
+                                    <StackPanel Spacing="8">
+                                        <VariableSizedWrapGrid MaximumRowsOrColumns="5" Orientation="Horizontal" ItemWidth="28" ItemHeight="28">
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#FFFF00" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#FFFF00" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#00FF00" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#00FF00" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#00FFFF" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#00FFFF" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#FF00FF" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#FF00FF" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#0000FF" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#0000FF" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#FF0000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#FF0000" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#000080" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#000080" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#008080" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#008080" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#008000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#008000" RadiusX="12" RadiusY="12"/></Border></Button>
+                                            <Button Click="HighlightSwatchButton_Click" Tag="#808000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Border CornerRadius="12" BorderBrush="#FFB7B7B7" BorderThickness="1"><Rectangle Fill="#808000" RadiusX="12" RadiusY="12"/></Border></Button>
+                                        </VariableSizedWrapGrid>
+                                        <ColorPicker x:Name="HighlightColorPicker" ColorChanged="HighlightColorPicker_ColorChanged" Visibility="Collapsed"/>
+                                    </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
                             <Grid>
@@ -156,8 +265,8 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="3"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="A" FontSize="13" HorizontalAlignment="Center"/>
-                                <Rectangle Grid.Row="1" Fill="#FFFF00" RadiusX="1" RadiusY="1" Margin="1,0"/>
+                                <TextBlock Text="A" FontSize="14" HorizontalAlignment="Center"/>
+                                <Rectangle x:Name="HighlightColorIndicator" Grid.Row="1" Fill="#FFFF00" RadiusX="1" RadiusY="1" Margin="1,0"/>
                             </Grid>
                         </Button>
                     </StackPanel>
@@ -166,65 +275,9 @@
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
 
-                <Rectangle Grid.Column="1" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,6" VerticalAlignment="Stretch"/>
-
-                <!-- ── PARAGRAPH ── -->
-                <Grid Grid.Column="2" Padding="6,4,6,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="18"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Row 1: indent · indent · bullets▼ · spacing▼ -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="0" Margin="0,0,0,3">
-                        <Button Click="DecreaseIndent_Click" Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Decrease Indent">
-                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E7;" FontSize="14"/>
-                        </Button>
-                        <Button Click="IncreaseIndent_Click" Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Increase Indent">
-                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="14"/>
-                        </Button>
-                        <Button Click="Bullets_Click" Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Bullets">
-                            <StackPanel Orientation="Horizontal" Spacing="1">
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8FD;" FontSize="14"/>
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE70D;" FontSize="8" VerticalAlignment="Bottom"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Line Spacing">
-                            <StackPanel Orientation="Horizontal" Spacing="1">
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8D4;" FontSize="14"/>
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE70D;" FontSize="8" VerticalAlignment="Bottom"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-
-                    <!-- Row 2: align L C R J + RTL -->
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
-                        <Button x:Name="AlignLeftBtn" Click="AlignLeft_Click" Padding="5,3" CornerRadius="4"
-                                Background="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="0" ToolTipService.ToolTip="Align Left">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8E3;" FontSize="14" Foreground="White"/>
-                        </Button>
-                        <Button Click="AlignCenter_Click"  Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Align Centre">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8E2;" FontSize="14"/>
-                        </Button>
-                        <Button Click="AlignRight_Click"   Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Align Right">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8E1;" FontSize="14"/>
-                        </Button>
-                        <Button Click="AlignJustify_Click" Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Justify">
-                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E4;" FontSize="14"/>
-                        </Button>
-                        <Button Padding="5,3" CornerRadius="4" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Right-to-left">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8EF;" FontSize="14"/>
-                        </Button>
-                    </StackPanel>
-
-                    <TextBlock Grid.Row="2" Text="Paragraph" FontSize="10" HorizontalAlignment="Center"
-                               VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                </Grid>
-
                 <Rectangle Grid.Column="3" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,6" VerticalAlignment="Stretch"/>
 
-                <!-- ── INSERT ── -->
+                <!-- ══ PARAGRAPH ══ -->
                 <Grid Grid.Column="4" Padding="6,4,6,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -232,86 +285,203 @@
                         <RowDefinition Height="18"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Row 1: picture · emoji · object · date/time (highlighted) -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="2" Margin="0,0,0,3">
-                        <Button Click="InsertPicture_Click" Width="34" Height="34" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Picture">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEB9F;" FontSize="18"/>
+                    <!-- Row 1: indent decrease · indent increase · list toggle+dropdown · line spacing dropdown -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="0" Margin="0,0,0,3">
+                        <Button Click="DecreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Decrease Indent">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E7;" FontSize="14"/>
                         </Button>
-                        <Button Width="34" Height="34" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Emoji">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xED54;" FontSize="18"/>
+                        <Button Click="IncreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Increase Indent">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="14"/>
                         </Button>
-                        <Button Width="34" Height="34" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Object">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xF4A5;" FontSize="18"/>
+                        <!-- List type button with dropdown -->
+                        <Button Click="Bullets_Click" Padding="4,3" CornerRadius="4" Height="28"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Start a list">
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem Text="None" Click="ListTypeNone_Click"/>
+                                    <MenuFlyoutItem Text="Bullet" Click="ListTypeBullet_Click"/>
+                                    <MenuFlyoutItem Text="Numbers" Click="ListTypeNumber_Click"/>
+                                    <MenuFlyoutItem Text="Lowercase letters" Click="ListTypeLowerLetter_Click"/>
+                                    <MenuFlyoutItem Text="Uppercase letters" Click="ListTypeUpperLetter_Click"/>
+                                    <MenuFlyoutItem Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"/>
+                                    <MenuFlyoutItem Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8FD;" FontSize="14"/>
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70D;" FontSize="8" VerticalAlignment="Bottom"/>
+                            </StackPanel>
                         </Button>
-                        <Button Click="InsertDateTime_Click" Width="34" Height="34" Padding="0" CornerRadius="4"
-                                Background="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="0"
-                                ToolTipService.ToolTip="Date &amp; Time">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE787;" FontSize="18" Foreground="White"/>
+                        <!-- Line spacing dropdown -->
+                        <Button Padding="4,3" CornerRadius="4" Height="28"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Line Spacing">
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem Text="1.0" Click="LineSpacing_Click" Tag="1.0"/>
+                                    <MenuFlyoutItem Text="1.15" Click="LineSpacing_Click" Tag="1.15"/>
+                                    <MenuFlyoutItem Text="1.5" Click="LineSpacing_Click" Tag="1.5"/>
+                                    <MenuFlyoutItem Text="2.0" Click="LineSpacing_Click" Tag="2.0"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8D4;" FontSize="14"/>
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70D;" FontSize="8" VerticalAlignment="Bottom"/>
+                            </StackPanel>
                         </Button>
                     </StackPanel>
 
-                    <!-- Row 2: empty placeholder keeps group height consistent -->
-                    <StackPanel Grid.Row="1" Height="26"/>
+                    <!-- Row 2: alignment buttons (radio-style) -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
+                        <RadioButton x:Name="AlignLeftRadio" Click="AlignLeft_Click" GroupName="Alignment"
+                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
+                                     Style="{StaticResource DefaultToggleButtonStyle}"
+                                     IsChecked="True" ToolTipService.ToolTip="Align Left">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E4;" FontSize="14"/>
+                        </RadioButton>
+                        <RadioButton x:Name="AlignCenterRadio" Click="AlignCenter_Click" GroupName="Alignment"
+                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
+                                     Style="{StaticResource DefaultToggleButtonStyle}"
+                                     ToolTipService.ToolTip="Align Center">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E3;" FontSize="14"/>
+                        </RadioButton>
+                        <RadioButton x:Name="AlignRightRadio" Click="AlignRight_Click" GroupName="Alignment"
+                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
+                                     Style="{StaticResource DefaultToggleButtonStyle}"
+                                     ToolTipService.ToolTip="Align Right">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E2;" FontSize="14"/>
+                        </RadioButton>
+                        <RadioButton x:Name="AlignJustifyRadio" Click="AlignJustify_Click" GroupName="Alignment"
+                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
+                                     Style="{StaticResource DefaultToggleButtonStyle}"
+                                     ToolTipService.ToolTip="Justify">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE700;" FontSize="14"/>
+                        </RadioButton>
+                    </StackPanel>
 
-                    <TextBlock Grid.Row="2" Text="Insert" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock Grid.Row="2" Text="Paragraph" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
 
                 <Rectangle Grid.Column="5" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,6" VerticalAlignment="Stretch"/>
 
-                <!-- ── EDITING ── -->
-                <Grid Grid.Column="6" Padding="6,4,6,0">
+                <!-- ══ INSERT ══ -->
+                <Grid Grid.Column="6" Padding="6,0,6,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="18"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" ColumnSpacing="6" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Picture with dropdown -->
+                        <Button Grid.Column="0" Click="InsertPicture_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Picture"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xEB9F;" FontSize="22"/>
+                                <TextBlock Text="Picture" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Paint drawing -->
+                        <Button Grid.Column="1" Width="40" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paint Drawing"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xED54;" FontSize="22"/>
+                                <TextBlock Text="Paint" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Insert object -->
+                        <Button Grid.Column="2" Width="40" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Object"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xF4A5;" FontSize="22"/>
+                                <TextBlock Text="Object" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Date and Time -->
+                        <Button Grid.Column="3" Click="InsertDateTime_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Date and Time"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE787;" FontSize="22"/>
+                                <TextBlock Text="Date/Time" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <TextBlock Grid.Row="1" Text="Insert" FontSize="10" HorizontalAlignment="Center"
+                               VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Grid>
+
+                <Rectangle Grid.Column="7" Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,6" VerticalAlignment="Stretch"/>
+
+                <!-- ══ EDITING ══ -->
+                <Grid Grid.Column="8" Padding="6,2,6,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
                         <RowDefinition Height="18"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" Spacing="1">
-                        <Button Padding="5,2" CornerRadius="4" Background="Transparent" BorderThickness="0">
+                    <StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="1">
+                        <!-- Find with dropdown flyout -->
+                        <Button Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                             <Button.Flyout>
                                 <Flyout>
-                                    <StackPanel Spacing="6" Width="240">
-                                        <TextBox x:Name="FindTextBox" PlaceholderText="Find what..."/>
-                                        <Button Content="Find Next" Click="FindNext_Click" HorizontalAlignment="Right"/>
+                                    <StackPanel Spacing="6" Width="300">
+                                        <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBox x:Name="FindTextBox" PlaceholderText="Text to look for"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                            <Button Content="Find Next" Click="FindNext_Click"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE721;" FontSize="14"/>
-                                <TextBlock Text="Find"       FontSize="12" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE11A;" FontSize="14"/>
+                                <TextBlock Text="Find" FontSize="12" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Padding="5,2" CornerRadius="4" Background="Transparent" BorderThickness="0">
+                        <!-- Replace with dropdown flyout -->
+                        <Button Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                             <Button.Flyout>
                                 <Flyout>
-                                    <StackPanel Spacing="6" Width="240">
-                                        <TextBox x:Name="ReplaceFindTextBox" PlaceholderText="Find what..."/>
-                                        <TextBox x:Name="ReplaceWithTextBox" PlaceholderText="Replace with..."/>
+                                    <StackPanel Spacing="6" Width="300">
+                                        <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBox x:Name="ReplaceFindTextBox" PlaceholderText="Text to look for"/>
+                                        <TextBlock Text="Replace" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
+                                        <TextBox x:Name="ReplaceWithTextBox" PlaceholderText="New text"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                                            <Button Content="Replace"     Click="Replace_Click"/>
+                                            <Button Content="Replace" Click="Replace_Click"/>
                                             <Button Content="Replace All" Click="ReplaceAll_Click"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8AB;" FontSize="14"/>
-                                <TextBlock Text="Replace"    FontSize="12" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8AB;" FontSize="14"/>
+                                <TextBlock Text="Replace" FontSize="12" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Click="SelectAll_Click" Padding="5,2" CornerRadius="4" Background="Transparent" BorderThickness="0">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8B3;" FontSize="14"/>
+                        <!-- Select all -->
+                        <Button Click="SelectAll_Click" Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8B3;" FontSize="14"/>
                                 <TextBlock Text="Select all" FontSize="12" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="2" Text="Editing" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock Grid.Row="1" Text="Editing" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
             </Grid>
@@ -325,7 +495,11 @@
 
         <!-- ═══ STATUS BAR ═══ -->
         <Grid Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
-            <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
+                           HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

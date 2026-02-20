@@ -16,6 +16,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Provider;
 using Microsoft.UI.Text;
+using Windows.UI;
 using WinRT.Interop;
 using SmrtPad.ViewModels;
 using SmrtPad.Views;
@@ -312,29 +313,28 @@ namespace SmrtPad
 
         private void ZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            if (Editor.RenderTransform is not ScaleTransform scaleTransform)
-            {
-                scaleTransform = new ScaleTransform { ScaleX = 1.0, ScaleY = 1.0 };
-                Editor.RenderTransform = scaleTransform;
-                Editor.RenderTransformOrigin = new Point(0.5, 0.5);
-            }
-            scaleTransform.ScaleX += 0.1;
-            scaleTransform.ScaleY += 0.1;
+            ViewModel.ZoomIn();
+            ApplyZoom();
         }
 
         private void ZoomOut_Click(object sender, RoutedEventArgs e)
         {
+            ViewModel.ZoomOut();
+            ApplyZoom();
+        }
+
+        private void ApplyZoom()
+        {
+            double scale = ViewModel.ZoomLevel / 100.0;
             if (Editor.RenderTransform is not ScaleTransform scaleTransform)
             {
-                scaleTransform = new ScaleTransform { ScaleX = 1.0, ScaleY = 1.0 };
+                scaleTransform = new ScaleTransform();
                 Editor.RenderTransform = scaleTransform;
                 Editor.RenderTransformOrigin = new Point(0.5, 0.5);
             }
-            if (scaleTransform.ScaleX > 0.2)
-            {
-                scaleTransform.ScaleX -= 0.1;
-                scaleTransform.ScaleY -= 0.1;
-            }
+            scaleTransform.ScaleX = scale;
+            scaleTransform.ScaleY = scale;
+            ZoomText.Text = $"{ViewModel.ZoomLevel:0}%";
         }
 
         private void AlignLeft_Click(object sender, RoutedEventArgs e)
@@ -346,6 +346,7 @@ namespace SmrtPad
                 paragraphFormatting.Alignment = ParagraphAlignment.Left;
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
+            ViewModel.SetAlignment("Left");
         }
 
         private void AlignCenter_Click(object sender, RoutedEventArgs e)
@@ -357,6 +358,7 @@ namespace SmrtPad
                 paragraphFormatting.Alignment = ParagraphAlignment.Center;
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
+            ViewModel.SetAlignment("Center");
         }
 
         private void AlignRight_Click(object sender, RoutedEventArgs e)
@@ -368,6 +370,7 @@ namespace SmrtPad
                 paragraphFormatting.Alignment = ParagraphAlignment.Right;
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
+            ViewModel.SetAlignment("Right");
         }
 
         private void AlignJustify_Click(object sender, RoutedEventArgs e)
@@ -379,6 +382,7 @@ namespace SmrtPad
                 paragraphFormatting.Alignment = ParagraphAlignment.Justify;
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
+            ViewModel.SetAlignment("Justify");
         }
 
         private void DecreaseIndent_Click(object sender, RoutedEventArgs e)
@@ -422,26 +426,118 @@ namespace SmrtPad
             }
         }
 
+        private void ApplyListType(MarkerType markerType, string listTypeName)
+        {
+            ITextSelection selectedText = Editor.Document.Selection;
+            if (selectedText != null)
+            {
+                ITextParagraphFormat paragraphFormatting = selectedText.ParagraphFormat;
+                paragraphFormatting.ListType = markerType;
+                selectedText.ParagraphFormat = paragraphFormatting;
+            }
+            ViewModel.SetListType(listTypeName);
+        }
+
+        private void ListTypeNone_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.None, "None");
+        private void ListTypeBullet_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.Bullet, "Bullet");
+        private void ListTypeNumber_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.Arabic, "Number");
+        private void ListTypeLowerLetter_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.LowercaseEnglishLetter, "LowercaseLetter");
+        private void ListTypeUpperLetter_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.UppercaseEnglishLetter, "UppercaseLetter");
+        private void ListTypeLowerRoman_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.LowercaseRoman, "LowercaseRoman");
+        private void ListTypeUpperRoman_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.UppercaseRoman, "UppercaseRoman");
+
+        private void LineSpacing_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem item && item.Tag is string tagStr && double.TryParse(tagStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double spacing))
+            {
+                ITextSelection selectedText = Editor.Document.Selection;
+                if (selectedText != null)
+                {
+                    ITextParagraphFormat paragraphFormatting = selectedText.ParagraphFormat;
+                    paragraphFormatting.SetLineSpacing(LineSpacingRule.Multiple, (float)(spacing * 12f));
+                    selectedText.ParagraphFormat = paragraphFormatting;
+                }
+                ViewModel.SetLineSpacing(spacing);
+            }
+        }
+
         private void TextColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+        {
+            ApplyTextColor(args.NewColor);
+        }
+
+        private void TextColorSwatchButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string hex)
+            {
+                var color = ParseHexColor(hex);
+                ApplyTextColor(color);
+                FontColorIndicator.Fill = new SolidColorBrush(color);
+            }
+        }
+
+        private void TextColorMoreColors_Click(object sender, RoutedEventArgs e)
+        {
+            TextColorPicker.Visibility = TextColorPicker.Visibility == Visibility.Visible
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        }
+
+        private void ApplyTextColor(Color color)
         {
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
-                charFormatting.ForegroundColor = args.NewColor;
+                charFormatting.ForegroundColor = color;
                 selectedText.CharacterFormat = charFormatting;
             }
         }
 
         private void HighlightColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
         {
+            ApplyHighlightColor(args.NewColor);
+        }
+
+        private void HighlightSwatchButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string hex)
+            {
+                var color = ParseHexColor(hex);
+                ApplyHighlightColor(color);
+                HighlightColorIndicator.Fill = new SolidColorBrush(color);
+            }
+        }
+
+        private void ApplyHighlightColor(Color color)
+        {
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
-                charFormatting.BackgroundColor = args.NewColor;
+                charFormatting.BackgroundColor = color;
                 selectedText.CharacterFormat = charFormatting;
             }
+        }
+
+        internal static Color ParseHexColor(string hex)
+        {
+            hex = hex.TrimStart('#');
+            byte r = 0, g = 0, b = 0, a = 255;
+            if (hex.Length == 6)
+            {
+                r = Convert.ToByte(hex.Substring(0, 2), 16);
+                g = Convert.ToByte(hex.Substring(2, 2), 16);
+                b = Convert.ToByte(hex.Substring(4, 2), 16);
+            }
+            else if (hex.Length == 8)
+            {
+                a = Convert.ToByte(hex.Substring(0, 2), 16);
+                r = Convert.ToByte(hex.Substring(2, 2), 16);
+                g = Convert.ToByte(hex.Substring(4, 2), 16);
+                b = Convert.ToByte(hex.Substring(6, 2), 16);
+            }
+            return Color.FromArgb(a, r, g, b);
         }
 
         private async void InsertPicture_Click(object sender, RoutedEventArgs e)
@@ -513,7 +609,10 @@ namespace SmrtPad
         private void WordWrap_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleMenuFlyoutItem toggleItem)
+            {
                 Editor.TextWrapping = toggleItem.IsChecked ? TextWrapping.Wrap : TextWrapping.NoWrap;
+                ViewModel.IsWordWrap = toggleItem.IsChecked;
+            }
         }
 
         private void GrowFont_Click(object sender, RoutedEventArgs e)
