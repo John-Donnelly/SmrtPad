@@ -55,10 +55,8 @@ public sealed partial class FileBackstageView : UserControl
                 OptionsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Exit":
-                BodyText.Text = "Exit SmrtPad.";
                 ExitRequested?.Invoke(this, EventArgs.Empty);
-                Application.Current.Exit();
-                break;
+                return;
         }
     }
 }
