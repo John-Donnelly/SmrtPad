@@ -332,36 +332,32 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- Row 2: alignment buttons (radio-style) -->
+                    <!-- Row 2: alignment buttons (toggle-style, mutually exclusive in code-behind) -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
-                        <RadioButton x:Name="AlignLeftRadio" Click="AlignLeft_Click" GroupName="Alignment"
-                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
-                                     Style="{StaticResource DefaultToggleButtonStyle}"
-                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                     IsChecked="True" ToolTipService.ToolTip="Align Left">
+                        <ToggleButton x:Name="AlignLeftToggle" Click="AlignLeft_Click"
+                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      IsChecked="True" ToolTipService.ToolTip="Align Left"
+                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E4;" FontSize="14"/>
-                        </RadioButton>
-                        <RadioButton x:Name="AlignCenterRadio" Click="AlignCenter_Click" GroupName="Alignment"
-                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
-                                     Style="{StaticResource DefaultToggleButtonStyle}"
-                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                     ToolTipService.ToolTip="Align Center">
+                        </ToggleButton>
+                        <ToggleButton x:Name="AlignCenterToggle" Click="AlignCenter_Click"
+                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      ToolTipService.ToolTip="Align Center"
+                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E3;" FontSize="14"/>
-                        </RadioButton>
-                        <RadioButton x:Name="AlignRightRadio" Click="AlignRight_Click" GroupName="Alignment"
-                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
-                                     Style="{StaticResource DefaultToggleButtonStyle}"
-                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                     ToolTipService.ToolTip="Align Right">
+                        </ToggleButton>
+                        <ToggleButton x:Name="AlignRightToggle" Click="AlignRight_Click"
+                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      ToolTipService.ToolTip="Align Right"
+                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E2;" FontSize="14"/>
-                        </RadioButton>
-                        <RadioButton x:Name="AlignJustifyRadio" Click="AlignJustify_Click" GroupName="Alignment"
-                                     Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
-                                     Style="{StaticResource DefaultToggleButtonStyle}"
-                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                     ToolTipService.ToolTip="Justify">
+                        </ToggleButton>
+                        <ToggleButton x:Name="AlignJustifyToggle" Click="AlignJustify_Click"
+                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                                      ToolTipService.ToolTip="Justify"
+                                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE700;" FontSize="14"/>
-                        </RadioButton>
+                        </ToggleButton>
                     </StackPanel>
 
                     <TextBlock Grid.Row="2" Text="Paragraph" FontSize="10" HorizontalAlignment="Center"

@@ -338,6 +338,14 @@ namespace SmrtPad
             ZoomText.Text = $"{ViewModel.ZoomLevel:0}%";
         }
 
+        private void SetAlignmentToggle(ToggleButton active)
+        {
+            AlignLeftToggle.IsChecked = (active == AlignLeftToggle);
+            AlignCenterToggle.IsChecked = (active == AlignCenterToggle);
+            AlignRightToggle.IsChecked = (active == AlignRightToggle);
+            AlignJustifyToggle.IsChecked = (active == AlignJustifyToggle);
+        }
+
         private void AlignLeft_Click(object sender, RoutedEventArgs e)
         {
             ITextSelection selectedText = Editor.Document.Selection;
@@ -348,6 +356,7 @@ namespace SmrtPad
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
             ViewModel.SetAlignment("Left");
+            SetAlignmentToggle(AlignLeftToggle);
         }
 
         private void AlignCenter_Click(object sender, RoutedEventArgs e)
@@ -360,6 +369,7 @@ namespace SmrtPad
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
             ViewModel.SetAlignment("Center");
+            SetAlignmentToggle(AlignCenterToggle);
         }
 
         private void AlignRight_Click(object sender, RoutedEventArgs e)
@@ -372,6 +382,7 @@ namespace SmrtPad
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
             ViewModel.SetAlignment("Right");
+            SetAlignmentToggle(AlignRightToggle);
         }
 
         private void AlignJustify_Click(object sender, RoutedEventArgs e)
@@ -384,6 +395,7 @@ namespace SmrtPad
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
             ViewModel.SetAlignment("Justify");
+            SetAlignmentToggle(AlignJustifyToggle);
         }
 
         private void DecreaseIndent_Click(object sender, RoutedEventArgs e)

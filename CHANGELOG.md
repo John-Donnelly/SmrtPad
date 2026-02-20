@@ -5,6 +5,8 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- Replaced `RadioButton` with `ToggleButton` for paragraph alignment buttons to fix WinUI 3 runtime crash (`E_INVALIDARG` / `E_UNEXPECTED`) caused by applying `DefaultToggleButtonStyle` to `RadioButton`
+- Alignment buttons now enforce mutual exclusivity via code-behind helper
 - Paragraph alignment button icons are now horizontally and vertically centered
 - Font size dropdown width doubled (56 → 112px) so selected values are fully visible
 
