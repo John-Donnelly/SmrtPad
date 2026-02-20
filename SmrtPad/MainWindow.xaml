@@ -165,7 +165,7 @@
                         <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
                                   PlaceholderText="Font" IsEditable="True"/>
-                        <ComboBox x:Name="FontSizeComboBox" Width="56" Height="28" FontSize="12"
+                        <ComboBox x:Name="FontSizeComboBox" Width="112" Height="28" FontSize="12"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
                                   IsEditable="True"/>
                         <Button Click="GrowFont_Click" Width="28" Height="28" Padding="0" CornerRadius="4"
@@ -337,24 +337,28 @@
                         <RadioButton x:Name="AlignLeftRadio" Click="AlignLeft_Click" GroupName="Alignment"
                                      Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
                                      Style="{StaticResource DefaultToggleButtonStyle}"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                      IsChecked="True" ToolTipService.ToolTip="Align Left">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E4;" FontSize="14"/>
                         </RadioButton>
                         <RadioButton x:Name="AlignCenterRadio" Click="AlignCenter_Click" GroupName="Alignment"
                                      Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
                                      Style="{StaticResource DefaultToggleButtonStyle}"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                      ToolTipService.ToolTip="Align Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E3;" FontSize="14"/>
                         </RadioButton>
                         <RadioButton x:Name="AlignRightRadio" Click="AlignRight_Click" GroupName="Alignment"
                                      Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
                                      Style="{StaticResource DefaultToggleButtonStyle}"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                      ToolTipService.ToolTip="Align Right">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E2;" FontSize="14"/>
                         </RadioButton>
                         <RadioButton x:Name="AlignJustifyRadio" Click="AlignJustify_Click" GroupName="Alignment"
                                      Width="32" Height="32" MinWidth="0" Padding="0" CornerRadius="4"
                                      Style="{StaticResource DefaultToggleButtonStyle}"
+                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                      ToolTipService.ToolTip="Justify">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE700;" FontSize="14"/>
                         </RadioButton>
