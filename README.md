@@ -7,7 +7,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 ### Ribbon Toolbar (WordPad-style)
 - **Clipboard** — Large Paste button with stacked Cut/Copy, matching the classic WordPad layout
 - **Font** — Font family picker, font size selector, grow/shrink buttons, toggle buttons for Bold, Italic, Underline, Strikethrough, Subscript, and Superscript, plus color swatch grids for font color and text highlight
-- **Paragraph** — Indent increase/decrease, list type dropdown (None, Bullet, Numbers, Letters, Roman numerals), line spacing selector (1.0, 1.15, 1.5, 2.0), and radio-style alignment buttons (Left, Center, Right, Justify)
+- **Paragraph** — Indent increase/decrease, list type dropdown (None, Bullet, Numbers, Letters, Roman numerals), line spacing selector (1.0, 1.15, 1.5, 2.0), and toggle-style alignment buttons (Left, Center, Right, Justify)
 - **Insert** — Picture, Paint Drawing, Insert Object, and Date/Time with large icon+label buttons
 - **Editing** — Find and Replace with flyout dialogs, and Select All
 

@@ -9,6 +9,8 @@ All notable changes to SmrtPad are documented in this file.
 - Alignment buttons now enforce mutual exclusivity via code-behind helper
 - Paragraph alignment button icons are now horizontally and vertically centered
 - Font size dropdown width doubled (56 → 112px) so selected values are fully visible
+- Color swatch buttons now render as filled circles instead of collapsed dots — replaced `Border`+`Rectangle` (no explicit size) with `Ellipse` (20×20) for both font color and highlight color grids
+- Line spacing no longer produces massive gaps — removed erroneous `× 12` multiplier; standard values (1.0, 1.5, 2.0) now use dedicated `LineSpacingRule.Single`/`OneAndHalf`/`Double` rules
 
 ### Added
 - README.md with project overview, build instructions, and test documentation
