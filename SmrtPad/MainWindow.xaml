@@ -389,7 +389,7 @@
                             </StackPanel>
                         </Button>
                         <!-- Paint drawing -->
-                        <Button Grid.Column="1" Width="40" Height="48" Padding="0" CornerRadius="4"
+                        <Button Grid.Column="1" Click="PaintDrawing_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paint Drawing"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
@@ -398,7 +398,7 @@
                             </StackPanel>
                         </Button>
                         <!-- Insert object -->
-                        <Button Grid.Column="2" Width="40" Height="48" Padding="0" CornerRadius="4"
+                        <Button Grid.Column="2" Click="InsertObject_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Object"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">

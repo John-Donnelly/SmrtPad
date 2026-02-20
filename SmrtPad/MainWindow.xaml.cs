@@ -7,9 +7,11 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
@@ -60,7 +62,7 @@ namespace SmrtPad
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
             FileBackstage.SaveRequested += (s, e) => { HideBackstage(); Save_Click(this, new RoutedEventArgs()); };
-            FileBackstage.ExitRequested += (s, e) => { HideBackstage(); Exit_Click(this, new RoutedEventArgs()); };
+            FileBackstage.ExitRequested += (s, e) => { Close(); };
         }
 
         // Image hosting now uses native RichEdit OLE objects.
@@ -304,7 +306,7 @@ namespace SmrtPad
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            Application.Current.Exit();
+            Close();
         }
 
         private void SelectAll_Click(object sender, RoutedEventArgs e)
@@ -648,6 +650,88 @@ namespace SmrtPad
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Redo();
+        }
+
+        private async void PaintDrawing_Click(object sender, RoutedEventArgs e)
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "SmrtPad");
+            Directory.CreateDirectory(tempDir);
+            string tempFile = Path.Combine(tempDir, $"drawing_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+
+            try
+            {
+                var process = new Process();
+                process.StartInfo.FileName = "SmrtDoodle.exe";
+                process.StartInfo.Arguments = $"\"{tempFile}\"";
+                process.StartInfo.UseShellExecute = true;
+                process.Start();
+                await Task.Run(() => process.WaitForExit());
+
+                if (process.ExitCode == 0 && File.Exists(tempFile))
+                {
+                    var file = await StorageFile.GetFileFromPathAsync(tempFile);
+                    using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                    {
+                        Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
+                    }
+                    ViewModel.UpdateStatus("Drawing inserted.");
+                }
+                else if (process.ExitCode != 0)
+                {
+                    ViewModel.UpdateStatus("Drawing cancelled.");
+                }
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "SmrtDoodle Not Found",
+                    Content = "SmrtDoodle is not installed or could not be found in the system PATH. Please install SmrtDoodle to use the Paint Drawing feature.",
+                    CloseButtonText = "OK",
+                    XamlRoot = Content.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+            finally
+            {
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+            }
+        }
+
+        private async void InsertObject_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker();
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            picker.ViewMode = PickerViewMode.Thumbnail;
+            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            picker.FileTypeFilter.Add(".png");
+            picker.FileTypeFilter.Add(".jpg");
+            picker.FileTypeFilter.Add(".jpeg");
+            picker.FileTypeFilter.Add(".bmp");
+            picker.FileTypeFilter.Add(".gif");
+            picker.FileTypeFilter.Add(".tif");
+            picker.FileTypeFilter.Add(".tiff");
+            picker.FileTypeFilter.Add(".ico");
+            picker.FileTypeFilter.Add(".svg");
+
+            StorageFile file = await picker.PickSingleFileAsync();
+            if (file != null)
+            {
+                string ext = file.FileType.ToLowerInvariant();
+                if (ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".gif" or ".tif" or ".tiff" or ".ico")
+                {
+                    using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                    {
+                        Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
+                    }
+                    ViewModel.UpdateStatus($"Inserted {file.Name}.");
+                }
+                else
+                {
+                    Editor.Document.Selection.Text = $"[Embedded object: {file.Name}]";
+                    ViewModel.UpdateStatus($"Inserted reference to {file.Name}.");
+                }
+            }
         }
     }
 }
