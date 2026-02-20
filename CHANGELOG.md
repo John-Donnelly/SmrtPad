@@ -11,8 +11,11 @@ All notable changes to SmrtPad are documented in this file.
 - Font size dropdown width doubled (56 → 112px) so selected values are fully visible
 - Color swatch buttons now render as filled circles instead of collapsed dots — replaced `Border`+`Rectangle` (no explicit size) with `Ellipse` (20×20) for both font color and highlight color grids
 - Line spacing no longer produces massive gaps — removed erroneous `× 12` multiplier; standard values (1.0, 1.5, 2.0) now use dedicated `LineSpacingRule.Single`/`OneAndHalf`/`Double` rules
+- Exit no longer throws `winrt::hresult_error` — removed duplicate `Application.Current.Exit()` from backstage, replaced with `Window.Close()` for proper WinUI 3 shutdown
 
 ### Added
+- **Paint Drawing** button launches SmrtDoodle (external companion app) with a temp file path, awaits exit, and inserts the resulting image; shows a dialog if SmrtDoodle is not installed
+- **Insert Object** button opens a file picker for image formats (PNG, JPG, BMP, GIF, TIFF, ICO, SVG) and inserts them into the document
 - README.md with project overview, build instructions, and test documentation
 - CHANGELOG.md
 
