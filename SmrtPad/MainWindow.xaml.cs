@@ -467,7 +467,14 @@ namespace SmrtPad
                 if (selectedText != null)
                 {
                     ITextParagraphFormat paragraphFormatting = selectedText.ParagraphFormat;
-                    paragraphFormatting.SetLineSpacing(LineSpacingRule.Multiple, (float)(spacing * 12f));
+                    if (spacing == 1.0)
+                        paragraphFormatting.SetLineSpacing(LineSpacingRule.Single, 0);
+                    else if (spacing == 1.5)
+                        paragraphFormatting.SetLineSpacing(LineSpacingRule.OneAndHalf, 0);
+                    else if (spacing == 2.0)
+                        paragraphFormatting.SetLineSpacing(LineSpacingRule.Double, 0);
+                    else
+                        paragraphFormatting.SetLineSpacing(LineSpacingRule.Multiple, (float)spacing);
                     selectedText.ParagraphFormat = paragraphFormatting;
                 }
                 ViewModel.SetLineSpacing(spacing);
