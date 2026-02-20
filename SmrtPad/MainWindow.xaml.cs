@@ -18,6 +18,7 @@ using Windows.Storage.Provider;
 using Microsoft.UI.Text;
 using Windows.UI;
 using WinRT.Interop;
+using SmrtPad.Helpers;
 using SmrtPad.ViewModels;
 using SmrtPad.Views;
 
@@ -470,7 +471,7 @@ namespace SmrtPad
         {
             if (sender is Button btn && btn.Tag is string hex)
             {
-                var color = ParseHexColor(hex);
+                var color = ColorHelper.ParseHexColor(hex);
                 ApplyTextColor(color);
                 FontColorIndicator.Fill = new SolidColorBrush(color);
             }
@@ -503,7 +504,7 @@ namespace SmrtPad
         {
             if (sender is Button btn && btn.Tag is string hex)
             {
-                var color = ParseHexColor(hex);
+                var color = ColorHelper.ParseHexColor(hex);
                 ApplyHighlightColor(color);
                 HighlightColorIndicator.Fill = new SolidColorBrush(color);
             }
@@ -518,26 +519,6 @@ namespace SmrtPad
                 charFormatting.BackgroundColor = color;
                 selectedText.CharacterFormat = charFormatting;
             }
-        }
-
-        internal static Color ParseHexColor(string hex)
-        {
-            hex = hex.TrimStart('#');
-            byte r = 0, g = 0, b = 0, a = 255;
-            if (hex.Length == 6)
-            {
-                r = Convert.ToByte(hex.Substring(0, 2), 16);
-                g = Convert.ToByte(hex.Substring(2, 2), 16);
-                b = Convert.ToByte(hex.Substring(4, 2), 16);
-            }
-            else if (hex.Length == 8)
-            {
-                a = Convert.ToByte(hex.Substring(0, 2), 16);
-                r = Convert.ToByte(hex.Substring(2, 2), 16);
-                g = Convert.ToByte(hex.Substring(4, 2), 16);
-                b = Convert.ToByte(hex.Substring(6, 2), 16);
-            }
-            return Color.FromArgb(a, r, g, b);
         }
 
         private async void InsertPicture_Click(object sender, RoutedEventArgs e)
