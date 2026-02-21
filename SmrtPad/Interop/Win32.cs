@@ -113,7 +113,7 @@ internal static class Win32
     [DllImport("user32.dll", SetLastError = true)]
     public static extern IntPtr SetFocus(IntPtr hWnd);
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern IntPtr LoadLibraryW(string lpLibFileName);
 
     [DllImport("kernel32.dll", SetLastError = true)]
