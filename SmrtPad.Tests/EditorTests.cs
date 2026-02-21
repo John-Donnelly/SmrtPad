@@ -928,4 +928,70 @@ namespace SmrtPad.Tests
             Assert.Equal(60, svc.AutoSaveIntervalSeconds);
         }
     }
+
+    // ═══ Service Abstraction Tests ═══
+
+    public class ServiceAbstractionTests
+    {
+        [Fact]
+        public void SavePromptResult_HasExpectedValues()
+        {
+            Assert.Equal(0, (int)SavePromptResult.Save);
+            Assert.Equal(1, (int)SavePromptResult.DontSave);
+            Assert.Equal(2, (int)SavePromptResult.Cancel);
+        }
+
+        [Fact]
+        public void IDialogService_InterfaceHasExpectedMethods()
+        {
+            var type = typeof(IDialogService);
+            Assert.NotNull(type.GetMethod("ShowErrorAsync"));
+            Assert.NotNull(type.GetMethod("ShowSavePromptAsync"));
+        }
+
+        [Fact]
+        public void IFileService_InterfaceHasExpectedMethods()
+        {
+            var type = typeof(IFileService);
+            Assert.NotNull(type.GetMethod("PickOpenFileAsync"));
+            Assert.NotNull(type.GetMethod("PickSaveFileAsync"));
+            Assert.NotNull(type.GetMethod("GetFileFromPathAsync"));
+        }
+
+        [Fact]
+        public void ISettingsService_InterfaceHasExpectedMembers()
+        {
+            var type = typeof(ISettingsService);
+            Assert.NotNull(type.GetProperty("DefaultFontFamily"));
+            Assert.NotNull(type.GetProperty("DefaultFontSize"));
+            Assert.NotNull(type.GetProperty("DefaultWordWrap"));
+            Assert.NotNull(type.GetProperty("DefaultSaveFormat"));
+            Assert.NotNull(type.GetProperty("ThemePreference"));
+            Assert.NotNull(type.GetProperty("AutoSaveEnabled"));
+            Assert.NotNull(type.GetProperty("AutoSaveIntervalSeconds"));
+            Assert.NotNull(type.GetProperty("RecentFiles"));
+            Assert.NotNull(type.GetMethod("AddRecentFile"));
+            Assert.NotNull(type.GetMethod("ClearRecentFiles"));
+            Assert.NotNull(type.GetMethod("Save"));
+            Assert.NotNull(type.GetMethod("Load"));
+        }
+
+        [Fact]
+        public void DialogService_ImplementsIDialogService()
+        {
+            Assert.True(typeof(IDialogService).IsAssignableFrom(typeof(DialogService)));
+        }
+
+        [Fact]
+        public void FileService_ImplementsIFileService()
+        {
+            Assert.True(typeof(IFileService).IsAssignableFrom(typeof(FileService)));
+        }
+
+        [Fact]
+        public void SettingsService_ImplementsISettingsService()
+        {
+            Assert.True(typeof(ISettingsService).IsAssignableFrom(typeof(SettingsService)));
+        }
+    }
 }
