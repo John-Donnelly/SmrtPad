@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Res = SmrtPad.Helpers.ResourceHelper;
 
 namespace SmrtPad.Services
 {
@@ -20,7 +21,7 @@ namespace SmrtPad.Services
             {
                 Title = title,
                 Content = message,
-                CloseButtonText = "OK",
+                CloseButtonText = Res.GetString("DlgOK"),
                 XamlRoot = _xamlRootProvider()
             };
             await dialog.ShowAsync();
@@ -30,11 +31,11 @@ namespace SmrtPad.Services
         {
             var dialog = new ContentDialog
             {
-                Title = "Unsaved Changes",
-                Content = $"Do you want to save changes to {documentTitle}?",
-                PrimaryButtonText = "Save",
-                SecondaryButtonText = "Don't Save",
-                CloseButtonText = "Cancel",
+                Title = Res.GetString("DlgUnsavedChanges"),
+                Content = Res.GetFormatted("DlgSaveChangesMessage", documentTitle),
+                PrimaryButtonText = Res.GetString("DlgSave"),
+                SecondaryButtonText = Res.GetString("DlgDontSave"),
+                CloseButtonText = Res.GetString("DlgCancel"),
                 XamlRoot = _xamlRootProvider()
             };
 

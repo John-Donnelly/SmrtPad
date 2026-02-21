@@ -4,16 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Res = SmrtPad.Helpers.ResourceHelper;
 
 namespace SmrtPad.ViewModels
 {
     public partial class EditorViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string _documentTitle = "Untitled";
+        private string _documentTitle = Res.GetString("DocumentUntitled");
 
         [ObservableProperty]
-        private string _statusMessage = "Ready";
+        private string _statusMessage = Res.GetString("StatusReady");
 
         [ObservableProperty]
         private bool _isModified;
@@ -100,8 +101,8 @@ namespace SmrtPad.ViewModels
         [RelayCommand]
         public void NewDocument()
         {
-            DocumentTitle = "Untitled";
-            StatusMessage = "New document created.";
+            DocumentTitle = Res.GetString("DocumentUntitled");
+            StatusMessage = Res.GetString("StatusNewDocument");
             IsModified = false;
             FontFamily = "Segoe UI";
             FontSize = 11.0;

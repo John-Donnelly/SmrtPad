@@ -25,6 +25,7 @@ using SmrtPad.Helpers;
 using SmrtPad.ViewModels;
 using SmrtPad.Views;
 using SmrtPad.Services;
+using Res = SmrtPad.Helpers.ResourceHelper;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -49,12 +50,12 @@ namespace SmrtPad
             _dialogService = new DialogService(() => Content.XamlRoot);
             _fileService = new FileService(() => this);
             InitializeComponent();
-            Title = $"SmrtPad - {ViewModel.DocumentTitle}";
+            Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
             ViewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(ViewModel.DocumentTitle))
                 {
-                    Title = $"SmrtPad - {ViewModel.DocumentTitle}";
+                    Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
                 }
                 else if (e.PropertyName == nameof(ViewModel.StatusMessage))
                 {
@@ -99,14 +100,14 @@ namespace SmrtPad
                 _currentFile = file;
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
-                ViewModel.UpdateStatus($"Opened {file.Name}");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
                 _settings.AddRecentFile(file.Path);
                 UpdateStatusBarCounts();
                 UpdateEncoding(isTxt ? "UTF-8" : "RTF");
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Error Opening File", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorOpeningFile"), ex.Message);
             }
         }
 
@@ -151,7 +152,7 @@ namespace SmrtPad
                                 Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
                             }
                             ViewModel.IsModified = false;
-                            ViewModel.UpdateStatus($"Auto-saved {_currentFile.Name}");
+                            ViewModel.UpdateStatus(Res.GetFormatted("StatusAutoSaved", _currentFile.Name));
                         }
                         catch { }
                     }
@@ -181,7 +182,7 @@ namespace SmrtPad
                 {
                     Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
                 }
-                ViewModel.UpdateStatus("Recovery file saved.");
+                ViewModel.UpdateStatus(Res.GetString("StatusRecoverySaved"));
             }
             catch { }
         }
@@ -197,8 +198,8 @@ namespace SmrtPad
 
             ViewModel.WordCount = wordCount;
             ViewModel.CharCount = charCount;
-            WordCountText.Text = $"Words: {wordCount}";
-            CharCountText.Text = $"Characters: {charCount}";
+            WordCountText.Text = Res.GetFormatted("StatusBarWords", wordCount);
+            CharCountText.Text = Res.GetFormatted("StatusBarCharacters", charCount);
         }
 
         private void UpdateLineColumn()
@@ -217,7 +218,7 @@ namespace SmrtPad
 
             ViewModel.LineNumber = line;
             ViewModel.ColumnNumber = col;
-            LineColText.Text = $"Ln {line}, Col {col}";
+            LineColText.Text = Res.GetFormatted("StatusBarLineCol", line, col);
         }
 
         private void UpdateSelectionLength()
@@ -227,7 +228,7 @@ namespace SmrtPad
 
             int length = Math.Abs(selection.EndPosition - selection.StartPosition);
             ViewModel.SelectionLength = length;
-            SelectionLengthText.Text = $"Sel: {length}";
+            SelectionLengthText.Text = Res.GetFormatted("StatusBarSelection", length);
         }
 
         private void UpdateEncoding(string encoding)
@@ -432,7 +433,7 @@ namespace SmrtPad
                     _currentFile = file;
                     ViewModel.DocumentTitle = file.Name;
                     ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus($"Opened {file.Name}");
+                    ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
                     _settings.AddRecentFile(file.Path);
                     UpdateStatusBarCounts();
                     UpdateEncoding(isTxt ? "UTF-8" : "RTF");
@@ -440,7 +441,7 @@ namespace SmrtPad
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Error Opening File", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorOpeningFile"), ex.Message);
             }
         }
 
@@ -453,9 +454,9 @@ namespace SmrtPad
                     var picker = new FileSavePicker();
                     InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                     picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                    picker.FileTypeChoices.Add("Rich Text Format", new List<string>() { ".rtf" });
-                    picker.FileTypeChoices.Add("Text Document", new List<string>() { ".txt" });
-                    picker.SuggestedFileName = "Document";
+                    picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string>() { ".rtf" });
+                    picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string>() { ".txt" });
+                    picker.SuggestedFileName = Res.GetString("FileDefaultName");
 
                     StorageFile file = await picker.PickSaveFileAsync();
                     if (file != null)
@@ -471,7 +472,7 @@ namespace SmrtPad
                             _currentFile = file;
                             ViewModel.DocumentTitle = file.Name;
                             ViewModel.IsModified = false;
-                            ViewModel.UpdateStatus($"Saved {file.Name}");
+                            ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
                             _settings.AddRecentFile(file.Path);
                         }
                     }
@@ -483,12 +484,12 @@ namespace SmrtPad
                         Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
                     }
                     ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
+                    ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", _currentFile.Name));
                 }
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Error Saving File", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorSavingFile"), ex.Message);
             }
         }
 
@@ -499,9 +500,9 @@ namespace SmrtPad
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add("Rich Text Format", new List<string>() { ".rtf" });
-                picker.FileTypeChoices.Add("Text Document", new List<string>() { ".txt" });
-                picker.SuggestedFileName = _currentFile?.DisplayName ?? "Document";
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string>() { ".rtf" });
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string>() { ".txt" });
+                picker.SuggestedFileName = _currentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
@@ -520,14 +521,14 @@ namespace SmrtPad
                         _currentFile = file;
                         ViewModel.DocumentTitle = file.Name;
                         ViewModel.IsModified = false;
-                        ViewModel.UpdateStatus($"Saved {file.Name}");
+                        ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
                         _settings.AddRecentFile(file.Path);
                     }
                 }
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Error Saving File", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorSavingFile"), ex.Message);
             }
         }
 
@@ -540,39 +541,39 @@ namespace SmrtPad
 
                 if (string.IsNullOrWhiteSpace(plainText.TrimEnd('\r')))
                 {
-                    await ShowErrorDialogAsync("Print", "There is no content to print.");
+                    await ShowErrorDialogAsync(Res.GetString("PrintTitle"), Res.GetString("PrintNoContent"));
                     return;
                 }
 
                 var printDialog = new ContentDialog
                 {
-                    Title = "Print Document",
+                    Title = Res.GetString("PrintDocumentTitle"),
                     Content = new StackPanel
                     {
                         Spacing = 12,
                         Children =
                         {
-                            new TextBlock { Text = $"Document: {ViewModel.DocumentTitle}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
-                            new TextBlock { Text = $"Pages: ~{Math.Max(1, plainText.Split('\r').Length / 50 + 1)}", Opacity = 0.7 },
-                            new TextBlock { Text = "The document will be sent to your default printer.", TextWrapping = TextWrapping.Wrap }
+                            new TextBlock { Text = Res.GetFormatted("PrintDocumentLabel", ViewModel.DocumentTitle), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                            new TextBlock { Text = Res.GetFormatted("PrintPagesLabel", Math.Max(1, plainText.Split('\r').Length / 50 + 1)), Opacity = 0.7 },
+                            new TextBlock { Text = Res.GetString("PrintSendToDefault"), TextWrapping = TextWrapping.Wrap }
                         }
                     },
-                    PrimaryButtonText = "Print",
-                    CloseButtonText = "Cancel",
+                    PrimaryButtonText = Res.GetString("ButtonPrint"),
+                    CloseButtonText = Res.GetString("ButtonCancel"),
                     XamlRoot = Content.XamlRoot
                 };
 
                 var result = await printDialog.ShowAsync();
                 if (result == ContentDialogResult.Primary)
                 {
-                    ViewModel.UpdateStatus("Printing...");
+                    ViewModel.UpdateStatus(Res.GetString("StatusPrinting"));
                     await Task.Delay(500);
-                    ViewModel.UpdateStatus($"Sent {ViewModel.DocumentTitle} to printer.");
+                    ViewModel.UpdateStatus(Res.GetFormatted("StatusSentToPrinter", ViewModel.DocumentTitle));
                 }
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Print Error", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorPrint"), ex.Message);
             }
         }
 
@@ -580,43 +581,43 @@ namespace SmrtPad
         {
             var panel = new StackPanel { Spacing = 12, MinWidth = 350 };
 
-            var fontFamilyBox = new ComboBox { Header = "Default Font", Width = 200, IsEditable = true };
+            var fontFamilyBox = new ComboBox { Header = Res.GetString("OptionsDefaultFont"), Width = 200, IsEditable = true };
             var systemFonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
             fontFamilyBox.ItemsSource = systemFonts.OrderBy(f => f).ToList();
             fontFamilyBox.SelectedItem = _settings.DefaultFontFamily;
             panel.Children.Add(fontFamilyBox);
 
-            var fontSizeBox = new NumberBox { Header = "Default Font Size", Minimum = 1, Maximum = 999, Value = _settings.DefaultFontSize, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var fontSizeBox = new NumberBox { Header = Res.GetString("OptionsDefaultFontSize"), Minimum = 1, Maximum = 999, Value = _settings.DefaultFontSize, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             panel.Children.Add(fontSizeBox);
 
-            var wordWrapCheck = new CheckBox { Content = "Word Wrap by Default", IsChecked = _settings.DefaultWordWrap };
+            var wordWrapCheck = new CheckBox { Content = Res.GetString("OptionsWordWrap"), IsChecked = _settings.DefaultWordWrap };
             panel.Children.Add(wordWrapCheck);
 
-            var saveFormatBox = new ComboBox { Header = "Default Save Format", Width = 200 };
+            var saveFormatBox = new ComboBox { Header = Res.GetString("OptionsDefaultSaveFormat"), Width = 200 };
             saveFormatBox.Items.Add(".rtf");
             saveFormatBox.Items.Add(".txt");
             saveFormatBox.SelectedItem = _settings.DefaultSaveFormat;
             panel.Children.Add(saveFormatBox);
 
-            var themeBox = new ComboBox { Header = "Theme", Width = 200 };
-            themeBox.Items.Add("System");
-            themeBox.Items.Add("Light");
-            themeBox.Items.Add("Dark");
+            var themeBox = new ComboBox { Header = Res.GetString("OptionsTheme"), Width = 200 };
+            themeBox.Items.Add(Res.GetString("OptionsThemeSystem"));
+            themeBox.Items.Add(Res.GetString("OptionsThemeLight"));
+            themeBox.Items.Add(Res.GetString("OptionsThemeDark"));
             themeBox.SelectedItem = _settings.ThemePreference;
             panel.Children.Add(themeBox);
 
-            var autoSaveCheck = new CheckBox { Content = "Enable Auto-Save", IsChecked = _settings.AutoSaveEnabled };
+            var autoSaveCheck = new CheckBox { Content = Res.GetString("OptionsAutoSave"), IsChecked = _settings.AutoSaveEnabled };
             panel.Children.Add(autoSaveCheck);
 
-            var autoSaveInterval = new NumberBox { Header = "Auto-Save Interval (seconds)", Minimum = 30, Maximum = 3600, Value = _settings.AutoSaveIntervalSeconds, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var autoSaveInterval = new NumberBox { Header = Res.GetString("OptionsAutoSaveInterval"), Minimum = 30, Maximum = 3600, Value = _settings.AutoSaveIntervalSeconds, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             panel.Children.Add(autoSaveInterval);
 
             var dialog = new ContentDialog
             {
-                Title = "Options",
+                Title = Res.GetString("OptionsTitle"),
                 Content = new ScrollViewer { Content = panel, MaxHeight = 400 },
-                PrimaryButtonText = "Save",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = Res.GetString("ButtonSave"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
                 XamlRoot = Content.XamlRoot
             };
 
@@ -633,7 +634,7 @@ namespace SmrtPad
                 _settings.Save();
                 ApplyThemeFromSettings();
                 SetupAutoSave();
-                ViewModel.UpdateStatus("Options saved.");
+                ViewModel.UpdateStatus(Res.GetString("StatusOptionsSaved"));
             }
         }
 
@@ -1031,10 +1032,10 @@ namespace SmrtPad
 
             var dialog = new ContentDialog
             {
-                Title = "Date and Time",
+                Title = Res.GetString("DateTimeTitle"),
                 Content = listBox,
-                PrimaryButtonText = "Insert",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = Res.GetString("ButtonInsert"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
                 XamlRoot = Content.XamlRoot
             };
 
@@ -1060,7 +1061,7 @@ namespace SmrtPad
             {
                 int found = Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, GetFindOptions());
                 if (found == 0)
-                    ViewModel.UpdateStatus("No match found.");
+                    ViewModel.UpdateStatus(Res.GetString("StatusNoMatch"));
             }
         }
 
@@ -1071,7 +1072,7 @@ namespace SmrtPad
             {
                 int found = Editor.Document.Selection.FindText(textToFind, -TextConstants.MaxUnitCount, GetFindOptions());
                 if (found == 0)
-                    ViewModel.UpdateStatus("No match found.");
+                    ViewModel.UpdateStatus(Res.GetString("StatusNoMatch"));
             }
         }
 
@@ -1099,7 +1100,7 @@ namespace SmrtPad
 
             // Restore selection
             Editor.Document.Selection.SetRange(savedStart, savedEnd);
-            ViewModel.UpdateStatus(count > 0 ? $"Highlighted {count} match(es)." : "No matches found.");
+            ViewModel.UpdateStatus(count > 0 ? Res.GetFormatted("StatusHighlighted", count) : Res.GetString("StatusNoMatches"));
         }
 
         private void ClearHighlights_Click(object sender, RoutedEventArgs e)
@@ -1110,7 +1111,7 @@ namespace SmrtPad
             Editor.Document.Selection.Expand(TextRangeUnit.Story);
             Editor.Document.Selection.CharacterFormat.BackgroundColor = TransparentColor;
             Editor.Document.Selection.SetRange(savedStart, savedEnd);
-            ViewModel.UpdateStatus("Highlights cleared.");
+            ViewModel.UpdateStatus(Res.GetString("StatusHighlightsCleared"));
         }
 
         private void Replace_Click(object sender, RoutedEventArgs e)
@@ -1144,7 +1145,7 @@ namespace SmrtPad
                     Editor.Document.Selection.Text = replaceWith;
                     count++;
                 }
-                ViewModel.UpdateStatus($"Replaced {count} occurrences.");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusReplaced", count));
             }
         }
 
@@ -1164,7 +1165,7 @@ namespace SmrtPad
                 var visibility = toggleItem.IsChecked ? Visibility.Collapsed : Visibility.Visible;
                 RibbonBar.Visibility = visibility;
                 StatusBar.Visibility = visibility;
-                ViewModel.UpdateStatus(toggleItem.IsChecked ? "Focus mode enabled." : "Focus mode disabled.");
+                ViewModel.UpdateStatus(toggleItem.IsChecked ? Res.GetString("StatusFocusModeEnabled") : Res.GetString("StatusFocusModeDisabled"));
             }
         }
 
@@ -1225,20 +1226,20 @@ namespace SmrtPad
                     {
                         Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
                     }
-                    ViewModel.UpdateStatus("Drawing inserted.");
+                    ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
                 }
                 else if (process.ExitCode != 0)
                 {
-                    ViewModel.UpdateStatus("Drawing cancelled.");
+                    ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
                 }
             }
             catch (System.ComponentModel.Win32Exception)
             {
                 var dialog = new ContentDialog
                 {
-                    Title = "SmrtDoodle Not Found",
-                    Content = "SmrtDoodle is not installed or could not be found in the system PATH. Please install SmrtDoodle to use the Paint Drawing feature.",
-                    CloseButtonText = "OK",
+                    Title = Res.GetString("SmrtDoodleNotFound"),
+                    Content = Res.GetString("SmrtDoodleNotFoundMessage"),
+                    CloseButtonText = Res.GetString("ButtonOK"),
                     XamlRoot = Content.XamlRoot
                 };
                 await dialog.ShowAsync();
@@ -1277,18 +1278,18 @@ namespace SmrtPad
                         {
                             Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
                         }
-                        ViewModel.UpdateStatus($"Inserted {file.Name}.");
+                        ViewModel.UpdateStatus(Res.GetFormatted("StatusInserted", file.Name));
                     }
                     else
                     {
-                        Editor.Document.Selection.Text = $"[Embedded object: {file.Name}]";
-                        ViewModel.UpdateStatus($"Inserted reference to {file.Name}.");
+                        Editor.Document.Selection.Text = Res.GetFormatted("EmbeddedObject", file.Name);
+                        ViewModel.UpdateStatus(Res.GetFormatted("StatusInsertedReference", file.Name));
                     }
                 }
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Error Inserting Object", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorInsertingObject"), ex.Message);
             }
         }
 
@@ -1315,7 +1316,7 @@ namespace SmrtPad
             }
             catch (Exception ex)
             {
-                await ShowErrorDialogAsync("Paste Error", ex.Message);
+                await ShowErrorDialogAsync(Res.GetString("ErrorPaste"), ex.Message);
             }
         }
 
@@ -1346,7 +1347,7 @@ namespace SmrtPad
                 paraFormatting.SpaceAfter = 0;
                 selectedText.ParagraphFormat = paraFormatting;
 
-                ViewModel.UpdateStatus("Formatting cleared.");
+                ViewModel.UpdateStatus(Res.GetString("StatusFormattingCleared"));
             }
         }
 
@@ -1354,7 +1355,7 @@ namespace SmrtPad
         {
             var spacingBox = new NumberBox
             {
-                Header = "Line Spacing Value",
+                Header = Res.GetString("LineSpacingHeader"),
                 Minimum = 0.5,
                 Maximum = 10.0,
                 Value = ViewModel.LineSpacing,
@@ -1364,10 +1365,10 @@ namespace SmrtPad
 
             var dialog = new ContentDialog
             {
-                Title = "Custom Line Spacing",
+                Title = Res.GetString("LineSpacingTitle"),
                 Content = spacingBox,
-                PrimaryButtonText = "Apply",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = Res.GetString("ButtonApply"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
                 XamlRoot = Content.XamlRoot
             };
 
@@ -1397,7 +1398,7 @@ namespace SmrtPad
                 selectedText.ParagraphFormat = paragraphFormatting;
                 ViewModel.ParagraphSpacingBefore = SpacingBeforeBox.Value;
                 ViewModel.ParagraphSpacingAfter = SpacingAfterBox.Value;
-                ViewModel.UpdateStatus($"Paragraph spacing: {SpacingBeforeBox.Value}pt before, {SpacingAfterBox.Value}pt after.");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusParagraphSpacing", SpacingBeforeBox.Value, SpacingAfterBox.Value));
             }
         }
 
@@ -1414,15 +1415,15 @@ namespace SmrtPad
                 _settings.ThemePreference = newTheme == "Default" ? "System" : newTheme;
                 _settings.Save();
                 ApplyThemeFromSettings();
-                ViewModel.UpdateStatus($"Theme: {_settings.ThemePreference}");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusTheme", _settings.ThemePreference));
             }
         }
 
         private async void InsertHyperlink_Click(object sender, RoutedEventArgs e)
         {
             var panel = new StackPanel { Spacing = 8, MinWidth = 300 };
-            var urlBox = new TextBox { Header = "URL", PlaceholderText = "https://example.com" };
-            var textBox = new TextBox { Header = "Display Text (optional)", PlaceholderText = "Link text" };
+            var urlBox = new TextBox { Header = Res.GetString("HyperlinkUrlHeader"), PlaceholderText = "https://example.com" };
+            var textBox = new TextBox { Header = Res.GetString("HyperlinkDisplayHeader"), PlaceholderText = "" };
 
             string selectedText = Editor.Document.Selection.Text;
             if (!string.IsNullOrEmpty(selectedText))
@@ -1433,10 +1434,10 @@ namespace SmrtPad
 
             var dialog = new ContentDialog
             {
-                Title = "Insert Hyperlink",
+                Title = Res.GetString("HyperlinkTitle"),
                 Content = panel,
-                PrimaryButtonText = "Insert",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = Res.GetString("ButtonInsert"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
                 XamlRoot = Content.XamlRoot
             };
 
@@ -1453,24 +1454,24 @@ namespace SmrtPad
                 range.Link = $"\"{url}\"";
                 range.CharacterFormat.ForegroundColor = Color.FromArgb(255, 0, 102, 204);
                 range.CharacterFormat.Underline = UnderlineType.Single;
-                ViewModel.UpdateStatus("Hyperlink inserted.");
+                ViewModel.UpdateStatus(Res.GetString("StatusHyperlinkInserted"));
             }
         }
 
         private async void InsertTable_Click(object sender, RoutedEventArgs e)
         {
             var panel = new StackPanel { Spacing = 8, MinWidth = 250 };
-            var rowsBox = new NumberBox { Header = "Rows", Minimum = 1, Maximum = 50, Value = 3, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
-            var colsBox = new NumberBox { Header = "Columns", Minimum = 1, Maximum = 20, Value = 3, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var rowsBox = new NumberBox { Header = Res.GetString("TableRows"), Minimum = 1, Maximum = 50, Value = 3, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var colsBox = new NumberBox { Header = Res.GetString("TableColumns"), Minimum = 1, Maximum = 20, Value = 3, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             panel.Children.Add(rowsBox);
             panel.Children.Add(colsBox);
 
             var dialog = new ContentDialog
             {
-                Title = "Insert Table",
+                Title = Res.GetString("TableTitle"),
                 Content = panel,
-                PrimaryButtonText = "Insert",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = Res.GetString("ButtonInsert"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
                 XamlRoot = Content.XamlRoot
             };
 
@@ -1501,7 +1502,7 @@ namespace SmrtPad
                 rtf.Append('}');
 
                 Editor.Document.Selection.SetText(TextSetOptions.FormatRtf, rtf.ToString());
-                ViewModel.UpdateStatus($"Inserted {rows}×{cols} table.");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusInsertedTable", rows, cols));
             }
         }
 
@@ -1530,10 +1531,10 @@ namespace SmrtPad
 
             var dialog = new ContentDialog
             {
-                Title = "Insert Symbol",
+                Title = Res.GetString("SymbolTitle"),
                 Content = grid,
-                PrimaryButtonText = "Insert",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = Res.GetString("ButtonInsert"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
                 XamlRoot = Content.XamlRoot
             };
 
@@ -1541,7 +1542,7 @@ namespace SmrtPad
             if (result == ContentDialogResult.Primary && selectedSymbol != null)
             {
                 Editor.Document.Selection.Text = selectedSymbol;
-                ViewModel.UpdateStatus($"Inserted symbol: {selectedSymbol}");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusInsertedSymbol", selectedSymbol));
             }
         }
 
@@ -1550,7 +1551,7 @@ namespace SmrtPad
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 e.AcceptedOperation = DataPackageOperation.Copy;
-                e.DragUIOverride.Caption = "Open file";
+                e.DragUIOverride.Caption = Res.GetString("DragDropCaption");
             }
         }
 
@@ -1574,11 +1575,11 @@ namespace SmrtPad
                             {
                                 Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
                             }
-                            ViewModel.UpdateStatus($"Inserted {file.Name}.");
+                            ViewModel.UpdateStatus(Res.GetFormatted("StatusInserted", file.Name));
                         }
                         catch (Exception ex)
                         {
-                            await ShowErrorDialogAsync("Error", ex.Message);
+                            await ShowErrorDialogAsync(Res.GetString("ErrorGeneric"), ex.Message);
                         }
                     }
                 }

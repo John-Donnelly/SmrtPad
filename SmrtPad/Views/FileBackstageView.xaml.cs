@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Res = SmrtPad.Helpers.ResourceHelper;
 
 namespace SmrtPad.Views;
 
@@ -30,7 +31,7 @@ public sealed partial class FileBackstageView : UserControl
         RecentFilesList.Items.Clear();
         if (recentFiles.Count == 0)
         {
-            RecentFilesList.Items.Add(new TextBlock { Text = "No recent files.", Opacity = 0.5 });
+            RecentFilesList.Items.Add(new TextBlock { Text = Res.GetString("BackstageNoRecentFiles"), Opacity = 0.5 });
             return;
         }
         foreach (var path in recentFiles)
@@ -66,35 +67,35 @@ public sealed partial class FileBackstageView : UserControl
             return;
 
         var tag = item.Tag as string;
-        HeaderText.Text = tag is null ? "File" : tag;
+        HeaderText.Text = tag is null ? Res.GetString("BackstageFile") : tag;
         RecentFilesPanel.Visibility = Visibility.Collapsed;
         BodyText.Visibility = Visibility.Visible;
 
         switch (tag)
         {
             case "New":
-                BodyText.Text = "Create a new document.";
+                BodyText.Text = Res.GetString("BackstageNewDesc");
                 NewRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Open":
-                BodyText.Text = "Open an existing document, or select a recent file below.";
+                BodyText.Text = Res.GetString("BackstageOpenDesc");
                 RecentFilesPanel.Visibility = Visibility.Visible;
                 OpenRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Save":
-                BodyText.Text = "Save changes to the current document.";
+                BodyText.Text = Res.GetString("BackstageSaveDesc");
                 SaveRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "SaveAs":
-                BodyText.Text = "Save the current document under a new name.";
+                BodyText.Text = Res.GetString("BackstageSaveAsDesc");
                 SaveAsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Print":
-                BodyText.Text = "Print the current document.";
+                BodyText.Text = Res.GetString("BackstagePrintDesc");
                 PrintRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Options":
-                BodyText.Text = "Configure application options.";
+                BodyText.Text = Res.GetString("BackstageOptionsDesc");
                 OptionsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Exit":
