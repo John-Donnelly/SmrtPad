@@ -80,10 +80,12 @@ namespace SmrtPad
 
             // Apply zoom via ScaleTransform on the editor container
             EditorContainer.RenderTransform = _editorScaleTransform;
-            EditorContainer.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0);
+            EditorContainer.RenderTransformOrigin = new Windows.Foundation.Point(0, 0);
 
             // Ctrl+Scroll wheel zoom
             EditorScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
+            // Recalculate container width on viewport resize so zoom stays aligned
+            EditorScrollViewer.SizeChanged += (s, e) => { if (ViewModel.ZoomLevel != 100) ApplyZoom(); };
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
             Editor.TextChanged += (s, e) =>
@@ -429,6 +431,9 @@ namespace SmrtPad
         {
             if (FontFamilyComboBox.SelectedItem is string fontName)
             {
+                // Keep the editable text in sync so the selected font name always shows
+                FontFamilyComboBox.Text = fontName;
+
                 ITextSelection selectedText = Editor.Document.Selection;
                 if (selectedText != null)
                 {
@@ -965,8 +970,18 @@ namespace SmrtPad
             _editorScaleTransform.ScaleX = scale;
             _editorScaleTransform.ScaleY = scale;
 
-            // Adjust container size so ScrollViewer knows the real extent
-            EditorContainer.Width = (EditorContainer.Parent as FrameworkElement)?.ActualWidth / scale ?? double.NaN;
+            // Compute container width so the scaled content fills the viewport.
+            // The ScrollViewer allocates ActualWidth for the column; dividing by scale
+            // makes the content (after transform) exactly fill that width.
+            double viewportWidth = EditorScrollViewer.ActualWidth;
+            if (viewportWidth > 0)
+            {
+                EditorContainer.Width = viewportWidth / scale;
+            }
+
+            // In page view the content is centered; in default view it's left-aligned.
+            // After scaling the container to fill viewport/scale, both modes stay correct
+            // because the container itself stretches and internal alignment is preserved.
 
             ZoomText.Text = $"{ViewModel.ZoomLevel:0}%";
 

@@ -188,9 +188,9 @@
 
                     <!-- Row 1: font family · font size · grow · shrink -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="3" Margin="0,0,0,3">
-                        <ComboBox x:Name="FontFamilyComboBox" x:Uid="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
+                        <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
-                                  PlaceholderText="Font" IsEditable="True"/>
+                                  IsEditable="True"/>
                         <ComboBox x:Name="FontSizeComboBox" Width="112" Height="28" FontSize="12"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
                                   IsEditable="True"/>
