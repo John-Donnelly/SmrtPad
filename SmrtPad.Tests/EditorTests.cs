@@ -848,6 +848,7 @@ namespace SmrtPad.Tests
             Assert.Equal("System", svc.ThemePreference);
             Assert.False(svc.AutoSaveEnabled);
             Assert.Equal(300, svc.AutoSaveIntervalSeconds);
+            Assert.Equal("en-US", svc.Language);
             Assert.Empty(svc.RecentFiles);
         }
 
@@ -914,6 +915,7 @@ namespace SmrtPad.Tests
             svc.ThemePreference = "Dark";
             svc.AutoSaveEnabled = true;
             svc.AutoSaveIntervalSeconds = 60;
+            svc.Language = "fr-FR";
 
             Assert.Equal("Arial", svc.DefaultFontFamily);
             Assert.Equal(14.0, svc.DefaultFontSize);
@@ -922,6 +924,18 @@ namespace SmrtPad.Tests
             Assert.Equal("Dark", svc.ThemePreference);
             Assert.True(svc.AutoSaveEnabled);
             Assert.Equal(60, svc.AutoSaveIntervalSeconds);
+            Assert.Equal("fr-FR", svc.Language);
+        }
+
+        [Fact]
+        public void SettingsService_Language_PersistsOnSaveAndLoad()
+        {
+            var svc = new SettingsService(_testSettingsPath);
+            svc.Language = "ja-JP";
+            svc.Save();
+
+            var svc2 = new SettingsService(_testSettingsPath);
+            Assert.Equal("ja-JP", svc2.Language);
         }
     }
 
@@ -965,6 +979,7 @@ namespace SmrtPad.Tests
             Assert.NotNull(type.GetProperty("ThemePreference"));
             Assert.NotNull(type.GetProperty("AutoSaveEnabled"));
             Assert.NotNull(type.GetProperty("AutoSaveIntervalSeconds"));
+            Assert.NotNull(type.GetProperty("Language"));
             Assert.NotNull(type.GetProperty("RecentFiles"));
             Assert.NotNull(type.GetMethod("AddRecentFile"));
             Assert.NotNull(type.GetMethod("ClearRecentFiles"));

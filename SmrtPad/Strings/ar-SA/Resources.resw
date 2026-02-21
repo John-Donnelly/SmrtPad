@@ -388,6 +388,21 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>تم حفظ الخيارات.</value>
   </data>
+  <data name="OptionsLanguage" xml:space="preserve">
+    <value>اللغة</value>
+  </data>
+  <data name="StatusRulerToggled" xml:space="preserve">
+    <value>المسطرة {0}.</value>
+  </data>
+  <data name="StatusPageViewToggled" xml:space="preserve">
+    <value>عرض الصفحة {0}.</value>
+  </data>
+  <data name="StatusEnabled" xml:space="preserve">
+    <value>مُفعّلة</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>مُعطّلة</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: البحث / الاستبدال ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">

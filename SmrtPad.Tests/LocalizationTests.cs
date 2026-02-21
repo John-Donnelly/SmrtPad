@@ -237,6 +237,19 @@ namespace SmrtPad.Tests
             Assert.Contains("{0}", entries["PrintJobTitle"]);
         }
 
+        [Theory]
+        [InlineData("OptionsLanguage")]
+        [InlineData("StatusRulerToggled")]
+        [InlineData("StatusPageViewToggled")]
+        [InlineData("StatusEnabled")]
+        [InlineData("StatusDisabled")]
+        public void ReswFile_ContainsSection4Keys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =

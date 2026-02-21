@@ -752,6 +752,25 @@ namespace SmrtPad
             var autoSaveInterval = new NumberBox { Header = Res.GetString("OptionsAutoSaveInterval"), Minimum = 30, Maximum = 3600, Value = _settings.AutoSaveIntervalSeconds, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
             panel.Children.Add(autoSaveInterval);
 
+            var languageBox = new ComboBox { Header = Res.GetString("OptionsLanguage"), Width = 200 };
+            var supportedLocales = new (string Tag, string Display)[]
+            {
+                ("en-US", "English (United States)"),
+                ("de-DE", "Deutsch (Deutschland)"),
+                ("es-ES", "Español (España)"),
+                ("fr-FR", "Français (France)"),
+                ("ja-JP", "??? (??)"),
+                ("zh-Hans", "?? (??)"),
+                ("ar-SA", "??????? (????????)"),
+                ("ru-RU", "??????? (??????)"),
+                ("ur-PK", "???? (???????)")
+            };
+            foreach (var (tag, display) in supportedLocales)
+                languageBox.Items.Add(display);
+            int selectedLocaleIndex = Array.FindIndex(supportedLocales, l => l.Tag == _settings.Language);
+            languageBox.SelectedIndex = selectedLocaleIndex >= 0 ? selectedLocaleIndex : 0;
+            panel.Children.Add(languageBox);
+
             var dialog = new ContentDialog
             {
                 Title = Res.GetString("OptionsTitle"),
@@ -771,6 +790,10 @@ namespace SmrtPad
                 _settings.ThemePreference = themeBox.SelectedItem as string ?? "System";
                 _settings.AutoSaveEnabled = autoSaveCheck.IsChecked == true;
                 _settings.AutoSaveIntervalSeconds = (int)autoSaveInterval.Value;
+                int langIdx = languageBox.SelectedIndex;
+                _settings.Language = langIdx >= 0 && langIdx < supportedLocales.Length
+                    ? supportedLocales[langIdx].Tag
+                    : "en-US";
                 _settings.Save();
                 ApplyThemeFromSettings();
                 SetupAutoSave();

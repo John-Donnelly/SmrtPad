@@ -388,6 +388,21 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>ترتیبات محفوظ ہو گئیں۔</value>
   </data>
+  <data name="OptionsLanguage" xml:space="preserve">
+    <value>زبان</value>
+  </data>
+  <data name="StatusRulerToggled" xml:space="preserve">
+    <value>رولر {0}۔</value>
+  </data>
+  <data name="StatusPageViewToggled" xml:space="preserve">
+    <value>صفحہ منظر {0}۔</value>
+  </data>
+  <data name="StatusEnabled" xml:space="preserve">
+    <value>فعال</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>غیر فعال</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: تلاش / تبدیل ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">

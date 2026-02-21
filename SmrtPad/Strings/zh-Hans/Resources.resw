@@ -388,6 +388,21 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>选项已保存。</value>
   </data>
+  <data name="OptionsLanguage" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="StatusRulerToggled" xml:space="preserve">
+    <value>标尺已{0}。</value>
+  </data>
+  <data name="StatusPageViewToggled" xml:space="preserve">
+    <value>页面视图已{0}。</value>
+  </data>
+  <data name="StatusEnabled" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>禁用</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: 查找 / 替换 ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">

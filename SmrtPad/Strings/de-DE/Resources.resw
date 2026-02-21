@@ -388,6 +388,21 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>Optionen gespeichert.</value>
   </data>
+  <data name="OptionsLanguage" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="StatusRulerToggled" xml:space="preserve">
+    <value>Lineal {0}.</value>
+  </data>
+  <data name="StatusPageViewToggled" xml:space="preserve">
+    <value>Seitenansicht {0}.</value>
+  </data>
+  <data name="StatusEnabled" xml:space="preserve">
+    <value>aktiviert</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>deaktiviert</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: Suchen / Ersetzen ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">

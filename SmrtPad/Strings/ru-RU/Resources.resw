@@ -388,6 +388,21 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>Параметры сохранены.</value>
   </data>
+  <data name="OptionsLanguage" xml:space="preserve">
+    <value>Язык</value>
+  </data>
+  <data name="StatusRulerToggled" xml:space="preserve">
+    <value>Линейка {0}.</value>
+  </data>
+  <data name="StatusPageViewToggled" xml:space="preserve">
+    <value>Режим страницы {0}.</value>
+  </data>
+  <data name="StatusEnabled" xml:space="preserve">
+    <value>включена</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>отключена</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: Поиск / Замена ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">

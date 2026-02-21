@@ -11,6 +11,7 @@ namespace SmrtPad.Services
         string ThemePreference { get; set; }
         bool AutoSaveEnabled { get; set; }
         int AutoSaveIntervalSeconds { get; set; }
+        string Language { get; set; }
         List<string> RecentFiles { get; }
         void AddRecentFile(string path);
         void ClearRecentFiles();

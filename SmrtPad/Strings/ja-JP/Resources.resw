@@ -388,6 +388,21 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>オプションを保存しました。</value>
   </data>
+  <data name="OptionsLanguage" xml:space="preserve">
+    <value>言語</value>
+  </data>
+  <data name="StatusRulerToggled" xml:space="preserve">
+    <value>ルーラーが{0}。</value>
+  </data>
+  <data name="StatusPageViewToggled" xml:space="preserve">
+    <value>ページビューが{0}。</value>
+  </data>
+  <data name="StatusEnabled" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="StatusDisabled" xml:space="preserve">
+    <value>無効</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: 検索 / 置換 ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">

@@ -74,6 +74,12 @@ namespace SmrtPad.Services
             set => _data.AutoSaveIntervalSeconds = value;
         }
 
+        public string Language
+        {
+            get => _data.Language;
+            set => _data.Language = value;
+        }
+
         public List<string> RecentFiles => _data.RecentFiles;
 
         public void AddRecentFile(string path)
@@ -131,6 +137,7 @@ namespace SmrtPad.Services
             public string ThemePreference { get; set; } = "System";
             public bool AutoSaveEnabled { get; set; } = false;
             public int AutoSaveIntervalSeconds { get; set; } = 300;
+            public string Language { get; set; } = "en-US";
             public List<string> RecentFiles { get; set; } = new();
         }
     }
