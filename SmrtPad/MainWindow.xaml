@@ -533,7 +533,8 @@
 
         <!-- ═══ EDITOR + BACKSTAGE ═══ -->
         <Grid Grid.Row="2" Margin="10">
-            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
+            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap"
+                         AllowDrop="True" DragOver="Editor_DragOver" Drop="Editor_Drop"/>
             <views:FileBackstageView x:Name="FileBackstage" Visibility="Collapsed" />
         </Grid>
 

@@ -276,6 +276,19 @@ namespace SmrtPad
                 ShowBackstage();
         }
 
+        public async void OpenFileFromPathAsync(string path)
+        {
+            try
+            {
+                var file = await StorageFile.GetFileFromPathAsync(path);
+                await OpenStorageFileAsync(file);
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Open Failed", $"Could not open '{path}': {ex.Message}");
+            }
+        }
+
         private async Task OpenStorageFileAsync(StorageFile file)
         {
             using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
@@ -1005,6 +1018,41 @@ namespace SmrtPad
                 charFormat.AllCaps = FormatEffect.Off;
                 charFormat.SmallCaps = FormatEffect.Off;
                 selection.CharacterFormat = charFormat;
+            }
+        }
+
+        private void Editor_DragOver(object sender, DragEventArgs e)
+        {
+            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            if (e.DragUIOverride != null)
+            {
+                e.DragUIOverride.Caption = "Open file";
+                e.DragUIOverride.IsContentVisible = false;
+            }
+            e.Handled = true;
+        }
+
+        private async void Editor_Drop(object sender, DragEventArgs e)
+        {
+            if (!e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+                return;
+
+            var items = await e.DataView.GetStorageItemsAsync();
+            var file = items.OfType<StorageFile>().FirstOrDefault(f =>
+                f.FileType.Equals(".rtf", StringComparison.OrdinalIgnoreCase) ||
+                f.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase));
+
+            if (file == null) return;
+
+            if (!await PromptSaveChangesAsync()) return;
+
+            try
+            {
+                await OpenStorageFileAsync(file);
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Open Failed", $"Could not open '{file.Name}': {ex.Message}");
             }
         }
 
