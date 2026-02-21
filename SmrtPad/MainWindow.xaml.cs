@@ -193,7 +193,7 @@ namespace SmrtPad
             }
         }
 
-        private async void Save_Click
+        private async void Save_Click(object sender, RoutedEventArgs e)
         {
             if (_currentFile == null)
             {
@@ -233,7 +233,7 @@ namespace SmrtPad
             }
         }
 
-        private async void SaveAs_Click
+        private async void SaveAs_Click(object sender, RoutedEventArgs e)
         {
             var picker = new FileSavePicker();
             InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
@@ -264,7 +264,7 @@ namespace SmrtPad
             }
         }
 
-        private async void Print_Click
+        private async void Print_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new ContentDialog
             {
