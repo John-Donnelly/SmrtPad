@@ -52,6 +52,7 @@ namespace SmrtPad
         private readonly List<UIElement> _printPreviewPages = new();
         private bool _rulersVisible;
         private bool _pageViewActive;
+        private readonly ScaleTransform _editorScaleTransform = new();
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
 
         public MainWindow()
@@ -76,6 +77,13 @@ namespace SmrtPad
             InitializeFonts();
             ApplySettings();
             SetupAutoSave();
+
+            // Apply zoom via ScaleTransform on the editor container
+            EditorContainer.RenderTransform = _editorScaleTransform;
+            EditorContainer.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0);
+
+            // Ctrl+Scroll wheel zoom
+            EditorScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
             Editor.TextChanged += (s, e) =>
@@ -375,10 +383,13 @@ namespace SmrtPad
             var fonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
             FontFamilyComboBox.ItemsSource = fonts.OrderBy(f => f).ToList();
             FontFamilyComboBox.SelectedItem = _settings.DefaultFontFamily;
+            // For editable combo boxes, also set Text to ensure the display shows the value
+            FontFamilyComboBox.Text = _settings.DefaultFontFamily;
 
             var sizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
             FontSizeComboBox.ItemsSource = sizes;
             FontSizeComboBox.SelectedItem = _settings.DefaultFontSize;
+            FontSizeComboBox.Text = _settings.DefaultFontSize.ToString();
 
             FontSizeComboBox.KeyDown += FontSizeComboBox_KeyDown;
             FontSizeComboBox.LostFocus += FontSizeComboBox_LostFocus;
@@ -949,8 +960,37 @@ namespace SmrtPad
         private void ApplyZoom()
         {
             double scale = ViewModel.ZoomLevel / 100.0;
-            Editor.FontSize = 11.0 * scale;
+
+            // Scale the editor container (true visual zoom, not font size change)
+            _editorScaleTransform.ScaleX = scale;
+            _editorScaleTransform.ScaleY = scale;
+
+            // Adjust container size so ScrollViewer knows the real extent
+            EditorContainer.Width = (EditorContainer.Parent as FrameworkElement)?.ActualWidth / scale ?? double.NaN;
+
             ZoomText.Text = $"{ViewModel.ZoomLevel:0}%";
+
+            // Redraw rulers at the new scale
+            if (_rulersVisible)
+                RedrawRulers();
+        }
+
+        private void EditorScrollViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            var props = e.GetCurrentPoint(EditorScrollViewer).Properties;
+            var keyState = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+            bool ctrlDown = (keyState & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
+
+            if (ctrlDown)
+            {
+                int delta = props.MouseWheelDelta;
+                if (delta > 0)
+                    ViewModel.ZoomIn();
+                else if (delta < 0)
+                    ViewModel.ZoomOut();
+                ApplyZoom();
+                e.Handled = true;
+            }
         }
 
         private void SetAlignmentToggle(ToggleButton active)
@@ -1381,8 +1421,10 @@ namespace SmrtPad
         {
             bool useCm = _settings.RulerUnits == "cm";
             unitLabel = useCm ? "cm" : "in";
-            // 96 DPI: 1 inch = 96px, 1 cm ? 37.795px
-            return useCm ? 96.0 / 2.54 : 96.0;
+            double basePixels = useCm ? 96.0 / 2.54 : 96.0;
+            // Scale ruler to match editor zoom
+            double scale = ViewModel.ZoomLevel / 100.0;
+            return basePixels * scale;
         }
 
         private void DrawHorizontalRuler()
@@ -1501,6 +1543,7 @@ namespace SmrtPad
         // Page dimensions at 96 DPI: US Letter 8.5×11 = 816×1056px
         // 1-inch margins on each side ? printable area = 624px wide
         private const double PageWidthPx = 816;
+        private const double PageHeightPx = 1056;
         private const double PageMarginPx = 96; // 1 inch each side
         private const double PrintableWidthPx = PageWidthPx - (PageMarginPx * 2); // 624
 
@@ -1521,6 +1564,7 @@ namespace SmrtPad
             {
                 PageViewBorder.Visibility = Visibility.Visible;
                 PageViewBorder.Width = PageWidthPx;
+                PageViewBorder.MinHeight = PageHeightPx;
                 Editor.HorizontalAlignment = HorizontalAlignment.Center;
                 Editor.Width = PrintableWidthPx;
                 Editor.MaxWidth = PrintableWidthPx;

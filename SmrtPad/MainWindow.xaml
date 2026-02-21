@@ -68,8 +68,16 @@
                         </MenuFlyoutItem>
                     </MenuBarItem>
                     <MenuBarItem x:Uid="ViewMenu" Title="View">
-                        <MenuFlyoutItem x:Uid="ZoomInMenuItem" Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click" />
-                        <MenuFlyoutItem x:Uid="ZoomOutMenuItem" Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click" />
+                        <MenuFlyoutItem x:Uid="ZoomInMenuItem" Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Add" Modifiers="Control"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem x:Uid="ZoomOutMenuItem" Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Subtract" Modifiers="Control"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem x:Uid="WordWrapMenuItem" Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
                         <MenuFlyoutSeparator />
