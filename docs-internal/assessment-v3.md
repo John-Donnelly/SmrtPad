@@ -1,7 +1,7 @@
 # SmrtPad — Comprehensive Project Assessment v3
 
 **Generated:** 2025-07-17 (full ground-truth audit of every authored file)  
-**Branch:** `master` — 11 commits ahead of `origin/master`  
+**Branch:** `master` — 14 commits ahead of `origin/master`
 **Stack:** WinUI 3 · .NET 10 · Windows App SDK 1.8.260209005 · CommunityToolkit.Mvvm 8.4  
 **Projects:** `SmrtPad` (main app) · `SmrtPad.Tests` (unit tests, xUnit 2.6.6)
 
@@ -15,8 +15,8 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **3,589** (2,074 C# app · 659 XAML · 856 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **211** (all passing) |
-| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 23 · `SettingsServiceTests` 7 · `ServiceAbstractionTests` 7 · `LocalizationTests` 115) |
+| Unit tests | **219** (all passing) |
+| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 23 · `SettingsServiceTests` 8 · `ServiceAbstractionTests` 7 · `LocalizationTests` 122) |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | UI / integration tests | 0 |
 | NuGet packages (app) | 5 — CommunityToolkit.Mvvm 8.4, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
@@ -54,7 +54,7 @@
 | Save As | ✅ | Separate picker; format-aware (RTF vs TXT via `TextGetOptions`) |
 | Unsaved-changes dialog | ✅ | Delegated to `IDialogService.ShowSavePromptAsync()` → Save / Don't Save / Cancel |
 | Print | ✅ | Real `PrintDocument` + `PrintManagerInterop` with `Paginate`/`GetPreviewPage`/`AddPages` handlers; multi-page text pagination; `PrintTask.Completed` status feedback; `PrintManager.IsSupported()` guard; localized strings across 9 locales |
-| Options | ✅ | Full `ContentDialog` with font, size, word wrap, save format, theme, auto-save controls; persists via `SettingsService.Save()` |
+| Options | ✅ | Full `ContentDialog` with font, size, word wrap, save format, theme, auto-save, and language selection (9 locales); persists via `SettingsService.Save()` |
 | Exit | ✅ | `PromptSaveChangesAsync` before `Close()` |
 | Recent files | ✅ | `SettingsService.AddRecentFile` (MRU max 10); backstage `SetRecentFiles` on open |
 | Drag-and-drop | ✅ | `Editor_DragOver` / `Editor_Drop` — .rtf/.txt/.docx/.htm/.html/.odt opens file; images insert inline |
@@ -86,9 +86,10 @@
 | Word Wrap | ✅ | `ToggleMenuFlyoutItem` → `Editor.TextWrapping` |
 | Status bar zoom display | ✅ | `ZoomText.Text` updated in `ApplyZoom()` |
 | Focus mode | ✅ | `FocusModeToggle` in View menu hides `RibbonBar` + `StatusBar` for distraction-free writing |
-| Ruler / page view | ❌ | |
+| Ruler | ✅ | `RulerToggle` in View menu shows/hides ruler `Canvas` with inch/half-inch/quarter-inch tick marks and labels; localized across 9 locales |
+| Page view | ✅ | `PageViewToggle` constrains editor to 816px centered `Border` with card background and page-like padding; localized across 9 locales |
 
-**Section: 80% (4/5)**
+**Section: 100% (6/6)**
 
 ---
 
@@ -175,7 +176,7 @@
 
 ## 10. File Backstage View
 
-`FileBackstageView.xaml.cs` — 96 lines. `FileBackstageView.xaml` — 61 lines.
+`FileBackstageView.xaml.cs` — 96 lines. `FileBackstageView.xaml` — 62 lines. Pane toggle (burger) button hidden via `IsPaneToggleButtonVisible="False"`.
 
 | Item | Status | Notes |
 |---|---|---|
@@ -250,8 +251,8 @@
 
 ## 14. Services
 
-### `ISettingsService` (19 lines) / `SettingsService` (121 lines)
-- Interface with 7 properties, `RecentFiles` list, and 4 methods
+### `ISettingsService` (20 lines) / `SettingsService` (128 lines)
+- Interface with 8 properties (`Language` added), `RecentFiles` list, and 4 methods
 - Serializes `SettingsData` to JSON at `%LOCALAPPDATA%/SmrtPad/settings.json`
 - `AddRecentFile`: dedup, insert-at-front, cap at 10, auto-save
 - `Save`/`Load` log errors via `Debug.WriteLine`
@@ -356,6 +357,10 @@
 | Real print via `PrintDocument` | `0335ca4` | `PrintManagerInterop.ShowPrintUIForWindowAsync`; `Paginate`/`GetPreviewPage`/`AddPages` handlers; multi-page text pagination; `PrintTask.Completed` status feedback; `PrintManager.IsSupported()` guard |
 | DOCX / HTML / ODT import | `0335ca4` | `.docx`/`.htm`/`.html`/`.odt` added to `FileOpenPicker` + drag-drop; `ZipArchive` + `XDocument` text extraction for DOCX/ODT; HTML as plain text; 9 localized resource keys across all locales |
 | Section 2 localization tests | `5b52be7` | 10 new tests for print and file format resource keys |
+| Fix backstage burger menu button | `38e864e` | Set `IsPaneToggleButtonVisible="False"` on `NavigationView` |
+| Language selection in Options | `24d62b4` | `Language` property on `ISettingsService`/`SettingsService` with JSON persistence; 9-locale `ComboBox` in Options dialog; `OptionsLanguage` localized key across all locales |
+| Ruler toggle | `9e91077` | `Canvas`-based ruler with inch/half-inch/quarter-inch ticks and labels; `ToggleMenuFlyoutItem` in View menu; localized across 9 locales |
+| Page View toggle | `9e91077` | Centered 816px `Border` with card background and page padding; constrains editor `MaxWidth`; localized across 9 locales |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -363,7 +368,8 @@
 | Before Section 17/18 work | 82 |
 | After Section 17/18 work | 96 (+14 tests, +17% growth) |
 | After localization work | 201 (+105 tests) |
-| After Section 2 work | **211** (+10 tests) |
+| After Section 2 work | 211 (+10 tests) |
+| After Section 4 + Options work | **219** (+8 tests) |
 
 ---
 
@@ -377,7 +383,7 @@
 | UI / integration tests (WinAppDriver) | Medium | High | Would cover 1,736 lines of code-behind |
 | ~~Localization / i18n~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — 9 locales, 130+ keys, 115 tests |
 | ~~Additional file formats (DOCX, HTML, ODT)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
-| Ruler / page view mode | Low | Medium | |
+| ~~Ruler / page view mode~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `9e91077` |
 | Find — regex support | Low | Medium | |
 | Font color keyboard shortcut | Low | Low | |
 | Tab stop configuration | Low | Medium | |
@@ -393,7 +399,7 @@
 | Application shell & infrastructure | **100%** |
 | File operations | **100%** |
 | Edit menu | **100%** |
-| View menu | 80% |
+| View menu | **100%** |
 | Ribbon — Clipboard | **100%** |
 | Ribbon — Font | 95% |
 | Ribbon — Paragraph | 75% |
@@ -407,7 +413,7 @@
 | Architecture / code quality | 82% |
 | **Unit test coverage (ViewModel + helpers + services)** | **~98%** |
 | **Unit test coverage (overall app, including UI code-behind)** | **~35%** |
-| **OVERALL PROJECT** | **~92%** |
+| **OVERALL PROJECT** | **~93%** |
 
 ---
 
@@ -419,14 +425,14 @@
 |---|---|---|
 | `App.xaml` | 13 | Resource dictionaries, `XamlControlsResources` |
 | `App.xaml.cs` | 48 | Entry point, `OnLaunched`, startup file arg handling |
-| `MainWindow.xaml` | 585 | Menu bar, ribbon (5 groups), editor, backstage overlay, status bar (7 indicators) |
-| `MainWindow.xaml.cs` | 1,736 | 70+ event handlers, all UI logic — file ops, formatting, find/replace, insert, drag-drop, real print, DOCX/HTML/ODT import |
+| `MainWindow.xaml` | 632 | Menu bar, ribbon (5 groups), ruler, editor with page view, backstage overlay, status bar (7 indicators) |
+| `MainWindow.xaml.cs` | 1,855 | 75+ event handlers, all UI logic — file ops, formatting, find/replace, insert, drag-drop, real print, DOCX/HTML/ODT import, ruler, page view |
 | `ViewModels/EditorViewModel.cs` | 203 | 28 observable properties, 15 relay commands, full `NewDocument()` reset |
 | `Views/FileBackstageView.xaml` | 61 | NavigationView + content pane + recent files panel |
 | `Views/FileBackstageView.xaml.cs` | 96 | 8 events, tag-based dispatch, `SetRecentFiles()` |
 | `Helpers/ColorHelper.cs` | 36 | `ParseHexColor` — 6/8-digit hex with validation |
-| `Services/ISettingsService.cs` | 19 | Interface — 7 properties, list, 4 methods |
-| `Services/SettingsService.cs` | 121 | JSON persistence, MRU recent files, Debug.WriteLine error logging |
+| `Services/ISettingsService.cs` | 20 | Interface — 8 properties (incl. Language), list, 4 methods |
+| `Services/SettingsService.cs` | 128 | JSON persistence, MRU recent files, Language preference, Debug.WriteLine error logging |
 | `Services/IDialogService.cs` | 15 | Interface — `ShowErrorAsync`, `ShowSavePromptAsync`, `SavePromptResult` enum |
 | `Services/DialogService.cs` | 45 | `ContentDialog`-based implementation |
 | `Services/IFileService.cs` | 11 | Interface — `PickOpenFileAsync`, `PickSaveFileAsync`, `GetFileFromPathAsync` |
@@ -437,8 +443,8 @@
 
 | File | Lines | Purpose |
 |---|---|---|
-| `EditorTests.cs` | 993 | 5 test classes, 96 tests (81 `[Fact]`/`[Theory]` + 15 `[InlineData]` variants) |
-| `LocalizationTests.cs` | 441 | 1 test class, 115 tests — key existence, value parity, format placeholder matching, satellite locale coverage |
+| `EditorTests.cs` | 1,008 | 5 test classes, 98 tests (83 `[Fact]`/`[Theory]` + 15 `[InlineData]` variants) |
+| `LocalizationTests.cs` | 456 | 1 test class, 122 tests — key existence, value parity, format placeholder matching, Uid entries, satellite locale coverage |
 
 ### Infrastructure
 
@@ -452,9 +458,13 @@
 
 ---
 
-## Appendix B — Commit History (11 commits ahead of origin)
+## Appendix B — Commit History (14 commits ahead of origin)
 
 ```
+9e91077 feat: add Ruler and Page View toggles to View menu with localized labels across 9 locales
+24d62b4 feat: add language selection to Options panel with persistence and localized labels
+38e864e fix: hide NavigationView pane toggle button in FileBackstageView
+cf88620 docs: update assessment-v3.md for completed Section 2 (print + DOCX/HTML/ODT)
 5b52be7 test: add 10 localization tests for Section 2 print and file format keys
 0335ca4 feat: implement real printing via PrintDocument and add DOCX/HTML/ODT import support
 4baf94a Add Russian (ru-RU), Urdu (ur-PK), and Arabic (ar-SA) localization
