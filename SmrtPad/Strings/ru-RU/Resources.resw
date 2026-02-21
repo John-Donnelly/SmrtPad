@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ═══ СТРОКА МЕНЮ ═══ -->
+  <data name="FileMenuButton.Content" xml:space="preserve">
+    <value>Файл</value>
+  </data>
+  <data name="EditMenu.Title" xml:space="preserve">
+    <value>Правка</value>
+  </data>
+  <data name="ViewMenu.Title" xml:space="preserve">
+    <value>Вид</value>
+  </data>
+  <data name="CutMenuItem.Text" xml:space="preserve">
+    <value>Вырезать</value>
+  </data>
+  <data name="CopyMenuItem.Text" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="PasteMenuItem.Text" xml:space="preserve">
+    <value>Вставить</value>
+  </data>
+  <data name="PasteSpecialMenuItem.Text" xml:space="preserve">
+    <value>Специальная вставка</value>
+  </data>
+  <data name="SelectAllMenuItem.Text" xml:space="preserve">
+    <value>Выделить всё</value>
+  </data>
+  <data name="ZoomInMenuItem.Text" xml:space="preserve">
+    <value>Увеличить</value>
+  </data>
+  <data name="ZoomOutMenuItem.Text" xml:space="preserve">
+    <value>Уменьшить</value>
+  </data>
+  <data name="WordWrapMenuItem.Text" xml:space="preserve">
+    <value>Перенос по словам</value>
+  </data>
+  <data name="FocusModeToggle.Text" xml:space="preserve">
+    <value>Режим фокусировки</value>
+  </data>
+
+  <!-- ═══ ЛЕНТА — БУФЕР ОБМЕНА ═══ -->
+  <data name="PasteRibbonLabel.Text" xml:space="preserve">
+    <value>Вставить</value>
+  </data>
+  <data name="CutRibbonLabel.Text" xml:space="preserve">
+    <value>Вырезать</value>
+  </data>
+  <data name="CopyRibbonLabel.Text" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="ClipboardGroupLabel.Text" xml:space="preserve">
+    <value>Буфер обмена</value>
+  </data>
+
+  <!-- ═══ ЛЕНТА — ШРИФТ ═══ -->
+  <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
+    <value>Шрифт</value>
+  </data>
+  <data name="MoreColorsButton.Content" xml:space="preserve">
+    <value>Другие цвета...</value>
+  </data>
+  <data name="FontGroupLabel.Text" xml:space="preserve">
+    <value>Шрифт</value>
+  </data>
+
+  <!-- ═══ ЛЕНТА — АБЗАЦ ═══ -->
+  <data name="ListTypeNoneItem.Text" xml:space="preserve">
+    <value>Нет</value>
+  </data>
+  <data name="ListTypeBulletItem.Text" xml:space="preserve">
+    <value>Маркер</value>
+  </data>
+  <data name="ListTypeNumberItem.Text" xml:space="preserve">
+    <value>Нумерация</value>
+  </data>
+  <data name="ListTypeLowerLetterItem.Text" xml:space="preserve">
+    <value>Строчные буквы</value>
+  </data>
+  <data name="ListTypeUpperLetterItem.Text" xml:space="preserve">
+    <value>Прописные буквы</value>
+  </data>
+  <data name="ListTypeLowerRomanItem.Text" xml:space="preserve">
+    <value>Римские строчные</value>
+  </data>
+  <data name="ListTypeUpperRomanItem.Text" xml:space="preserve">
+    <value>Римские прописные</value>
+  </data>
+  <data name="CustomSpacingItem.Text" xml:space="preserve">
+    <value>Другой...</value>
+  </data>
+  <data name="ParagraphSpacingHeader.Text" xml:space="preserve">
+    <value>Интервал между абзацами</value>
+  </data>
+  <data name="SpacingBeforeLabel.Text" xml:space="preserve">
+    <value>До (пт)</value>
+  </data>
+  <data name="SpacingAfterLabel.Text" xml:space="preserve">
+    <value>После (пт)</value>
+  </data>
+  <data name="ApplySpacingButton.Content" xml:space="preserve">
+    <value>Применить</value>
+  </data>
+  <data name="ParagraphGroupLabel.Text" xml:space="preserve">
+    <value>Абзац</value>
+  </data>
+
+  <!-- ═══ ЛЕНТА — ВСТАВКА ═══ -->
+  <data name="PictureRibbonLabel.Text" xml:space="preserve">
+    <value>Рисунок</value>
+  </data>
+  <data name="PaintRibbonLabel.Text" xml:space="preserve">
+    <value>Рисование</value>
+  </data>
+  <data name="ObjectRibbonLabel.Text" xml:space="preserve">
+    <value>Объект</value>
+  </data>
+  <data name="DateTimeRibbonLabel.Text" xml:space="preserve">
+    <value>Дата/Время</value>
+  </data>
+  <data name="LinkRibbonLabel.Text" xml:space="preserve">
+    <value>Ссылка</value>
+  </data>
+  <data name="TableRibbonLabel.Text" xml:space="preserve">
+    <value>Таблица</value>
+  </data>
+  <data name="SymbolRibbonLabel.Text" xml:space="preserve">
+    <value>Символ</value>
+  </data>
+  <data name="InsertGroupLabel.Text" xml:space="preserve">
+    <value>Вставка</value>
+  </data>
+
+  <!-- ═══ ЛЕНТА — РЕДАКТИРОВАНИЕ ═══ -->
+  <data name="FindFlyoutHeader.Text" xml:space="preserve">
+    <value>Найти</value>
+  </data>
+  <data name="FindTextBox.PlaceholderText" xml:space="preserve">
+    <value>Искомый текст</value>
+  </data>
+  <data name="FindMatchCaseCheckBox.Content" xml:space="preserve">
+    <value>С учётом регистра</value>
+  </data>
+  <data name="FindWholeWordCheckBox.Content" xml:space="preserve">
+    <value>Слово целиком</value>
+  </data>
+  <data name="HighlightAllButton.Content" xml:space="preserve">
+    <value>Выделить все</value>
+  </data>
+  <data name="ClearHighlightsButton.Content" xml:space="preserve">
+    <value>Снять выделение</value>
+  </data>
+  <data name="FindPreviousButton.Content" xml:space="preserve">
+    <value>Найти предыдущее</value>
+  </data>
+  <data name="FindNextButton.Content" xml:space="preserve">
+    <value>Найти далее</value>
+  </data>
+  <data name="FindRibbonLabel.Text" xml:space="preserve">
+    <value>Найти</value>
+  </data>
+  <data name="ReplaceFlyoutHeader.Text" xml:space="preserve">
+    <value>Найти и заменить</value>
+  </data>
+  <data name="ReplaceFindTextBox.PlaceholderText" xml:space="preserve">
+    <value>Искомый текст</value>
+  </data>
+  <data name="ReplaceFlyoutLabel.Text" xml:space="preserve">
+    <value>Заменить</value>
+  </data>
+  <data name="ReplaceWithTextBox.PlaceholderText" xml:space="preserve">
+    <value>Новый текст</value>
+  </data>
+  <data name="ReplaceButton.Content" xml:space="preserve">
+    <value>Заменить</value>
+  </data>
+  <data name="ReplaceAllButton.Content" xml:space="preserve">
+    <value>Заменить все</value>
+  </data>
+  <data name="ReplaceRibbonLabel.Text" xml:space="preserve">
+    <value>Заменить</value>
+  </data>
+  <data name="SelectAllRibbonLabel.Text" xml:space="preserve">
+    <value>Выделить всё</value>
+  </data>
+  <data name="EditingGroupLabel.Text" xml:space="preserve">
+    <value>Редактирование</value>
+  </data>
+
+  <!-- ═══ BACKSTAGE ═══ -->
+  <data name="NewNavItem.Content" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="OpenNavItem.Content" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="SaveNavItem.Content" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="SaveAsNavItem.Content" xml:space="preserve">
+    <value>Сохранить как</value>
+  </data>
+  <data name="PrintNavItem.Content" xml:space="preserve">
+    <value>Печать</value>
+  </data>
+  <data name="OptionsNavItem.Content" xml:space="preserve">
+    <value>Параметры</value>
+  </data>
+  <data name="ExitNavItem.Content" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="RecentFilesHeader.Text" xml:space="preserve">
+    <value>Последние файлы</value>
+  </data>
+  <data name="BackstageBodyDefault.Text" xml:space="preserve">
+    <value>Выберите параметр слева.</value>
+  </data>
+
+  <!-- ═══ СТРОКА СОСТОЯНИЯ ═══ -->
+  <data name="StatusText.Text" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Общие ═══ -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="DocumentUntitled" xml:space="preserve">
+    <value>Без имени</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="StatusNewDocument" xml:space="preserve">
+    <value>Создан новый документ.</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="ButtonApply" xml:space="preserve">
+    <value>Применить</value>
+  </data>
+  <data name="ButtonInsert" xml:space="preserve">
+    <value>Вставить</value>
+  </data>
+  <data name="ButtonOK" xml:space="preserve">
+    <value>ОК</value>
+  </data>
+  <data name="ButtonPrint" xml:space="preserve">
+    <value>Печать</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Файловые операции ═══ -->
+  <data name="StatusOpened" xml:space="preserve">
+    <value>Открыт {0}</value>
+  </data>
+  <data name="StatusSaved" xml:space="preserve">
+    <value>Сохранён {0}</value>
+  </data>
+  <data name="StatusAutoSaved" xml:space="preserve">
+    <value>Автосохранение {0}</value>
+  </data>
+  <data name="StatusRecoverySaved" xml:space="preserve">
+    <value>Файл восстановления сохранён.</value>
+  </data>
+  <data name="ErrorOpeningFile" xml:space="preserve">
+    <value>Ошибка при открытии файла</value>
+  </data>
+  <data name="ErrorSavingFile" xml:space="preserve">
+    <value>Ошибка при сохранении файла</value>
+  </data>
+  <data name="FileTypeRtf" xml:space="preserve">
+    <value>Формат RTF</value>
+  </data>
+  <data name="FileTypeTxt" xml:space="preserve">
+    <value>Текстовый документ</value>
+  </data>
+  <data name="FileDefaultName" xml:space="preserve">
+    <value>Документ</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Печать ═══ -->
+  <data name="PrintTitle" xml:space="preserve">
+    <value>Печать</value>
+  </data>
+  <data name="PrintNoContent" xml:space="preserve">
+    <value>Нет содержимого для печати.</value>
+  </data>
+  <data name="PrintDocumentTitle" xml:space="preserve">
+    <value>Печать документа</value>
+  </data>
+  <data name="PrintDocumentLabel" xml:space="preserve">
+    <value>Документ: {0}</value>
+  </data>
+  <data name="PrintPagesLabel" xml:space="preserve">
+    <value>Страниц: ~{0}</value>
+  </data>
+  <data name="PrintSendToDefault" xml:space="preserve">
+    <value>Документ будет отправлен на принтер по умолчанию.</value>
+  </data>
+  <data name="StatusPrinting" xml:space="preserve">
+    <value>Печать...</value>
+  </data>
+  <data name="StatusSentToPrinter" xml:space="preserve">
+    <value>{0} отправлен на принтер.</value>
+  </data>
+  <data name="ErrorPrint" xml:space="preserve">
+    <value>Ошибка печати</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Параметры ═══ -->
+  <data name="OptionsTitle" xml:space="preserve">
+    <value>Параметры</value>
+  </data>
+  <data name="OptionsDefaultFont" xml:space="preserve">
+    <value>Шрифт по умолчанию</value>
+  </data>
+  <data name="OptionsDefaultFontSize" xml:space="preserve">
+    <value>Размер шрифта по умолчанию</value>
+  </data>
+  <data name="OptionsWordWrap" xml:space="preserve">
+    <value>Перенос по словам по умолчанию</value>
+  </data>
+  <data name="OptionsDefaultSaveFormat" xml:space="preserve">
+    <value>Формат сохранения по умолчанию</value>
+  </data>
+  <data name="OptionsTheme" xml:space="preserve">
+    <value>Тема</value>
+  </data>
+  <data name="OptionsThemeSystem" xml:space="preserve">
+    <value>Системная</value>
+  </data>
+  <data name="OptionsThemeLight" xml:space="preserve">
+    <value>Светлая</value>
+  </data>
+  <data name="OptionsThemeDark" xml:space="preserve">
+    <value>Тёмная</value>
+  </data>
+  <data name="OptionsAutoSave" xml:space="preserve">
+    <value>Включить автосохранение</value>
+  </data>
+  <data name="OptionsAutoSaveInterval" xml:space="preserve">
+    <value>Интервал автосохранения (секунды)</value>
+  </data>
+  <data name="StatusOptionsSaved" xml:space="preserve">
+    <value>Параметры сохранены.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Поиск / Замена ═══ -->
+  <data name="StatusNoMatch" xml:space="preserve">
+    <value>Совпадение не найдено.</value>
+  </data>
+  <data name="StatusHighlighted" xml:space="preserve">
+    <value>Выделено совпадений: {0}.</value>
+  </data>
+  <data name="StatusNoMatches" xml:space="preserve">
+    <value>Совпадений не найдено.</value>
+  </data>
+  <data name="StatusHighlightsCleared" xml:space="preserve">
+    <value>Выделение снято.</value>
+  </data>
+  <data name="StatusReplaced" xml:space="preserve">
+    <value>Заменено вхождений: {0}.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Режим фокусировки ═══ -->
+  <data name="StatusFocusModeEnabled" xml:space="preserve">
+    <value>Режим фокусировки включён.</value>
+  </data>
+  <data name="StatusFocusModeDisabled" xml:space="preserve">
+    <value>Режим фокусировки выключен.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Вставка ═══ -->
+  <data name="DateTimeTitle" xml:space="preserve">
+    <value>Дата и время</value>
+  </data>
+  <data name="StatusInserted" xml:space="preserve">
+    <value>Вставлено: {0}.</value>
+  </data>
+  <data name="StatusInsertedReference" xml:space="preserve">
+    <value>Вставлена ссылка на {0}.</value>
+  </data>
+  <data name="EmbeddedObject" xml:space="preserve">
+    <value>[Внедрённый объект: {0}]</value>
+  </data>
+  <data name="ErrorInsertingObject" xml:space="preserve">
+    <value>Ошибка при вставке объекта</value>
+  </data>
+  <data name="StatusDrawingInserted" xml:space="preserve">
+    <value>Рисунок вставлен.</value>
+  </data>
+  <data name="StatusDrawingCancelled" xml:space="preserve">
+    <value>Рисование отменено.</value>
+  </data>
+  <data name="SmrtDoodleNotFound" xml:space="preserve">
+    <value>SmrtDoodle не найден</value>
+  </data>
+  <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
+    <value>SmrtDoodle не установлен или не найден в системном PATH. Установите SmrtDoodle для использования функции рисования.</value>
+  </data>
+  <data name="HyperlinkTitle" xml:space="preserve">
+    <value>Вставить гиперссылку</value>
+  </data>
+  <data name="HyperlinkUrlHeader" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="HyperlinkDisplayHeader" xml:space="preserve">
+    <value>Отображаемый текст (необязательно)</value>
+  </data>
+  <data name="StatusHyperlinkInserted" xml:space="preserve">
+    <value>Гиперссылка вставлена.</value>
+  </data>
+  <data name="TableTitle" xml:space="preserve">
+    <value>Вставить таблицу</value>
+  </data>
+  <data name="TableRows" xml:space="preserve">
+    <value>Строки</value>
+  </data>
+  <data name="TableColumns" xml:space="preserve">
+    <value>Столбцы</value>
+  </data>
+  <data name="StatusInsertedTable" xml:space="preserve">
+    <value>Вставлена таблица {0}×{1}.</value>
+  </data>
+  <data name="SymbolTitle" xml:space="preserve">
+    <value>Вставить символ</value>
+  </data>
+  <data name="StatusInsertedSymbol" xml:space="preserve">
+    <value>Вставлен символ: {0}</value>
+  </data>
+  <data name="LineSpacingTitle" xml:space="preserve">
+    <value>Настраиваемый междустрочный интервал</value>
+  </data>
+  <data name="LineSpacingHeader" xml:space="preserve">
+    <value>Междустрочный интервал</value>
+  </data>
+  <data name="StatusFormattingCleared" xml:space="preserve">
+    <value>Форматирование очищено.</value>
+  </data>
+  <data name="StatusParagraphSpacing" xml:space="preserve">
+    <value>Интервал: {0}пт до, {1}пт после.</value>
+  </data>
+  <data name="StatusTheme" xml:space="preserve">
+    <value>Тема: {0}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Вставка / Ошибки ═══ -->
+  <data name="ErrorPaste" xml:space="preserve">
+    <value>Ошибка вставки</value>
+  </data>
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="DragDropCaption" xml:space="preserve">
+    <value>Открыть файл</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Строка состояния ═══ -->
+  <data name="StatusBarWords" xml:space="preserve">
+    <value>Слов: {0}</value>
+  </data>
+  <data name="StatusBarCharacters" xml:space="preserve">
+    <value>Символов: {0}</value>
+  </data>
+  <data name="StatusBarSelection" xml:space="preserve">
+    <value>Выд.: {0}</value>
+  </data>
+  <data name="StatusBarLineCol" xml:space="preserve">
+    <value>Стр {0}, Стб {1}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Служба диалогов ═══ -->
+  <data name="DlgUnsavedChanges" xml:space="preserve">
+    <value>Несохранённые изменения</value>
+  </data>
+  <data name="DlgSaveChangesMessage" xml:space="preserve">
+    <value>Сохранить изменения в {0}?</value>
+  </data>
+  <data name="DlgSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="DlgDontSave" xml:space="preserve">
+    <value>Не сохранять</value>
+  </data>
+  <data name="DlgCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="DlgOK" xml:space="preserve">
+    <value>ОК</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Backstage ═══ -->
+  <data name="BackstageFile" xml:space="preserve">
+    <value>Файл</value>
+  </data>
+  <data name="BackstageNewDesc" xml:space="preserve">
+    <value>Создать новый документ.</value>
+  </data>
+  <data name="BackstageOpenDesc" xml:space="preserve">
+    <value>Открыть существующий документ или выбрать из последних файлов.</value>
+  </data>
+  <data name="BackstageSaveDesc" xml:space="preserve">
+    <value>Сохранить изменения в текущем документе.</value>
+  </data>
+  <data name="BackstageSaveAsDesc" xml:space="preserve">
+    <value>Сохранить текущий документ под другим именем.</value>
+  </data>
+  <data name="BackstagePrintDesc" xml:space="preserve">
+    <value>Напечатать текущий документ.</value>
+  </data>
+  <data name="BackstageOptionsDesc" xml:space="preserve">
+    <value>Настроить параметры приложения.</value>
+  </data>
+  <data name="BackstageNoRecentFiles" xml:space="preserve">
+    <value>Нет последних файлов.</value>
+  </data>
+
+</root>

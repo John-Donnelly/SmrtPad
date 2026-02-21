@@ -216,7 +216,7 @@ namespace SmrtPad.Tests
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =
-            ["de-DE", "es-ES", "fr-FR", "ja-JP", "zh-Hans"];
+            ["ar-SA", "de-DE", "es-ES", "fr-FR", "ja-JP", "ru-RU", "ur-PK", "zh-Hans"];
 
         private static string? FindStringsRoot()
         {
@@ -248,10 +248,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_Exists(string locale)
         {
@@ -262,10 +265,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_IsValidXml(string locale)
         {
@@ -277,10 +283,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_HasAllEnUsKeys(string locale)
         {
@@ -296,10 +305,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_HasNoExtraKeys(string locale)
         {
@@ -315,10 +327,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_NoEmptyValues(string locale)
         {
@@ -334,10 +349,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_FormatPlaceholders_Match(string locale)
         {
@@ -370,10 +388,13 @@ namespace SmrtPad.Tests
         }
 
         [Theory]
+        [InlineData("ar-SA")]
         [InlineData("de-DE")]
         [InlineData("es-ES")]
         [InlineData("fr-FR")]
         [InlineData("ja-JP")]
+        [InlineData("ru-RU")]
+        [InlineData("ur-PK")]
         [InlineData("zh-Hans")]
         public void SatelliteResw_NoDuplicateKeys(string locale)
         {

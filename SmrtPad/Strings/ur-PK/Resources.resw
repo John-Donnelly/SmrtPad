@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ═══ مینو بار ═══ -->
+  <data name="FileMenuButton.Content" xml:space="preserve">
+    <value>فائل</value>
+  </data>
+  <data name="EditMenu.Title" xml:space="preserve">
+    <value>ترمیم</value>
+  </data>
+  <data name="ViewMenu.Title" xml:space="preserve">
+    <value>منظر</value>
+  </data>
+  <data name="CutMenuItem.Text" xml:space="preserve">
+    <value>کاٹیں</value>
+  </data>
+  <data name="CopyMenuItem.Text" xml:space="preserve">
+    <value>کاپی</value>
+  </data>
+  <data name="PasteMenuItem.Text" xml:space="preserve">
+    <value>چسپاں کریں</value>
+  </data>
+  <data name="PasteSpecialMenuItem.Text" xml:space="preserve">
+    <value>خاص چسپاں</value>
+  </data>
+  <data name="SelectAllMenuItem.Text" xml:space="preserve">
+    <value>سب منتخب کریں</value>
+  </data>
+  <data name="ZoomInMenuItem.Text" xml:space="preserve">
+    <value>بڑا کریں</value>
+  </data>
+  <data name="ZoomOutMenuItem.Text" xml:space="preserve">
+    <value>چھوٹا کریں</value>
+  </data>
+  <data name="WordWrapMenuItem.Text" xml:space="preserve">
+    <value>لفظ لپیٹ</value>
+  </data>
+  <data name="FocusModeToggle.Text" xml:space="preserve">
+    <value>توجہ موڈ</value>
+  </data>
+
+  <!-- ═══ ربن — کلپ بورڈ ═══ -->
+  <data name="PasteRibbonLabel.Text" xml:space="preserve">
+    <value>چسپاں کریں</value>
+  </data>
+  <data name="CutRibbonLabel.Text" xml:space="preserve">
+    <value>کاٹیں</value>
+  </data>
+  <data name="CopyRibbonLabel.Text" xml:space="preserve">
+    <value>کاپی</value>
+  </data>
+  <data name="ClipboardGroupLabel.Text" xml:space="preserve">
+    <value>کلپ بورڈ</value>
+  </data>
+
+  <!-- ═══ ربن — فونٹ ═══ -->
+  <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
+    <value>فونٹ</value>
+  </data>
+  <data name="MoreColorsButton.Content" xml:space="preserve">
+    <value>مزید رنگ...</value>
+  </data>
+  <data name="FontGroupLabel.Text" xml:space="preserve">
+    <value>فونٹ</value>
+  </data>
+
+  <!-- ═══ ربن — پیراگراف ═══ -->
+  <data name="ListTypeNoneItem.Text" xml:space="preserve">
+    <value>کوئی نہیں</value>
+  </data>
+  <data name="ListTypeBulletItem.Text" xml:space="preserve">
+    <value>بلٹ</value>
+  </data>
+  <data name="ListTypeNumberItem.Text" xml:space="preserve">
+    <value>نمبر</value>
+  </data>
+  <data name="ListTypeLowerLetterItem.Text" xml:space="preserve">
+    <value>چھوٹے حروف</value>
+  </data>
+  <data name="ListTypeUpperLetterItem.Text" xml:space="preserve">
+    <value>بڑے حروف</value>
+  </data>
+  <data name="ListTypeLowerRomanItem.Text" xml:space="preserve">
+    <value>چھوٹے رومن</value>
+  </data>
+  <data name="ListTypeUpperRomanItem.Text" xml:space="preserve">
+    <value>بڑے رومن</value>
+  </data>
+  <data name="CustomSpacingItem.Text" xml:space="preserve">
+    <value>حسب ضرورت...</value>
+  </data>
+  <data name="ParagraphSpacingHeader.Text" xml:space="preserve">
+    <value>پیراگراف کا فاصلہ</value>
+  </data>
+  <data name="SpacingBeforeLabel.Text" xml:space="preserve">
+    <value>پہلے (pt)</value>
+  </data>
+  <data name="SpacingAfterLabel.Text" xml:space="preserve">
+    <value>بعد (pt)</value>
+  </data>
+  <data name="ApplySpacingButton.Content" xml:space="preserve">
+    <value>لاگو کریں</value>
+  </data>
+  <data name="ParagraphGroupLabel.Text" xml:space="preserve">
+    <value>پیراگراف</value>
+  </data>
+
+  <!-- ═══ ربن — داخل کریں ═══ -->
+  <data name="PictureRibbonLabel.Text" xml:space="preserve">
+    <value>تصویر</value>
+  </data>
+  <data name="PaintRibbonLabel.Text" xml:space="preserve">
+    <value>پینٹ</value>
+  </data>
+  <data name="ObjectRibbonLabel.Text" xml:space="preserve">
+    <value>آبجیکٹ</value>
+  </data>
+  <data name="DateTimeRibbonLabel.Text" xml:space="preserve">
+    <value>تاریخ/وقت</value>
+  </data>
+  <data name="LinkRibbonLabel.Text" xml:space="preserve">
+    <value>لنک</value>
+  </data>
+  <data name="TableRibbonLabel.Text" xml:space="preserve">
+    <value>جدول</value>
+  </data>
+  <data name="SymbolRibbonLabel.Text" xml:space="preserve">
+    <value>علامت</value>
+  </data>
+  <data name="InsertGroupLabel.Text" xml:space="preserve">
+    <value>داخل کریں</value>
+  </data>
+
+  <!-- ═══ ربن — ترمیم ═══ -->
+  <data name="FindFlyoutHeader.Text" xml:space="preserve">
+    <value>تلاش کریں</value>
+  </data>
+  <data name="FindTextBox.PlaceholderText" xml:space="preserve">
+    <value>تلاش کرنے کے لیے متن</value>
+  </data>
+  <data name="FindMatchCaseCheckBox.Content" xml:space="preserve">
+    <value>حروف کی تفریق</value>
+  </data>
+  <data name="FindWholeWordCheckBox.Content" xml:space="preserve">
+    <value>پورا لفظ</value>
+  </data>
+  <data name="HighlightAllButton.Content" xml:space="preserve">
+    <value>سب نمایاں کریں</value>
+  </data>
+  <data name="ClearHighlightsButton.Content" xml:space="preserve">
+    <value>نمایاں صاف کریں</value>
+  </data>
+  <data name="FindPreviousButton.Content" xml:space="preserve">
+    <value>پچھلا تلاش کریں</value>
+  </data>
+  <data name="FindNextButton.Content" xml:space="preserve">
+    <value>اگلا تلاش کریں</value>
+  </data>
+  <data name="FindRibbonLabel.Text" xml:space="preserve">
+    <value>تلاش کریں</value>
+  </data>
+  <data name="ReplaceFlyoutHeader.Text" xml:space="preserve">
+    <value>تلاش اور تبدیل</value>
+  </data>
+  <data name="ReplaceFindTextBox.PlaceholderText" xml:space="preserve">
+    <value>تلاش کرنے کے لیے متن</value>
+  </data>
+  <data name="ReplaceFlyoutLabel.Text" xml:space="preserve">
+    <value>تبدیل کریں</value>
+  </data>
+  <data name="ReplaceWithTextBox.PlaceholderText" xml:space="preserve">
+    <value>نیا متن</value>
+  </data>
+  <data name="ReplaceButton.Content" xml:space="preserve">
+    <value>تبدیل کریں</value>
+  </data>
+  <data name="ReplaceAllButton.Content" xml:space="preserve">
+    <value>سب تبدیل کریں</value>
+  </data>
+  <data name="ReplaceRibbonLabel.Text" xml:space="preserve">
+    <value>تبدیل کریں</value>
+  </data>
+  <data name="SelectAllRibbonLabel.Text" xml:space="preserve">
+    <value>سب منتخب کریں</value>
+  </data>
+  <data name="EditingGroupLabel.Text" xml:space="preserve">
+    <value>ترمیم</value>
+  </data>
+
+  <!-- ═══ بیک اسٹیج ═══ -->
+  <data name="NewNavItem.Content" xml:space="preserve">
+    <value>نیا</value>
+  </data>
+  <data name="OpenNavItem.Content" xml:space="preserve">
+    <value>کھولیں</value>
+  </data>
+  <data name="SaveNavItem.Content" xml:space="preserve">
+    <value>محفوظ کریں</value>
+  </data>
+  <data name="SaveAsNavItem.Content" xml:space="preserve">
+    <value>بطور محفوظ کریں</value>
+  </data>
+  <data name="PrintNavItem.Content" xml:space="preserve">
+    <value>پرنٹ</value>
+  </data>
+  <data name="OptionsNavItem.Content" xml:space="preserve">
+    <value>ترتیبات</value>
+  </data>
+  <data name="ExitNavItem.Content" xml:space="preserve">
+    <value>باہر نکلیں</value>
+  </data>
+  <data name="RecentFilesHeader.Text" xml:space="preserve">
+    <value>حالیہ فائلیں</value>
+  </data>
+  <data name="BackstageBodyDefault.Text" xml:space="preserve">
+    <value>بائیں طرف سے ایک آپشن منتخب کریں۔</value>
+  </data>
+
+  <!-- ═══ اسٹیٹس بار ═══ -->
+  <data name="StatusText.Text" xml:space="preserve">
+    <value>تیار</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: عمومی ═══ -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="DocumentUntitled" xml:space="preserve">
+    <value>بے عنوان</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>تیار</value>
+  </data>
+  <data name="StatusNewDocument" xml:space="preserve">
+    <value>نئی دستاویز بنائی گئی۔</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>محفوظ کریں</value>
+  </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>منسوخ</value>
+  </data>
+  <data name="ButtonApply" xml:space="preserve">
+    <value>لاگو کریں</value>
+  </data>
+  <data name="ButtonInsert" xml:space="preserve">
+    <value>داخل کریں</value>
+  </data>
+  <data name="ButtonOK" xml:space="preserve">
+    <value>ٹھیک ہے</value>
+  </data>
+  <data name="ButtonPrint" xml:space="preserve">
+    <value>پرنٹ</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: فائل آپریشنز ═══ -->
+  <data name="StatusOpened" xml:space="preserve">
+    <value>{0} کھولا گیا</value>
+  </data>
+  <data name="StatusSaved" xml:space="preserve">
+    <value>{0} محفوظ ہو گیا</value>
+  </data>
+  <data name="StatusAutoSaved" xml:space="preserve">
+    <value>{0} خودکار محفوظ</value>
+  </data>
+  <data name="StatusRecoverySaved" xml:space="preserve">
+    <value>بازیافت فائل محفوظ ہو گئی۔</value>
+  </data>
+  <data name="ErrorOpeningFile" xml:space="preserve">
+    <value>فائل کھولنے میں خرابی</value>
+  </data>
+  <data name="ErrorSavingFile" xml:space="preserve">
+    <value>فائل محفوظ کرنے میں خرابی</value>
+  </data>
+  <data name="FileTypeRtf" xml:space="preserve">
+    <value>رچ ٹیکسٹ فارمیٹ</value>
+  </data>
+  <data name="FileTypeTxt" xml:space="preserve">
+    <value>ٹیکسٹ دستاویز</value>
+  </data>
+  <data name="FileDefaultName" xml:space="preserve">
+    <value>دستاویز</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: پرنٹ ═══ -->
+  <data name="PrintTitle" xml:space="preserve">
+    <value>پرنٹ</value>
+  </data>
+  <data name="PrintNoContent" xml:space="preserve">
+    <value>پرنٹ کرنے کے لیے کوئی مواد نہیں ہے۔</value>
+  </data>
+  <data name="PrintDocumentTitle" xml:space="preserve">
+    <value>دستاویز پرنٹ کریں</value>
+  </data>
+  <data name="PrintDocumentLabel" xml:space="preserve">
+    <value>دستاویز: {0}</value>
+  </data>
+  <data name="PrintPagesLabel" xml:space="preserve">
+    <value>صفحات: ~{0}</value>
+  </data>
+  <data name="PrintSendToDefault" xml:space="preserve">
+    <value>دستاویز آپ کے طے شدہ پرنٹر کو بھیجی جائے گی۔</value>
+  </data>
+  <data name="StatusPrinting" xml:space="preserve">
+    <value>پرنٹ ہو رہا ہے...</value>
+  </data>
+  <data name="StatusSentToPrinter" xml:space="preserve">
+    <value>{0} پرنٹر کو بھیجا گیا۔</value>
+  </data>
+  <data name="ErrorPrint" xml:space="preserve">
+    <value>پرنٹ میں خرابی</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ترتیبات ═══ -->
+  <data name="OptionsTitle" xml:space="preserve">
+    <value>ترتیبات</value>
+  </data>
+  <data name="OptionsDefaultFont" xml:space="preserve">
+    <value>طے شدہ فونٹ</value>
+  </data>
+  <data name="OptionsDefaultFontSize" xml:space="preserve">
+    <value>طے شدہ فونٹ سائز</value>
+  </data>
+  <data name="OptionsWordWrap" xml:space="preserve">
+    <value>طے شدہ لفظ لپیٹ</value>
+  </data>
+  <data name="OptionsDefaultSaveFormat" xml:space="preserve">
+    <value>طے شدہ محفوظ فارمیٹ</value>
+  </data>
+  <data name="OptionsTheme" xml:space="preserve">
+    <value>تھیم</value>
+  </data>
+  <data name="OptionsThemeSystem" xml:space="preserve">
+    <value>سسٹم</value>
+  </data>
+  <data name="OptionsThemeLight" xml:space="preserve">
+    <value>ہلکا</value>
+  </data>
+  <data name="OptionsThemeDark" xml:space="preserve">
+    <value>گہرا</value>
+  </data>
+  <data name="OptionsAutoSave" xml:space="preserve">
+    <value>خودکار محفوظ فعال کریں</value>
+  </data>
+  <data name="OptionsAutoSaveInterval" xml:space="preserve">
+    <value>خودکار محفوظ وقفہ (سیکنڈ)</value>
+  </data>
+  <data name="StatusOptionsSaved" xml:space="preserve">
+    <value>ترتیبات محفوظ ہو گئیں۔</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: تلاش / تبدیل ═══ -->
+  <data name="StatusNoMatch" xml:space="preserve">
+    <value>کوئی مماثلت نہیں ملی۔</value>
+  </data>
+  <data name="StatusHighlighted" xml:space="preserve">
+    <value>{0} مماثلتیں نمایاں کی گئیں۔</value>
+  </data>
+  <data name="StatusNoMatches" xml:space="preserve">
+    <value>کوئی مماثلتیں نہیں ملیں۔</value>
+  </data>
+  <data name="StatusHighlightsCleared" xml:space="preserve">
+    <value>نمایاں صاف ہو گئے۔</value>
+  </data>
+  <data name="StatusReplaced" xml:space="preserve">
+    <value>{0} واقعات تبدیل کیے گئے۔</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: توجہ موڈ ═══ -->
+  <data name="StatusFocusModeEnabled" xml:space="preserve">
+    <value>توجہ موڈ فعال ہو گیا۔</value>
+  </data>
+  <data name="StatusFocusModeDisabled" xml:space="preserve">
+    <value>توجہ موڈ غیر فعال ہو گیا۔</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: داخل کرنا ═══ -->
+  <data name="DateTimeTitle" xml:space="preserve">
+    <value>تاریخ اور وقت</value>
+  </data>
+  <data name="StatusInserted" xml:space="preserve">
+    <value>{0} داخل کیا گیا۔</value>
+  </data>
+  <data name="StatusInsertedReference" xml:space="preserve">
+    <value>{0} کا حوالہ داخل کیا گیا۔</value>
+  </data>
+  <data name="EmbeddedObject" xml:space="preserve">
+    <value>[سرایت شدہ آبجیکٹ: {0}]</value>
+  </data>
+  <data name="ErrorInsertingObject" xml:space="preserve">
+    <value>آبجیکٹ داخل کرنے میں خرابی</value>
+  </data>
+  <data name="StatusDrawingInserted" xml:space="preserve">
+    <value>ڈرائنگ داخل ہو گئی۔</value>
+  </data>
+  <data name="StatusDrawingCancelled" xml:space="preserve">
+    <value>ڈرائنگ منسوخ ہو گئی۔</value>
+  </data>
+  <data name="SmrtDoodleNotFound" xml:space="preserve">
+    <value>SmrtDoodle نہیں ملا</value>
+  </data>
+  <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
+    <value>SmrtDoodle انسٹال نہیں ہے یا سسٹم PATH میں نہیں مل سکا۔ پینٹ ڈرائنگ کی خصوصیت استعمال کرنے کے لیے SmrtDoodle انسٹال کریں۔</value>
+  </data>
+  <data name="HyperlinkTitle" xml:space="preserve">
+    <value>ہائپر لنک داخل کریں</value>
+  </data>
+  <data name="HyperlinkUrlHeader" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="HyperlinkDisplayHeader" xml:space="preserve">
+    <value>ظاہری متن (اختیاری)</value>
+  </data>
+  <data name="StatusHyperlinkInserted" xml:space="preserve">
+    <value>ہائپر لنک داخل ہو گیا۔</value>
+  </data>
+  <data name="TableTitle" xml:space="preserve">
+    <value>جدول داخل کریں</value>
+  </data>
+  <data name="TableRows" xml:space="preserve">
+    <value>قطاریں</value>
+  </data>
+  <data name="TableColumns" xml:space="preserve">
+    <value>کالم</value>
+  </data>
+  <data name="StatusInsertedTable" xml:space="preserve">
+    <value>{0}×{1} جدول داخل کیا گیا۔</value>
+  </data>
+  <data name="SymbolTitle" xml:space="preserve">
+    <value>علامت داخل کریں</value>
+  </data>
+  <data name="StatusInsertedSymbol" xml:space="preserve">
+    <value>علامت داخل ہوئی: {0}</value>
+  </data>
+  <data name="LineSpacingTitle" xml:space="preserve">
+    <value>حسب ضرورت لائن فاصلہ</value>
+  </data>
+  <data name="LineSpacingHeader" xml:space="preserve">
+    <value>لائن فاصلے کی قدر</value>
+  </data>
+  <data name="StatusFormattingCleared" xml:space="preserve">
+    <value>فارمیٹنگ صاف ہو گئی۔</value>
+  </data>
+  <data name="StatusParagraphSpacing" xml:space="preserve">
+    <value>پیراگراف فاصلہ: پہلے {0}pt، بعد {1}pt۔</value>
+  </data>
+  <data name="StatusTheme" xml:space="preserve">
+    <value>تھیم: {0}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: چسپاں / خرابی ═══ -->
+  <data name="ErrorPaste" xml:space="preserve">
+    <value>چسپاں میں خرابی</value>
+  </data>
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>خرابی</value>
+  </data>
+  <data name="DragDropCaption" xml:space="preserve">
+    <value>فائل کھولیں</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: اسٹیٹس بار ═══ -->
+  <data name="StatusBarWords" xml:space="preserve">
+    <value>الفاظ: {0}</value>
+  </data>
+  <data name="StatusBarCharacters" xml:space="preserve">
+    <value>حروف: {0}</value>
+  </data>
+  <data name="StatusBarSelection" xml:space="preserve">
+    <value>منتخب: {0}</value>
+  </data>
+  <data name="StatusBarLineCol" xml:space="preserve">
+    <value>سطر {0}، کالم {1}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ڈائیلاگ سروس ═══ -->
+  <data name="DlgUnsavedChanges" xml:space="preserve">
+    <value>غیر محفوظ تبدیلیاں</value>
+  </data>
+  <data name="DlgSaveChangesMessage" xml:space="preserve">
+    <value>کیا آپ {0} میں تبدیلیاں محفوظ کرنا چاہتے ہیں؟</value>
+  </data>
+  <data name="DlgSave" xml:space="preserve">
+    <value>محفوظ کریں</value>
+  </data>
+  <data name="DlgDontSave" xml:space="preserve">
+    <value>محفوظ نہ کریں</value>
+  </data>
+  <data name="DlgCancel" xml:space="preserve">
+    <value>منسوخ</value>
+  </data>
+  <data name="DlgOK" xml:space="preserve">
+    <value>ٹھیک ہے</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: بیک اسٹیج ═══ -->
+  <data name="BackstageFile" xml:space="preserve">
+    <value>فائل</value>
+  </data>
+  <data name="BackstageNewDesc" xml:space="preserve">
+    <value>نئی دستاویز بنائیں۔</value>
+  </data>
+  <data name="BackstageOpenDesc" xml:space="preserve">
+    <value>موجودہ دستاویز کھولیں، یا نیچے حالیہ فائل منتخب کریں۔</value>
+  </data>
+  <data name="BackstageSaveDesc" xml:space="preserve">
+    <value>موجودہ دستاویز میں تبدیلیاں محفوظ کریں۔</value>
+  </data>
+  <data name="BackstageSaveAsDesc" xml:space="preserve">
+    <value>موجودہ دستاویز نئے نام سے محفوظ کریں۔</value>
+  </data>
+  <data name="BackstagePrintDesc" xml:space="preserve">
+    <value>موجودہ دستاویز پرنٹ کریں۔</value>
+  </data>
+  <data name="BackstageOptionsDesc" xml:space="preserve">
+    <value>ایپلیکیشن کی ترتیبات مرتب کریں۔</value>
+  </data>
+  <data name="BackstageNoRecentFiles" xml:space="preserve">
+    <value>کوئی حالیہ فائلیں نہیں ہیں۔</value>
+  </data>
+
+</root>

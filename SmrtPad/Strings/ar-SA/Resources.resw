@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ═══ شريط القوائم ═══ -->
+  <data name="FileMenuButton.Content" xml:space="preserve">
+    <value>ملف</value>
+  </data>
+  <data name="EditMenu.Title" xml:space="preserve">
+    <value>تحرير</value>
+  </data>
+  <data name="ViewMenu.Title" xml:space="preserve">
+    <value>عرض</value>
+  </data>
+  <data name="CutMenuItem.Text" xml:space="preserve">
+    <value>قص</value>
+  </data>
+  <data name="CopyMenuItem.Text" xml:space="preserve">
+    <value>نسخ</value>
+  </data>
+  <data name="PasteMenuItem.Text" xml:space="preserve">
+    <value>لصق</value>
+  </data>
+  <data name="PasteSpecialMenuItem.Text" xml:space="preserve">
+    <value>لصق خاص</value>
+  </data>
+  <data name="SelectAllMenuItem.Text" xml:space="preserve">
+    <value>تحديد الكل</value>
+  </data>
+  <data name="ZoomInMenuItem.Text" xml:space="preserve">
+    <value>تكبير</value>
+  </data>
+  <data name="ZoomOutMenuItem.Text" xml:space="preserve">
+    <value>تصغير</value>
+  </data>
+  <data name="WordWrapMenuItem.Text" xml:space="preserve">
+    <value>التفاف النص</value>
+  </data>
+  <data name="FocusModeToggle.Text" xml:space="preserve">
+    <value>وضع التركيز</value>
+  </data>
+
+  <!-- ═══ الشريط — الحافظة ═══ -->
+  <data name="PasteRibbonLabel.Text" xml:space="preserve">
+    <value>لصق</value>
+  </data>
+  <data name="CutRibbonLabel.Text" xml:space="preserve">
+    <value>قص</value>
+  </data>
+  <data name="CopyRibbonLabel.Text" xml:space="preserve">
+    <value>نسخ</value>
+  </data>
+  <data name="ClipboardGroupLabel.Text" xml:space="preserve">
+    <value>الحافظة</value>
+  </data>
+
+  <!-- ═══ الشريط — الخط ═══ -->
+  <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
+    <value>الخط</value>
+  </data>
+  <data name="MoreColorsButton.Content" xml:space="preserve">
+    <value>ألوان إضافية...</value>
+  </data>
+  <data name="FontGroupLabel.Text" xml:space="preserve">
+    <value>الخط</value>
+  </data>
+
+  <!-- ═══ الشريط — الفقرة ═══ -->
+  <data name="ListTypeNoneItem.Text" xml:space="preserve">
+    <value>بلا</value>
+  </data>
+  <data name="ListTypeBulletItem.Text" xml:space="preserve">
+    <value>تعداد نقطي</value>
+  </data>
+  <data name="ListTypeNumberItem.Text" xml:space="preserve">
+    <value>أرقام</value>
+  </data>
+  <data name="ListTypeLowerLetterItem.Text" xml:space="preserve">
+    <value>أحرف صغيرة</value>
+  </data>
+  <data name="ListTypeUpperLetterItem.Text" xml:space="preserve">
+    <value>أحرف كبيرة</value>
+  </data>
+  <data name="ListTypeLowerRomanItem.Text" xml:space="preserve">
+    <value>أرقام رومانية صغيرة</value>
+  </data>
+  <data name="ListTypeUpperRomanItem.Text" xml:space="preserve">
+    <value>أرقام رومانية كبيرة</value>
+  </data>
+  <data name="CustomSpacingItem.Text" xml:space="preserve">
+    <value>مخصص...</value>
+  </data>
+  <data name="ParagraphSpacingHeader.Text" xml:space="preserve">
+    <value>تباعد الفقرات</value>
+  </data>
+  <data name="SpacingBeforeLabel.Text" xml:space="preserve">
+    <value>قبل (نقطة)</value>
+  </data>
+  <data name="SpacingAfterLabel.Text" xml:space="preserve">
+    <value>بعد (نقطة)</value>
+  </data>
+  <data name="ApplySpacingButton.Content" xml:space="preserve">
+    <value>تطبيق</value>
+  </data>
+  <data name="ParagraphGroupLabel.Text" xml:space="preserve">
+    <value>فقرة</value>
+  </data>
+
+  <!-- ═══ الشريط — إدراج ═══ -->
+  <data name="PictureRibbonLabel.Text" xml:space="preserve">
+    <value>صورة</value>
+  </data>
+  <data name="PaintRibbonLabel.Text" xml:space="preserve">
+    <value>رسم</value>
+  </data>
+  <data name="ObjectRibbonLabel.Text" xml:space="preserve">
+    <value>كائن</value>
+  </data>
+  <data name="DateTimeRibbonLabel.Text" xml:space="preserve">
+    <value>التاريخ/الوقت</value>
+  </data>
+  <data name="LinkRibbonLabel.Text" xml:space="preserve">
+    <value>ارتباط</value>
+  </data>
+  <data name="TableRibbonLabel.Text" xml:space="preserve">
+    <value>جدول</value>
+  </data>
+  <data name="SymbolRibbonLabel.Text" xml:space="preserve">
+    <value>رمز</value>
+  </data>
+  <data name="InsertGroupLabel.Text" xml:space="preserve">
+    <value>إدراج</value>
+  </data>
+
+  <!-- ═══ الشريط — التحرير ═══ -->
+  <data name="FindFlyoutHeader.Text" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="FindTextBox.PlaceholderText" xml:space="preserve">
+    <value>النص المراد البحث عنه</value>
+  </data>
+  <data name="FindMatchCaseCheckBox.Content" xml:space="preserve">
+    <value>مطابقة حالة الأحرف</value>
+  </data>
+  <data name="FindWholeWordCheckBox.Content" xml:space="preserve">
+    <value>كلمة كاملة</value>
+  </data>
+  <data name="HighlightAllButton.Content" xml:space="preserve">
+    <value>تمييز الكل</value>
+  </data>
+  <data name="ClearHighlightsButton.Content" xml:space="preserve">
+    <value>مسح التمييز</value>
+  </data>
+  <data name="FindPreviousButton.Content" xml:space="preserve">
+    <value>بحث عن السابق</value>
+  </data>
+  <data name="FindNextButton.Content" xml:space="preserve">
+    <value>بحث عن التالي</value>
+  </data>
+  <data name="FindRibbonLabel.Text" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="ReplaceFlyoutHeader.Text" xml:space="preserve">
+    <value>بحث واستبدال</value>
+  </data>
+  <data name="ReplaceFindTextBox.PlaceholderText" xml:space="preserve">
+    <value>النص المراد البحث عنه</value>
+  </data>
+  <data name="ReplaceFlyoutLabel.Text" xml:space="preserve">
+    <value>استبدال</value>
+  </data>
+  <data name="ReplaceWithTextBox.PlaceholderText" xml:space="preserve">
+    <value>النص الجديد</value>
+  </data>
+  <data name="ReplaceButton.Content" xml:space="preserve">
+    <value>استبدال</value>
+  </data>
+  <data name="ReplaceAllButton.Content" xml:space="preserve">
+    <value>استبدال الكل</value>
+  </data>
+  <data name="ReplaceRibbonLabel.Text" xml:space="preserve">
+    <value>استبدال</value>
+  </data>
+  <data name="SelectAllRibbonLabel.Text" xml:space="preserve">
+    <value>تحديد الكل</value>
+  </data>
+  <data name="EditingGroupLabel.Text" xml:space="preserve">
+    <value>تحرير</value>
+  </data>
+
+  <!-- ═══ الكواليس ═══ -->
+  <data name="NewNavItem.Content" xml:space="preserve">
+    <value>جديد</value>
+  </data>
+  <data name="OpenNavItem.Content" xml:space="preserve">
+    <value>فتح</value>
+  </data>
+  <data name="SaveNavItem.Content" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="SaveAsNavItem.Content" xml:space="preserve">
+    <value>حفظ باسم</value>
+  </data>
+  <data name="PrintNavItem.Content" xml:space="preserve">
+    <value>طباعة</value>
+  </data>
+  <data name="OptionsNavItem.Content" xml:space="preserve">
+    <value>خيارات</value>
+  </data>
+  <data name="ExitNavItem.Content" xml:space="preserve">
+    <value>خروج</value>
+  </data>
+  <data name="RecentFilesHeader.Text" xml:space="preserve">
+    <value>الملفات الأخيرة</value>
+  </data>
+  <data name="BackstageBodyDefault.Text" xml:space="preserve">
+    <value>اختر خيارًا من القائمة.</value>
+  </data>
+
+  <!-- ═══ شريط الحالة ═══ -->
+  <data name="StatusText.Text" xml:space="preserve">
+    <value>جاهز</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: عام ═══ -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="DocumentUntitled" xml:space="preserve">
+    <value>بدون عنوان</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>جاهز</value>
+  </data>
+  <data name="StatusNewDocument" xml:space="preserve">
+    <value>تم إنشاء مستند جديد.</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="ButtonApply" xml:space="preserve">
+    <value>تطبيق</value>
+  </data>
+  <data name="ButtonInsert" xml:space="preserve">
+    <value>إدراج</value>
+  </data>
+  <data name="ButtonOK" xml:space="preserve">
+    <value>موافق</value>
+  </data>
+  <data name="ButtonPrint" xml:space="preserve">
+    <value>طباعة</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: عمليات الملفات ═══ -->
+  <data name="StatusOpened" xml:space="preserve">
+    <value>تم فتح {0}</value>
+  </data>
+  <data name="StatusSaved" xml:space="preserve">
+    <value>تم حفظ {0}</value>
+  </data>
+  <data name="StatusAutoSaved" xml:space="preserve">
+    <value>تم الحفظ التلقائي لـ {0}</value>
+  </data>
+  <data name="StatusRecoverySaved" xml:space="preserve">
+    <value>تم حفظ ملف الاسترداد.</value>
+  </data>
+  <data name="ErrorOpeningFile" xml:space="preserve">
+    <value>خطأ في فتح الملف</value>
+  </data>
+  <data name="ErrorSavingFile" xml:space="preserve">
+    <value>خطأ في حفظ الملف</value>
+  </data>
+  <data name="FileTypeRtf" xml:space="preserve">
+    <value>تنسيق النص المنسق</value>
+  </data>
+  <data name="FileTypeTxt" xml:space="preserve">
+    <value>مستند نصي</value>
+  </data>
+  <data name="FileDefaultName" xml:space="preserve">
+    <value>مستند</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: الطباعة ═══ -->
+  <data name="PrintTitle" xml:space="preserve">
+    <value>طباعة</value>
+  </data>
+  <data name="PrintNoContent" xml:space="preserve">
+    <value>لا يوجد محتوى للطباعة.</value>
+  </data>
+  <data name="PrintDocumentTitle" xml:space="preserve">
+    <value>طباعة المستند</value>
+  </data>
+  <data name="PrintDocumentLabel" xml:space="preserve">
+    <value>المستند: {0}</value>
+  </data>
+  <data name="PrintPagesLabel" xml:space="preserve">
+    <value>الصفحات: ~{0}</value>
+  </data>
+  <data name="PrintSendToDefault" xml:space="preserve">
+    <value>سيتم إرسال المستند إلى الطابعة الافتراضية.</value>
+  </data>
+  <data name="StatusPrinting" xml:space="preserve">
+    <value>جارٍ الطباعة...</value>
+  </data>
+  <data name="StatusSentToPrinter" xml:space="preserve">
+    <value>تم إرسال {0} إلى الطابعة.</value>
+  </data>
+  <data name="ErrorPrint" xml:space="preserve">
+    <value>خطأ في الطباعة</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: الخيارات ═══ -->
+  <data name="OptionsTitle" xml:space="preserve">
+    <value>خيارات</value>
+  </data>
+  <data name="OptionsDefaultFont" xml:space="preserve">
+    <value>الخط الافتراضي</value>
+  </data>
+  <data name="OptionsDefaultFontSize" xml:space="preserve">
+    <value>حجم الخط الافتراضي</value>
+  </data>
+  <data name="OptionsWordWrap" xml:space="preserve">
+    <value>التفاف النص افتراضيًا</value>
+  </data>
+  <data name="OptionsDefaultSaveFormat" xml:space="preserve">
+    <value>تنسيق الحفظ الافتراضي</value>
+  </data>
+  <data name="OptionsTheme" xml:space="preserve">
+    <value>النسق</value>
+  </data>
+  <data name="OptionsThemeSystem" xml:space="preserve">
+    <value>النظام</value>
+  </data>
+  <data name="OptionsThemeLight" xml:space="preserve">
+    <value>فاتح</value>
+  </data>
+  <data name="OptionsThemeDark" xml:space="preserve">
+    <value>داكن</value>
+  </data>
+  <data name="OptionsAutoSave" xml:space="preserve">
+    <value>تمكين الحفظ التلقائي</value>
+  </data>
+  <data name="OptionsAutoSaveInterval" xml:space="preserve">
+    <value>فترة الحفظ التلقائي (ثوانٍ)</value>
+  </data>
+  <data name="StatusOptionsSaved" xml:space="preserve">
+    <value>تم حفظ الخيارات.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: البحث / الاستبدال ═══ -->
+  <data name="StatusNoMatch" xml:space="preserve">
+    <value>لم يتم العثور على تطابق.</value>
+  </data>
+  <data name="StatusHighlighted" xml:space="preserve">
+    <value>تم تمييز {0} تطابق(ات).</value>
+  </data>
+  <data name="StatusNoMatches" xml:space="preserve">
+    <value>لم يتم العثور على تطابقات.</value>
+  </data>
+  <data name="StatusHighlightsCleared" xml:space="preserve">
+    <value>تم مسح التمييز.</value>
+  </data>
+  <data name="StatusReplaced" xml:space="preserve">
+    <value>تم استبدال {0} تكرار(ات).</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: وضع التركيز ═══ -->
+  <data name="StatusFocusModeEnabled" xml:space="preserve">
+    <value>تم تمكين وضع التركيز.</value>
+  </data>
+  <data name="StatusFocusModeDisabled" xml:space="preserve">
+    <value>تم تعطيل وضع التركيز.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ميزات الإدراج ═══ -->
+  <data name="DateTimeTitle" xml:space="preserve">
+    <value>التاريخ والوقت</value>
+  </data>
+  <data name="StatusInserted" xml:space="preserve">
+    <value>تم إدراج {0}.</value>
+  </data>
+  <data name="StatusInsertedReference" xml:space="preserve">
+    <value>تم إدراج مرجع إلى {0}.</value>
+  </data>
+  <data name="EmbeddedObject" xml:space="preserve">
+    <value>[كائن مضمّن: {0}]</value>
+  </data>
+  <data name="ErrorInsertingObject" xml:space="preserve">
+    <value>خطأ في إدراج الكائن</value>
+  </data>
+  <data name="StatusDrawingInserted" xml:space="preserve">
+    <value>تم إدراج الرسم.</value>
+  </data>
+  <data name="StatusDrawingCancelled" xml:space="preserve">
+    <value>تم إلغاء الرسم.</value>
+  </data>
+  <data name="SmrtDoodleNotFound" xml:space="preserve">
+    <value>لم يتم العثور على SmrtDoodle</value>
+  </data>
+  <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
+    <value>SmrtDoodle غير مثبّت أو لا يمكن العثور عليه في مسار النظام PATH. يرجى تثبيت SmrtDoodle لاستخدام ميزة الرسم.</value>
+  </data>
+  <data name="HyperlinkTitle" xml:space="preserve">
+    <value>إدراج ارتباط تشعبي</value>
+  </data>
+  <data name="HyperlinkUrlHeader" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="HyperlinkDisplayHeader" xml:space="preserve">
+    <value>نص العرض (اختياري)</value>
+  </data>
+  <data name="StatusHyperlinkInserted" xml:space="preserve">
+    <value>تم إدراج الارتباط التشعبي.</value>
+  </data>
+  <data name="TableTitle" xml:space="preserve">
+    <value>إدراج جدول</value>
+  </data>
+  <data name="TableRows" xml:space="preserve">
+    <value>صفوف</value>
+  </data>
+  <data name="TableColumns" xml:space="preserve">
+    <value>أعمدة</value>
+  </data>
+  <data name="StatusInsertedTable" xml:space="preserve">
+    <value>تم إدراج جدول {0}×{1}.</value>
+  </data>
+  <data name="SymbolTitle" xml:space="preserve">
+    <value>إدراج رمز</value>
+  </data>
+  <data name="StatusInsertedSymbol" xml:space="preserve">
+    <value>تم إدراج الرمز: {0}</value>
+  </data>
+  <data name="LineSpacingTitle" xml:space="preserve">
+    <value>تباعد أسطر مخصص</value>
+  </data>
+  <data name="LineSpacingHeader" xml:space="preserve">
+    <value>قيمة تباعد الأسطر</value>
+  </data>
+  <data name="StatusFormattingCleared" xml:space="preserve">
+    <value>تم مسح التنسيق.</value>
+  </data>
+  <data name="StatusParagraphSpacing" xml:space="preserve">
+    <value>تباعد الفقرات: {0}نقطة قبل، {1}نقطة بعد.</value>
+  </data>
+  <data name="StatusTheme" xml:space="preserve">
+    <value>النسق: {0}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: اللصق / الأخطاء ═══ -->
+  <data name="ErrorPaste" xml:space="preserve">
+    <value>خطأ في اللصق</value>
+  </data>
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>خطأ</value>
+  </data>
+  <data name="DragDropCaption" xml:space="preserve">
+    <value>فتح ملف</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: شريط الحالة ═══ -->
+  <data name="StatusBarWords" xml:space="preserve">
+    <value>الكلمات: {0}</value>
+  </data>
+  <data name="StatusBarCharacters" xml:space="preserve">
+    <value>الأحرف: {0}</value>
+  </data>
+  <data name="StatusBarSelection" xml:space="preserve">
+    <value>التحديد: {0}</value>
+  </data>
+  <data name="StatusBarLineCol" xml:space="preserve">
+    <value>سطر {0}، عمود {1}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: خدمة الحوار ═══ -->
+  <data name="DlgUnsavedChanges" xml:space="preserve">
+    <value>تغييرات غير محفوظة</value>
+  </data>
+  <data name="DlgSaveChangesMessage" xml:space="preserve">
+    <value>هل تريد حفظ التغييرات في {0}؟</value>
+  </data>
+  <data name="DlgSave" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="DlgDontSave" xml:space="preserve">
+    <value>عدم الحفظ</value>
+  </data>
+  <data name="DlgCancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="DlgOK" xml:space="preserve">
+    <value>موافق</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: أوصاف الكواليس ═══ -->
+  <data name="BackstageFile" xml:space="preserve">
+    <value>ملف</value>
+  </data>
+  <data name="BackstageNewDesc" xml:space="preserve">
+    <value>إنشاء مستند جديد.</value>
+  </data>
+  <data name="BackstageOpenDesc" xml:space="preserve">
+    <value>فتح مستند موجود، أو اختيار ملف حديث أدناه.</value>
+  </data>
+  <data name="BackstageSaveDesc" xml:space="preserve">
+    <value>حفظ التغييرات في المستند الحالي.</value>
+  </data>
+  <data name="BackstageSaveAsDesc" xml:space="preserve">
+    <value>حفظ المستند الحالي باسم جديد.</value>
+  </data>
+  <data name="BackstagePrintDesc" xml:space="preserve">
+    <value>طباعة المستند الحالي.</value>
+  </data>
+  <data name="BackstageOptionsDesc" xml:space="preserve">
+    <value>تكوين خيارات التطبيق.</value>
+  </data>
+  <data name="BackstageNoRecentFiles" xml:space="preserve">
+    <value>لا توجد ملفات حديثة.</value>
+  </data>
+
+</root>
