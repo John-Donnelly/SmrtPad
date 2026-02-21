@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Xunit;
 using SmrtPad.ViewModels;
 using SmrtPad.Helpers;
+using SmrtPad.Services;
 
 namespace SmrtPad.Tests
 {
@@ -569,6 +572,297 @@ namespace SmrtPad.Tests
         public void ParseHexColor_HashOnly_ThrowsFormatException()
         {
             Assert.Throws<FormatException>(() => ColorHelper.ParseHexColor("#"));
+        }
+    }
+
+    // ═══ New ViewModel Property Tests ═══
+
+    public class EditorViewModelNewPropertiesTests
+    {
+        [Fact]
+        public void ViewModel_DefaultValues_NewProperties()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal(0, vm.WordCount);
+            Assert.Equal(0, vm.CharCount);
+            Assert.Equal(1, vm.LineNumber);
+            Assert.Equal(1, vm.ColumnNumber);
+            Assert.Equal(0.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(0.0, vm.ParagraphSpacingAfter);
+            Assert.False(vm.FindMatchCase);
+            Assert.False(vm.FindWholeWord);
+            Assert.NotNull(vm.RecentFiles);
+            Assert.Empty(vm.RecentFiles);
+        }
+
+        [Fact]
+        public void NewDocument_ResetsNewProperties()
+        {
+            var vm = new EditorViewModel();
+            vm.WordCount = 100;
+            vm.CharCount = 500;
+            vm.LineNumber = 10;
+            vm.ColumnNumber = 20;
+            vm.ParagraphSpacingBefore = 12.0;
+            vm.ParagraphSpacingAfter = 6.0;
+            vm.FindMatchCase = true;
+            vm.FindWholeWord = true;
+
+            vm.NewDocument();
+
+            Assert.Equal(0, vm.WordCount);
+            Assert.Equal(0, vm.CharCount);
+            Assert.Equal(1, vm.LineNumber);
+            Assert.Equal(1, vm.ColumnNumber);
+            Assert.Equal(0.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(0.0, vm.ParagraphSpacingAfter);
+            Assert.False(vm.FindMatchCase);
+            Assert.False(vm.FindWholeWord);
+        }
+
+        [Fact]
+        public void UpdateWordCount_SetsWordCount()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateWordCount(42);
+            Assert.Equal(42, vm.WordCount);
+        }
+
+        [Fact]
+        public void UpdateCharCount_SetsCharCount()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCharCount(256);
+            Assert.Equal(256, vm.CharCount);
+        }
+
+        [Fact]
+        public void UpdateCursorPosition_SetsLineAndColumn()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCursorPosition(new[] { 5, 10 });
+            Assert.Equal(5, vm.LineNumber);
+            Assert.Equal(10, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void UpdateCursorPosition_IgnoresShortArray()
+        {
+            var vm = new EditorViewModel();
+            vm.LineNumber = 3;
+            vm.ColumnNumber = 7;
+            vm.UpdateCursorPosition(new[] { 1 });
+            Assert.Equal(3, vm.LineNumber);
+            Assert.Equal(7, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void SetParagraphSpacing_SetsValues()
+        {
+            var vm = new EditorViewModel();
+            vm.SetParagraphSpacing(new[] { 12.0, 6.0 });
+            Assert.Equal(12.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(6.0, vm.ParagraphSpacingAfter);
+        }
+
+        [Fact]
+        public void SetParagraphSpacing_IgnoresShortArray()
+        {
+            var vm = new EditorViewModel();
+            vm.ParagraphSpacingBefore = 5.0;
+            vm.SetParagraphSpacing(new[] { 10.0 });
+            Assert.Equal(5.0, vm.ParagraphSpacingBefore);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredOnWordCountChange()
+        {
+            var vm = new EditorViewModel();
+            string? changed = null;
+            vm.PropertyChanged += (s, e) => changed = e.PropertyName;
+            vm.WordCount = 10;
+            Assert.Equal(nameof(EditorViewModel.WordCount), changed);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredOnCharCountChange()
+        {
+            var vm = new EditorViewModel();
+            string? changed = null;
+            vm.PropertyChanged += (s, e) => changed = e.PropertyName;
+            vm.CharCount = 50;
+            Assert.Equal(nameof(EditorViewModel.CharCount), changed);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredOnLineNumberChange()
+        {
+            var vm = new EditorViewModel();
+            string? changed = null;
+            vm.PropertyChanged += (s, e) => changed = e.PropertyName;
+            vm.LineNumber = 7;
+            Assert.Equal(nameof(EditorViewModel.LineNumber), changed);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredOnColumnNumberChange()
+        {
+            var vm = new EditorViewModel();
+            string? changed = null;
+            vm.PropertyChanged += (s, e) => changed = e.PropertyName;
+            vm.ColumnNumber = 15;
+            Assert.Equal(nameof(EditorViewModel.ColumnNumber), changed);
+        }
+
+        [Fact]
+        public void FindMatchCase_PropertyChange()
+        {
+            var vm = new EditorViewModel();
+            var changed = new List<string>();
+            vm.PropertyChanged += (s, e) => changed.Add(e.PropertyName!);
+            vm.FindMatchCase = true;
+            Assert.Contains(nameof(EditorViewModel.FindMatchCase), changed);
+            Assert.True(vm.FindMatchCase);
+        }
+
+        [Fact]
+        public void FindWholeWord_PropertyChange()
+        {
+            var vm = new EditorViewModel();
+            var changed = new List<string>();
+            vm.PropertyChanged += (s, e) => changed.Add(e.PropertyName!);
+            vm.FindWholeWord = true;
+            Assert.Contains(nameof(EditorViewModel.FindWholeWord), changed);
+            Assert.True(vm.FindWholeWord);
+        }
+
+        [Fact]
+        public void SetLineSpacing_CustomValue()
+        {
+            var vm = new EditorViewModel();
+            vm.SetLineSpacing(2.5);
+            Assert.Equal(2.5, vm.LineSpacing);
+        }
+
+        [Fact]
+        public void RecentFiles_CanBeSet()
+        {
+            var vm = new EditorViewModel();
+            var files = new List<string> { "file1.rtf", "file2.txt" };
+            vm.RecentFiles = files;
+            Assert.Equal(2, vm.RecentFiles.Count);
+            Assert.Equal("file1.rtf", vm.RecentFiles[0]);
+        }
+    }
+
+    // ═══ Settings Service Tests ═══
+
+    public class SettingsServiceTests : IDisposable
+    {
+        private readonly string _testDir;
+        private readonly string _testSettingsPath;
+
+        public SettingsServiceTests()
+        {
+            _testDir = Path.Combine(Path.GetTempPath(), $"SmrtPadTest_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(_testDir);
+            _testSettingsPath = Path.Combine(_testDir, "settings.json");
+        }
+
+        public void Dispose()
+        {
+            try { Directory.Delete(_testDir, true); } catch { }
+        }
+
+        [Fact]
+        public void SettingsService_DefaultValues()
+        {
+            var svc = new SettingsService();
+            Assert.Equal("Segoe UI", svc.DefaultFontFamily);
+            Assert.Equal(11.0, svc.DefaultFontSize);
+            Assert.True(svc.DefaultWordWrap);
+            Assert.Equal(".rtf", svc.DefaultSaveFormat);
+            Assert.Equal("System", svc.ThemePreference);
+            Assert.False(svc.AutoSaveEnabled);
+            Assert.Equal(300, svc.AutoSaveIntervalSeconds);
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void SettingsService_AddRecentFile_AddsToFront()
+        {
+            var svc = new SettingsService();
+            svc.ClearRecentFiles();
+            svc.AddRecentFile("C:\\file1.rtf");
+            svc.AddRecentFile("C:\\file2.rtf");
+            Assert.Equal(2, svc.RecentFiles.Count);
+            Assert.Equal("C:\\file2.rtf", svc.RecentFiles[0]);
+            Assert.Equal("C:\\file1.rtf", svc.RecentFiles[1]);
+        }
+
+        [Fact]
+        public void SettingsService_AddRecentFile_NoDuplicates()
+        {
+            var svc = new SettingsService();
+            svc.ClearRecentFiles();
+            svc.AddRecentFile("C:\\file1.rtf");
+            svc.AddRecentFile("C:\\file2.rtf");
+            svc.AddRecentFile("C:\\file1.rtf");
+            Assert.Equal(2, svc.RecentFiles.Count);
+            Assert.Equal("C:\\file1.rtf", svc.RecentFiles[0]);
+        }
+
+        [Fact]
+        public void SettingsService_AddRecentFile_CapsAt10()
+        {
+            var svc = new SettingsService();
+            svc.ClearRecentFiles();
+            for (int i = 0; i < 15; i++)
+                svc.AddRecentFile($"C:\\file{i}.rtf");
+            Assert.Equal(10, svc.RecentFiles.Count);
+            Assert.Equal("C:\\file14.rtf", svc.RecentFiles[0]);
+        }
+
+        [Fact]
+        public void SettingsService_AddRecentFile_IgnoresNullOrWhitespace()
+        {
+            var svc = new SettingsService();
+            svc.ClearRecentFiles();
+            svc.AddRecentFile(null!);
+            svc.AddRecentFile("");
+            svc.AddRecentFile("  ");
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void SettingsService_ClearRecentFiles()
+        {
+            var svc = new SettingsService();
+            svc.AddRecentFile("C:\\file1.rtf");
+            svc.AddRecentFile("C:\\file2.rtf");
+            svc.ClearRecentFiles();
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void SettingsService_SetAndGetProperties()
+        {
+            var svc = new SettingsService();
+            svc.DefaultFontFamily = "Arial";
+            svc.DefaultFontSize = 14.0;
+            svc.DefaultWordWrap = false;
+            svc.DefaultSaveFormat = ".txt";
+            svc.ThemePreference = "Dark";
+            svc.AutoSaveEnabled = true;
+            svc.AutoSaveIntervalSeconds = 60;
+
+            Assert.Equal("Arial", svc.DefaultFontFamily);
+            Assert.Equal(14.0, svc.DefaultFontSize);
+            Assert.False(svc.DefaultWordWrap);
+            Assert.Equal(".txt", svc.DefaultSaveFormat);
+            Assert.Equal("Dark", svc.ThemePreference);
+            Assert.True(svc.AutoSaveEnabled);
+            Assert.Equal(60, svc.AutoSaveIntervalSeconds);
         }
     }
 }
