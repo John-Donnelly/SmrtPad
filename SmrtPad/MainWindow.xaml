@@ -72,6 +72,8 @@
                         <MenuFlyoutItem Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click" />
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
+                        <MenuFlyoutSeparator />
+                        <ToggleMenuFlyoutItem x:Name="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click" />
                     </MenuBarItem>
                 </MenuBar>
                 <!-- Quick-access separator -->
@@ -100,7 +102,7 @@
         </Grid>
 
         <!-- ═══ RIBBON ═══ -->
-        <Border Grid.Row="1"
+        <Border x:Name="RibbonBar" Grid.Row="1"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                 BorderThickness="0,0,0,1"
@@ -425,6 +427,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <!-- Picture with dropdown -->
                         <Button Grid.Column="0" Click="InsertPicture_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
@@ -478,6 +481,15 @@
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE80A;" FontSize="22"/>
                                 <TextBlock Text="Table" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Insert Symbol -->
+                        <Button Grid.Column="6" Click="InsertSymbol_Click" Width="44" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Symbol"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE710;" FontSize="22"/>
+                                <TextBlock Text="Symbol" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -563,7 +575,7 @@
         </Grid>
 
         <!-- ═══ STATUS BAR ═══ -->
-        <Grid Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
+        <Grid x:Name="StatusBar" Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

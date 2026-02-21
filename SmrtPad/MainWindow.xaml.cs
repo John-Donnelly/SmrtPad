@@ -1127,6 +1127,17 @@ namespace SmrtPad
             }
         }
 
+        private void FocusMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleMenuFlyoutItem toggleItem)
+            {
+                var visibility = toggleItem.IsChecked ? Visibility.Collapsed : Visibility.Visible;
+                RibbonBar.Visibility = visibility;
+                StatusBar.Visibility = visibility;
+                ViewModel.UpdateStatus(toggleItem.IsChecked ? "Focus mode enabled." : "Focus mode disabled.");
+            }
+        }
+
         private void GrowFont_Click(object sender, RoutedEventArgs e)
         {
             ITextSelection selection = Editor.Document.Selection;
@@ -1468,6 +1479,46 @@ namespace SmrtPad
 
                 Editor.Document.Selection.SetText(TextSetOptions.FormatRtf, rtf.ToString());
                 ViewModel.UpdateStatus($"Inserted {rows}×{cols} table.");
+            }
+        }
+
+        private async void InsertSymbol_Click(object sender, RoutedEventArgs e)
+        {
+            var symbols = new[]
+            {
+                "©", "®", "™", "°", "±", "µ", "¶", "·", "÷", "×",
+                "€", "£", "¥", "¢", "§", "†", "‡", "•", "…", "‰",
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "¼", "½", "¾", "?", "?", "—", "–", "«", "»", "¿",
+            };
+
+            var grid = new GridView
+            {
+                ItemsSource = symbols,
+                SelectionMode = ListViewSelectionMode.Single,
+                MaxHeight = 280,
+                IsItemClickEnabled = true,
+            };
+
+            string? selectedSymbol = null;
+            grid.ItemClick += (s, args) => { selectedSymbol = args.ClickedItem as string; };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Insert Symbol",
+                Content = grid,
+                PrimaryButtonText = "Insert",
+                CloseButtonText = "Cancel",
+                XamlRoot = Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && selectedSymbol != null)
+            {
+                Editor.Document.Selection.Text = selectedSymbol;
+                ViewModel.UpdateStatus($"Inserted symbol: {selectedSymbol}");
             }
         }
 
