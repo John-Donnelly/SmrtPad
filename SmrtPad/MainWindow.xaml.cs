@@ -62,6 +62,9 @@ namespace SmrtPad
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
             FileBackstage.SaveRequested += (s, e) => { HideBackstage(); Save_Click(this, new RoutedEventArgs()); };
+            FileBackstage.SaveAsRequested += (s, e) => { HideBackstage(); SaveAs_Click(this, new RoutedEventArgs()); };
+            FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
+            FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += (s, e) => { Close(); };
         }
 
@@ -194,6 +197,60 @@ namespace SmrtPad
                 }
                 ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
             }
+        }
+
+        private async void SaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileSavePicker();
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            picker.FileTypeChoices.Add("Rich Text Format", new List<string>() { ".rtf" });
+            picker.FileTypeChoices.Add("Text Document", new List<string>() { ".txt" });
+            picker.SuggestedFileName = _currentFile?.DisplayName ?? "Document";
+
+            StorageFile file = await picker.PickSaveFileAsync();
+            if (file != null)
+            {
+                CachedFileManager.DeferUpdates(file);
+                using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                        ? TextGetOptions.None
+                        : TextGetOptions.FormatRtf;
+                    Editor.Document.SaveToStream(options, randAccStream);
+                }
+                FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                if (status == FileUpdateStatus.Complete)
+                {
+                    _currentFile = file;
+                    ViewModel.DocumentTitle = file.Name;
+                    ViewModel.UpdateStatus($"Saved {file.Name}");
+                }
+            }
+        }
+
+        private async void Print_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Print",
+                Content = "Printing is not yet implemented. This feature will be available in a future update.",
+                CloseButtonText = "OK",
+                XamlRoot = Content.XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+
+        private async void Options_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Options",
+                Content = "Options are not yet implemented. This feature will be available in a future update.",
+                CloseButtonText = "OK",
+                XamlRoot = Content.XamlRoot
+            };
+            await dialog.ShowAsync();
         }
 
         private void Cut_Click(object sender, RoutedEventArgs e)
