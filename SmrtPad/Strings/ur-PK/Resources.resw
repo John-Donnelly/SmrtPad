@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>توجہ موڈ</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>رولر</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>صفحہ منظر</value>
+  </data>
 
   <!-- ═══ ربن — کلپ بورڈ ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

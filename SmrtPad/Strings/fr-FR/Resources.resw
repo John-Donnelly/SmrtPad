@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>Mode concentration</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>Règle</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>Aperçu de page</value>
+  </data>
 
   <!-- ═══ RUBAN — PRESSE-PAPIERS ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

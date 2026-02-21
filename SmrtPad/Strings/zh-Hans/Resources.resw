@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>专注模式</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>标尺</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>页面视图</value>
+  </data>
 
   <!-- ═══ 功能区 — 剪贴板 ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

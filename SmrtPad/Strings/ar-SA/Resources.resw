@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>وضع التركيز</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>المسطرة</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>عرض الصفحة</value>
+  </data>
 
   <!-- ═══ الشريط — الحافظة ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

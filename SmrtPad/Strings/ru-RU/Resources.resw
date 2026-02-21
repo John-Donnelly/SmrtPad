@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>Режим фокусировки</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>Линейка</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>Режим страницы</value>
+  </data>
 
   <!-- ═══ ЛЕНТА — БУФЕР ОБМЕНА ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

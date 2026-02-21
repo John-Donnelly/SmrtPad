@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>集中モード</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>ルーラー</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>ページビュー</value>
+  </data>
 
   <!-- ═══ リボン — クリップボード ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

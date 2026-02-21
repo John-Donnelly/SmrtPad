@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>Modo enfoque</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>Regla</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>Vista de página</value>
+  </data>
 
   <!-- ═══ CINTA — PORTAPAPELES ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

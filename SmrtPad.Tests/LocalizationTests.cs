@@ -118,6 +118,8 @@ namespace SmrtPad.Tests
         [InlineData("OpenNavItem.Content")]
         [InlineData("SaveNavItem.Content")]
         [InlineData("ExitNavItem.Content")]
+        [InlineData("RulerToggle.Text")]
+        [InlineData("PageViewToggle.Text")]
         public void ReswFile_ContainsXamlUidEntries(string key)
         {
             var dict = LoadResw();

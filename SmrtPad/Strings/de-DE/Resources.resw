@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>Fokusmodus</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>Lineal</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>Seitenansicht</value>
+  </data>
 
   <!-- ═══ MENÜBAND — ZWISCHENABLAGE ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">

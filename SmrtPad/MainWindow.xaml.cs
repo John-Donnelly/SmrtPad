@@ -1332,6 +1332,102 @@ namespace SmrtPad
             }
         }
 
+        private void Ruler_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleMenuFlyoutItem toggleItem)
+            {
+                RulerBorder.Visibility = toggleItem.IsChecked ? Visibility.Visible : Visibility.Collapsed;
+                if (toggleItem.IsChecked)
+                    DrawRuler();
+                string state = toggleItem.IsChecked ? Res.GetString("StatusEnabled") : Res.GetString("StatusDisabled");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusRulerToggled", state));
+            }
+        }
+
+        private void DrawRuler()
+        {
+            RulerCanvas.Children.Clear();
+            double width = RulerCanvas.ActualWidth > 0 ? RulerCanvas.ActualWidth : 800;
+            double dpi = 96.0;
+            double pixelsPerInch = dpi;
+
+            for (int i = 0; i <= (int)(width / pixelsPerInch) + 1; i++)
+            {
+                double x = i * pixelsPerInch;
+                if (x > width) break;
+
+                // Major tick (inch)
+                var majorTick = new Microsoft.UI.Xaml.Shapes.Line
+                {
+                    X1 = x, Y1 = 14, X2 = x, Y2 = 24,
+                    Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray),
+                    StrokeThickness = 1
+                };
+                RulerCanvas.Children.Add(majorTick);
+
+                // Inch label
+                var label = new TextBlock
+                {
+                    Text = i.ToString(),
+                    FontSize = 9,
+                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
+                };
+                Canvas.SetLeft(label, x + 2);
+                Canvas.SetTop(label, 1);
+                RulerCanvas.Children.Add(label);
+
+                // Half-inch tick
+                double halfX = x + pixelsPerInch / 2;
+                if (halfX < width)
+                {
+                    var halfTick = new Microsoft.UI.Xaml.Shapes.Line
+                    {
+                        X1 = halfX, Y1 = 18, X2 = halfX, Y2 = 24,
+                        Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray),
+                        StrokeThickness = 1
+                    };
+                    RulerCanvas.Children.Add(halfTick);
+                }
+
+                // Quarter-inch ticks
+                for (int q = 1; q <= 3; q += 2)
+                {
+                    double qx = x + q * pixelsPerInch / 4;
+                    if (qx < width)
+                    {
+                        var qTick = new Microsoft.UI.Xaml.Shapes.Line
+                        {
+                            X1 = qx, Y1 = 20, X2 = qx, Y2 = 24,
+                            Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray),
+                            StrokeThickness = 0.5
+                        };
+                        RulerCanvas.Children.Add(qTick);
+                    }
+                }
+            }
+        }
+
+        private void PageView_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleMenuFlyoutItem toggleItem)
+            {
+                if (toggleItem.IsChecked)
+                {
+                    PageViewBorder.Visibility = Visibility.Visible;
+                    Editor.HorizontalAlignment = HorizontalAlignment.Center;
+                    Editor.MaxWidth = 720;
+                }
+                else
+                {
+                    PageViewBorder.Visibility = Visibility.Collapsed;
+                    Editor.HorizontalAlignment = HorizontalAlignment.Stretch;
+                    Editor.MaxWidth = double.PositiveInfinity;
+                }
+                string state = toggleItem.IsChecked ? Res.GetString("StatusEnabled") : Res.GetString("StatusDisabled");
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusPageViewToggled", state));
+            }
+        }
+
         private void GrowFont_Click(object sender, RoutedEventArgs e)
         {
             ITextSelection selection = Editor.Document.Selection;

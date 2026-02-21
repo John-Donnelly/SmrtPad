@@ -78,6 +78,12 @@
   <data name="FocusModeToggle.Text" xml:space="preserve">
     <value>Focus Mode</value>
   </data>
+  <data name="RulerToggle.Text" xml:space="preserve">
+    <value>Ruler</value>
+  </data>
+  <data name="PageViewToggle.Text" xml:space="preserve">
+    <value>Page View</value>
+  </data>
 
   <!-- ═══ RIBBON — CLIPBOARD ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
