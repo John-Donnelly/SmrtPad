@@ -5,15 +5,20 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml.Printing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Graphics.Printing;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Provider;
@@ -42,6 +47,9 @@ namespace SmrtPad
         private readonly IDialogService _dialogService;
         private readonly IFileService _fileService;
         private DispatcherTimer? _autoSaveTimer;
+        private PrintDocument? _printDocument;
+        private IPrintDocumentSource? _printDocumentSource;
+        private readonly List<UIElement> _printPreviewPages = new();
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
 
         public MainWindow()
@@ -83,6 +91,8 @@ namespace SmrtPad
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
+
+            RegisterForPrinting();
         }
 
         public async Task OpenFileByPathAsync(string filePath)
@@ -91,7 +101,44 @@ namespace SmrtPad
             {
                 if (!await PromptSaveChangesAsync()) return;
                 var file = await StorageFile.GetFileFromPathAsync(filePath);
-                bool isTxt = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase);
+                await OpenStorageFileAsync(file);
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorOpeningFile"), ex.Message);
+            }
+        }
+
+        private async Task OpenStorageFileAsync(StorageFile file)
+        {
+            string ext = file.FileType.ToLowerInvariant();
+            if (ext is ".docx" or ".odt")
+            {
+                string text = await ExtractTextFromArchiveAsync(file, ext);
+                Editor.Document.SetText(TextSetOptions.None, text);
+                _currentFile = null;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
+                _settings.AddRecentFile(file.Path);
+                UpdateStatusBarCounts();
+                UpdateEncoding("UTF-8");
+            }
+            else if (ext is ".htm" or ".html")
+            {
+                string html = await FileIO.ReadTextAsync(file);
+                Editor.Document.SetText(TextSetOptions.None, html);
+                _currentFile = null;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
+                _settings.AddRecentFile(file.Path);
+                UpdateStatusBarCounts();
+                UpdateEncoding("UTF-8");
+            }
+            else
+            {
+                bool isTxt = ext == ".txt";
                 using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
                 {
                     var options = isTxt ? TextSetOptions.None : TextSetOptions.FormatRtf;
@@ -105,10 +152,29 @@ namespace SmrtPad
                 UpdateStatusBarCounts();
                 UpdateEncoding(isTxt ? "UTF-8" : "RTF");
             }
-            catch (Exception ex)
-            {
-                await ShowErrorDialogAsync(Res.GetString("ErrorOpeningFile"), ex.Message);
-            }
+        }
+
+        private static async Task<string> ExtractTextFromArchiveAsync(StorageFile file, string ext)
+        {
+            using var stream = await file.OpenStreamForReadAsync();
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+
+            string entryPath = ext == ".docx" ? "word/document.xml" : "content.xml";
+            var entry = archive.GetEntry(entryPath);
+            if (entry == null)
+                return string.Empty;
+
+            using var entryStream = entry.Open();
+            var doc = XDocument.Load(entryStream);
+
+            var texts = doc.Descendants()
+                .Where(el => el.Name.LocalName == (ext == ".docx" ? "t" : "p"))
+                .Select(el => ext == ".docx" ? el.Value : el.Value);
+
+            return ext == ".docx"
+                ? string.Join("", texts)
+                    .Replace("\n", Environment.NewLine)
+                : string.Join(Environment.NewLine, texts);
         }
 
         private void ApplySettings()
@@ -420,23 +486,15 @@ namespace SmrtPad
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeFilter.Add(".rtf");
                 picker.FileTypeFilter.Add(".txt");
+                picker.FileTypeFilter.Add(".docx");
+                picker.FileTypeFilter.Add(".htm");
+                picker.FileTypeFilter.Add(".html");
+                picker.FileTypeFilter.Add(".odt");
 
                 StorageFile file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {
-                    bool isTxt = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase);
-                    using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
-                    {
-                        var options = isTxt ? TextSetOptions.None : TextSetOptions.FormatRtf;
-                        Editor.Document.LoadFromStream(options, randAccStream);
-                    }
-                    _currentFile = file;
-                    ViewModel.DocumentTitle = file.Name;
-                    ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
-                    _settings.AddRecentFile(file.Path);
-                    UpdateStatusBarCounts();
-                    UpdateEncoding(isTxt ? "UTF-8" : "RTF");
+                    await OpenStorageFileAsync(file);
                 }
             }
             catch (Exception ex)
@@ -534,47 +592,129 @@ namespace SmrtPad
 
         private async void Print_Click(object sender, RoutedEventArgs e)
         {
+            if (!PrintManager.IsSupported())
+            {
+                await ShowErrorDialogAsync(Res.GetString("PrintNotSupported"), Res.GetString("PrintNotSupportedMessage"));
+                return;
+            }
+
+            Editor.Document.GetText(TextGetOptions.None, out string plainText);
+            if (string.IsNullOrWhiteSpace(plainText.TrimEnd('\r')))
+            {
+                await ShowErrorDialogAsync(Res.GetString("PrintTitle"), Res.GetString("PrintNoContent"));
+                return;
+            }
+
             try
             {
-                Editor.Document.GetText(TextGetOptions.FormatRtf, out string rtfContent);
-                Editor.Document.GetText(TextGetOptions.None, out string plainText);
-
-                if (string.IsNullOrWhiteSpace(plainText.TrimEnd('\r')))
-                {
-                    await ShowErrorDialogAsync(Res.GetString("PrintTitle"), Res.GetString("PrintNoContent"));
-                    return;
-                }
-
-                var printDialog = new ContentDialog
-                {
-                    Title = Res.GetString("PrintDocumentTitle"),
-                    Content = new StackPanel
-                    {
-                        Spacing = 12,
-                        Children =
-                        {
-                            new TextBlock { Text = Res.GetFormatted("PrintDocumentLabel", ViewModel.DocumentTitle), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
-                            new TextBlock { Text = Res.GetFormatted("PrintPagesLabel", Math.Max(1, plainText.Split('\r').Length / 50 + 1)), Opacity = 0.7 },
-                            new TextBlock { Text = Res.GetString("PrintSendToDefault"), TextWrapping = TextWrapping.Wrap }
-                        }
-                    },
-                    PrimaryButtonText = Res.GetString("ButtonPrint"),
-                    CloseButtonText = Res.GetString("ButtonCancel"),
-                    XamlRoot = Content.XamlRoot
-                };
-
-                var result = await printDialog.ShowAsync();
-                if (result == ContentDialogResult.Primary)
-                {
-                    ViewModel.UpdateStatus(Res.GetString("StatusPrinting"));
-                    await Task.Delay(500);
-                    ViewModel.UpdateStatus(Res.GetFormatted("StatusSentToPrinter", ViewModel.DocumentTitle));
-                }
+                ViewModel.UpdateStatus(Res.GetString("StatusPrinting"));
+                var hWnd = WindowNative.GetWindowHandle(this);
+                await PrintManagerInterop.ShowPrintUIForWindowAsync(hWnd);
             }
             catch (Exception ex)
             {
                 await ShowErrorDialogAsync(Res.GetString("ErrorPrint"), ex.Message);
             }
+        }
+
+        private void RegisterForPrinting()
+        {
+            _printDocument = new PrintDocument();
+            _printDocumentSource = _printDocument.DocumentSource;
+            _printDocument.Paginate += PrintDocument_Paginate;
+            _printDocument.GetPreviewPage += PrintDocument_GetPreviewPage;
+            _printDocument.AddPages += PrintDocument_AddPages;
+
+            var hWnd = WindowNative.GetWindowHandle(this);
+            PrintManager printManager = PrintManagerInterop.GetForWindow(hWnd);
+            printManager.PrintTaskRequested += PrintTask_Requested;
+        }
+
+        private void PrintTask_Requested(PrintManager sender, PrintTaskRequestedEventArgs args)
+        {
+            PrintTask printTask = args.Request.CreatePrintTask(
+                Res.GetFormatted("PrintJobTitle", ViewModel.DocumentTitle),
+                PrintTaskSourceRequested);
+
+            printTask.Completed += PrintTask_Completed;
+        }
+
+        private void PrintTaskSourceRequested(PrintTaskSourceRequestedArgs args)
+        {
+            args.SetSource(_printDocumentSource);
+        }
+
+        private void PrintTask_Completed(PrintTask sender, PrintTaskCompletedEventArgs args)
+        {
+            string status = args.Completion switch
+            {
+                PrintTaskCompletion.Failed => Res.GetString("StatusPrintFailed"),
+                PrintTaskCompletion.Canceled => Res.GetString("StatusPrintCancelled"),
+                _ => Res.GetString("StatusPrintCompleted")
+            };
+
+            DispatcherQueue.TryEnqueue(() => ViewModel.UpdateStatus(status));
+        }
+
+        private void PrintDocument_Paginate(object sender, PaginateEventArgs e)
+        {
+            _printPreviewPages.Clear();
+
+            PrintTaskOptions options = (PrintTaskOptions)e.PrintTaskOptions;
+            PrintPageDescription pageDesc = options.GetPageDescription(0);
+            double pageWidth = pageDesc.PageSize.Width;
+            double pageHeight = pageDesc.PageSize.Height;
+            double margin = 48;
+
+            Editor.Document.GetText(TextGetOptions.None, out string fullText);
+            string[] lines = fullText.TrimEnd('\r').Split('\r');
+
+            int linesPerPage = Math.Max(1, (int)((pageHeight - margin * 2) / 18));
+            int totalPages = Math.Max(1, (int)Math.Ceiling((double)lines.Length / linesPerPage));
+
+            for (int page = 0; page < totalPages; page++)
+            {
+                var pagePanel = new StackPanel
+                {
+                    Width = pageWidth,
+                    Height = pageHeight,
+                    Padding = new Thickness(margin)
+                };
+
+                int startLine = page * linesPerPage;
+                int endLine = Math.Min(startLine + linesPerPage, lines.Length);
+                string pageText = string.Join(Environment.NewLine, lines[startLine..endLine]);
+
+                pagePanel.Children.Add(new TextBlock
+                {
+                    Text = pageText,
+                    FontFamily = new FontFamily(ViewModel.FontFamily),
+                    FontSize = ViewModel.FontSize,
+                    TextWrapping = TextWrapping.Wrap,
+                    Width = pageWidth - margin * 2
+                });
+
+                _printPreviewPages.Add(pagePanel);
+            }
+
+            PrintDocument printDoc = (PrintDocument)sender;
+            printDoc.SetPreviewPageCount(_printPreviewPages.Count, PreviewPageCountType.Final);
+        }
+
+        private void PrintDocument_GetPreviewPage(object sender, GetPreviewPageEventArgs e)
+        {
+            PrintDocument printDoc = (PrintDocument)sender;
+            printDoc.SetPreviewPage(e.PageNumber, _printPreviewPages[e.PageNumber - 1]);
+        }
+
+        private void PrintDocument_AddPages(object sender, AddPagesEventArgs e)
+        {
+            PrintDocument printDoc = (PrintDocument)sender;
+            foreach (var page in _printPreviewPages)
+            {
+                printDoc.AddPage(page);
+            }
+            printDoc.AddPagesComplete();
         }
 
         private async void Options_Click(object sender, RoutedEventArgs e)
@@ -1563,7 +1703,7 @@ namespace SmrtPad
                 if (items.Count > 0 && items[0] is StorageFile file)
                 {
                     string ext = file.FileType.ToLowerInvariant();
-                    if (ext is ".rtf" or ".txt")
+                    if (ext is ".rtf" or ".txt" or ".docx" or ".htm" or ".html" or ".odt")
                     {
                         await OpenFileByPathAsync(file.Path);
                     }

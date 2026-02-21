@@ -488,6 +488,37 @@
     <value>النسق: {0}</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: الطباعة (حقيقية) ═══ -->
+  <data name="PrintJobTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="PrintNotSupported" xml:space="preserve">
+    <value>الطباعة غير مدعومة</value>
+  </data>
+  <data name="PrintNotSupportedMessage" xml:space="preserve">
+    <value>الطباعة غير مدعومة على هذا الجهاز.</value>
+  </data>
+  <data name="StatusPrintCompleted" xml:space="preserve">
+    <value>اكتملت مهمة الطباعة.</value>
+  </data>
+  <data name="StatusPrintFailed" xml:space="preserve">
+    <value>فشلت مهمة الطباعة.</value>
+  </data>
+  <data name="StatusPrintCancelled" xml:space="preserve">
+    <value>تم إلغاء الطباعة.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: استيراد تنسيقات الملفات ═══ -->
+  <data name="FileTypeDocx" xml:space="preserve">
+    <value>مستند Word</value>
+  </data>
+  <data name="FileTypeHtml" xml:space="preserve">
+    <value>مستند HTML</value>
+  </data>
+  <data name="FileTypeOdt" xml:space="preserve">
+    <value>نص OpenDocument</value>
+  </data>
+
   <!-- ═══ CODE-BEHIND: اللصق / الأخطاء ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>خطأ في اللصق</value>

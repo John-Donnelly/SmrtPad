@@ -488,6 +488,37 @@
     <value>テーマ: {0}</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: 印刷 (実装) ═══ -->
+  <data name="PrintJobTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="PrintNotSupported" xml:space="preserve">
+    <value>印刷はサポートされていません</value>
+  </data>
+  <data name="PrintNotSupportedMessage" xml:space="preserve">
+    <value>このデバイスでは印刷がサポートされていません。</value>
+  </data>
+  <data name="StatusPrintCompleted" xml:space="preserve">
+    <value>印刷ジョブが完了しました。</value>
+  </data>
+  <data name="StatusPrintFailed" xml:space="preserve">
+    <value>印刷ジョブが失敗しました。</value>
+  </data>
+  <data name="StatusPrintCancelled" xml:space="preserve">
+    <value>印刷がキャンセルされました。</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ファイル形式インポート ═══ -->
+  <data name="FileTypeDocx" xml:space="preserve">
+    <value>Word 文書</value>
+  </data>
+  <data name="FileTypeHtml" xml:space="preserve">
+    <value>HTML 文書</value>
+  </data>
+  <data name="FileTypeOdt" xml:space="preserve">
+    <value>OpenDocument テキスト</value>
+  </data>
+
   <!-- ═══ CODE-BEHIND: 貼り付け / エラー ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>貼り付けエラー</value>

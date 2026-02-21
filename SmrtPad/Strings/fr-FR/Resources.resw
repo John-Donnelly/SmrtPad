@@ -488,6 +488,37 @@
     <value>Thème : {0}</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND : Impression (réelle) ═══ -->
+  <data name="PrintJobTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="PrintNotSupported" xml:space="preserve">
+    <value>Impression non prise en charge</value>
+  </data>
+  <data name="PrintNotSupportedMessage" xml:space="preserve">
+    <value>L'impression n'est pas prise en charge sur cet appareil.</value>
+  </data>
+  <data name="StatusPrintCompleted" xml:space="preserve">
+    <value>Impression terminée.</value>
+  </data>
+  <data name="StatusPrintFailed" xml:space="preserve">
+    <value>Échec de l'impression.</value>
+  </data>
+  <data name="StatusPrintCancelled" xml:space="preserve">
+    <value>Impression annulée.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND : Import de formats ═══ -->
+  <data name="FileTypeDocx" xml:space="preserve">
+    <value>Document Word</value>
+  </data>
+  <data name="FileTypeHtml" xml:space="preserve">
+    <value>Document HTML</value>
+  </data>
+  <data name="FileTypeOdt" xml:space="preserve">
+    <value>Texte OpenDocument</value>
+  </data>
+
   <!-- ═══ CODE-BEHIND : Coller / Erreur ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>Erreur de collage</value>

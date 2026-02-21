@@ -488,6 +488,37 @@
     <value>Тема: {0}</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: Печать (реальная) ═══ -->
+  <data name="PrintJobTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="PrintNotSupported" xml:space="preserve">
+    <value>Печать не поддерживается</value>
+  </data>
+  <data name="PrintNotSupportedMessage" xml:space="preserve">
+    <value>Печать не поддерживается на этом устройстве.</value>
+  </data>
+  <data name="StatusPrintCompleted" xml:space="preserve">
+    <value>Задание печати выполнено.</value>
+  </data>
+  <data name="StatusPrintFailed" xml:space="preserve">
+    <value>Задание печати не выполнено.</value>
+  </data>
+  <data name="StatusPrintCancelled" xml:space="preserve">
+    <value>Печать отменена.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Импорт форматов ═══ -->
+  <data name="FileTypeDocx" xml:space="preserve">
+    <value>Документ Word</value>
+  </data>
+  <data name="FileTypeHtml" xml:space="preserve">
+    <value>Документ HTML</value>
+  </data>
+  <data name="FileTypeOdt" xml:space="preserve">
+    <value>Текст OpenDocument</value>
+  </data>
+
   <!-- ═══ CODE-BEHIND: Вставка / Ошибки ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>Ошибка вставки</value>

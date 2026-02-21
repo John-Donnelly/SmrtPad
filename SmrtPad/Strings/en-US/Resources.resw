@@ -504,6 +504,38 @@
     <comment>{0} = theme name</comment>
   </data>
 
+  <!-- ═══ CODE-BEHIND: Print (real) ═══ -->
+  <data name="PrintJobTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+    <comment>{0} = document title</comment>
+  </data>
+  <data name="PrintNotSupported" xml:space="preserve">
+    <value>Printing Not Supported</value>
+  </data>
+  <data name="PrintNotSupportedMessage" xml:space="preserve">
+    <value>Printing is not supported on this device.</value>
+  </data>
+  <data name="StatusPrintCompleted" xml:space="preserve">
+    <value>Print job completed.</value>
+  </data>
+  <data name="StatusPrintFailed" xml:space="preserve">
+    <value>Print job failed.</value>
+  </data>
+  <data name="StatusPrintCancelled" xml:space="preserve">
+    <value>Printing cancelled.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: File format import ═══ -->
+  <data name="FileTypeDocx" xml:space="preserve">
+    <value>Word Document</value>
+  </data>
+  <data name="FileTypeHtml" xml:space="preserve">
+    <value>HTML Document</value>
+  </data>
+  <data name="FileTypeOdt" xml:space="preserve">
+    <value>OpenDocument Text</value>
+  </data>
+
   <!-- ═══ CODE-BEHIND: Paste / Error ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>Paste Error</value>

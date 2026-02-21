@@ -488,6 +488,37 @@
     <value>تھیم: {0}</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: پرنٹ (حقیقی) ═══ -->
+  <data name="PrintJobTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="PrintNotSupported" xml:space="preserve">
+    <value>پرنٹ تعاون یافتہ نہیں</value>
+  </data>
+  <data name="PrintNotSupportedMessage" xml:space="preserve">
+    <value>اس آلے پر پرنٹ تعاون یافتہ نہیں ہے۔</value>
+  </data>
+  <data name="StatusPrintCompleted" xml:space="preserve">
+    <value>پرنٹ کا کام مکمل ہو گیا۔</value>
+  </data>
+  <data name="StatusPrintFailed" xml:space="preserve">
+    <value>پرنٹ کا کام ناکام ہو گیا۔</value>
+  </data>
+  <data name="StatusPrintCancelled" xml:space="preserve">
+    <value>پرنٹ منسوخ ہو گیا۔</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: فائل فارمیٹ درآمد ═══ -->
+  <data name="FileTypeDocx" xml:space="preserve">
+    <value>ورڈ دستاویز</value>
+  </data>
+  <data name="FileTypeHtml" xml:space="preserve">
+    <value>HTML دستاویز</value>
+  </data>
+  <data name="FileTypeOdt" xml:space="preserve">
+    <value>اوپن ڈاکومنٹ ٹیکسٹ</value>
+  </data>
+
   <!-- ═══ CODE-BEHIND: چسپاں / خرابی ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>چسپاں میں خرابی</value>
