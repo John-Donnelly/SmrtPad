@@ -423,10 +423,32 @@
                                 <TextBlock Text="Object" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <!-- Date and Time -->
-                        <Button Grid.Column="3" Click="InsertDateTime_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
+                        <!-- Date and Time with format picker -->
+                        <Button Grid.Column="3" Width="52" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Date and Time"
                                 VerticalAlignment="Top">
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="g">
+                                        <MenuFlyoutItem.Text>Short: 7/14/2025 2:30 PM</MenuFlyoutItem.Text>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="D">
+                                        <MenuFlyoutItem.Text>Long date: Monday, July 14, 2025</MenuFlyoutItem.Text>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="d">
+                                        <MenuFlyoutItem.Text>Short date: 7/14/2025</MenuFlyoutItem.Text>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="t">
+                                        <MenuFlyoutItem.Text>Short time: 2:30 PM</MenuFlyoutItem.Text>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="T">
+                                        <MenuFlyoutItem.Text>Long time: 2:30:45 PM</MenuFlyoutItem.Text>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="s">
+                                        <MenuFlyoutItem.Text>ISO 8601: 2025-07-14T14:30:45</MenuFlyoutItem.Text>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Button.Flyout>
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE787;" FontSize="22"/>
                                 <TextBlock Text="Date/Time" FontSize="9" HorizontalAlignment="Center"/>
@@ -519,6 +541,8 @@
         <Grid Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
             <StackPanel Orientation="Horizontal" Spacing="16">
                 <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock x:Name="WordCountText" Text="Words: 0" VerticalAlignment="Center" FontSize="11"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
                            HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </StackPanel>

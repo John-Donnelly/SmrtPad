@@ -58,7 +58,11 @@ namespace SmrtPad
             InitializeFonts();
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
-            Editor.TextChanged += (s, e) => { ViewModel.IsModified = true; };
+            Editor.TextChanged += (s, e) =>
+            {
+                ViewModel.IsModified = true;
+                UpdateWordCount();
+            };
             Editor.SelectionChanged += Editor_SelectionChanged;
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
@@ -68,6 +72,27 @@ namespace SmrtPad
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
+        }
+
+        private async Task ShowErrorDialogAsync(string title, string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = Content.XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+
+        private void UpdateWordCount()
+        {
+            Editor.Document.GetText(TextGetOptions.None, out string text);
+            int wordCount = string.IsNullOrWhiteSpace(text)
+                ? 0
+                : text.Trim().Split(new char[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            WordCountText.Text = $"Words: {wordCount}";
         }
 
         // Image hosting now uses native RichEdit OLE objects.
@@ -234,17 +259,24 @@ namespace SmrtPad
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
-                using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+                try
                 {
-                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                        ? TextSetOptions.None
-                        : TextSetOptions.FormatRtf;
-                    Editor.Document.LoadFromStream(options, randAccStream);
+                    using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+                    {
+                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                            ? TextSetOptions.None
+                            : TextSetOptions.FormatRtf;
+                        Editor.Document.LoadFromStream(options, randAccStream);
+                    }
+                    _currentFile = file;
+                    ViewModel.DocumentTitle = file.Name;
+                    ViewModel.IsModified = false;
+                    ViewModel.UpdateStatus($"Opened {file.Name}");
                 }
-                _currentFile = file;
-                ViewModel.DocumentTitle = file.Name;
-                ViewModel.IsModified = false;
-                ViewModel.UpdateStatus($"Opened {file.Name}");
+                catch (Exception ex)
+                {
+                    await ShowErrorDialogAsync("Open Failed", $"Could not open '{file.Name}': {ex.Message}");
+                }
             }
         }
 
@@ -262,29 +294,43 @@ namespace SmrtPad
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
                 {
-                    CachedFileManager.DeferUpdates(file);
-                    using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                    try
                     {
-                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                        CachedFileManager.DeferUpdates(file);
+                        using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                        {
+                            Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                        }
+                        FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                        if (status == FileUpdateStatus.Complete)
+                        {
+                            _currentFile = file;
+                            ViewModel.DocumentTitle = file.Name;
+                            ViewModel.IsModified = false;
+                            ViewModel.UpdateStatus($"Saved {file.Name}");
+                        }
                     }
-                    FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                    if (status == FileUpdateStatus.Complete)
+                    catch (Exception ex)
                     {
-                        _currentFile = file;
-                        ViewModel.DocumentTitle = file.Name;
-                        ViewModel.IsModified = false;
-                        ViewModel.UpdateStatus($"Saved {file.Name}");
+                        await ShowErrorDialogAsync("Save Failed", $"Could not save '{file.Name}': {ex.Message}");
                     }
                 }
             }
             else
             {
-                using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
+                try
                 {
-                    Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                    using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
+                    {
+                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                    }
+                    ViewModel.IsModified = false;
+                    ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
                 }
-                ViewModel.IsModified = false;
-                ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
+                catch (Exception ex)
+                {
+                    await ShowErrorDialogAsync("Save Failed", $"Could not save '{_currentFile.Name}': {ex.Message}");
+                }
             }
         }
 
@@ -300,21 +346,28 @@ namespace SmrtPad
             StorageFile file = await picker.PickSaveFileAsync();
             if (file != null)
             {
-                CachedFileManager.DeferUpdates(file);
-                using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                try
                 {
-                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                        ? TextGetOptions.None
-                        : TextGetOptions.FormatRtf;
-                    Editor.Document.SaveToStream(options, randAccStream);
+                    CachedFileManager.DeferUpdates(file);
+                    using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                    {
+                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                            ? TextGetOptions.None
+                            : TextGetOptions.FormatRtf;
+                        Editor.Document.SaveToStream(options, randAccStream);
+                    }
+                    FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                    if (status == FileUpdateStatus.Complete)
+                    {
+                        _currentFile = file;
+                        ViewModel.DocumentTitle = file.Name;
+                        ViewModel.IsModified = false;
+                        ViewModel.UpdateStatus($"Saved {file.Name}");
+                    }
                 }
-                FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                if (status == FileUpdateStatus.Complete)
+                catch (Exception ex)
                 {
-                    _currentFile = file;
-                    ViewModel.DocumentTitle = file.Name;
-                    ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus($"Saved {file.Name}");
+                    await ShowErrorDialogAsync("Save As Failed", $"Could not save '{file.Name}': {ex.Message}");
                 }
             }
         }
@@ -720,7 +773,10 @@ namespace SmrtPad
 
         private void InsertDateTime_Click(object sender, RoutedEventArgs e)
         {
-            Editor.Document.Selection.Text = DateTime.Now.ToString("g");
+            string format = "g";
+            if (sender is MenuFlyoutItem item && item.Tag is string tag)
+                format = tag;
+            Editor.Document.Selection.Text = DateTime.Now.ToString(format);
         }
 
         private FindOptions GetFindOptions()
