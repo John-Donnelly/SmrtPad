@@ -87,6 +87,12 @@ namespace SmrtPad.ViewModels
         [ObservableProperty]
         private List<string> _recentFiles = new();
 
+        [ObservableProperty]
+        private int _selectionLength;
+
+        [ObservableProperty]
+        private string _encoding = "UTF-8";
+
         public EditorViewModel()
         {
         }
@@ -119,6 +125,8 @@ namespace SmrtPad.ViewModels
             ParagraphSpacingAfter = 0;
             FindMatchCase = false;
             FindWholeWord = false;
+            SelectionLength = 0;
+            Encoding = "UTF-8";
         }
 
         [RelayCommand]

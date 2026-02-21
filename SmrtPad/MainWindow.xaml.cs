@@ -88,11 +88,10 @@ namespace SmrtPad
             {
                 if (!await PromptSaveChangesAsync()) return;
                 var file = await StorageFile.GetFileFromPathAsync(filePath);
+                bool isTxt = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase);
                 using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
                 {
-                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                        ? TextSetOptions.None
-                        : TextSetOptions.FormatRtf;
+                    var options = isTxt ? TextSetOptions.None : TextSetOptions.FormatRtf;
                     Editor.Document.LoadFromStream(options, randAccStream);
                 }
                 _currentFile = file;
@@ -101,6 +100,7 @@ namespace SmrtPad
                 ViewModel.UpdateStatus($"Opened {file.Name}");
                 _settings.AddRecentFile(file.Path);
                 UpdateStatusBarCounts();
+                UpdateEncoding(isTxt ? "UTF-8" : "RTF");
             }
             catch (Exception ex)
             {
@@ -218,6 +218,22 @@ namespace SmrtPad
             LineColText.Text = $"Ln {line}, Col {col}";
         }
 
+        private void UpdateSelectionLength()
+        {
+            var selection = Editor.Document.Selection;
+            if (selection == null) return;
+
+            int length = Math.Abs(selection.EndPosition - selection.StartPosition);
+            ViewModel.SelectionLength = length;
+            SelectionLengthText.Text = $"Sel: {length}";
+        }
+
+        private void UpdateEncoding(string encoding)
+        {
+            ViewModel.Encoding = encoding;
+            EncodingText.Text = encoding;
+        }
+
         // Image hosting now uses native RichEdit OLE objects.
 
         private void HideBackstage()
@@ -280,6 +296,7 @@ namespace SmrtPad
             }
 
             UpdateLineColumn();
+            UpdateSelectionLength();
         }
 
         private void InitializeFonts()
@@ -386,6 +403,7 @@ namespace SmrtPad
             Editor.Document.SetText(TextSetOptions.None, string.Empty);
             _currentFile = null;
             ViewModel.NewDocument();
+            UpdateEncoding("UTF-8");
         }
 
         private void FileMenu_Tapped(object sender, RoutedEventArgs e)
@@ -413,11 +431,10 @@ namespace SmrtPad
                 StorageFile file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {
+                    bool isTxt = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase);
                     using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
                     {
-                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                            ? TextSetOptions.None
-                            : TextSetOptions.FormatRtf;
+                        var options = isTxt ? TextSetOptions.None : TextSetOptions.FormatRtf;
                         Editor.Document.LoadFromStream(options, randAccStream);
                     }
                     _currentFile = file;
@@ -426,6 +443,7 @@ namespace SmrtPad
                     ViewModel.UpdateStatus($"Opened {file.Name}");
                     _settings.AddRecentFile(file.Path);
                     UpdateStatusBarCounts();
+                    UpdateEncoding(isTxt ? "UTF-8" : "RTF");
                 }
             }
             catch (Exception ex)

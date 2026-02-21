@@ -753,6 +753,69 @@ namespace SmrtPad.Tests
             Assert.Equal(2, vm.RecentFiles.Count);
             Assert.Equal("file1.rtf", vm.RecentFiles[0]);
         }
+
+        [Fact]
+        public void SelectionLength_DefaultIsZero()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal(0, vm.SelectionLength);
+        }
+
+        [Fact]
+        public void SelectionLength_CanBeSet()
+        {
+            var vm = new EditorViewModel();
+            vm.SelectionLength = 42;
+            Assert.Equal(42, vm.SelectionLength);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredOnSelectionLengthChange()
+        {
+            var vm = new EditorViewModel();
+            string? changed = null;
+            vm.PropertyChanged += (s, e) => changed = e.PropertyName;
+            vm.SelectionLength = 10;
+            Assert.Equal(nameof(EditorViewModel.SelectionLength), changed);
+        }
+
+        [Fact]
+        public void Encoding_DefaultIsUtf8()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal("UTF-8", vm.Encoding);
+        }
+
+        [Fact]
+        public void Encoding_CanBeSet()
+        {
+            var vm = new EditorViewModel();
+            vm.Encoding = "RTF";
+            Assert.Equal("RTF", vm.Encoding);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredOnEncodingChange()
+        {
+            var vm = new EditorViewModel();
+            string? changed = null;
+            vm.PropertyChanged += (s, e) => changed = e.PropertyName;
+            vm.Encoding = "RTF";
+            Assert.Equal(nameof(EditorViewModel.Encoding), changed);
+        }
+
+        [Fact]
+        public void NewDocument_ResetsSelectionLengthAndEncoding()
+        {
+            var vm = new EditorViewModel();
+            vm.SelectionLength = 50;
+            vm.Encoding = "RTF";
+
+            vm.NewDocument();
+
+            Assert.Equal(0, vm.SelectionLength);
+            Assert.Equal("UTF-8", vm.Encoding);
+        }
     }
 
     // ═══ Settings Service Tests ═══

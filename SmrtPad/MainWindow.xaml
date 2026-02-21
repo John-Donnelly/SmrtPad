@@ -577,7 +577,11 @@
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="CharCountText" Text="Characters: 0" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="SelectionLengthText" Text="Sel: 0" VerticalAlignment="Center" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="LineColText" Text="Ln 1, Col 1" VerticalAlignment="Center" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="EncodingText" Text="UTF-8" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
