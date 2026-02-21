@@ -397,6 +397,15 @@
   <data name="OptionsLanguage" xml:space="preserve">
     <value>语言</value>
   </data>
+  <data name="OptionsRulerUnits" xml:space="preserve">
+    <value>标尺单位</value>
+  </data>
+  <data name="OptionsRulerInches" xml:space="preserve">
+    <value>英寸</value>
+  </data>
+  <data name="OptionsRulerCentimeters" xml:space="preserve">
+    <value>厘米</value>
+  </data>
   <data name="StatusRulerToggled" xml:space="preserve">
     <value>标尺已{0}。</value>
   </data>

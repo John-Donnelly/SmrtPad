@@ -397,6 +397,15 @@
   <data name="OptionsLanguage" xml:space="preserve">
     <value>Sprache</value>
   </data>
+  <data name="OptionsRulerUnits" xml:space="preserve">
+    <value>Linealeinheiten</value>
+  </data>
+  <data name="OptionsRulerInches" xml:space="preserve">
+    <value>Zoll</value>
+  </data>
+  <data name="OptionsRulerCentimeters" xml:space="preserve">
+    <value>Zentimeter</value>
+  </data>
   <data name="StatusRulerToggled" xml:space="preserve">
     <value>Lineal {0}.</value>
   </data>

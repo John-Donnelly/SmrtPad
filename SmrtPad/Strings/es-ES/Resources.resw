@@ -397,6 +397,15 @@
   <data name="OptionsLanguage" xml:space="preserve">
     <value>Idioma</value>
   </data>
+  <data name="OptionsRulerUnits" xml:space="preserve">
+    <value>Unidades de regla</value>
+  </data>
+  <data name="OptionsRulerInches" xml:space="preserve">
+    <value>Pulgadas</value>
+  </data>
+  <data name="OptionsRulerCentimeters" xml:space="preserve">
+    <value>Centímetros</value>
+  </data>
   <data name="StatusRulerToggled" xml:space="preserve">
     <value>Regla {0}.</value>
   </data>

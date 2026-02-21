@@ -397,6 +397,15 @@
   <data name="OptionsLanguage" xml:space="preserve">
     <value>اللغة</value>
   </data>
+  <data name="OptionsRulerUnits" xml:space="preserve">
+    <value>وحدات المسطرة</value>
+  </data>
+  <data name="OptionsRulerInches" xml:space="preserve">
+    <value>بوصات</value>
+  </data>
+  <data name="OptionsRulerCentimeters" xml:space="preserve">
+    <value>سنتيمترات</value>
+  </data>
   <data name="StatusRulerToggled" xml:space="preserve">
     <value>المسطرة {0}.</value>
   </data>

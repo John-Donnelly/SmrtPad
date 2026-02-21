@@ -12,6 +12,7 @@ namespace SmrtPad.Services
         bool AutoSaveEnabled { get; set; }
         int AutoSaveIntervalSeconds { get; set; }
         string Language { get; set; }
+        string RulerUnits { get; set; }
         List<string> RecentFiles { get; }
         void AddRecentFile(string path);
         void ClearRecentFiles();

@@ -50,6 +50,8 @@ namespace SmrtPad
         private PrintDocument? _printDocument;
         private IPrintDocumentSource? _printDocumentSource;
         private readonly List<UIElement> _printPreviewPages = new();
+        private bool _rulersVisible;
+        private bool _pageViewActive;
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
 
         public MainWindow()
@@ -771,6 +773,12 @@ namespace SmrtPad
             languageBox.SelectedIndex = selectedLocaleIndex >= 0 ? selectedLocaleIndex : 0;
             panel.Children.Add(languageBox);
 
+            var rulerUnitsBox = new ComboBox { Header = Res.GetString("OptionsRulerUnits"), Width = 200 };
+            rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerInches"));
+            rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerCentimeters"));
+            rulerUnitsBox.SelectedIndex = _settings.RulerUnits == "cm" ? 1 : 0;
+            panel.Children.Add(rulerUnitsBox);
+
             var dialog = new ContentDialog
             {
                 Title = Res.GetString("OptionsTitle"),
@@ -794,9 +802,11 @@ namespace SmrtPad
                 _settings.Language = langIdx >= 0 && langIdx < supportedLocales.Length
                     ? supportedLocales[langIdx].Tag
                     : "en-US";
+                _settings.RulerUnits = rulerUnitsBox.SelectedIndex == 1 ? "cm" : "in";
                 _settings.Save();
                 ApplyThemeFromSettings();
                 SetupAutoSave();
+                if (_rulersVisible) RedrawRulers();
                 ViewModel.UpdateStatus(Res.GetString("StatusOptionsSaved"));
             }
         }
@@ -1336,95 +1346,193 @@ namespace SmrtPad
         {
             if (sender is ToggleMenuFlyoutItem toggleItem)
             {
-                RulerBorder.Visibility = toggleItem.IsChecked ? Visibility.Visible : Visibility.Collapsed;
-                if (toggleItem.IsChecked)
-                    DrawRuler();
-                string state = toggleItem.IsChecked ? Res.GetString("StatusEnabled") : Res.GetString("StatusDisabled");
+                _rulersVisible = toggleItem.IsChecked;
+                UpdateRulerVisibility();
+                if (_rulersVisible)
+                    RedrawRulers();
+                string state = _rulersVisible ? Res.GetString("StatusEnabled") : Res.GetString("StatusDisabled");
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusRulerToggled", state));
             }
         }
 
-        private void DrawRuler()
+        private void UpdateRulerVisibility()
         {
-            RulerCanvas.Children.Clear();
-            double width = RulerCanvas.ActualWidth > 0 ? RulerCanvas.ActualWidth : 800;
-            double dpi = 96.0;
-            double pixelsPerInch = dpi;
+            HorizontalRulerRow.Height = _rulersVisible ? new GridLength(26) : new GridLength(0);
+            VerticalRulerColumn.Width = _rulersVisible ? new GridLength(26) : new GridLength(0);
+        }
 
-            for (int i = 0; i <= (int)(width / pixelsPerInch) + 1; i++)
+        private void HRulerCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_rulersVisible) DrawHorizontalRuler();
+        }
+
+        private void VRulerCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_rulersVisible) DrawVerticalRuler();
+        }
+
+        private void RedrawRulers()
+        {
+            DrawHorizontalRuler();
+            DrawVerticalRuler();
+        }
+
+        private double GetPixelsPerUnit(out string unitLabel)
+        {
+            bool useCm = _settings.RulerUnits == "cm";
+            unitLabel = useCm ? "cm" : "in";
+            // 96 DPI: 1 inch = 96px, 1 cm ? 37.795px
+            return useCm ? 96.0 / 2.54 : 96.0;
+        }
+
+        private void DrawHorizontalRuler()
+        {
+            HRulerCanvas.Children.Clear();
+            double width = HRulerCanvas.ActualWidth > 0 ? HRulerCanvas.ActualWidth : 1200;
+            double pixelsPerUnit = GetPixelsPerUnit(out _);
+            double canvasHeight = 24;
+            var brush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+            var lightBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray);
+
+            int maxUnits = (int)(width / pixelsPerUnit) + 1;
+            for (int i = 0; i <= maxUnits; i++)
             {
-                double x = i * pixelsPerInch;
+                double x = i * pixelsPerUnit;
                 if (x > width) break;
 
-                // Major tick (inch)
-                var majorTick = new Microsoft.UI.Xaml.Shapes.Line
+                // Major tick
+                HRulerCanvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
                 {
-                    X1 = x, Y1 = 14, X2 = x, Y2 = 24,
-                    Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray),
-                    StrokeThickness = 1
-                };
-                RulerCanvas.Children.Add(majorTick);
+                    X1 = x, Y1 = canvasHeight - 10, X2 = x, Y2 = canvasHeight,
+                    Stroke = brush, StrokeThickness = 1
+                });
 
-                // Inch label
-                var label = new TextBlock
-                {
-                    Text = i.ToString(),
-                    FontSize = 9,
-                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
-                };
+                // Label
+                var label = new TextBlock { Text = i.ToString(), FontSize = 9, Foreground = brush };
                 Canvas.SetLeft(label, x + 2);
                 Canvas.SetTop(label, 1);
-                RulerCanvas.Children.Add(label);
+                HRulerCanvas.Children.Add(label);
 
-                // Half-inch tick
-                double halfX = x + pixelsPerInch / 2;
+                // Half tick
+                double halfX = x + pixelsPerUnit / 2;
                 if (halfX < width)
                 {
-                    var halfTick = new Microsoft.UI.Xaml.Shapes.Line
+                    HRulerCanvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
                     {
-                        X1 = halfX, Y1 = 18, X2 = halfX, Y2 = 24,
-                        Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray),
-                        StrokeThickness = 1
-                    };
-                    RulerCanvas.Children.Add(halfTick);
+                        X1 = halfX, Y1 = canvasHeight - 6, X2 = halfX, Y2 = canvasHeight,
+                        Stroke = lightBrush, StrokeThickness = 1
+                    });
                 }
 
-                // Quarter-inch ticks
+                // Quarter ticks
                 for (int q = 1; q <= 3; q += 2)
                 {
-                    double qx = x + q * pixelsPerInch / 4;
+                    double qx = x + q * pixelsPerUnit / 4;
                     if (qx < width)
                     {
-                        var qTick = new Microsoft.UI.Xaml.Shapes.Line
+                        HRulerCanvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
                         {
-                            X1 = qx, Y1 = 20, X2 = qx, Y2 = 24,
-                            Stroke = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray),
-                            StrokeThickness = 0.5
-                        };
-                        RulerCanvas.Children.Add(qTick);
+                            X1 = qx, Y1 = canvasHeight - 4, X2 = qx, Y2 = canvasHeight,
+                            Stroke = lightBrush, StrokeThickness = 0.5
+                        });
                     }
                 }
             }
         }
 
+        private void DrawVerticalRuler()
+        {
+            VRulerCanvas.Children.Clear();
+            double height = VRulerCanvas.ActualHeight > 0 ? VRulerCanvas.ActualHeight : 800;
+            double pixelsPerUnit = GetPixelsPerUnit(out _);
+            double canvasWidth = 24;
+            var brush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+            var lightBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray);
+
+            int maxUnits = (int)(height / pixelsPerUnit) + 1;
+            for (int i = 0; i <= maxUnits; i++)
+            {
+                double y = i * pixelsPerUnit;
+                if (y > height) break;
+
+                // Major tick
+                VRulerCanvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
+                {
+                    X1 = canvasWidth - 10, Y1 = y, X2 = canvasWidth, Y2 = y,
+                    Stroke = brush, StrokeThickness = 1
+                });
+
+                // Label (rotated for vertical)
+                if (i > 0)
+                {
+                    var label = new TextBlock { Text = i.ToString(), FontSize = 9, Foreground = brush };
+                    Canvas.SetLeft(label, 2);
+                    Canvas.SetTop(label, y + 2);
+                    VRulerCanvas.Children.Add(label);
+                }
+
+                // Half tick
+                double halfY = y + pixelsPerUnit / 2;
+                if (halfY < height)
+                {
+                    VRulerCanvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
+                    {
+                        X1 = canvasWidth - 6, Y1 = halfY, X2 = canvasWidth, Y2 = halfY,
+                        Stroke = lightBrush, StrokeThickness = 1
+                    });
+                }
+
+                // Quarter ticks
+                for (int q = 1; q <= 3; q += 2)
+                {
+                    double qy = y + q * pixelsPerUnit / 4;
+                    if (qy < height)
+                    {
+                        VRulerCanvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Line
+                        {
+                            X1 = canvasWidth - 4, Y1 = qy, X2 = canvasWidth, Y2 = qy,
+                            Stroke = lightBrush, StrokeThickness = 0.5
+                        });
+                    }
+                }
+            }
+        }
+
+        // Page dimensions at 96 DPI: US Letter 8.5×11 = 816×1056px
+        // 1-inch margins on each side ? printable area = 624px wide
+        private const double PageWidthPx = 816;
+        private const double PageMarginPx = 96; // 1 inch each side
+        private const double PrintableWidthPx = PageWidthPx - (PageMarginPx * 2); // 624
+
         private void PageView_Click(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleMenuFlyoutItem toggleItem)
             {
-                if (toggleItem.IsChecked)
-                {
-                    PageViewBorder.Visibility = Visibility.Visible;
-                    Editor.HorizontalAlignment = HorizontalAlignment.Center;
-                    Editor.MaxWidth = 720;
-                }
-                else
-                {
-                    PageViewBorder.Visibility = Visibility.Collapsed;
-                    Editor.HorizontalAlignment = HorizontalAlignment.Stretch;
-                    Editor.MaxWidth = double.PositiveInfinity;
-                }
-                string state = toggleItem.IsChecked ? Res.GetString("StatusEnabled") : Res.GetString("StatusDisabled");
+                _pageViewActive = toggleItem.IsChecked;
+                ApplyPageViewLayout();
+                string state = _pageViewActive ? Res.GetString("StatusEnabled") : Res.GetString("StatusDisabled");
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusPageViewToggled", state));
+            }
+        }
+
+        private void ApplyPageViewLayout()
+        {
+            if (_pageViewActive)
+            {
+                PageViewBorder.Visibility = Visibility.Visible;
+                PageViewBorder.Width = PageWidthPx;
+                Editor.HorizontalAlignment = HorizontalAlignment.Center;
+                Editor.Width = PrintableWidthPx;
+                Editor.MaxWidth = PrintableWidthPx;
+                Editor.Margin = new Thickness(0, PageMarginPx, 0, PageMarginPx);
+            }
+            else
+            {
+                PageViewBorder.Visibility = Visibility.Collapsed;
+                Editor.HorizontalAlignment = HorizontalAlignment.Stretch;
+                Editor.Width = double.NaN;
+                Editor.MaxWidth = double.PositiveInfinity;
+                Editor.Margin = new Thickness(0);
             }
         }
 

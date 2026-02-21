@@ -241,6 +241,9 @@ namespace SmrtPad.Tests
 
         [Theory]
         [InlineData("OptionsLanguage")]
+        [InlineData("OptionsRulerUnits")]
+        [InlineData("OptionsRulerInches")]
+        [InlineData("OptionsRulerCentimeters")]
         [InlineData("StatusRulerToggled")]
         [InlineData("StatusPageViewToggled")]
         [InlineData("StatusEnabled")]

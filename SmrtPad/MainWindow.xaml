@@ -574,32 +574,56 @@
             </Grid>
         </Border>
 
-        <!-- ═══ EDITOR + BACKSTAGE ═══ -->
+        <!-- ═══ EDITOR + RULERS + BACKSTAGE ═══ -->
         <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="VerticalRulerColumn" Width="0" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition x:Name="HorizontalRulerRow" Height="0" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Ruler -->
-            <Border Grid.Row="0" x:Name="RulerBorder" Visibility="Collapsed"
+            <!-- Corner block (top-left when both rulers visible) -->
+            <Border Grid.Row="0" Grid.Column="0"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                    BorderThickness="0,0,0,1" Height="24">
-                <Canvas x:Name="RulerCanvas" />
+                    BorderThickness="0,0,1,1" />
+
+            <!-- Horizontal ruler -->
+            <Border x:Name="HRulerBorder" Grid.Row="0" Grid.Column="1"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,0,1">
+                <Canvas x:Name="HRulerCanvas" Height="24" SizeChanged="HRulerCanvas_SizeChanged" />
+            </Border>
+
+            <!-- Vertical ruler -->
+            <Border x:Name="VRulerBorder" Grid.Row="1" Grid.Column="0"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,1,0">
+                <Canvas x:Name="VRulerCanvas" Width="24" SizeChanged="VRulerCanvas_SizeChanged" />
             </Border>
 
             <!-- Editor + Page View wrapper -->
-            <Grid Grid.Row="1" Margin="10">
-                <Border x:Name="PageViewBorder" Visibility="Collapsed"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="2"
-                        HorizontalAlignment="Center" Width="816" Padding="48,36" />
-                <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap"
-                             AllowDrop="True" DragOver="Editor_DragOver" Drop="Editor_Drop"/>
-                <views:FileBackstageView x:Name="FileBackstage" Visibility="Collapsed" />
-            </Grid>
+            <ScrollViewer x:Name="EditorScrollViewer" Grid.Row="1" Grid.Column="1"
+                          HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <Grid x:Name="EditorContainer" Margin="4">
+                    <Border x:Name="PageViewBorder" Visibility="Collapsed"
+                            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="2"
+                            HorizontalAlignment="Center" MinHeight="1056" />
+                    <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap"
+                                 AllowDrop="True" DragOver="Editor_DragOver" Drop="Editor_Drop"/>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Backstage overlay -->
+            <views:FileBackstageView x:Name="FileBackstage" Grid.Row="0" Grid.RowSpan="2"
+                                     Grid.Column="0" Grid.ColumnSpan="2" Visibility="Collapsed" />
         </Grid>
 
         <!-- ═══ STATUS BAR ═══ -->

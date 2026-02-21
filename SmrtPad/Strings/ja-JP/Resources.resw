@@ -397,6 +397,15 @@
   <data name="OptionsLanguage" xml:space="preserve">
     <value>言語</value>
   </data>
+  <data name="OptionsRulerUnits" xml:space="preserve">
+    <value>ルーラーの単位</value>
+  </data>
+  <data name="OptionsRulerInches" xml:space="preserve">
+    <value>インチ</value>
+  </data>
+  <data name="OptionsRulerCentimeters" xml:space="preserve">
+    <value>センチメートル</value>
+  </data>
   <data name="StatusRulerToggled" xml:space="preserve">
     <value>ルーラーが{0}。</value>
   </data>
