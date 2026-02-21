@@ -358,6 +358,16 @@ namespace SmrtPad
             Editor.Document.Selection.Paste(0);
         }
 
+        private async void PasteSpecial_Click(object sender, RoutedEventArgs e)
+        {
+            var dataPackage = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+            if (dataPackage.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
+            {
+                string text = await dataPackage.GetTextAsync();
+                Editor.Document.Selection.Text = text;
+            }
+        }
+
         private void Bold_Click(object sender, RoutedEventArgs e)
         {
             ITextSelection selectedText = Editor.Document.Selection;
@@ -713,12 +723,29 @@ namespace SmrtPad
             Editor.Document.Selection.Text = DateTime.Now.ToString("g");
         }
 
+        private FindOptions GetFindOptions()
+        {
+            var options = FindOptions.None;
+            if (FindMatchCaseCheckBox.IsChecked == true) options |= FindOptions.Case;
+            if (FindWholeWordCheckBox.IsChecked == true) options |= FindOptions.Word;
+            return options;
+        }
+
         private void FindNext_Click(object sender, RoutedEventArgs e)
         {
             string textToFind = FindTextBox.Text;
             if (!string.IsNullOrEmpty(textToFind))
             {
-                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, FindOptions.None);
+                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, GetFindOptions());
+            }
+        }
+
+        private void FindPrevious_Click(object sender, RoutedEventArgs e)
+        {
+            string textToFind = FindTextBox.Text;
+            if (!string.IsNullOrEmpty(textToFind))
+            {
+                Editor.Document.Selection.FindText(textToFind, -TextConstants.MaxUnitCount, GetFindOptions());
             }
         }
 

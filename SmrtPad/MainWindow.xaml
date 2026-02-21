@@ -147,6 +147,14 @@
                                     <TextBlock Text="Copy" FontSize="12" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
+                            <Button Click="PasteSpecial_Click" Height="26" Padding="6,2" CornerRadius="4"
+                                    Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paste as Plain Text"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE77F;" FontSize="13"/>
+                                    <TextBlock Text="Paste text" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
                     <TextBlock Grid.Row="1" Text="Clipboard" FontSize="10" HorizontalAlignment="Center"
@@ -444,10 +452,15 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                             <Button.Flyout>
                                 <Flyout>
-                                    <StackPanel Spacing="6" Width="300">
+                                     <StackPanel Spacing="6" Width="300">
                                         <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
                                         <TextBox x:Name="FindTextBox" PlaceholderText="Text to look for"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <CheckBox x:Name="FindMatchCaseCheckBox" Content="Match case"/>
+                                            <CheckBox x:Name="FindWholeWordCheckBox" Content="Whole word"/>
+                                        </StackPanel>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                            <Button Content="Find Previous" Click="FindPrevious_Click"/>
                                             <Button Content="Find Next" Click="FindNext_Click"/>
                                         </StackPanel>
                                     </StackPanel>
