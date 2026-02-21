@@ -1,7 +1,7 @@
 # SmrtPad — Comprehensive Project Assessment v3
 
 **Generated:** 2025-07-17 (full ground-truth audit of every authored file)  
-**Branch:** `master` — 14 commits ahead of `origin/master`
+**Branch:** `master` — 15 commits ahead of `origin/master`
 **Stack:** WinUI 3 · .NET 10 · Windows App SDK 1.8.260209005 · CommunityToolkit.Mvvm 8.4  
 **Projects:** `SmrtPad` (main app) · `SmrtPad.Tests` (unit tests, xUnit 2.6.6)
 
@@ -15,8 +15,8 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **3,589** (2,074 C# app · 659 XAML · 856 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **219** (all passing) |
-| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 23 · `SettingsServiceTests` 8 · `ServiceAbstractionTests` 7 · `LocalizationTests` 122) |
+| Unit tests | **223** (all passing) |
+| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 23 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 7 · `LocalizationTests` 125) |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | UI / integration tests | 0 |
 | NuGet packages (app) | 5 — CommunityToolkit.Mvvm 8.4, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
@@ -86,8 +86,8 @@
 | Word Wrap | ✅ | `ToggleMenuFlyoutItem` → `Editor.TextWrapping` |
 | Status bar zoom display | ✅ | `ZoomText.Text` updated in `ApplyZoom()` |
 | Focus mode | ✅ | `FocusModeToggle` in View menu hides `RibbonBar` + `StatusBar` for distraction-free writing |
-| Ruler | ✅ | `RulerToggle` in View menu shows/hides ruler `Canvas` with inch/half-inch/quarter-inch tick marks and labels; localized across 9 locales |
-| Page view | ✅ | `PageViewToggle` constrains editor to 816px centered `Border` with card background and page-like padding; localized across 9 locales |
+| Ruler (horizontal + vertical) | ✅ | `RulerToggle` shows/hides both horizontal and vertical rulers via `Canvas` with major/half/quarter tick marks; redraws on resize via `SizeChanged`; supports inches and centimeters via `RulerUnits` setting; localized across 9 locales |
+| Page view | ✅ | `PageViewToggle` constrains editor to US Letter page (816×1056px at 96 DPI) with 1-inch margins; `RichEditBox` fills the 624px printable area; `ScrollViewer` for vertical scrolling; localized across 9 locales |
 
 **Section: 100% (6/6)**
 
@@ -251,8 +251,8 @@
 
 ## 14. Services
 
-### `ISettingsService` (20 lines) / `SettingsService` (128 lines)
-- Interface with 8 properties (`Language` added), `RecentFiles` list, and 4 methods
+### `ISettingsService` (21 lines) / `SettingsService` (135 lines)
+- Interface with 9 properties (`Language`, `RulerUnits` added), `RecentFiles` list, and 4 methods
 - Serializes `SettingsData` to JSON at `%LOCALAPPDATA%/SmrtPad/settings.json`
 - `AddRecentFile`: dedup, insert-at-front, cap at 10, auto-save
 - `Save`/`Load` log errors via `Debug.WriteLine`
@@ -369,7 +369,8 @@
 | After Section 17/18 work | 96 (+14 tests, +17% growth) |
 | After localization work | 201 (+105 tests) |
 | After Section 2 work | 211 (+10 tests) |
-| After Section 4 + Options work | **219** (+8 tests) |
+| After Section 4 + Options work | 219 (+8 tests) |
+| After ruler/page view overhaul | **223** (+4 tests) |
 
 ---
 
@@ -425,14 +426,14 @@
 |---|---|---|
 | `App.xaml` | 13 | Resource dictionaries, `XamlControlsResources` |
 | `App.xaml.cs` | 48 | Entry point, `OnLaunched`, startup file arg handling |
-| `MainWindow.xaml` | 632 | Menu bar, ribbon (5 groups), ruler, editor with page view, backstage overlay, status bar (7 indicators) |
-| `MainWindow.xaml.cs` | 1,855 | 75+ event handlers, all UI logic — file ops, formatting, find/replace, insert, drag-drop, real print, DOCX/HTML/ODT import, ruler, page view |
+| `MainWindow.xaml` | 648 | Menu bar, ribbon (5 groups), horizontal+vertical rulers, editor with page view, backstage overlay, status bar (7 indicators) |
+| `MainWindow.xaml.cs` | 1,921 | 75+ event handlers, all UI logic — file ops, formatting, find/replace, insert, drag-drop, real print, DOCX/HTML/ODT import, dual rulers, page view |
 | `ViewModels/EditorViewModel.cs` | 203 | 28 observable properties, 15 relay commands, full `NewDocument()` reset |
 | `Views/FileBackstageView.xaml` | 61 | NavigationView + content pane + recent files panel |
 | `Views/FileBackstageView.xaml.cs` | 96 | 8 events, tag-based dispatch, `SetRecentFiles()` |
 | `Helpers/ColorHelper.cs` | 36 | `ParseHexColor` — 6/8-digit hex with validation |
-| `Services/ISettingsService.cs` | 20 | Interface — 8 properties (incl. Language), list, 4 methods |
-| `Services/SettingsService.cs` | 128 | JSON persistence, MRU recent files, Language preference, Debug.WriteLine error logging |
+| `Services/ISettingsService.cs` | 21 | Interface — 9 properties (incl. Language, RulerUnits), list, 4 methods |
+| `Services/SettingsService.cs` | 135 | JSON persistence, MRU recent files, Language/RulerUnits preferences, Debug.WriteLine error logging |
 | `Services/IDialogService.cs` | 15 | Interface — `ShowErrorAsync`, `ShowSavePromptAsync`, `SavePromptResult` enum |
 | `Services/DialogService.cs` | 45 | `ContentDialog`-based implementation |
 | `Services/IFileService.cs` | 11 | Interface — `PickOpenFileAsync`, `PickSaveFileAsync`, `GetFileFromPathAsync` |
@@ -458,9 +459,11 @@
 
 ---
 
-## Appendix B — Commit History (14 commits ahead of origin)
+## Appendix B — Commit History (15 commits ahead of origin)
 
 ```
+a495cc7 feat: overhaul rulers with horizontal+vertical, inches/cm option, and fix page view layout to fill printable area
+51bb89e docs: update assessment-v3.md for Section 4 completion, language selection, and burger menu fix
 9e91077 feat: add Ruler and Page View toggles to View menu with localized labels across 9 locales
 24d62b4 feat: add language selection to Options panel with persistence and localized labels
 38e864e fix: hide NavigationView pane toggle button in FileBackstageView
