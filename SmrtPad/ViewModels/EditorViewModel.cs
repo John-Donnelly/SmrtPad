@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -59,6 +60,33 @@ namespace SmrtPad.ViewModels
         [ObservableProperty]
         private double _lineSpacing = 1.0;
 
+        [ObservableProperty]
+        private int _wordCount;
+
+        [ObservableProperty]
+        private int _charCount;
+
+        [ObservableProperty]
+        private int _lineNumber = 1;
+
+        [ObservableProperty]
+        private int _columnNumber = 1;
+
+        [ObservableProperty]
+        private double _paragraphSpacingBefore;
+
+        [ObservableProperty]
+        private double _paragraphSpacingAfter;
+
+        [ObservableProperty]
+        private bool _findMatchCase;
+
+        [ObservableProperty]
+        private bool _findWholeWord;
+
+        [ObservableProperty]
+        private List<string> _recentFiles = new();
+
         public EditorViewModel()
         {
         }
@@ -83,6 +111,14 @@ namespace SmrtPad.ViewModels
             ZoomLevel = 100.0;
             ListType = "None";
             LineSpacing = 1.0;
+            WordCount = 0;
+            CharCount = 0;
+            LineNumber = 1;
+            ColumnNumber = 1;
+            ParagraphSpacingBefore = 0;
+            ParagraphSpacingAfter = 0;
+            FindMatchCase = false;
+            FindWholeWord = false;
         }
 
         [RelayCommand]
@@ -170,6 +206,38 @@ namespace SmrtPad.ViewModels
         public void ZoomOut()
         {
             ZoomLevel = Math.Max(10.0, ZoomLevel - 10.0);
+        }
+
+        [RelayCommand]
+        public void SetParagraphSpacing(double[] spacing)
+        {
+            if (spacing.Length >= 2)
+            {
+                ParagraphSpacingBefore = spacing[0];
+                ParagraphSpacingAfter = spacing[1];
+            }
+        }
+
+        [RelayCommand]
+        public void UpdateWordCount(int count)
+        {
+            WordCount = count;
+        }
+
+        [RelayCommand]
+        public void UpdateCharCount(int count)
+        {
+            CharCount = count;
+        }
+
+        [RelayCommand]
+        public void UpdateCursorPosition(int[] position)
+        {
+            if (position.Length >= 2)
+            {
+                LineNumber = position[0];
+                ColumnNumber = position[1];
+            }
         }
     }
 }
