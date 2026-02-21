@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -13,6 +14,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? PrintRequested;
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
+    public event EventHandler<string>? RecentFileRequested;
 
     private bool _suppressSelectionEvent;
 
@@ -37,32 +39,73 @@ public sealed partial class FileBackstageView : UserControl
         switch (tag)
         {
             case "New":
-                BodyText.Text = "Create a new document.";
+                ShowDefaultPanel("Create a new document.");
                 NewRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Open":
-                BodyText.Text = "Open an existing document.";
-                OpenRequested?.Invoke(this, EventArgs.Empty);
+                ShowOpenPanel();
                 break;
             case "Save":
-                BodyText.Text = "Save changes to the current document.";
+                ShowDefaultPanel("Save changes to the current document.");
                 SaveRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "SaveAs":
-                BodyText.Text = "Save the current document under a new name.";
+                ShowDefaultPanel("Save the current document under a new name.");
                 SaveAsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Print":
-                BodyText.Text = "Print the current document.";
+                ShowDefaultPanel("Print the current document.");
                 PrintRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Options":
-                BodyText.Text = "Configure application options.";
+                ShowDefaultPanel("Configure application options.");
                 OptionsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Exit":
                 ExitRequested?.Invoke(this, EventArgs.Empty);
                 return;
         }
+    }
+
+    public void SetRecentFiles(IReadOnlyList<string> paths)
+    {
+        if (paths.Count == 0)
+        {
+            RecentFilesList.Visibility = Visibility.Collapsed;
+            RecentFilesHeader.Visibility = Visibility.Collapsed;
+            NoRecentFilesText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            RecentFilesList.ItemsSource = paths;
+            RecentFilesList.Visibility = Visibility.Visible;
+            RecentFilesHeader.Visibility = Visibility.Visible;
+            NoRecentFilesText.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ShowDefaultPanel(string bodyText)
+    {
+        BodyText.Text = bodyText;
+        BodyText.Visibility = Visibility.Visible;
+        OpenPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowOpenPanel()
+    {
+        HeaderText.Text = "Open";
+        BodyText.Visibility = Visibility.Collapsed;
+        OpenPanel.Visibility = Visibility.Visible;
+    }
+
+    private void BrowseForFile_Click(object sender, RoutedEventArgs e)
+    {
+        OpenRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RecentFile_Click(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is string path)
+            RecentFileRequested?.Invoke(this, path);
     }
 }

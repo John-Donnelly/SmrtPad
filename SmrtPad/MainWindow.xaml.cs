@@ -73,6 +73,20 @@ namespace SmrtPad
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
+            FileBackstage.RecentFileRequested += async (s, path) =>
+            {
+                HideBackstage();
+                if (!await PromptSaveChangesAsync()) return;
+                try
+                {
+                    var file = await StorageFile.GetFileFromPathAsync(path);
+                    await OpenStorageFileAsync(file);
+                }
+                catch (Exception ex)
+                {
+                    await ShowErrorDialogAsync("Open Failed", $"Could not open '{path}': {ex.Message}");
+                }
+            };
         }
 
         private async Task ShowErrorDialogAsync(string title, string message)
@@ -100,6 +114,7 @@ namespace SmrtPad
 
         private void ShowBackstage()
         {
+            FileBackstage.SetRecentFiles(RecentFilesHelper.GetAll());
             FileBackstage.Visibility = Visibility.Visible;
             Editor.Visibility = Visibility.Collapsed;
         }
@@ -261,6 +276,22 @@ namespace SmrtPad
                 ShowBackstage();
         }
 
+        private async Task OpenStorageFileAsync(StorageFile file)
+        {
+            using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+            {
+                var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                    ? TextSetOptions.None
+                    : TextSetOptions.FormatRtf;
+                Editor.Document.LoadFromStream(options, randAccStream);
+            }
+            _currentFile = file;
+            ViewModel.DocumentTitle = file.Name;
+            ViewModel.IsModified = false;
+            ViewModel.UpdateStatus($"Opened {file.Name}");
+            RecentFilesHelper.Add(file.Path);
+        }
+
         private async void Open_Click(object sender, RoutedEventArgs e)
         {
             if (!await PromptSaveChangesAsync())
@@ -278,17 +309,7 @@ namespace SmrtPad
             {
                 try
                 {
-                    using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
-                    {
-                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                            ? TextSetOptions.None
-                            : TextSetOptions.FormatRtf;
-                        Editor.Document.LoadFromStream(options, randAccStream);
-                    }
-                    _currentFile = file;
-                    ViewModel.DocumentTitle = file.Name;
-                    ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus($"Opened {file.Name}");
+                    await OpenStorageFileAsync(file);
                 }
                 catch (Exception ex)
                 {
