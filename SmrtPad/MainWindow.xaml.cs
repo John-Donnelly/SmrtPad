@@ -59,6 +59,7 @@ namespace SmrtPad
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
             Editor.TextChanged += (s, e) => { ViewModel.IsModified = true; };
+            Editor.SelectionChanged += Editor_SelectionChanged;
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
@@ -81,6 +82,60 @@ namespace SmrtPad
         {
             FileBackstage.Visibility = Visibility.Collapsed;
             Editor.Visibility = Visibility.Visible;
+        }
+
+        private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selection = Editor.Document.Selection;
+            if (selection == null) return;
+
+            ITextCharacterFormat charFormat = selection.CharacterFormat;
+
+            BoldToggle.IsChecked = charFormat.Bold == FormatEffect.On;
+            ItalicToggle.IsChecked = charFormat.Italic == FormatEffect.On;
+            UnderlineToggle.IsChecked = charFormat.Underline != UnderlineType.None;
+            StrikethroughToggle.IsChecked = charFormat.Strikethrough == FormatEffect.On;
+            SubscriptToggle.IsChecked = charFormat.Subscript == FormatEffect.On;
+            SuperscriptToggle.IsChecked = charFormat.Superscript == FormatEffect.On;
+
+            ViewModel.IsBold = charFormat.Bold == FormatEffect.On;
+            ViewModel.IsItalic = charFormat.Italic == FormatEffect.On;
+            ViewModel.IsUnderline = charFormat.Underline != UnderlineType.None;
+            ViewModel.IsStrikethrough = charFormat.Strikethrough == FormatEffect.On;
+            ViewModel.IsSubscript = charFormat.Subscript == FormatEffect.On;
+            ViewModel.IsSuperscript = charFormat.Superscript == FormatEffect.On;
+
+            if (!string.IsNullOrEmpty(charFormat.Name))
+            {
+                ViewModel.FontFamily = charFormat.Name;
+                FontFamilyComboBox.SelectedItem = charFormat.Name;
+            }
+            if (charFormat.Size > 0)
+            {
+                ViewModel.FontSize = charFormat.Size;
+                FontSizeComboBox.Text = ((int)charFormat.Size).ToString();
+            }
+
+            ITextParagraphFormat paraFormat = selection.ParagraphFormat;
+            switch (paraFormat.Alignment)
+            {
+                case ParagraphAlignment.Left:
+                    SetAlignmentToggle(AlignLeftToggle);
+                    ViewModel.Alignment = "Left";
+                    break;
+                case ParagraphAlignment.Center:
+                    SetAlignmentToggle(AlignCenterToggle);
+                    ViewModel.Alignment = "Center";
+                    break;
+                case ParagraphAlignment.Right:
+                    SetAlignmentToggle(AlignRightToggle);
+                    ViewModel.Alignment = "Right";
+                    break;
+                case ParagraphAlignment.Justify:
+                    SetAlignmentToggle(AlignJustifyToggle);
+                    ViewModel.Alignment = "Justify";
+                    break;
+            }
         }
 
         private void InitializeFonts()
