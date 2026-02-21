@@ -481,14 +481,7 @@ namespace SmrtPad
         private void ApplyZoom()
         {
             double scale = ViewModel.ZoomLevel / 100.0;
-            if (Editor.RenderTransform is not ScaleTransform scaleTransform)
-            {
-                scaleTransform = new ScaleTransform();
-                Editor.RenderTransform = scaleTransform;
-                Editor.RenderTransformOrigin = new Point(0.5, 0.5);
-            }
-            scaleTransform.ScaleX = scale;
-            scaleTransform.ScaleY = scale;
+            Editor.FontSize = 11.0 * scale;
             ZoomText.Text = $"{ViewModel.ZoomLevel:0}%";
         }
 
