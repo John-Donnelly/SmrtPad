@@ -72,6 +72,9 @@
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
                 <!-- Quick-access toolbar buttons -->
                 <Button Click="Save_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Save (Ctrl+S)">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="S" Modifiers="Control"/>
+                    </Button.KeyboardAccelerators>
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE74E;" FontSize="14"/>
                 </Button>
                 <Button Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New">
@@ -455,7 +458,7 @@
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
-                                        <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Find &amp; Replace" FontSize="14" FontWeight="SemiBold"/>
                                         <TextBox x:Name="ReplaceFindTextBox" PlaceholderText="Text to look for"/>
                                         <TextBlock Text="Replace" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
                                         <TextBox x:Name="ReplaceWithTextBox" PlaceholderText="New text"/>

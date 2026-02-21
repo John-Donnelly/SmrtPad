@@ -291,6 +291,9 @@ node_modules/
 # Visual Studio 6 workspace options file
 *.opt
 
+# Internal documentation (not for source control)
+docs-internal/
+
 # Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
 *.vbw
 

@@ -147,7 +147,10 @@ namespace SmrtPad
             {
                 using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
                 {
-                    Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, randAccStream);
+                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                        ? TextSetOptions.None
+                        : TextSetOptions.FormatRtf;
+                    Editor.Document.LoadFromStream(options, randAccStream);
                 }
                 _currentFile = file;
                 ViewModel.DocumentTitle = file.Name;
