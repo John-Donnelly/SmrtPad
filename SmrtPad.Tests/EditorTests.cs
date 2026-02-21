@@ -534,5 +534,41 @@ namespace SmrtPad.Tests
             Assert.Equal(g, color.G);
             Assert.Equal(b, color.B);
         }
+
+        [Fact]
+        public void ParseHexColor_NullInput_ThrowsArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() => ColorHelper.ParseHexColor(null!));
+        }
+
+        [Fact]
+        public void ParseHexColor_EmptyString_ThrowsArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() => ColorHelper.ParseHexColor(string.Empty));
+        }
+
+        [Fact]
+        public void ParseHexColor_InvalidLength_ThrowsFormatException()
+        {
+            Assert.Throws<FormatException>(() => ColorHelper.ParseHexColor("#FFF"));
+        }
+
+        [Fact]
+        public void ParseHexColor_InvalidHexCharacters_ThrowsFormatException()
+        {
+            Assert.Throws<FormatException>(() => ColorHelper.ParseHexColor("#GGHHII"));
+        }
+
+        [Fact]
+        public void ParseHexColor_OddLength_ThrowsFormatException()
+        {
+            Assert.Throws<FormatException>(() => ColorHelper.ParseHexColor("#12345"));
+        }
+
+        [Fact]
+        public void ParseHexColor_HashOnly_ThrowsFormatException()
+        {
+            Assert.Throws<FormatException>(() => ColorHelper.ParseHexColor("#"));
+        }
     }
 }
