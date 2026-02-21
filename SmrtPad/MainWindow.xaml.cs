@@ -56,14 +56,9 @@ namespace SmrtPad
             };
 
             InitializeFonts();
-            LoadSettings();
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
-            Editor.TextChanged += (s, e) =>
-            {
-                ViewModel.IsModified = true;
-                UpdateWordCount();
-            };
+            Editor.TextChanged += (s, e) => { ViewModel.IsModified = true; };
             Editor.SelectionChanged += Editor_SelectionChanged;
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
@@ -73,48 +68,12 @@ namespace SmrtPad
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
-            FileBackstage.RecentFileRequested += async (s, path) =>
-            {
-                HideBackstage();
-                if (!await PromptSaveChangesAsync()) return;
-                try
-                {
-                    var file = await StorageFile.GetFileFromPathAsync(path);
-                    await OpenStorageFileAsync(file);
-                }
-                catch (Exception ex)
-                {
-                    await ShowErrorDialogAsync("Open Failed", $"Could not open '{path}': {ex.Message}");
-                }
-            };
-        }
-
-        private async Task ShowErrorDialogAsync(string title, string message)
-        {
-            var dialog = new ContentDialog
-            {
-                Title = title,
-                Content = message,
-                CloseButtonText = "OK",
-                XamlRoot = Content.XamlRoot
-            };
-            await dialog.ShowAsync();
-        }
-
-        private void UpdateWordCount()
-        {
-            Editor.Document.GetText(TextGetOptions.None, out string text);
-            int wordCount = string.IsNullOrWhiteSpace(text)
-                ? 0
-                : text.Trim().Split(new char[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length;
-            WordCountText.Text = $"Words: {wordCount}";
         }
 
         // Image hosting now uses native RichEdit OLE objects.
 
         private void ShowBackstage()
         {
-            FileBackstage.SetRecentFiles(RecentFilesHelper.GetAll());
             FileBackstage.Visibility = Visibility.Visible;
             Editor.Visibility = Visibility.Collapsed;
         }
@@ -190,22 +149,6 @@ namespace SmrtPad
             FontSizeComboBox.SelectedItem = 11.0;
         }
 
-        private void LoadSettings()
-        {
-            bool wordWrap = SettingsHelper.WordWrap;
-            Editor.TextWrapping = wordWrap ? TextWrapping.Wrap : TextWrapping.NoWrap;
-            ViewModel.IsWordWrap = wordWrap;
-
-            string fontFamily = SettingsHelper.DefaultFontFamily;
-            if (FontFamilyComboBox.ItemsSource is System.Collections.Generic.IEnumerable<string> fonts
-                && fonts.Contains(fontFamily))
-                FontFamilyComboBox.SelectedItem = fontFamily;
-
-            double fontSize = SettingsHelper.DefaultFontSize;
-            FontSizeComboBox.Text = ((int)fontSize).ToString();
-            ViewModel.FontSize = fontSize;
-        }
-
         private void FontFamilyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (FontFamilyComboBox.SelectedItem is string fontName)
@@ -276,35 +219,6 @@ namespace SmrtPad
                 ShowBackstage();
         }
 
-        public async void OpenFileFromPathAsync(string path)
-        {
-            try
-            {
-                var file = await StorageFile.GetFileFromPathAsync(path);
-                await OpenStorageFileAsync(file);
-            }
-            catch (Exception ex)
-            {
-                await ShowErrorDialogAsync("Open Failed", $"Could not open '{path}': {ex.Message}");
-            }
-        }
-
-        private async Task OpenStorageFileAsync(StorageFile file)
-        {
-            using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
-            {
-                var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                    ? TextSetOptions.None
-                    : TextSetOptions.FormatRtf;
-                Editor.Document.LoadFromStream(options, randAccStream);
-            }
-            _currentFile = file;
-            ViewModel.DocumentTitle = file.Name;
-            ViewModel.IsModified = false;
-            ViewModel.UpdateStatus($"Opened {file.Name}");
-            RecentFilesHelper.Add(file.Path);
-        }
-
         private async void Open_Click(object sender, RoutedEventArgs e)
         {
             if (!await PromptSaveChangesAsync())
@@ -320,14 +234,17 @@ namespace SmrtPad
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
-                try
+                using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
                 {
-                    await OpenStorageFileAsync(file);
+                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                        ? TextSetOptions.None
+                        : TextSetOptions.FormatRtf;
+                    Editor.Document.LoadFromStream(options, randAccStream);
                 }
-                catch (Exception ex)
-                {
-                    await ShowErrorDialogAsync("Open Failed", $"Could not open '{file.Name}': {ex.Message}");
-                }
+                _currentFile = file;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus($"Opened {file.Name}");
             }
         }
 
@@ -345,43 +262,29 @@ namespace SmrtPad
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
                 {
-                    try
+                    CachedFileManager.DeferUpdates(file);
+                    using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
                     {
-                        CachedFileManager.DeferUpdates(file);
-                        using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                        {
-                            Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
-                        }
-                        FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                        if (status == FileUpdateStatus.Complete)
-                        {
-                            _currentFile = file;
-                            ViewModel.DocumentTitle = file.Name;
-                            ViewModel.IsModified = false;
-                            ViewModel.UpdateStatus($"Saved {file.Name}");
-                        }
+                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
                     }
-                    catch (Exception ex)
+                    FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                    if (status == FileUpdateStatus.Complete)
                     {
-                        await ShowErrorDialogAsync("Save Failed", $"Could not save '{file.Name}': {ex.Message}");
+                        _currentFile = file;
+                        ViewModel.DocumentTitle = file.Name;
+                        ViewModel.IsModified = false;
+                        ViewModel.UpdateStatus($"Saved {file.Name}");
                     }
                 }
             }
             else
             {
-                try
+                using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
                 {
-                    using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
-                    {
-                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
-                    }
-                    ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
+                    Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
                 }
-                catch (Exception ex)
-                {
-                    await ShowErrorDialogAsync("Save Failed", $"Could not save '{_currentFile.Name}': {ex.Message}");
-                }
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
             }
         }
 
@@ -397,28 +300,21 @@ namespace SmrtPad
             StorageFile file = await picker.PickSaveFileAsync();
             if (file != null)
             {
-                try
+                CachedFileManager.DeferUpdates(file);
+                using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
                 {
-                    CachedFileManager.DeferUpdates(file);
-                    using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                    {
-                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                            ? TextGetOptions.None
-                            : TextGetOptions.FormatRtf;
-                        Editor.Document.SaveToStream(options, randAccStream);
-                    }
-                    FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                    if (status == FileUpdateStatus.Complete)
-                    {
-                        _currentFile = file;
-                        ViewModel.DocumentTitle = file.Name;
-                        ViewModel.IsModified = false;
-                        ViewModel.UpdateStatus($"Saved {file.Name}");
-                    }
+                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                        ? TextGetOptions.None
+                        : TextGetOptions.FormatRtf;
+                    Editor.Document.SaveToStream(options, randAccStream);
                 }
-                catch (Exception ex)
+                FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                if (status == FileUpdateStatus.Complete)
                 {
-                    await ShowErrorDialogAsync("Save As Failed", $"Could not save '{file.Name}': {ex.Message}");
+                    _currentFile = file;
+                    ViewModel.DocumentTitle = file.Name;
+                    ViewModel.IsModified = false;
+                    ViewModel.UpdateStatus($"Saved {file.Name}");
                 }
             }
         }
@@ -437,66 +333,14 @@ namespace SmrtPad
 
         private async void Options_Click(object sender, RoutedEventArgs e)
         {
-            var fontFamilies = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies().OrderBy(f => f).ToList();
-
-            var fontFamilyCombo = new ComboBox
-            {
-                Width = 200,
-                PlaceholderText = "Font",
-                ItemsSource = fontFamilies,
-                SelectedItem = SettingsHelper.DefaultFontFamily
-            };
-
-            var fontSizeSizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
-            var fontSizeCombo = new ComboBox
-            {
-                Width = 80,
-                IsEditable = true,
-                ItemsSource = fontSizeSizes,
-                SelectedItem = SettingsHelper.DefaultFontSize
-            };
-            if (fontSizeCombo.SelectedItem == null)
-                fontSizeCombo.Text = ((int)SettingsHelper.DefaultFontSize).ToString();
-
-            var wordWrapCheck = new CheckBox
-            {
-                Content = "Word wrap by default",
-                IsChecked = SettingsHelper.WordWrap
-            };
-
-            var fontRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-            fontRow.Children.Add(fontFamilyCombo);
-            fontRow.Children.Add(fontSizeCombo);
-
-            var panel = new StackPanel { Spacing = 12, MinWidth = 320 };
-            panel.Children.Add(new TextBlock { Text = "Default font:" });
-            panel.Children.Add(fontRow);
-            panel.Children.Add(wordWrapCheck);
-
             var dialog = new ContentDialog
             {
                 Title = "Options",
-                Content = panel,
-                PrimaryButtonText = "OK",
-                CloseButtonText = "Cancel",
+                Content = "Options are not yet implemented. This feature will be available in a future update.",
+                CloseButtonText = "OK",
                 XamlRoot = Content.XamlRoot
             };
-
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
-            {
-                if (fontFamilyCombo.SelectedItem is string newFont)
-                    SettingsHelper.DefaultFontFamily = newFont;
-
-                if (fontSizeCombo.SelectedItem is double newSize)
-                    SettingsHelper.DefaultFontSize = newSize;
-                else if (double.TryParse(fontSizeCombo.Text, System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out double parsedSize) && parsedSize > 0)
-                    SettingsHelper.DefaultFontSize = parsedSize;
-
-                SettingsHelper.WordWrap = wordWrapCheck.IsChecked == true;
-                ViewModel.UpdateStatus("Options saved.");
-            }
+            await dialog.ShowAsync();
         }
 
         private void Cut_Click(object sender, RoutedEventArgs e)
@@ -512,16 +356,6 @@ namespace SmrtPad
         private void Paste_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Selection.Paste(0);
-        }
-
-        private async void PasteSpecial_Click(object sender, RoutedEventArgs e)
-        {
-            var dataPackage = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
-            if (dataPackage.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
-            {
-                string text = await dataPackage.GetTextAsync();
-                Editor.Document.Selection.Text = text;
-            }
         }
 
         private void Bold_Click(object sender, RoutedEventArgs e)
@@ -876,18 +710,7 @@ namespace SmrtPad
 
         private void InsertDateTime_Click(object sender, RoutedEventArgs e)
         {
-            string format = "g";
-            if (sender is MenuFlyoutItem item && item.Tag is string tag)
-                format = tag;
-            Editor.Document.Selection.Text = DateTime.Now.ToString(format);
-        }
-
-        private FindOptions GetFindOptions()
-        {
-            var options = FindOptions.None;
-            if (FindMatchCaseCheckBox.IsChecked == true) options |= FindOptions.Case;
-            if (FindWholeWordCheckBox.IsChecked == true) options |= FindOptions.Word;
-            return options;
+            Editor.Document.Selection.Text = DateTime.Now.ToString("g");
         }
 
         private void FindNext_Click(object sender, RoutedEventArgs e)
@@ -895,16 +718,7 @@ namespace SmrtPad
             string textToFind = FindTextBox.Text;
             if (!string.IsNullOrEmpty(textToFind))
             {
-                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, GetFindOptions());
-            }
-        }
-
-        private void FindPrevious_Click(object sender, RoutedEventArgs e)
-        {
-            string textToFind = FindTextBox.Text;
-            if (!string.IsNullOrEmpty(textToFind))
-            {
-                Editor.Document.Selection.FindText(textToFind, -TextConstants.MaxUnitCount, GetFindOptions());
+                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, FindOptions.None);
             }
         }
 
@@ -970,89 +784,6 @@ namespace SmrtPad
                 float next = Math.Max(1f, current - 1f);
                 selection.CharacterFormat.Size = next;
                 FontSizeComboBox.Text = ((int)next).ToString();
-            }
-        }
-
-        private void ApplyTypedFontSize()
-        {
-            if (double.TryParse(FontSizeComboBox.Text, System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out double fontSize) && fontSize > 0)
-            {
-                ITextSelection selectedText = Editor.Document.Selection;
-                if (selectedText != null)
-                {
-                    ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
-                    charFormatting.Size = (float)fontSize;
-                    selectedText.CharacterFormat = charFormatting;
-                }
-                ViewModel.FontSize = fontSize;
-            }
-        }
-
-        private void FontSizeComboBox_KeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            if (e.Key == Windows.System.VirtualKey.Enter)
-            {
-                ApplyTypedFontSize();
-                e.Handled = true;
-            }
-        }
-
-        private void FontSizeComboBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            ApplyTypedFontSize();
-        }
-
-        private void ClearFormatting_Click(object sender, RoutedEventArgs e)
-        {
-            ITextSelection selection = Editor.Document.Selection;
-            if (selection != null)
-            {
-                ITextCharacterFormat charFormat = selection.CharacterFormat;
-                charFormat.Bold = FormatEffect.Off;
-                charFormat.Italic = FormatEffect.Off;
-                charFormat.Underline = UnderlineType.None;
-                charFormat.Strikethrough = FormatEffect.Off;
-                charFormat.Subscript = FormatEffect.Off;
-                charFormat.Superscript = FormatEffect.Off;
-                charFormat.AllCaps = FormatEffect.Off;
-                charFormat.SmallCaps = FormatEffect.Off;
-                selection.CharacterFormat = charFormat;
-            }
-        }
-
-        private void Editor_DragOver(object sender, DragEventArgs e)
-        {
-            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-            if (e.DragUIOverride != null)
-            {
-                e.DragUIOverride.Caption = "Open file";
-                e.DragUIOverride.IsContentVisible = false;
-            }
-            e.Handled = true;
-        }
-
-        private async void Editor_Drop(object sender, DragEventArgs e)
-        {
-            if (!e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
-                return;
-
-            var items = await e.DataView.GetStorageItemsAsync();
-            var file = items.OfType<StorageFile>().FirstOrDefault(f =>
-                f.FileType.Equals(".rtf", StringComparison.OrdinalIgnoreCase) ||
-                f.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase));
-
-            if (file == null) return;
-
-            if (!await PromptSaveChangesAsync()) return;
-
-            try
-            {
-                await OpenStorageFileAsync(file);
-            }
-            catch (Exception ex)
-            {
-                await ShowErrorDialogAsync("Open Failed", $"Could not open '{file.Name}': {ex.Message}");
             }
         }
 

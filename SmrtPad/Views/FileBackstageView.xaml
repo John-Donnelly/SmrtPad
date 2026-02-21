@@ -49,35 +49,8 @@
             <Border Grid.Row="1"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="8" Padding="16">
-                <Grid>
-                    <!-- Default content for all panels except Open -->
-                    <TextBlock x:Name="BodyText" TextWrapping="Wrap"
-                               Text="Choose an option on the left." />
-
-                    <!-- Open panel: browse button + recent files -->
-                    <StackPanel x:Name="OpenPanel" Visibility="Collapsed" Spacing="12">
-                        <Button x:Name="BrowseButton" Content="Browse for file..."
-                                Click="BrowseForFile_Click" HorizontalAlignment="Left"
-                                Style="{StaticResource AccentButtonStyle}"/>
-                        <TextBlock x:Name="RecentFilesHeader" Text="Recent files:"
-                                   FontWeight="SemiBold" Visibility="Collapsed"/>
-                        <ListView x:Name="RecentFilesList"
-                                  SelectionMode="Single"
-                                  IsItemClickEnabled="True"
-                                  ItemClick="RecentFile_Click"
-                                  Visibility="Collapsed">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis"
-                                               FontSize="12" ToolTipService.ToolTip="{Binding}"/>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                        <TextBlock x:Name="NoRecentFilesText" Text="No recent files."
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Visibility="Collapsed"/>
-                    </StackPanel>
-                </Grid>
+                <TextBlock x:Name="BodyText" TextWrapping="Wrap"
+                           Text="Choose an option on the left." />
             </Border>
         </Grid>
     </Grid>

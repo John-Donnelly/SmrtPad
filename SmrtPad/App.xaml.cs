@@ -48,20 +48,6 @@ namespace SmrtPad
             _window = new MainWindow();
             MainWindow = _window;
             _window.Activate();
-
-            // Open file passed as a command-line argument (e.g. shell "Open with" or direct launch)
-            var cmdArgs = Environment.GetCommandLineArgs();
-            if (cmdArgs.Length > 1)
-            {
-                string path = cmdArgs[1];
-                if (File.Exists(path))
-                {
-                    _window.DispatcherQueue.TryEnqueue(() =>
-                    {
-                        ((SmrtPad.MainWindow)_window).OpenFileFromPathAsync(path);
-                    });
-                }
-            }
         }
     }
 }

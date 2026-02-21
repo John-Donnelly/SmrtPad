@@ -147,14 +147,6 @@
                                     <TextBlock Text="Copy" FontSize="12" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Click="PasteSpecial_Click" Height="26" Padding="6,2" CornerRadius="4"
-                                    Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paste as Plain Text"
-                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE77F;" FontSize="13"/>
-                                    <TextBlock Text="Paste text" FontSize="12" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
                         </StackPanel>
                     </Grid>
                     <TextBlock Grid.Row="1" Text="Clipboard" FontSize="10" HorizontalAlignment="Center"
@@ -177,10 +169,8 @@
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
                                   PlaceholderText="Font" IsEditable="True"/>
                         <ComboBox x:Name="FontSizeComboBox" Width="112" Height="28" FontSize="12"
-                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
-                                   KeyDown="FontSizeComboBox_KeyDown"
-                                   LostFocus="FontSizeComboBox_LostFocus"
-                                   IsEditable="True"/>
+                                  SelectionChanged="FontSizeComboBox_SelectionChanged"
+                                  IsEditable="True"/>
                         <Button Click="GrowFont_Click" Width="28" Height="28" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Grow Font">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="13"/>
@@ -217,10 +207,6 @@
                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
                             <TextBlock FontSize="13" Text="x&#xB2;"/>
                         </ToggleButton>
-                        <Button Click="ClearFormatting_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Clear Formatting">
-                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8BB;" FontSize="13"/>
-                        </Button>
                         <!-- Font Color with swatch grid -->
                         <Button Padding="4,3" MinWidth="32" Height="32" CornerRadius="4" Background="Transparent" BorderThickness="0"
                                 ToolTipService.ToolTip="Font Color">
@@ -423,32 +409,10 @@
                                 <TextBlock Text="Object" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <!-- Date and Time with format picker -->
-                        <Button Grid.Column="3" Width="52" Height="48" Padding="0" CornerRadius="4"
+                        <!-- Date and Time -->
+                        <Button Grid.Column="3" Click="InsertDateTime_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Date and Time"
                                 VerticalAlignment="Top">
-                            <Button.Flyout>
-                                <MenuFlyout Placement="Bottom">
-                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="g">
-                                        <MenuFlyoutItem.Text>Short: 7/14/2025 2:30 PM</MenuFlyoutItem.Text>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="D">
-                                        <MenuFlyoutItem.Text>Long date: Monday, July 14, 2025</MenuFlyoutItem.Text>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="d">
-                                        <MenuFlyoutItem.Text>Short date: 7/14/2025</MenuFlyoutItem.Text>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="t">
-                                        <MenuFlyoutItem.Text>Short time: 2:30 PM</MenuFlyoutItem.Text>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="T">
-                                        <MenuFlyoutItem.Text>Long time: 2:30:45 PM</MenuFlyoutItem.Text>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Click="InsertDateTime_Click" Tag="s">
-                                        <MenuFlyoutItem.Text>ISO 8601: 2025-07-14T14:30:45</MenuFlyoutItem.Text>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </Button.Flyout>
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE787;" FontSize="22"/>
                                 <TextBlock Text="Date/Time" FontSize="9" HorizontalAlignment="Center"/>
@@ -474,15 +438,10 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                             <Button.Flyout>
                                 <Flyout>
-                                     <StackPanel Spacing="6" Width="300">
+                                    <StackPanel Spacing="6" Width="300">
                                         <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
                                         <TextBox x:Name="FindTextBox" PlaceholderText="Text to look for"/>
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <CheckBox x:Name="FindMatchCaseCheckBox" Content="Match case"/>
-                                            <CheckBox x:Name="FindWholeWordCheckBox" Content="Whole word"/>
-                                        </StackPanel>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                                            <Button Content="Find Previous" Click="FindPrevious_Click"/>
                                             <Button Content="Find Next" Click="FindNext_Click"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -533,8 +492,7 @@
 
         <!-- ═══ EDITOR + BACKSTAGE ═══ -->
         <Grid Grid.Row="2" Margin="10">
-            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap"
-                         AllowDrop="True" DragOver="Editor_DragOver" Drop="Editor_Drop"/>
+            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
             <views:FileBackstageView x:Name="FileBackstage" Visibility="Collapsed" />
         </Grid>
 
@@ -542,8 +500,6 @@
         <Grid Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
             <StackPanel Orientation="Horizontal" Spacing="16">
                 <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
-                <TextBlock x:Name="WordCountText" Text="Words: 0" VerticalAlignment="Center" FontSize="11"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
                            HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </StackPanel>
