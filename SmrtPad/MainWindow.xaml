@@ -30,50 +30,50 @@
               Height="34">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="0">
                 <!-- File → backstage -->
-                <Button Content="File" Click="FileMenu_Tapped"
+                <Button x:Uid="FileMenuButton" Content="File" Click="FileMenu_Tapped"
                         Padding="10,5" Background="Transparent" BorderThickness="0"
                         CornerRadius="0" FontSize="13"/>
                 <!-- Edit / View menus -->
                 <MenuBar VerticalAlignment="Center" Background="Transparent" Padding="0">
-                    <MenuBarItem Title="Edit">
-                        <MenuFlyoutItem Text="Cut" Click="Cut_Click">
+                    <MenuBarItem x:Uid="EditMenu" Title="Edit">
+                        <MenuFlyoutItem x:Uid="CutMenuItem" Text="Cut" Click="Cut_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C6;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="X" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Copy" Click="Copy_Click">
+                        <MenuFlyoutItem x:Uid="CopyMenuItem" Text="Copy" Click="Copy_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="C" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Paste" Click="Paste_Click">
+                        <MenuFlyoutItem x:Uid="PasteMenuItem" Text="Paste" Click="Paste_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="V" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="Paste Special" Click="PasteSpecial_Click">
+                        <MenuFlyoutItem x:Uid="PasteSpecialMenuItem" Text="Paste Special" Click="PasteSpecial_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="V" Modifiers="Control,Shift"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem Text="Select All" Click="SelectAll_Click">
+                        <MenuFlyoutItem x:Uid="SelectAllMenuItem" Text="Select All" Click="SelectAll_Click">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="A" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                     </MenuBarItem>
-                    <MenuBarItem Title="View">
-                        <MenuFlyoutItem Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click" />
-                        <MenuFlyoutItem Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click" />
+                    <MenuBarItem x:Uid="ViewMenu" Title="View">
+                        <MenuFlyoutItem x:Uid="ZoomInMenuItem" Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click" />
+                        <MenuFlyoutItem x:Uid="ZoomOutMenuItem" Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click" />
                         <MenuFlyoutSeparator />
-                        <ToggleMenuFlyoutItem Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
+                        <ToggleMenuFlyoutItem x:Uid="WordWrapMenuItem" Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
                         <MenuFlyoutSeparator />
-                        <ToggleMenuFlyoutItem x:Name="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click" />
+                        <ToggleMenuFlyoutItem x:Name="FocusModeToggle" x:Uid="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click" />
                     </MenuBarItem>
                 </MenuBar>
                 <!-- Quick-access separator -->
@@ -138,7 +138,7 @@
                                 VerticalAlignment="Top" Margin="0,2,4,0">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE77F;" FontSize="24"/>
-                                <TextBlock Text="Paste" FontSize="10" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="PasteRibbonLabel" Text="Paste" FontSize="10" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Cut / Copy / Paste Special stacked -->
@@ -148,7 +148,7 @@
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8C6;" FontSize="13"/>
-                                    <TextBlock Text="Cut" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock x:Uid="CutRibbonLabel" Text="Cut" FontSize="12" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Click="Copy_Click" Height="26" Padding="6,2" CornerRadius="4"
@@ -156,12 +156,12 @@
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8C8;" FontSize="13"/>
-                                    <TextBlock Text="Copy" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock x:Uid="CopyRibbonLabel" Text="Copy" FontSize="12" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Grid.Row="1" Text="Clipboard" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock x:Uid="ClipboardGroupLabel" Grid.Row="1" Text="Clipboard" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
 
@@ -177,7 +177,7 @@
 
                     <!-- Row 1: font family · font size · grow · shrink -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="3" Margin="0,0,0,3">
-                        <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
+                        <ComboBox x:Name="FontFamilyComboBox" x:Uid="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
                                   PlaceholderText="Font" IsEditable="True"/>
                         <ComboBox x:Name="FontSizeComboBox" Width="112" Height="28" FontSize="12"
@@ -239,7 +239,7 @@
                                             <Button Click="TextColorSwatchButton_Click" Tag="#9b00d3" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Ellipse Fill="#9b00d3" Width="20" Height="20" Stroke="#B7B7B7" StrokeThickness="1"/></Button>
                                             <Button Click="TextColorSwatchButton_Click" Tag="#c0504d" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Ellipse Fill="#c0504d" Width="20" Height="20" Stroke="#B7B7B7" StrokeThickness="1"/></Button>
                                         </VariableSizedWrapGrid>
-                                        <Button Content="More colors..." Click="TextColorMoreColors_Click" HorizontalAlignment="Stretch"/>
+                                        <Button x:Uid="MoreColorsButton" Content="More colors..." Click="TextColorMoreColors_Click" HorizontalAlignment="Stretch"/>
                                         <ColorPicker x:Name="TextColorPicker" ColorChanged="TextColorPicker_ColorChanged" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </Flyout>
@@ -291,7 +291,7 @@
                         </Button>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="2" Text="Font" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock x:Uid="FontGroupLabel" Grid.Row="2" Text="Font" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
 
@@ -320,13 +320,13 @@
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Start a list">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
-                                    <MenuFlyoutItem Text="None" Click="ListTypeNone_Click"/>
-                                    <MenuFlyoutItem Text="Bullet" Click="ListTypeBullet_Click"/>
-                                    <MenuFlyoutItem Text="Numbers" Click="ListTypeNumber_Click"/>
-                                    <MenuFlyoutItem Text="Lowercase letters" Click="ListTypeLowerLetter_Click"/>
-                                    <MenuFlyoutItem Text="Uppercase letters" Click="ListTypeUpperLetter_Click"/>
-                                    <MenuFlyoutItem Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"/>
-                                    <MenuFlyoutItem Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeNoneItem" Text="None" Click="ListTypeNone_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeBulletItem" Text="Bullet" Click="ListTypeBullet_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeNumberItem" Text="Numbers" Click="ListTypeNumber_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeLowerLetterItem" Text="Lowercase letters" Click="ListTypeLowerLetter_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeUpperLetterItem" Text="Uppercase letters" Click="ListTypeUpperLetter_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeLowerRomanItem" Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"/>
+                                    <MenuFlyoutItem x:Uid="ListTypeUpperRomanItem" Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
@@ -344,7 +344,7 @@
                                     <MenuFlyoutItem Text="1.5" Click="LineSpacing_Click" Tag="1.5"/>
                                     <MenuFlyoutItem Text="2.0" Click="LineSpacing_Click" Tag="2.0"/>
                                     <MenuFlyoutSeparator/>
-                                    <MenuFlyoutItem Text="Custom..." Click="CustomLineSpacing_Click"/>
+                                    <MenuFlyoutItem x:Uid="CustomSpacingItem" Text="Custom..." Click="CustomLineSpacing_Click"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
@@ -358,20 +358,20 @@
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="8" Width="200">
-                                        <TextBlock Text="Paragraph Spacing" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock x:Uid="ParagraphSpacingHeader" Text="Paragraph Spacing" FontSize="14" FontWeight="SemiBold"/>
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <StackPanel>
-                                                <TextBlock Text="Before (pt)" FontSize="11"/>
+                                                <TextBlock x:Uid="SpacingBeforeLabel" Text="Before (pt)" FontSize="11"/>
                                                 <NumberBox x:Name="SpacingBeforeBox" Minimum="0" Maximum="100" Value="0"
                                                            SpinButtonPlacementMode="Compact" SmallChange="1"/>
                                             </StackPanel>
                                             <StackPanel>
-                                                <TextBlock Text="After (pt)" FontSize="11"/>
+                                                <TextBlock x:Uid="SpacingAfterLabel" Text="After (pt)" FontSize="11"/>
                                                 <NumberBox x:Name="SpacingAfterBox" Minimum="0" Maximum="100" Value="0"
                                                            SpinButtonPlacementMode="Compact" SmallChange="1"/>
                                             </StackPanel>
                                         </StackPanel>
-                                        <Button Content="Apply" Click="ApplyParagraphSpacing_Click" HorizontalAlignment="Right"/>
+                                        <Button x:Uid="ApplySpacingButton" Content="Apply" Click="ApplyParagraphSpacing_Click" HorizontalAlignment="Right"/>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
@@ -407,7 +407,7 @@
                         </ToggleButton>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="2" Text="Paragraph" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock x:Uid="ParagraphGroupLabel" Grid.Row="2" Text="Paragraph" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
 
@@ -435,7 +435,7 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xEB9F;" FontSize="22"/>
-                                <TextBlock Text="Picture" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="PictureRibbonLabel" Text="Picture" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Paint drawing -->
@@ -444,7 +444,7 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xED54;" FontSize="22"/>
-                                <TextBlock Text="Paint" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="PaintRibbonLabel" Text="Paint" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Insert object -->
@@ -453,7 +453,7 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xF4A5;" FontSize="22"/>
-                                <TextBlock Text="Object" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="ObjectRibbonLabel" Text="Object" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Date and Time -->
@@ -462,7 +462,7 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE787;" FontSize="22"/>
-                                <TextBlock Text="Date/Time" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="DateTimeRibbonLabel" Text="Date/Time" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Insert Hyperlink -->
@@ -471,7 +471,7 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE71B;" FontSize="22"/>
-                                <TextBlock Text="Link" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="LinkRibbonLabel" Text="Link" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Insert Table -->
@@ -480,7 +480,7 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE80A;" FontSize="22"/>
-                                <TextBlock Text="Table" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="TableRibbonLabel" Text="Table" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Insert Symbol -->
@@ -489,11 +489,11 @@
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE710;" FontSize="22"/>
-                                <TextBlock Text="Symbol" FontSize="9" HorizontalAlignment="Center"/>
+                                <TextBlock x:Uid="SymbolRibbonLabel" Text="Symbol" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </Grid>
-                    <TextBlock Grid.Row="1" Text="Insert" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock x:Uid="InsertGroupLabel" Grid.Row="1" Text="Insert" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
 
@@ -513,24 +513,24 @@
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
-                                        <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBox x:Name="FindTextBox" PlaceholderText="Text to look for"/>
-                                        <CheckBox x:Name="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"/>
-                                        <CheckBox x:Name="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"/>
+                                        <TextBlock x:Uid="FindFlyoutHeader" Text="Find" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBox x:Name="FindTextBox" x:Uid="FindTextBox" PlaceholderText="Text to look for"/>
+                                        <CheckBox x:Name="FindMatchCaseCheckBox" x:Uid="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"/>
+                                        <CheckBox x:Name="FindWholeWordCheckBox" x:Uid="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                                            <Button Content="Highlight All" Click="HighlightAllMatches_Click"/>
-                                            <Button Content="Clear Highlights" Click="ClearHighlights_Click"/>
+                                            <Button x:Uid="HighlightAllButton" Content="Highlight All" Click="HighlightAllMatches_Click"/>
+                                            <Button x:Uid="ClearHighlightsButton" Content="Clear Highlights" Click="ClearHighlights_Click"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                                            <Button Content="Find Previous" Click="FindPrevious_Click"/>
-                                            <Button Content="Find Next" Click="FindNext_Click"/>
+                                            <Button x:Uid="FindPreviousButton" Content="Find Previous" Click="FindPrevious_Click"/>
+                                            <Button x:Uid="FindNextButton" Content="Find Next" Click="FindNext_Click"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE11A;" FontSize="14"/>
-                                <TextBlock Text="Find" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock x:Uid="FindRibbonLabel" Text="Find" FontSize="12" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Replace with dropdown flyout -->
@@ -539,20 +539,20 @@
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
-                                        <TextBlock Text="Find &amp; Replace" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBox x:Name="ReplaceFindTextBox" PlaceholderText="Text to look for"/>
-                                        <TextBlock Text="Replace" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                                        <TextBox x:Name="ReplaceWithTextBox" PlaceholderText="New text"/>
+                                        <TextBlock x:Uid="ReplaceFlyoutHeader" Text="Find &amp; Replace" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBox x:Name="ReplaceFindTextBox" x:Uid="ReplaceFindTextBox" PlaceholderText="Text to look for"/>
+                                        <TextBlock x:Uid="ReplaceFlyoutLabel" Text="Replace" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
+                                        <TextBox x:Name="ReplaceWithTextBox" x:Uid="ReplaceWithTextBox" PlaceholderText="New text"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                                            <Button Content="Replace" Click="Replace_Click"/>
-                                            <Button Content="Replace All" Click="ReplaceAll_Click"/>
+                                            <Button x:Uid="ReplaceButton" Content="Replace" Click="Replace_Click"/>
+                                            <Button x:Uid="ReplaceAllButton" Content="Replace All" Click="ReplaceAll_Click"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8AB;" FontSize="14"/>
-                                <TextBlock Text="Replace" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock x:Uid="ReplaceRibbonLabel" Text="Replace" FontSize="12" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Select all -->
@@ -560,12 +560,12 @@
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8B3;" FontSize="14"/>
-                                <TextBlock Text="Select all" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock x:Uid="SelectAllRibbonLabel" Text="Select all" FontSize="12" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="1" Text="Editing" FontSize="10" HorizontalAlignment="Center"
+                    <TextBlock x:Uid="EditingGroupLabel" Grid.Row="1" Text="Editing" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Grid>
             </Grid>
@@ -586,7 +586,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
-                    <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
+                    <TextBlock x:Name="StatusText" x:Uid="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
                     <TextBlock x:Name="WordCountText" Text="Words: 0" VerticalAlignment="Center" FontSize="11"
