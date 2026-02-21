@@ -1,6 +1,6 @@
 # SmrtPad
 
-A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface.
+A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface.
 
 ## Features
 
@@ -29,7 +29,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 ## Requirements
 
 - Windows 10 version 1809 (build 17763) or later
-- .NET 8 SDK
+- .NET 10 SDK
 - Windows App SDK 1.8+
 
 ## Building
@@ -48,7 +48,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite includes 53 tests covering:
+The test suite includes 59 tests covering:
 - ViewModel default values and property change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
 - Alignment setting for all four modes
@@ -58,15 +58,14 @@ The test suite includes 53 tests covering:
 - Word wrap toggle
 - NewDocument full state reset
 - Hex color parsing for 6-digit and 8-digit formats
+- Negative/error-case tests for ColorHelper input validation
 
 ## Project Structure
 
 ```
 SmrtPad/
 ├── SmrtPad/
-│   ├── Controls/           # Custom controls (NativeRichEditHost)
 │   ├── Helpers/             # Utility classes (ColorHelper)
-│   ├── Interop/             # Win32 interop
 │   ├── ViewModels/          # MVVM view models (EditorViewModel)
 │   ├── Views/               # User controls (FileBackstageView)
 │   ├── MainWindow.xaml      # Main window with ribbon UI

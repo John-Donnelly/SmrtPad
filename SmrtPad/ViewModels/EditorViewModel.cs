@@ -15,7 +15,7 @@ namespace SmrtPad.ViewModels
         private string _statusMessage = "Ready";
 
         [ObservableProperty]
-        private bool _isModified = false;
+        private bool _isModified;
 
         [ObservableProperty]
         private string _fontFamily = "Segoe UI";
@@ -24,28 +24,28 @@ namespace SmrtPad.ViewModels
         private double _fontSize = 11.0;
 
         [ObservableProperty]
-        private bool _isBold = false;
+        private bool _isBold;
 
         [ObservableProperty]
-        private bool _isItalic = false;
+        private bool _isItalic;
 
         [ObservableProperty]
-        private bool _isUnderline = false;
+        private bool _isUnderline;
 
         [ObservableProperty]
-        private bool _isStrikethrough = false;
+        private bool _isStrikethrough;
 
         [ObservableProperty]
-        private bool _isSubscript = false;
+        private bool _isSubscript;
 
         [ObservableProperty]
-        private bool _isSuperscript = false;
+        private bool _isSuperscript;
 
         [ObservableProperty]
         private string _alignment = "Left";
 
         [ObservableProperty]
-        private bool _isBullets = false;
+        private bool _isBullets;
 
         [ObservableProperty]
         private bool _isWordWrap = true;
