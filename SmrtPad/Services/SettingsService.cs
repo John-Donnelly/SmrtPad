@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 
@@ -89,7 +90,10 @@ namespace SmrtPad.Services
                 var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(_settingsFilePath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SettingsService.Save failed: {ex.Message}");
+            }
         }
 
         public void Load()
@@ -102,8 +106,9 @@ namespace SmrtPad.Services
                     _data = JsonSerializer.Deserialize<SettingsData>(json) ?? new SettingsData();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
                 _data = new SettingsData();
             }
         }

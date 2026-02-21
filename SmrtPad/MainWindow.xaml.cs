@@ -170,11 +170,7 @@ namespace SmrtPad
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "SmrtPad", "Recovery");
                 Directory.CreateDirectory(recoveryDir);
-                string recoveryPath = Path.Combine(recoveryDir, $"recovery_{DateTime.Now:yyyyMMdd_HHmmss}.rtf");
-                var file = await StorageFile.GetFileFromPathAsync(
-                    Path.Combine(recoveryDir, "."));
 
-                // Use a temp file for recovery
                 var folder = await StorageFolder.GetFolderFromPathAsync(recoveryDir);
                 var recoveryFile = await folder.CreateFileAsync(
                     $"recovery_{DateTime.Now:yyyyMMdd_HHmmss}.rtf",
@@ -1075,11 +1071,14 @@ namespace SmrtPad
             string replaceWith = ReplaceWithTextBox.Text;
             if (!string.IsNullOrEmpty(textToFind))
             {
-                if (Editor.Document.Selection.Text == textToFind)
+                var options = GetFindOptions();
+                if (Editor.Document.Selection.FindText(textToFind, 0, options) > 0
+                    || Editor.Document.Selection.Text.Equals(textToFind,
+                        options.HasFlag(FindOptions.Case) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                 {
                     Editor.Document.Selection.Text = replaceWith;
                 }
-                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, FindOptions.None);
+                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, options);
             }
         }
 
@@ -1089,9 +1088,10 @@ namespace SmrtPad
             string replaceWith = ReplaceWithTextBox.Text;
             if (!string.IsNullOrEmpty(textToFind))
             {
+                var options = GetFindOptions();
                 int count = 0;
                 Editor.Document.Selection.SetRange(0, 0);
-                while (Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, FindOptions.None) > 0)
+                while (Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, options) > 0)
                 {
                     Editor.Document.Selection.Text = replaceWith;
                     count++;
