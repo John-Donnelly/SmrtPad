@@ -14,15 +14,21 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
 
+    private bool _suppressSelectionEvent;
+
     public FileBackstageView()
     {
         InitializeComponent();
+        _suppressSelectionEvent = true;
         Nav.SelectedItem = Nav.MenuItems[0];
+        HeaderText.Text = "New";
+        BodyText.Text = "Create a new document.";
+        _suppressSelectionEvent = false;
     }
 
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        if (args.SelectedItem is not NavigationViewItem item)
+        if (_suppressSelectionEvent || args.SelectedItem is not NavigationViewItem item)
             return;
 
         var tag = item.Tag as string;

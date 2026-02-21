@@ -169,8 +169,10 @@
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
                                   PlaceholderText="Font" IsEditable="True"/>
                         <ComboBox x:Name="FontSizeComboBox" Width="112" Height="28" FontSize="12"
-                                  SelectionChanged="FontSizeComboBox_SelectionChanged"
-                                  IsEditable="True"/>
+                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
+                                   KeyDown="FontSizeComboBox_KeyDown"
+                                   LostFocus="FontSizeComboBox_LostFocus"
+                                   IsEditable="True"/>
                         <Button Click="GrowFont_Click" Width="28" Height="28" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Grow Font">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="13"/>
@@ -207,6 +209,10 @@
                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
                             <TextBlock FontSize="13" Text="x&#xB2;"/>
                         </ToggleButton>
+                        <Button Click="ClearFormatting_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Clear Formatting">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8BB;" FontSize="13"/>
+                        </Button>
                         <!-- Font Color with swatch grid -->
                         <Button Padding="4,3" MinWidth="32" Height="32" CornerRadius="4" Background="Transparent" BorderThickness="0"
                                 ToolTipService.ToolTip="Font Color">

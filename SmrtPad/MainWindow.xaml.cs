@@ -787,6 +787,54 @@ namespace SmrtPad
             }
         }
 
+        private void ApplyTypedFontSize()
+        {
+            if (double.TryParse(FontSizeComboBox.Text, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out double fontSize) && fontSize > 0)
+            {
+                ITextSelection selectedText = Editor.Document.Selection;
+                if (selectedText != null)
+                {
+                    ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
+                    charFormatting.Size = (float)fontSize;
+                    selectedText.CharacterFormat = charFormatting;
+                }
+                ViewModel.FontSize = fontSize;
+            }
+        }
+
+        private void FontSizeComboBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                ApplyTypedFontSize();
+                e.Handled = true;
+            }
+        }
+
+        private void FontSizeComboBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ApplyTypedFontSize();
+        }
+
+        private void ClearFormatting_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selection = Editor.Document.Selection;
+            if (selection != null)
+            {
+                ITextCharacterFormat charFormat = selection.CharacterFormat;
+                charFormat.Bold = FormatEffect.Off;
+                charFormat.Italic = FormatEffect.Off;
+                charFormat.Underline = UnderlineType.None;
+                charFormat.Strikethrough = FormatEffect.Off;
+                charFormat.Subscript = FormatEffect.Off;
+                charFormat.Superscript = FormatEffect.Off;
+                charFormat.AllCaps = FormatEffect.Off;
+                charFormat.SmallCaps = FormatEffect.Off;
+                selection.CharacterFormat = charFormat;
+            }
+        }
+
         private void Undo_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Undo();
