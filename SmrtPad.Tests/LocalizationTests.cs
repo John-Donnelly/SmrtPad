@@ -213,6 +213,30 @@ namespace SmrtPad.Tests
             Assert.Equal("New document created.", vm.StatusMessage);
         }
 
+        [Theory]
+        [InlineData("PrintJobTitle")]
+        [InlineData("PrintNotSupported")]
+        [InlineData("PrintNotSupportedMessage")]
+        [InlineData("StatusPrintCompleted")]
+        [InlineData("StatusPrintFailed")]
+        [InlineData("StatusPrintCancelled")]
+        [InlineData("FileTypeDocx")]
+        [InlineData("FileTypeHtml")]
+        [InlineData("FileTypeOdt")]
+        public void ReswFile_ContainsSection2Keys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
+        [Fact]
+        public void ReswFile_PrintJobTitle_HasPlaceholder()
+        {
+            var entries = LoadResw();
+            Assert.Contains("{0}", entries["PrintJobTitle"]);
+        }
+
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =
