@@ -38,14 +38,16 @@ namespace SmrtPad
     {
         private StorageFile? _currentFile;
         private readonly ISettingsService _settings;
+        private readonly IDialogService _dialogService;
+        private readonly IFileService _fileService;
         private DispatcherTimer? _autoSaveTimer;
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
-
-        // reserved for future image selection tracking
 
         public MainWindow()
         {
             _settings = new SettingsService();
+            _dialogService = new DialogService(() => Content.XamlRoot);
+            _fileService = new FileService(() => this);
             InitializeComponent();
             Title = $"SmrtPad - {ViewModel.DocumentTitle}";
             ViewModel.PropertyChanged += (s, e) =>
@@ -376,23 +378,13 @@ namespace SmrtPad
             if (!ViewModel.IsModified)
                 return true;
 
-            var dialog = new ContentDialog
-            {
-                Title = "Unsaved Changes",
-                Content = $"Do you want to save changes to {ViewModel.DocumentTitle}?",
-                PrimaryButtonText = "Save",
-                SecondaryButtonText = "Don't Save",
-                CloseButtonText = "Cancel",
-                XamlRoot = Content.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
+            var result = await _dialogService.ShowSavePromptAsync(ViewModel.DocumentTitle);
+            if (result == SavePromptResult.Save)
             {
                 Save_Click(this, new RoutedEventArgs());
                 return true;
             }
-            return result == ContentDialogResult.Secondary;
+            return result == SavePromptResult.DontSave;
         }
 
         private async void New_Click(object sender, RoutedEventArgs e)
@@ -1302,14 +1294,7 @@ namespace SmrtPad
 
         private async Task ShowErrorDialogAsync(string title, string message)
         {
-            var dialog = new ContentDialog
-            {
-                Title = title,
-                Content = message,
-                CloseButtonText = "OK",
-                XamlRoot = Content.XamlRoot
-            };
-            await dialog.ShowAsync();
+            await _dialogService.ShowErrorAsync(title, message);
         }
 
         private void PasteSpecial_Click(object sender, RoutedEventArgs e)
