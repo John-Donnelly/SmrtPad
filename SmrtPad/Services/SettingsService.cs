@@ -23,6 +23,15 @@ namespace SmrtPad.Services
             Load();
         }
 
+        public SettingsService(string settingsFilePath)
+        {
+            _settingsFilePath = settingsFilePath;
+            string? dir = Path.GetDirectoryName(settingsFilePath);
+            if (dir != null) Directory.CreateDirectory(dir);
+            _data = new SettingsData();
+            Load();
+        }
+
         public string DefaultFontFamily
         {
             get => _data.DefaultFontFamily;

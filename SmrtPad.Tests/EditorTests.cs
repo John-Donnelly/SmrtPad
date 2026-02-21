@@ -840,7 +840,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_DefaultValues()
         {
-            var svc = new SettingsService();
+            var svc = new SettingsService(_testSettingsPath);
             Assert.Equal("Segoe UI", svc.DefaultFontFamily);
             Assert.Equal(11.0, svc.DefaultFontSize);
             Assert.True(svc.DefaultWordWrap);
@@ -854,8 +854,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_AddRecentFile_AddsToFront()
         {
-            var svc = new SettingsService();
-            svc.ClearRecentFiles();
+            var svc = new SettingsService(_testSettingsPath);
             svc.AddRecentFile("C:\\file1.rtf");
             svc.AddRecentFile("C:\\file2.rtf");
             Assert.Equal(2, svc.RecentFiles.Count);
@@ -866,8 +865,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_AddRecentFile_NoDuplicates()
         {
-            var svc = new SettingsService();
-            svc.ClearRecentFiles();
+            var svc = new SettingsService(_testSettingsPath);
             svc.AddRecentFile("C:\\file1.rtf");
             svc.AddRecentFile("C:\\file2.rtf");
             svc.AddRecentFile("C:\\file1.rtf");
@@ -878,8 +876,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_AddRecentFile_CapsAt10()
         {
-            var svc = new SettingsService();
-            svc.ClearRecentFiles();
+            var svc = new SettingsService(_testSettingsPath);
             for (int i = 0; i < 15; i++)
                 svc.AddRecentFile($"C:\\file{i}.rtf");
             Assert.Equal(10, svc.RecentFiles.Count);
@@ -889,8 +886,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_AddRecentFile_IgnoresNullOrWhitespace()
         {
-            var svc = new SettingsService();
-            svc.ClearRecentFiles();
+            var svc = new SettingsService(_testSettingsPath);
             svc.AddRecentFile(null!);
             svc.AddRecentFile("");
             svc.AddRecentFile("  ");
@@ -900,7 +896,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_ClearRecentFiles()
         {
-            var svc = new SettingsService();
+            var svc = new SettingsService(_testSettingsPath);
             svc.AddRecentFile("C:\\file1.rtf");
             svc.AddRecentFile("C:\\file2.rtf");
             svc.ClearRecentFiles();
@@ -910,7 +906,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsService_SetAndGetProperties()
         {
-            var svc = new SettingsService();
+            var svc = new SettingsService(_testSettingsPath);
             svc.DefaultFontFamily = "Arial";
             svc.DefaultFontSize = 14.0;
             svc.DefaultWordWrap = false;
