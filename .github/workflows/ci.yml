@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Add NuGet source (Windows App SDK)
+        run: |
+          dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org || true
+
+      - name: Restore dependencies
+        run: dotnet restore SmrtPad.sln
+
+      - name: Build (x64 Debug)
+        run: >
+          dotnet build SmrtPad.sln
+          --configuration Debug
+          --no-restore
+          -p:Platform=x64
+          -p:RuntimeIdentifier=win-x64
+
+      - name: Run tests with coverage
+        run: >
+          dotnet test SmrtPad.Tests/SmrtPad.Tests.csproj
+          --configuration Debug
+          --no-build
+          -p:Platform=x64
+          -p:RuntimeIdentifier=win-x64
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
+          --logger "trx;LogFileName=test-results.trx"
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: TestResults/**/coverage.cobertura.xml
