@@ -212,5 +212,185 @@ namespace SmrtPad.Tests
             Assert.Equal("Untitled", vm.DocumentTitle);
             Assert.Equal("New document created.", vm.StatusMessage);
         }
+
+        // ── Satellite locale parity tests ──
+
+        private static readonly string[] SatelliteLocales =
+            ["de-DE", "es-ES", "fr-FR", "ja-JP", "zh-Hans"];
+
+        private static string? FindStringsRoot()
+        {
+            string? dir = AppContext.BaseDirectory;
+            for (int i = 0; i < 8 && dir is not null; i++)
+            {
+                string candidate = Path.Combine(dir, "Strings");
+                if (!Directory.Exists(candidate))
+                    candidate = Path.Combine(dir, "SmrtPad", "Strings");
+                if (Directory.Exists(candidate))
+                    return candidate;
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return null;
+        }
+
+        private static Dictionary<string, string> LoadReswFrom(string path)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.Ordinal);
+            var doc = XDocument.Load(path);
+            foreach (var data in doc.Descendants("data"))
+            {
+                string? name = data.Attribute("name")?.Value;
+                string? val = data.Element("value")?.Value;
+                if (name is not null && val is not null)
+                    dict[name] = val;
+            }
+            return dict;
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_Exists(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            Assert.True(File.Exists(path), $"Missing {locale}/Resources.resw");
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_IsValidXml(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            var doc = XDocument.Load(path);
+            Assert.NotNull(doc.Root);
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_HasAllEnUsKeys(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            var enUs = LoadResw();
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            var satellite = LoadReswFrom(path);
+
+            var missing = enUs.Keys.Except(satellite.Keys).ToList();
+            Assert.True(missing.Count == 0,
+                $"{locale} is missing keys: {string.Join(", ", missing)}");
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_HasNoExtraKeys(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            var enUs = LoadResw();
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            var satellite = LoadReswFrom(path);
+
+            var extra = satellite.Keys.Except(enUs.Keys).ToList();
+            Assert.True(extra.Count == 0,
+                $"{locale} has extra keys: {string.Join(", ", extra)}");
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_NoEmptyValues(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            var satellite = LoadReswFrom(path);
+
+            var empty = satellite.Where(kv => string.IsNullOrWhiteSpace(kv.Value))
+                                 .Select(kv => kv.Key).ToList();
+            Assert.True(empty.Count == 0,
+                $"{locale} has empty values: {string.Join(", ", empty)}");
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_FormatPlaceholders_Match(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            var enUs = LoadResw();
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            var satellite = LoadReswFrom(path);
+
+            // Check that format strings preserve {0}, {1}, etc.
+            var formatKeys = enUs.Where(kv => kv.Value.Contains("{0}"))
+                                 .Select(kv => kv.Key);
+
+            foreach (var key in formatKeys)
+            {
+                Assert.True(satellite.ContainsKey(key), $"{locale} missing format key: {key}");
+
+                // Count placeholders in en-US
+                int enCount = 0;
+                for (int i = 0; i < 10; i++)
+                    if (enUs[key].Contains($"{{{i}}}")) enCount++;
+
+                // Same count in satellite
+                int satCount = 0;
+                for (int i = 0; i < 10; i++)
+                    if (satellite[key].Contains($"{{{i}}}")) satCount++;
+
+                Assert.Equal(enCount, satCount);
+            }
+        }
+
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("es-ES")]
+        [InlineData("fr-FR")]
+        [InlineData("ja-JP")]
+        [InlineData("zh-Hans")]
+        public void SatelliteResw_NoDuplicateKeys(string locale)
+        {
+            var root = FindStringsRoot();
+            Assert.NotNull(root);
+            string path = Path.Combine(root!, locale, "Resources.resw");
+            var doc = XDocument.Load(path);
+            var keys = doc.Descendants("data")
+                          .Select(d => d.Attribute("name")?.Value)
+                          .Where(n => n is not null)
+                          .ToList();
+            var duplicates = keys.GroupBy(k => k)
+                                 .Where(g => g.Count() > 1)
+                                 .Select(g => g.Key)
+                                 .ToList();
+            Assert.True(duplicates.Count == 0,
+                $"{locale} has duplicate keys: {string.Join(", ", duplicates!)}");
+        }
     }
 }

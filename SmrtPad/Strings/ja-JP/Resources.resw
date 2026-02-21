@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ═══ メニューバー ═══ -->
+  <data name="FileMenuButton.Content" xml:space="preserve">
+    <value>ファイル</value>
+  </data>
+  <data name="EditMenu.Title" xml:space="preserve">
+    <value>編集</value>
+  </data>
+  <data name="ViewMenu.Title" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="CutMenuItem.Text" xml:space="preserve">
+    <value>切り取り</value>
+  </data>
+  <data name="CopyMenuItem.Text" xml:space="preserve">
+    <value>コピー</value>
+  </data>
+  <data name="PasteMenuItem.Text" xml:space="preserve">
+    <value>貼り付け</value>
+  </data>
+  <data name="PasteSpecialMenuItem.Text" xml:space="preserve">
+    <value>形式を選択して貼り付け</value>
+  </data>
+  <data name="SelectAllMenuItem.Text" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
+  <data name="ZoomInMenuItem.Text" xml:space="preserve">
+    <value>拡大</value>
+  </data>
+  <data name="ZoomOutMenuItem.Text" xml:space="preserve">
+    <value>縮小</value>
+  </data>
+  <data name="WordWrapMenuItem.Text" xml:space="preserve">
+    <value>右端で折り返す</value>
+  </data>
+  <data name="FocusModeToggle.Text" xml:space="preserve">
+    <value>集中モード</value>
+  </data>
+
+  <!-- ═══ リボン — クリップボード ═══ -->
+  <data name="PasteRibbonLabel.Text" xml:space="preserve">
+    <value>貼り付け</value>
+  </data>
+  <data name="CutRibbonLabel.Text" xml:space="preserve">
+    <value>切り取り</value>
+  </data>
+  <data name="CopyRibbonLabel.Text" xml:space="preserve">
+    <value>コピー</value>
+  </data>
+  <data name="ClipboardGroupLabel.Text" xml:space="preserve">
+    <value>クリップボード</value>
+  </data>
+
+  <!-- ═══ リボン — フォント ═══ -->
+  <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
+    <value>フォント</value>
+  </data>
+  <data name="MoreColorsButton.Content" xml:space="preserve">
+    <value>その他の色...</value>
+  </data>
+  <data name="FontGroupLabel.Text" xml:space="preserve">
+    <value>フォント</value>
+  </data>
+
+  <!-- ═══ リボン — 段落 ═══ -->
+  <data name="ListTypeNoneItem.Text" xml:space="preserve">
+    <value>なし</value>
+  </data>
+  <data name="ListTypeBulletItem.Text" xml:space="preserve">
+    <value>箇条書き</value>
+  </data>
+  <data name="ListTypeNumberItem.Text" xml:space="preserve">
+    <value>番号付き</value>
+  </data>
+  <data name="ListTypeLowerLetterItem.Text" xml:space="preserve">
+    <value>小文字アルファベット</value>
+  </data>
+  <data name="ListTypeUpperLetterItem.Text" xml:space="preserve">
+    <value>大文字アルファベット</value>
+  </data>
+  <data name="ListTypeLowerRomanItem.Text" xml:space="preserve">
+    <value>ローマ数字小文字</value>
+  </data>
+  <data name="ListTypeUpperRomanItem.Text" xml:space="preserve">
+    <value>ローマ数字大文字</value>
+  </data>
+  <data name="CustomSpacingItem.Text" xml:space="preserve">
+    <value>カスタム...</value>
+  </data>
+  <data name="ParagraphSpacingHeader.Text" xml:space="preserve">
+    <value>段落の間隔</value>
+  </data>
+  <data name="SpacingBeforeLabel.Text" xml:space="preserve">
+    <value>前 (pt)</value>
+  </data>
+  <data name="SpacingAfterLabel.Text" xml:space="preserve">
+    <value>後 (pt)</value>
+  </data>
+  <data name="ApplySpacingButton.Content" xml:space="preserve">
+    <value>適用</value>
+  </data>
+  <data name="ParagraphGroupLabel.Text" xml:space="preserve">
+    <value>段落</value>
+  </data>
+
+  <!-- ═══ リボン — 挿入 ═══ -->
+  <data name="PictureRibbonLabel.Text" xml:space="preserve">
+    <value>画像</value>
+  </data>
+  <data name="PaintRibbonLabel.Text" xml:space="preserve">
+    <value>描画</value>
+  </data>
+  <data name="ObjectRibbonLabel.Text" xml:space="preserve">
+    <value>オブジェクト</value>
+  </data>
+  <data name="DateTimeRibbonLabel.Text" xml:space="preserve">
+    <value>日付/時刻</value>
+  </data>
+  <data name="LinkRibbonLabel.Text" xml:space="preserve">
+    <value>リンク</value>
+  </data>
+  <data name="TableRibbonLabel.Text" xml:space="preserve">
+    <value>表</value>
+  </data>
+  <data name="SymbolRibbonLabel.Text" xml:space="preserve">
+    <value>記号</value>
+  </data>
+  <data name="InsertGroupLabel.Text" xml:space="preserve">
+    <value>挿入</value>
+  </data>
+
+  <!-- ═══ リボン — 編集 ═══ -->
+  <data name="FindFlyoutHeader.Text" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="FindTextBox.PlaceholderText" xml:space="preserve">
+    <value>検索するテキスト</value>
+  </data>
+  <data name="FindMatchCaseCheckBox.Content" xml:space="preserve">
+    <value>大文字と小文字を区別</value>
+  </data>
+  <data name="FindWholeWordCheckBox.Content" xml:space="preserve">
+    <value>単語単位</value>
+  </data>
+  <data name="HighlightAllButton.Content" xml:space="preserve">
+    <value>すべて強調表示</value>
+  </data>
+  <data name="ClearHighlightsButton.Content" xml:space="preserve">
+    <value>強調表示をクリア</value>
+  </data>
+  <data name="FindPreviousButton.Content" xml:space="preserve">
+    <value>前を検索</value>
+  </data>
+  <data name="FindNextButton.Content" xml:space="preserve">
+    <value>次を検索</value>
+  </data>
+  <data name="FindRibbonLabel.Text" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="ReplaceFlyoutHeader.Text" xml:space="preserve">
+    <value>検索と置換</value>
+  </data>
+  <data name="ReplaceFindTextBox.PlaceholderText" xml:space="preserve">
+    <value>検索するテキスト</value>
+  </data>
+  <data name="ReplaceFlyoutLabel.Text" xml:space="preserve">
+    <value>置換</value>
+  </data>
+  <data name="ReplaceWithTextBox.PlaceholderText" xml:space="preserve">
+    <value>置換後のテキスト</value>
+  </data>
+  <data name="ReplaceButton.Content" xml:space="preserve">
+    <value>置換</value>
+  </data>
+  <data name="ReplaceAllButton.Content" xml:space="preserve">
+    <value>すべて置換</value>
+  </data>
+  <data name="ReplaceRibbonLabel.Text" xml:space="preserve">
+    <value>置換</value>
+  </data>
+  <data name="SelectAllRibbonLabel.Text" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
+  <data name="EditingGroupLabel.Text" xml:space="preserve">
+    <value>編集</value>
+  </data>
+
+  <!-- ═══ バックステージ ═══ -->
+  <data name="NewNavItem.Content" xml:space="preserve">
+    <value>新規</value>
+  </data>
+  <data name="OpenNavItem.Content" xml:space="preserve">
+    <value>開く</value>
+  </data>
+  <data name="SaveNavItem.Content" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="SaveAsNavItem.Content" xml:space="preserve">
+    <value>名前を付けて保存</value>
+  </data>
+  <data name="PrintNavItem.Content" xml:space="preserve">
+    <value>印刷</value>
+  </data>
+  <data name="OptionsNavItem.Content" xml:space="preserve">
+    <value>オプション</value>
+  </data>
+  <data name="ExitNavItem.Content" xml:space="preserve">
+    <value>終了</value>
+  </data>
+  <data name="RecentFilesHeader.Text" xml:space="preserve">
+    <value>最近使ったファイル</value>
+  </data>
+  <data name="BackstageBodyDefault.Text" xml:space="preserve">
+    <value>左側からオプションを選択してください。</value>
+  </data>
+
+  <!-- ═══ ステータスバー ═══ -->
+  <data name="StatusText.Text" xml:space="preserve">
+    <value>準備完了</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: 一般 ═══ -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="DocumentUntitled" xml:space="preserve">
+    <value>無題</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>準備完了</value>
+  </data>
+  <data name="StatusNewDocument" xml:space="preserve">
+    <value>新しいドキュメントを作成しました。</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="ButtonApply" xml:space="preserve">
+    <value>適用</value>
+  </data>
+  <data name="ButtonInsert" xml:space="preserve">
+    <value>挿入</value>
+  </data>
+  <data name="ButtonOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ButtonPrint" xml:space="preserve">
+    <value>印刷</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ファイル操作 ═══ -->
+  <data name="StatusOpened" xml:space="preserve">
+    <value>{0} を開きました</value>
+  </data>
+  <data name="StatusSaved" xml:space="preserve">
+    <value>{0} を保存しました</value>
+  </data>
+  <data name="StatusAutoSaved" xml:space="preserve">
+    <value>{0} を自動保存しました</value>
+  </data>
+  <data name="StatusRecoverySaved" xml:space="preserve">
+    <value>回復ファイルを保存しました。</value>
+  </data>
+  <data name="ErrorOpeningFile" xml:space="preserve">
+    <value>ファイルを開く際のエラー</value>
+  </data>
+  <data name="ErrorSavingFile" xml:space="preserve">
+    <value>ファイル保存エラー</value>
+  </data>
+  <data name="FileTypeRtf" xml:space="preserve">
+    <value>リッチテキスト形式</value>
+  </data>
+  <data name="FileTypeTxt" xml:space="preserve">
+    <value>テキスト文書</value>
+  </data>
+  <data name="FileDefaultName" xml:space="preserve">
+    <value>ドキュメント</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: 印刷 ═══ -->
+  <data name="PrintTitle" xml:space="preserve">
+    <value>印刷</value>
+  </data>
+  <data name="PrintNoContent" xml:space="preserve">
+    <value>印刷する内容がありません。</value>
+  </data>
+  <data name="PrintDocumentTitle" xml:space="preserve">
+    <value>ドキュメントの印刷</value>
+  </data>
+  <data name="PrintDocumentLabel" xml:space="preserve">
+    <value>ドキュメント: {0}</value>
+  </data>
+  <data name="PrintPagesLabel" xml:space="preserve">
+    <value>ページ数: 約{0}</value>
+  </data>
+  <data name="PrintSendToDefault" xml:space="preserve">
+    <value>ドキュメントは既定のプリンターに送信されます。</value>
+  </data>
+  <data name="StatusPrinting" xml:space="preserve">
+    <value>印刷中...</value>
+  </data>
+  <data name="StatusSentToPrinter" xml:space="preserve">
+    <value>{0} をプリンターに送信しました。</value>
+  </data>
+  <data name="ErrorPrint" xml:space="preserve">
+    <value>印刷エラー</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: オプション ═══ -->
+  <data name="OptionsTitle" xml:space="preserve">
+    <value>オプション</value>
+  </data>
+  <data name="OptionsDefaultFont" xml:space="preserve">
+    <value>既定のフォント</value>
+  </data>
+  <data name="OptionsDefaultFontSize" xml:space="preserve">
+    <value>既定のフォントサイズ</value>
+  </data>
+  <data name="OptionsWordWrap" xml:space="preserve">
+    <value>既定で右端で折り返す</value>
+  </data>
+  <data name="OptionsDefaultSaveFormat" xml:space="preserve">
+    <value>既定の保存形式</value>
+  </data>
+  <data name="OptionsTheme" xml:space="preserve">
+    <value>テーマ</value>
+  </data>
+  <data name="OptionsThemeSystem" xml:space="preserve">
+    <value>システム</value>
+  </data>
+  <data name="OptionsThemeLight" xml:space="preserve">
+    <value>ライト</value>
+  </data>
+  <data name="OptionsThemeDark" xml:space="preserve">
+    <value>ダーク</value>
+  </data>
+  <data name="OptionsAutoSave" xml:space="preserve">
+    <value>自動保存を有効にする</value>
+  </data>
+  <data name="OptionsAutoSaveInterval" xml:space="preserve">
+    <value>自動保存の間隔 (秒)</value>
+  </data>
+  <data name="StatusOptionsSaved" xml:space="preserve">
+    <value>オプションを保存しました。</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: 検索 / 置換 ═══ -->
+  <data name="StatusNoMatch" xml:space="preserve">
+    <value>一致するものが見つかりません。</value>
+  </data>
+  <data name="StatusHighlighted" xml:space="preserve">
+    <value>{0} 件を強調表示しました。</value>
+  </data>
+  <data name="StatusNoMatches" xml:space="preserve">
+    <value>一致するものが見つかりません。</value>
+  </data>
+  <data name="StatusHighlightsCleared" xml:space="preserve">
+    <value>強調表示をクリアしました。</value>
+  </data>
+  <data name="StatusReplaced" xml:space="preserve">
+    <value>{0} 件を置換しました。</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: 集中モード ═══ -->
+  <data name="StatusFocusModeEnabled" xml:space="preserve">
+    <value>集中モードを有効にしました。</value>
+  </data>
+  <data name="StatusFocusModeDisabled" xml:space="preserve">
+    <value>集中モードを無効にしました。</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: 挿入機能 ═══ -->
+  <data name="DateTimeTitle" xml:space="preserve">
+    <value>日付と時刻</value>
+  </data>
+  <data name="StatusInserted" xml:space="preserve">
+    <value>{0} を挿入しました。</value>
+  </data>
+  <data name="StatusInsertedReference" xml:space="preserve">
+    <value>{0} への参照を挿入しました。</value>
+  </data>
+  <data name="EmbeddedObject" xml:space="preserve">
+    <value>[埋め込みオブジェクト: {0}]</value>
+  </data>
+  <data name="ErrorInsertingObject" xml:space="preserve">
+    <value>オブジェクト挿入エラー</value>
+  </data>
+  <data name="StatusDrawingInserted" xml:space="preserve">
+    <value>描画を挿入しました。</value>
+  </data>
+  <data name="StatusDrawingCancelled" xml:space="preserve">
+    <value>描画がキャンセルされました。</value>
+  </data>
+  <data name="SmrtDoodleNotFound" xml:space="preserve">
+    <value>SmrtDoodle が見つかりません</value>
+  </data>
+  <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
+    <value>SmrtDoodle がインストールされていないか、システムパスに見つかりませんでした。描画機能を使用するには SmrtDoodle をインストールしてください。</value>
+  </data>
+  <data name="HyperlinkTitle" xml:space="preserve">
+    <value>ハイパーリンクの挿入</value>
+  </data>
+  <data name="HyperlinkUrlHeader" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="HyperlinkDisplayHeader" xml:space="preserve">
+    <value>表示テキスト (省略可)</value>
+  </data>
+  <data name="StatusHyperlinkInserted" xml:space="preserve">
+    <value>ハイパーリンクを挿入しました。</value>
+  </data>
+  <data name="TableTitle" xml:space="preserve">
+    <value>表の挿入</value>
+  </data>
+  <data name="TableRows" xml:space="preserve">
+    <value>行</value>
+  </data>
+  <data name="TableColumns" xml:space="preserve">
+    <value>列</value>
+  </data>
+  <data name="StatusInsertedTable" xml:space="preserve">
+    <value>{0}×{1} の表を挿入しました。</value>
+  </data>
+  <data name="SymbolTitle" xml:space="preserve">
+    <value>記号の挿入</value>
+  </data>
+  <data name="StatusInsertedSymbol" xml:space="preserve">
+    <value>記号を挿入しました: {0}</value>
+  </data>
+  <data name="LineSpacingTitle" xml:space="preserve">
+    <value>カスタム行間</value>
+  </data>
+  <data name="LineSpacingHeader" xml:space="preserve">
+    <value>行間の値</value>
+  </data>
+  <data name="StatusFormattingCleared" xml:space="preserve">
+    <value>書式をクリアしました。</value>
+  </data>
+  <data name="StatusParagraphSpacing" xml:space="preserve">
+    <value>段落の間隔: 前 {0}pt、後 {1}pt。</value>
+  </data>
+  <data name="StatusTheme" xml:space="preserve">
+    <value>テーマ: {0}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: 貼り付け / エラー ═══ -->
+  <data name="ErrorPaste" xml:space="preserve">
+    <value>貼り付けエラー</value>
+  </data>
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>エラー</value>
+  </data>
+  <data name="DragDropCaption" xml:space="preserve">
+    <value>ファイルを開く</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ステータスバー ═══ -->
+  <data name="StatusBarWords" xml:space="preserve">
+    <value>単語数: {0}</value>
+  </data>
+  <data name="StatusBarCharacters" xml:space="preserve">
+    <value>文字数: {0}</value>
+  </data>
+  <data name="StatusBarSelection" xml:space="preserve">
+    <value>選択: {0}</value>
+  </data>
+  <data name="StatusBarLineCol" xml:space="preserve">
+    <value>{0} 行、{1} 列</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: ダイアログサービス ═══ -->
+  <data name="DlgUnsavedChanges" xml:space="preserve">
+    <value>未保存の変更</value>
+  </data>
+  <data name="DlgSaveChangesMessage" xml:space="preserve">
+    <value>{0} への変更を保存しますか?</value>
+  </data>
+  <data name="DlgSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="DlgDontSave" xml:space="preserve">
+    <value>保存しない</value>
+  </data>
+  <data name="DlgCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="DlgOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: バックステージ ═══ -->
+  <data name="BackstageFile" xml:space="preserve">
+    <value>ファイル</value>
+  </data>
+  <data name="BackstageNewDesc" xml:space="preserve">
+    <value>新しいドキュメントを作成します。</value>
+  </data>
+  <data name="BackstageOpenDesc" xml:space="preserve">
+    <value>既存のドキュメントを開くか、最近使ったファイルを選択します。</value>
+  </data>
+  <data name="BackstageSaveDesc" xml:space="preserve">
+    <value>現在のドキュメントの変更を保存します。</value>
+  </data>
+  <data name="BackstageSaveAsDesc" xml:space="preserve">
+    <value>現在のドキュメントを別の名前で保存します。</value>
+  </data>
+  <data name="BackstagePrintDesc" xml:space="preserve">
+    <value>現在のドキュメントを印刷します。</value>
+  </data>
+  <data name="BackstageOptionsDesc" xml:space="preserve">
+    <value>アプリケーションのオプションを設定します。</value>
+  </data>
+  <data name="BackstageNoRecentFiles" xml:space="preserve">
+    <value>最近使ったファイルはありません。</value>
+  </data>
+
+</root>

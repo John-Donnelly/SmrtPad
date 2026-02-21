@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ═══ MENÜLEISTE ═══ -->
+  <data name="FileMenuButton.Content" xml:space="preserve">
+    <value>Datei</value>
+  </data>
+  <data name="EditMenu.Title" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="ViewMenu.Title" xml:space="preserve">
+    <value>Ansicht</value>
+  </data>
+  <data name="CutMenuItem.Text" xml:space="preserve">
+    <value>Ausschneiden</value>
+  </data>
+  <data name="CopyMenuItem.Text" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="PasteMenuItem.Text" xml:space="preserve">
+    <value>Einfügen</value>
+  </data>
+  <data name="PasteSpecialMenuItem.Text" xml:space="preserve">
+    <value>Inhalte einfügen</value>
+  </data>
+  <data name="SelectAllMenuItem.Text" xml:space="preserve">
+    <value>Alles auswählen</value>
+  </data>
+  <data name="ZoomInMenuItem.Text" xml:space="preserve">
+    <value>Vergrößern</value>
+  </data>
+  <data name="ZoomOutMenuItem.Text" xml:space="preserve">
+    <value>Verkleinern</value>
+  </data>
+  <data name="WordWrapMenuItem.Text" xml:space="preserve">
+    <value>Zeilenumbruch</value>
+  </data>
+  <data name="FocusModeToggle.Text" xml:space="preserve">
+    <value>Fokusmodus</value>
+  </data>
+
+  <!-- ═══ MENÜBAND — ZWISCHENABLAGE ═══ -->
+  <data name="PasteRibbonLabel.Text" xml:space="preserve">
+    <value>Einfügen</value>
+  </data>
+  <data name="CutRibbonLabel.Text" xml:space="preserve">
+    <value>Ausschneiden</value>
+  </data>
+  <data name="CopyRibbonLabel.Text" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="ClipboardGroupLabel.Text" xml:space="preserve">
+    <value>Zwischenablage</value>
+  </data>
+
+  <!-- ═══ MENÜBAND — SCHRIFTART ═══ -->
+  <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
+    <value>Schriftart</value>
+  </data>
+  <data name="MoreColorsButton.Content" xml:space="preserve">
+    <value>Weitere Farben...</value>
+  </data>
+  <data name="FontGroupLabel.Text" xml:space="preserve">
+    <value>Schriftart</value>
+  </data>
+
+  <!-- ═══ MENÜBAND — ABSATZ ═══ -->
+  <data name="ListTypeNoneItem.Text" xml:space="preserve">
+    <value>Keine</value>
+  </data>
+  <data name="ListTypeBulletItem.Text" xml:space="preserve">
+    <value>Aufzählung</value>
+  </data>
+  <data name="ListTypeNumberItem.Text" xml:space="preserve">
+    <value>Nummerierung</value>
+  </data>
+  <data name="ListTypeLowerLetterItem.Text" xml:space="preserve">
+    <value>Kleinbuchstaben</value>
+  </data>
+  <data name="ListTypeUpperLetterItem.Text" xml:space="preserve">
+    <value>Großbuchstaben</value>
+  </data>
+  <data name="ListTypeLowerRomanItem.Text" xml:space="preserve">
+    <value>Römisch klein</value>
+  </data>
+  <data name="ListTypeUpperRomanItem.Text" xml:space="preserve">
+    <value>Römisch groß</value>
+  </data>
+  <data name="CustomSpacingItem.Text" xml:space="preserve">
+    <value>Benutzerdefiniert...</value>
+  </data>
+  <data name="ParagraphSpacingHeader.Text" xml:space="preserve">
+    <value>Absatzabstand</value>
+  </data>
+  <data name="SpacingBeforeLabel.Text" xml:space="preserve">
+    <value>Vor (pt)</value>
+  </data>
+  <data name="SpacingAfterLabel.Text" xml:space="preserve">
+    <value>Nach (pt)</value>
+  </data>
+  <data name="ApplySpacingButton.Content" xml:space="preserve">
+    <value>Übernehmen</value>
+  </data>
+  <data name="ParagraphGroupLabel.Text" xml:space="preserve">
+    <value>Absatz</value>
+  </data>
+
+  <!-- ═══ MENÜBAND — EINFÜGEN ═══ -->
+  <data name="PictureRibbonLabel.Text" xml:space="preserve">
+    <value>Bild</value>
+  </data>
+  <data name="PaintRibbonLabel.Text" xml:space="preserve">
+    <value>Zeichnung</value>
+  </data>
+  <data name="ObjectRibbonLabel.Text" xml:space="preserve">
+    <value>Objekt</value>
+  </data>
+  <data name="DateTimeRibbonLabel.Text" xml:space="preserve">
+    <value>Datum/Zeit</value>
+  </data>
+  <data name="LinkRibbonLabel.Text" xml:space="preserve">
+    <value>Link</value>
+  </data>
+  <data name="TableRibbonLabel.Text" xml:space="preserve">
+    <value>Tabelle</value>
+  </data>
+  <data name="SymbolRibbonLabel.Text" xml:space="preserve">
+    <value>Symbol</value>
+  </data>
+  <data name="InsertGroupLabel.Text" xml:space="preserve">
+    <value>Einfügen</value>
+  </data>
+
+  <!-- ═══ MENÜBAND — BEARBEITUNG ═══ -->
+  <data name="FindFlyoutHeader.Text" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="FindTextBox.PlaceholderText" xml:space="preserve">
+    <value>Suchtext eingeben</value>
+  </data>
+  <data name="FindMatchCaseCheckBox.Content" xml:space="preserve">
+    <value>Groß-/Kleinschreibung</value>
+  </data>
+  <data name="FindWholeWordCheckBox.Content" xml:space="preserve">
+    <value>Ganzes Wort</value>
+  </data>
+  <data name="HighlightAllButton.Content" xml:space="preserve">
+    <value>Alle hervorheben</value>
+  </data>
+  <data name="ClearHighlightsButton.Content" xml:space="preserve">
+    <value>Hervorhebung löschen</value>
+  </data>
+  <data name="FindPreviousButton.Content" xml:space="preserve">
+    <value>Vorheriges suchen</value>
+  </data>
+  <data name="FindNextButton.Content" xml:space="preserve">
+    <value>Nächstes suchen</value>
+  </data>
+  <data name="FindRibbonLabel.Text" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="ReplaceFlyoutHeader.Text" xml:space="preserve">
+    <value>Suchen &amp; Ersetzen</value>
+  </data>
+  <data name="ReplaceFindTextBox.PlaceholderText" xml:space="preserve">
+    <value>Suchtext eingeben</value>
+  </data>
+  <data name="ReplaceFlyoutLabel.Text" xml:space="preserve">
+    <value>Ersetzen</value>
+  </data>
+  <data name="ReplaceWithTextBox.PlaceholderText" xml:space="preserve">
+    <value>Neuer Text</value>
+  </data>
+  <data name="ReplaceButton.Content" xml:space="preserve">
+    <value>Ersetzen</value>
+  </data>
+  <data name="ReplaceAllButton.Content" xml:space="preserve">
+    <value>Alle ersetzen</value>
+  </data>
+  <data name="ReplaceRibbonLabel.Text" xml:space="preserve">
+    <value>Ersetzen</value>
+  </data>
+  <data name="SelectAllRibbonLabel.Text" xml:space="preserve">
+    <value>Alles auswählen</value>
+  </data>
+  <data name="EditingGroupLabel.Text" xml:space="preserve">
+    <value>Bearbeitung</value>
+  </data>
+
+  <!-- ═══ BACKSTAGE ═══ -->
+  <data name="NewNavItem.Content" xml:space="preserve">
+    <value>Neu</value>
+  </data>
+  <data name="OpenNavItem.Content" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="SaveNavItem.Content" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="SaveAsNavItem.Content" xml:space="preserve">
+    <value>Speichern unter</value>
+  </data>
+  <data name="PrintNavItem.Content" xml:space="preserve">
+    <value>Drucken</value>
+  </data>
+  <data name="OptionsNavItem.Content" xml:space="preserve">
+    <value>Optionen</value>
+  </data>
+  <data name="ExitNavItem.Content" xml:space="preserve">
+    <value>Beenden</value>
+  </data>
+  <data name="RecentFilesHeader.Text" xml:space="preserve">
+    <value>Zuletzt verwendet</value>
+  </data>
+  <data name="BackstageBodyDefault.Text" xml:space="preserve">
+    <value>Wählen Sie links eine Option.</value>
+  </data>
+
+  <!-- ═══ STATUSLEISTE ═══ -->
+  <data name="StatusText.Text" xml:space="preserve">
+    <value>Bereit</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Allgemein ═══ -->
+  <data name="AppTitle" xml:space="preserve">
+    <value>SmrtPad - {0}</value>
+  </data>
+  <data name="DocumentUntitled" xml:space="preserve">
+    <value>Unbenannt</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>Bereit</value>
+  </data>
+  <data name="StatusNewDocument" xml:space="preserve">
+    <value>Neues Dokument erstellt.</value>
+  </data>
+  <data name="ButtonSave" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="ButtonCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="ButtonApply" xml:space="preserve">
+    <value>Übernehmen</value>
+  </data>
+  <data name="ButtonInsert" xml:space="preserve">
+    <value>Einfügen</value>
+  </data>
+  <data name="ButtonOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ButtonPrint" xml:space="preserve">
+    <value>Drucken</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Dateivorgänge ═══ -->
+  <data name="StatusOpened" xml:space="preserve">
+    <value>{0} geöffnet</value>
+  </data>
+  <data name="StatusSaved" xml:space="preserve">
+    <value>{0} gespeichert</value>
+  </data>
+  <data name="StatusAutoSaved" xml:space="preserve">
+    <value>{0} automatisch gespeichert</value>
+  </data>
+  <data name="StatusRecoverySaved" xml:space="preserve">
+    <value>Wiederherstellungsdatei gespeichert.</value>
+  </data>
+  <data name="ErrorOpeningFile" xml:space="preserve">
+    <value>Fehler beim Öffnen der Datei</value>
+  </data>
+  <data name="ErrorSavingFile" xml:space="preserve">
+    <value>Fehler beim Speichern der Datei</value>
+  </data>
+  <data name="FileTypeRtf" xml:space="preserve">
+    <value>Rich-Text-Format</value>
+  </data>
+  <data name="FileTypeTxt" xml:space="preserve">
+    <value>Textdokument</value>
+  </data>
+  <data name="FileDefaultName" xml:space="preserve">
+    <value>Dokument</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Drucken ═══ -->
+  <data name="PrintTitle" xml:space="preserve">
+    <value>Drucken</value>
+  </data>
+  <data name="PrintNoContent" xml:space="preserve">
+    <value>Es gibt keinen Inhalt zum Drucken.</value>
+  </data>
+  <data name="PrintDocumentTitle" xml:space="preserve">
+    <value>Dokument drucken</value>
+  </data>
+  <data name="PrintDocumentLabel" xml:space="preserve">
+    <value>Dokument: {0}</value>
+  </data>
+  <data name="PrintPagesLabel" xml:space="preserve">
+    <value>Seiten: ~{0}</value>
+  </data>
+  <data name="PrintSendToDefault" xml:space="preserve">
+    <value>Das Dokument wird an Ihren Standarddrucker gesendet.</value>
+  </data>
+  <data name="StatusPrinting" xml:space="preserve">
+    <value>Druckt...</value>
+  </data>
+  <data name="StatusSentToPrinter" xml:space="preserve">
+    <value>{0} an Drucker gesendet.</value>
+  </data>
+  <data name="ErrorPrint" xml:space="preserve">
+    <value>Druckfehler</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Optionen ═══ -->
+  <data name="OptionsTitle" xml:space="preserve">
+    <value>Optionen</value>
+  </data>
+  <data name="OptionsDefaultFont" xml:space="preserve">
+    <value>Standardschriftart</value>
+  </data>
+  <data name="OptionsDefaultFontSize" xml:space="preserve">
+    <value>Standardschriftgröße</value>
+  </data>
+  <data name="OptionsWordWrap" xml:space="preserve">
+    <value>Zeilenumbruch standardmäßig</value>
+  </data>
+  <data name="OptionsDefaultSaveFormat" xml:space="preserve">
+    <value>Standard-Speicherformat</value>
+  </data>
+  <data name="OptionsTheme" xml:space="preserve">
+    <value>Design</value>
+  </data>
+  <data name="OptionsThemeSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="OptionsThemeLight" xml:space="preserve">
+    <value>Hell</value>
+  </data>
+  <data name="OptionsThemeDark" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="OptionsAutoSave" xml:space="preserve">
+    <value>Automatisches Speichern aktivieren</value>
+  </data>
+  <data name="OptionsAutoSaveInterval" xml:space="preserve">
+    <value>Intervall für autom. Speichern (Sekunden)</value>
+  </data>
+  <data name="StatusOptionsSaved" xml:space="preserve">
+    <value>Optionen gespeichert.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Suchen / Ersetzen ═══ -->
+  <data name="StatusNoMatch" xml:space="preserve">
+    <value>Keine Übereinstimmung gefunden.</value>
+  </data>
+  <data name="StatusHighlighted" xml:space="preserve">
+    <value>{0} Übereinstimmung(en) hervorgehoben.</value>
+  </data>
+  <data name="StatusNoMatches" xml:space="preserve">
+    <value>Keine Übereinstimmungen gefunden.</value>
+  </data>
+  <data name="StatusHighlightsCleared" xml:space="preserve">
+    <value>Hervorhebungen gelöscht.</value>
+  </data>
+  <data name="StatusReplaced" xml:space="preserve">
+    <value>{0} Vorkommen ersetzt.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Fokusmodus ═══ -->
+  <data name="StatusFocusModeEnabled" xml:space="preserve">
+    <value>Fokusmodus aktiviert.</value>
+  </data>
+  <data name="StatusFocusModeDisabled" xml:space="preserve">
+    <value>Fokusmodus deaktiviert.</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Einfügen ═══ -->
+  <data name="DateTimeTitle" xml:space="preserve">
+    <value>Datum und Uhrzeit</value>
+  </data>
+  <data name="StatusInserted" xml:space="preserve">
+    <value>{0} eingefügt.</value>
+  </data>
+  <data name="StatusInsertedReference" xml:space="preserve">
+    <value>Verweis auf {0} eingefügt.</value>
+  </data>
+  <data name="EmbeddedObject" xml:space="preserve">
+    <value>[Eingebettetes Objekt: {0}]</value>
+  </data>
+  <data name="ErrorInsertingObject" xml:space="preserve">
+    <value>Fehler beim Einfügen des Objekts</value>
+  </data>
+  <data name="StatusDrawingInserted" xml:space="preserve">
+    <value>Zeichnung eingefügt.</value>
+  </data>
+  <data name="StatusDrawingCancelled" xml:space="preserve">
+    <value>Zeichnung abgebrochen.</value>
+  </data>
+  <data name="SmrtDoodleNotFound" xml:space="preserve">
+    <value>SmrtDoodle nicht gefunden</value>
+  </data>
+  <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
+    <value>SmrtDoodle ist nicht installiert oder konnte im Systempfad nicht gefunden werden. Bitte installieren Sie SmrtDoodle, um die Zeichenfunktion zu nutzen.</value>
+  </data>
+  <data name="HyperlinkTitle" xml:space="preserve">
+    <value>Hyperlink einfügen</value>
+  </data>
+  <data name="HyperlinkUrlHeader" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="HyperlinkDisplayHeader" xml:space="preserve">
+    <value>Anzeigetext (optional)</value>
+  </data>
+  <data name="StatusHyperlinkInserted" xml:space="preserve">
+    <value>Hyperlink eingefügt.</value>
+  </data>
+  <data name="TableTitle" xml:space="preserve">
+    <value>Tabelle einfügen</value>
+  </data>
+  <data name="TableRows" xml:space="preserve">
+    <value>Zeilen</value>
+  </data>
+  <data name="TableColumns" xml:space="preserve">
+    <value>Spalten</value>
+  </data>
+  <data name="StatusInsertedTable" xml:space="preserve">
+    <value>Tabelle mit {0}×{1} eingefügt.</value>
+  </data>
+  <data name="SymbolTitle" xml:space="preserve">
+    <value>Symbol einfügen</value>
+  </data>
+  <data name="StatusInsertedSymbol" xml:space="preserve">
+    <value>Symbol eingefügt: {0}</value>
+  </data>
+  <data name="LineSpacingTitle" xml:space="preserve">
+    <value>Benutzerdefinierter Zeilenabstand</value>
+  </data>
+  <data name="LineSpacingHeader" xml:space="preserve">
+    <value>Zeilenabstand</value>
+  </data>
+  <data name="StatusFormattingCleared" xml:space="preserve">
+    <value>Formatierung gelöscht.</value>
+  </data>
+  <data name="StatusParagraphSpacing" xml:space="preserve">
+    <value>Absatzabstand: {0}pt davor, {1}pt danach.</value>
+  </data>
+  <data name="StatusTheme" xml:space="preserve">
+    <value>Design: {0}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Einfügen / Fehler ═══ -->
+  <data name="ErrorPaste" xml:space="preserve">
+    <value>Fehler beim Einfügen</value>
+  </data>
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="DragDropCaption" xml:space="preserve">
+    <value>Datei öffnen</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Statusleiste ═══ -->
+  <data name="StatusBarWords" xml:space="preserve">
+    <value>Wörter: {0}</value>
+  </data>
+  <data name="StatusBarCharacters" xml:space="preserve">
+    <value>Zeichen: {0}</value>
+  </data>
+  <data name="StatusBarSelection" xml:space="preserve">
+    <value>Ausw.: {0}</value>
+  </data>
+  <data name="StatusBarLineCol" xml:space="preserve">
+    <value>Zl {0}, Sp {1}</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Dialogdienst ═══ -->
+  <data name="DlgUnsavedChanges" xml:space="preserve">
+    <value>Nicht gespeicherte Änderungen</value>
+  </data>
+  <data name="DlgSaveChangesMessage" xml:space="preserve">
+    <value>Möchten Sie die Änderungen an {0} speichern?</value>
+  </data>
+  <data name="DlgSave" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="DlgDontSave" xml:space="preserve">
+    <value>Nicht speichern</value>
+  </data>
+  <data name="DlgCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="DlgOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+
+  <!-- ═══ CODE-BEHIND: Backstage ═══ -->
+  <data name="BackstageFile" xml:space="preserve">
+    <value>Datei</value>
+  </data>
+  <data name="BackstageNewDesc" xml:space="preserve">
+    <value>Ein neues Dokument erstellen.</value>
+  </data>
+  <data name="BackstageOpenDesc" xml:space="preserve">
+    <value>Ein vorhandenes Dokument öffnen oder eine zuletzt verwendete Datei auswählen.</value>
+  </data>
+  <data name="BackstageSaveDesc" xml:space="preserve">
+    <value>Änderungen am aktuellen Dokument speichern.</value>
+  </data>
+  <data name="BackstageSaveAsDesc" xml:space="preserve">
+    <value>Das aktuelle Dokument unter einem neuen Namen speichern.</value>
+  </data>
+  <data name="BackstagePrintDesc" xml:space="preserve">
+    <value>Das aktuelle Dokument drucken.</value>
+  </data>
+  <data name="BackstageOptionsDesc" xml:space="preserve">
+    <value>Anwendungsoptionen konfigurieren.</value>
+  </data>
+  <data name="BackstageNoRecentFiles" xml:space="preserve">
+    <value>Keine zuletzt verwendeten Dateien.</value>
+  </data>
+
+</root>
