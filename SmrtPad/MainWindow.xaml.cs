@@ -1083,6 +1083,44 @@ namespace SmrtPad
             }
         }
 
+        private static readonly Color HighlightColor = Color.FromArgb(255, 255, 255, 0);
+        private static readonly Color TransparentColor = Color.FromArgb(0, 255, 255, 255);
+
+        private void HighlightAllMatches_Click(object sender, RoutedEventArgs e)
+        {
+            string textToFind = FindTextBox.Text;
+            if (string.IsNullOrEmpty(textToFind)) return;
+
+            var options = GetFindOptions();
+            int count = 0;
+
+            // Save current selection
+            int savedStart = Editor.Document.Selection.StartPosition;
+            int savedEnd = Editor.Document.Selection.EndPosition;
+
+            Editor.Document.Selection.SetRange(0, 0);
+            while (Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, options) > 0)
+            {
+                Editor.Document.Selection.CharacterFormat.BackgroundColor = HighlightColor;
+                count++;
+            }
+
+            // Restore selection
+            Editor.Document.Selection.SetRange(savedStart, savedEnd);
+            ViewModel.UpdateStatus(count > 0 ? $"Highlighted {count} match(es)." : "No matches found.");
+        }
+
+        private void ClearHighlights_Click(object sender, RoutedEventArgs e)
+        {
+            int savedStart = Editor.Document.Selection.StartPosition;
+            int savedEnd = Editor.Document.Selection.EndPosition;
+
+            Editor.Document.Selection.Expand(TextRangeUnit.Story);
+            Editor.Document.Selection.CharacterFormat.BackgroundColor = TransparentColor;
+            Editor.Document.Selection.SetRange(savedStart, savedEnd);
+            ViewModel.UpdateStatus("Highlights cleared.");
+        }
+
         private void Replace_Click(object sender, RoutedEventArgs e)
         {
             string textToFind = ReplaceFindTextBox.Text;

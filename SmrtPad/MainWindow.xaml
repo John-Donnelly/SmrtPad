@@ -518,6 +518,10 @@
                                         <CheckBox x:Name="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"/>
                                         <CheckBox x:Name="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                            <Button Content="Highlight All" Click="HighlightAllMatches_Click"/>
+                                            <Button Content="Clear Highlights" Click="ClearHighlights_Click"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
                                             <Button Content="Find Previous" Click="FindPrevious_Click"/>
                                             <Button Content="Find Next" Click="FindNext_Click"/>
                                         </StackPanel>
