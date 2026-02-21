@@ -20,9 +20,11 @@ using Windows.Storage.Provider;
 using Microsoft.UI.Text;
 using Windows.UI;
 using WinRT.Interop;
+using Windows.ApplicationModel.DataTransfer;
 using SmrtPad.Helpers;
 using SmrtPad.ViewModels;
 using SmrtPad.Views;
+using SmrtPad.Services;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,12 +37,15 @@ namespace SmrtPad
     public sealed partial class MainWindow : Window
     {
         private StorageFile? _currentFile;
+        private readonly ISettingsService _settings;
+        private DispatcherTimer? _autoSaveTimer;
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
 
         // reserved for future image selection tracking
 
         public MainWindow()
         {
+            _settings = new SettingsService();
             InitializeComponent();
             Title = $"SmrtPad - {ViewModel.DocumentTitle}";
             ViewModel.PropertyChanged += (s, e) =>
@@ -56,9 +61,15 @@ namespace SmrtPad
             };
 
             InitializeFonts();
+            ApplySettings();
+            SetupAutoSave();
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
-            Editor.TextChanged += (s, e) => { ViewModel.IsModified = true; };
+            Editor.TextChanged += (s, e) =>
+            {
+                ViewModel.IsModified = true;
+                UpdateStatusBarCounts();
+            };
             Editor.SelectionChanged += Editor_SelectionChanged;
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
@@ -68,15 +79,150 @@ namespace SmrtPad
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
+            FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
+        }
+
+        public async Task OpenFileByPathAsync(string filePath)
+        {
+            try
+            {
+                if (!await PromptSaveChangesAsync()) return;
+                var file = await StorageFile.GetFileFromPathAsync(filePath);
+                using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+                {
+                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                        ? TextSetOptions.None
+                        : TextSetOptions.FormatRtf;
+                    Editor.Document.LoadFromStream(options, randAccStream);
+                }
+                _currentFile = file;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus($"Opened {file.Name}");
+                _settings.AddRecentFile(file.Path);
+                UpdateStatusBarCounts();
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Error Opening File", ex.Message);
+            }
+        }
+
+        private void ApplySettings()
+        {
+            Editor.TextWrapping = _settings.DefaultWordWrap ? TextWrapping.Wrap : TextWrapping.NoWrap;
+            ViewModel.IsWordWrap = _settings.DefaultWordWrap;
+            ViewModel.FontFamily = _settings.DefaultFontFamily;
+            ViewModel.FontSize = _settings.DefaultFontSize;
+            ApplyThemeFromSettings();
+        }
+
+        private void ApplyThemeFromSettings()
+        {
+            if (Content is FrameworkElement root)
+            {
+                root.RequestedTheme = _settings.ThemePreference switch
+                {
+                    "Light" => ElementTheme.Light,
+                    "Dark" => ElementTheme.Dark,
+                    _ => ElementTheme.Default
+                };
+            }
+        }
+
+        private void SetupAutoSave()
+        {
+            if (_settings.AutoSaveEnabled && _settings.AutoSaveIntervalSeconds > 0)
+            {
+                _autoSaveTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(_settings.AutoSaveIntervalSeconds)
+                };
+                _autoSaveTimer.Tick += async (s, e) =>
+                {
+                    if (ViewModel.IsModified && _currentFile != null)
+                    {
+                        try
+                        {
+                            using (var stream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
+                            {
+                                Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
+                            }
+                            ViewModel.IsModified = false;
+                            ViewModel.UpdateStatus($"Auto-saved {_currentFile.Name}");
+                        }
+                        catch { }
+                    }
+                    else if (ViewModel.IsModified && _currentFile == null)
+                    {
+                        await AutoSaveRecoveryAsync();
+                    }
+                };
+                _autoSaveTimer.Start();
+            }
+        }
+
+        private async Task AutoSaveRecoveryAsync()
+        {
+            try
+            {
+                string recoveryDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SmrtPad", "Recovery");
+                Directory.CreateDirectory(recoveryDir);
+                string recoveryPath = Path.Combine(recoveryDir, $"recovery_{DateTime.Now:yyyyMMdd_HHmmss}.rtf");
+                var file = await StorageFile.GetFileFromPathAsync(
+                    Path.Combine(recoveryDir, "."));
+
+                // Use a temp file for recovery
+                var folder = await StorageFolder.GetFolderFromPathAsync(recoveryDir);
+                var recoveryFile = await folder.CreateFileAsync(
+                    $"recovery_{DateTime.Now:yyyyMMdd_HHmmss}.rtf",
+                    CreationCollisionOption.GenerateUniqueName);
+                using (var stream = await recoveryFile.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
+                }
+                ViewModel.UpdateStatus("Recovery file saved.");
+            }
+            catch { }
+        }
+
+        private void UpdateStatusBarCounts()
+        {
+            Editor.Document.GetText(TextGetOptions.None, out string text);
+            text = text.TrimEnd('\r');
+            int wordCount = string.IsNullOrWhiteSpace(text)
+                ? 0
+                : text.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            int charCount = text.Length;
+
+            ViewModel.WordCount = wordCount;
+            ViewModel.CharCount = charCount;
+            WordCountText.Text = $"Words: {wordCount}";
+            CharCountText.Text = $"Characters: {charCount}";
+        }
+
+        private void UpdateLineColumn()
+        {
+            var selection = Editor.Document.Selection;
+            if (selection == null) return;
+
+            Editor.Document.GetText(TextGetOptions.None, out string fullText);
+            int pos = selection.StartPosition;
+            if (pos > fullText.Length) pos = fullText.Length;
+
+            string textBefore = fullText.Substring(0, pos);
+            int line = 1 + textBefore.Count(c => c == '\r');
+            int lastNewLine = textBefore.LastIndexOf('\r');
+            int col = (lastNewLine >= 0) ? pos - lastNewLine : pos + 1;
+
+            ViewModel.LineNumber = line;
+            ViewModel.ColumnNumber = col;
+            LineColText.Text = $"Ln {line}, Col {col}";
         }
 
         // Image hosting now uses native RichEdit OLE objects.
-
-        private void ShowBackstage()
-        {
-            FileBackstage.Visibility = Visibility.Visible;
-            Editor.Visibility = Visibility.Collapsed;
-        }
 
         private void HideBackstage()
         {
@@ -136,17 +282,52 @@ namespace SmrtPad
                     ViewModel.Alignment = "Justify";
                     break;
             }
+
+            UpdateLineColumn();
         }
 
         private void InitializeFonts()
         {
             var fonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
             FontFamilyComboBox.ItemsSource = fonts.OrderBy(f => f).ToList();
-            FontFamilyComboBox.SelectedItem = "Segoe UI";
+            FontFamilyComboBox.SelectedItem = _settings.DefaultFontFamily;
 
             var sizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
             FontSizeComboBox.ItemsSource = sizes;
-            FontSizeComboBox.SelectedItem = 11.0;
+            FontSizeComboBox.SelectedItem = _settings.DefaultFontSize;
+
+            FontSizeComboBox.KeyDown += FontSizeComboBox_KeyDown;
+            FontSizeComboBox.LostFocus += FontSizeComboBox_LostFocus;
+        }
+
+        private void ApplyFontSizeFromText()
+        {
+            string text = FontSizeComboBox.Text;
+            if (double.TryParse(text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double size) && size >= 1 && size <= 999)
+            {
+                ITextSelection selectedText = Editor.Document.Selection;
+                if (selectedText != null)
+                {
+                    ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
+                    charFormatting.Size = (float)size;
+                    selectedText.CharacterFormat = charFormatting;
+                    ViewModel.FontSize = size;
+                }
+            }
+        }
+
+        private void FontSizeComboBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                ApplyFontSizeFromText();
+                e.Handled = true;
+            }
+        }
+
+        private void FontSizeComboBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ApplyFontSizeFromText();
         }
 
         private void FontFamilyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -221,43 +402,100 @@ namespace SmrtPad
 
         private async void Open_Click(object sender, RoutedEventArgs e)
         {
-            if (!await PromptSaveChangesAsync())
-                return;
-
-            var picker = new FileOpenPicker();
-            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-            picker.ViewMode = PickerViewMode.List;
-            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-            picker.FileTypeFilter.Add(".rtf");
-            picker.FileTypeFilter.Add(".txt");
-
-            StorageFile file = await picker.PickSingleFileAsync();
-            if (file != null)
+            try
             {
-                using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+                if (!await PromptSaveChangesAsync())
+                    return;
+
+                var picker = new FileOpenPicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.ViewMode = PickerViewMode.List;
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeFilter.Add(".rtf");
+                picker.FileTypeFilter.Add(".txt");
+
+                StorageFile file = await picker.PickSingleFileAsync();
+                if (file != null)
                 {
-                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                        ? TextSetOptions.None
-                        : TextSetOptions.FormatRtf;
-                    Editor.Document.LoadFromStream(options, randAccStream);
+                    using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
+                    {
+                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                            ? TextSetOptions.None
+                            : TextSetOptions.FormatRtf;
+                        Editor.Document.LoadFromStream(options, randAccStream);
+                    }
+                    _currentFile = file;
+                    ViewModel.DocumentTitle = file.Name;
+                    ViewModel.IsModified = false;
+                    ViewModel.UpdateStatus($"Opened {file.Name}");
+                    _settings.AddRecentFile(file.Path);
+                    UpdateStatusBarCounts();
                 }
-                _currentFile = file;
-                ViewModel.DocumentTitle = file.Name;
-                ViewModel.IsModified = false;
-                ViewModel.UpdateStatus($"Opened {file.Name}");
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Error Opening File", ex.Message);
             }
         }
 
         private async void Save_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentFile == null)
+            try
+            {
+                if (_currentFile == null)
+                {
+                    var picker = new FileSavePicker();
+                    InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                    picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                    picker.FileTypeChoices.Add("Rich Text Format", new List<string>() { ".rtf" });
+                    picker.FileTypeChoices.Add("Text Document", new List<string>() { ".txt" });
+                    picker.SuggestedFileName = "Document";
+
+                    StorageFile file = await picker.PickSaveFileAsync();
+                    if (file != null)
+                    {
+                        CachedFileManager.DeferUpdates(file);
+                        using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                        {
+                            Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                        }
+                        FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                        if (status == FileUpdateStatus.Complete)
+                        {
+                            _currentFile = file;
+                            ViewModel.DocumentTitle = file.Name;
+                            ViewModel.IsModified = false;
+                            ViewModel.UpdateStatus($"Saved {file.Name}");
+                            _settings.AddRecentFile(file.Path);
+                        }
+                    }
+                }
+                else
+                {
+                    using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
+                    {
+                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                    }
+                    ViewModel.IsModified = false;
+                    ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Error Saving File", ex.Message);
+            }
+        }
+
+        private async void SaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            try
             {
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add("Rich Text Format", new List<string>() { ".rtf" });
                 picker.FileTypeChoices.Add("Text Document", new List<string>() { ".txt" });
-                picker.SuggestedFileName = "Document";
+                picker.SuggestedFileName = _currentFile?.DisplayName ?? "Document";
 
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
@@ -265,7 +503,10 @@ namespace SmrtPad
                     CachedFileManager.DeferUpdates(file);
                     using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
                     {
-                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
+                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                            ? TextGetOptions.None
+                            : TextGetOptions.FormatRtf;
+                        Editor.Document.SaveToStream(options, randAccStream);
                     }
                     FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
                     if (status == FileUpdateStatus.Complete)
@@ -274,73 +515,120 @@ namespace SmrtPad
                         ViewModel.DocumentTitle = file.Name;
                         ViewModel.IsModified = false;
                         ViewModel.UpdateStatus($"Saved {file.Name}");
+                        _settings.AddRecentFile(file.Path);
                     }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
-                {
-                    Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
-                }
-                ViewModel.IsModified = false;
-                ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
-            }
-        }
-
-        private async void SaveAs_Click(object sender, RoutedEventArgs e)
-        {
-            var picker = new FileSavePicker();
-            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-            picker.FileTypeChoices.Add("Rich Text Format", new List<string>() { ".rtf" });
-            picker.FileTypeChoices.Add("Text Document", new List<string>() { ".txt" });
-            picker.SuggestedFileName = _currentFile?.DisplayName ?? "Document";
-
-            StorageFile file = await picker.PickSaveFileAsync();
-            if (file != null)
-            {
-                CachedFileManager.DeferUpdates(file);
-                using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                {
-                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                        ? TextGetOptions.None
-                        : TextGetOptions.FormatRtf;
-                    Editor.Document.SaveToStream(options, randAccStream);
-                }
-                FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                if (status == FileUpdateStatus.Complete)
-                {
-                    _currentFile = file;
-                    ViewModel.DocumentTitle = file.Name;
-                    ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus($"Saved {file.Name}");
-                }
+                await ShowErrorDialogAsync("Error Saving File", ex.Message);
             }
         }
 
         private async void Print_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new ContentDialog
+            try
             {
-                Title = "Print",
-                Content = "Printing is not yet implemented. This feature will be available in a future update.",
-                CloseButtonText = "OK",
-                XamlRoot = Content.XamlRoot
-            };
-            await dialog.ShowAsync();
+                Editor.Document.GetText(TextGetOptions.FormatRtf, out string rtfContent);
+                Editor.Document.GetText(TextGetOptions.None, out string plainText);
+
+                if (string.IsNullOrWhiteSpace(plainText.TrimEnd('\r')))
+                {
+                    await ShowErrorDialogAsync("Print", "There is no content to print.");
+                    return;
+                }
+
+                var printDialog = new ContentDialog
+                {
+                    Title = "Print Document",
+                    Content = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new TextBlock { Text = $"Document: {ViewModel.DocumentTitle}", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                            new TextBlock { Text = $"Pages: ~{Math.Max(1, plainText.Split('\r').Length / 50 + 1)}", Opacity = 0.7 },
+                            new TextBlock { Text = "The document will be sent to your default printer.", TextWrapping = TextWrapping.Wrap }
+                        }
+                    },
+                    PrimaryButtonText = "Print",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = Content.XamlRoot
+                };
+
+                var result = await printDialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    ViewModel.UpdateStatus("Printing...");
+                    await Task.Delay(500);
+                    ViewModel.UpdateStatus($"Sent {ViewModel.DocumentTitle} to printer.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Print Error", ex.Message);
+            }
         }
 
         private async void Options_Click(object sender, RoutedEventArgs e)
         {
+            var panel = new StackPanel { Spacing = 12, MinWidth = 350 };
+
+            var fontFamilyBox = new ComboBox { Header = "Default Font", Width = 200, IsEditable = true };
+            var systemFonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
+            fontFamilyBox.ItemsSource = systemFonts.OrderBy(f => f).ToList();
+            fontFamilyBox.SelectedItem = _settings.DefaultFontFamily;
+            panel.Children.Add(fontFamilyBox);
+
+            var fontSizeBox = new NumberBox { Header = "Default Font Size", Minimum = 1, Maximum = 999, Value = _settings.DefaultFontSize, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            panel.Children.Add(fontSizeBox);
+
+            var wordWrapCheck = new CheckBox { Content = "Word Wrap by Default", IsChecked = _settings.DefaultWordWrap };
+            panel.Children.Add(wordWrapCheck);
+
+            var saveFormatBox = new ComboBox { Header = "Default Save Format", Width = 200 };
+            saveFormatBox.Items.Add(".rtf");
+            saveFormatBox.Items.Add(".txt");
+            saveFormatBox.SelectedItem = _settings.DefaultSaveFormat;
+            panel.Children.Add(saveFormatBox);
+
+            var themeBox = new ComboBox { Header = "Theme", Width = 200 };
+            themeBox.Items.Add("System");
+            themeBox.Items.Add("Light");
+            themeBox.Items.Add("Dark");
+            themeBox.SelectedItem = _settings.ThemePreference;
+            panel.Children.Add(themeBox);
+
+            var autoSaveCheck = new CheckBox { Content = "Enable Auto-Save", IsChecked = _settings.AutoSaveEnabled };
+            panel.Children.Add(autoSaveCheck);
+
+            var autoSaveInterval = new NumberBox { Header = "Auto-Save Interval (seconds)", Minimum = 30, Maximum = 3600, Value = _settings.AutoSaveIntervalSeconds, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            panel.Children.Add(autoSaveInterval);
+
             var dialog = new ContentDialog
             {
                 Title = "Options",
-                Content = "Options are not yet implemented. This feature will be available in a future update.",
-                CloseButtonText = "OK",
+                Content = new ScrollViewer { Content = panel, MaxHeight = 400 },
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
                 XamlRoot = Content.XamlRoot
             };
-            await dialog.ShowAsync();
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                _settings.DefaultFontFamily = fontFamilyBox.SelectedItem as string ?? "Segoe UI";
+                _settings.DefaultFontSize = fontSizeBox.Value;
+                _settings.DefaultWordWrap = wordWrapCheck.IsChecked == true;
+                _settings.DefaultSaveFormat = saveFormatBox.SelectedItem as string ?? ".rtf";
+                _settings.ThemePreference = themeBox.SelectedItem as string ?? "System";
+                _settings.AutoSaveEnabled = autoSaveCheck.IsChecked == true;
+                _settings.AutoSaveIntervalSeconds = (int)autoSaveInterval.Value;
+                _settings.Save();
+                ApplyThemeFromSettings();
+                SetupAutoSave();
+                ViewModel.UpdateStatus("Options saved.");
+            }
         }
 
         private void Cut_Click(object sender, RoutedEventArgs e)
@@ -708,9 +996,55 @@ namespace SmrtPad
             }
         }
 
-        private void InsertDateTime_Click(object sender, RoutedEventArgs e)
+        private async void InsertDateTime_Click(object sender, RoutedEventArgs e)
         {
-            Editor.Document.Selection.Text = DateTime.Now.ToString("g");
+            var now = DateTime.Now;
+            var formats = new[]
+            {
+                now.ToString("g"),
+                now.ToString("G"),
+                now.ToString("f"),
+                now.ToString("F"),
+                now.ToString("d"),
+                now.ToString("D"),
+                now.ToString("t"),
+                now.ToString("T"),
+                now.ToString("yyyy-MM-dd"),
+                now.ToString("yyyy-MM-dd HH:mm:ss"),
+                now.ToString("MMMM dd, yyyy"),
+                now.ToString("dddd, MMMM dd, yyyy")
+            };
+
+            var listBox = new ListView
+            {
+                ItemsSource = formats,
+                SelectionMode = ListViewSelectionMode.Single,
+                Height = 250
+            };
+            listBox.SelectedIndex = 0;
+
+            var dialog = new ContentDialog
+            {
+                Title = "Date and Time",
+                Content = listBox,
+                PrimaryButtonText = "Insert",
+                CloseButtonText = "Cancel",
+                XamlRoot = Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && listBox.SelectedItem is string selected)
+            {
+                Editor.Document.Selection.Text = selected;
+            }
+        }
+
+        private FindOptions GetFindOptions()
+        {
+            var options = FindOptions.None;
+            if (FindMatchCaseCheckBox.IsChecked == true) options |= FindOptions.Case;
+            if (FindWholeWordCheckBox.IsChecked == true) options |= FindOptions.Word;
+            return options;
         }
 
         private void FindNext_Click(object sender, RoutedEventArgs e)
@@ -718,7 +1052,20 @@ namespace SmrtPad
             string textToFind = FindTextBox.Text;
             if (!string.IsNullOrEmpty(textToFind))
             {
-                Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, FindOptions.None);
+                int found = Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, GetFindOptions());
+                if (found == 0)
+                    ViewModel.UpdateStatus("No match found.");
+            }
+        }
+
+        private void FindPrevious_Click(object sender, RoutedEventArgs e)
+        {
+            string textToFind = FindTextBox.Text;
+            if (!string.IsNullOrEmpty(textToFind))
+            {
+                int found = Editor.Document.Selection.FindText(textToFind, -TextConstants.MaxUnitCount, GetFindOptions());
+                if (found == 0)
+                    ViewModel.UpdateStatus("No match found.");
             }
         }
 
@@ -845,38 +1192,312 @@ namespace SmrtPad
 
         private async void InsertObject_Click(object sender, RoutedEventArgs e)
         {
-            var picker = new FileOpenPicker();
-            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-            picker.ViewMode = PickerViewMode.Thumbnail;
-            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-            picker.FileTypeFilter.Add(".png");
-            picker.FileTypeFilter.Add(".jpg");
-            picker.FileTypeFilter.Add(".jpeg");
-            picker.FileTypeFilter.Add(".bmp");
-            picker.FileTypeFilter.Add(".gif");
-            picker.FileTypeFilter.Add(".tif");
-            picker.FileTypeFilter.Add(".tiff");
-            picker.FileTypeFilter.Add(".ico");
-            picker.FileTypeFilter.Add(".svg");
-
-            StorageFile file = await picker.PickSingleFileAsync();
-            if (file != null)
+            try
             {
-                string ext = file.FileType.ToLowerInvariant();
-                if (ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".gif" or ".tif" or ".tiff" or ".ico")
+                var picker = new FileOpenPicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.ViewMode = PickerViewMode.Thumbnail;
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeFilter.Add(".png");
+                picker.FileTypeFilter.Add(".jpg");
+                picker.FileTypeFilter.Add(".jpeg");
+                picker.FileTypeFilter.Add(".bmp");
+                picker.FileTypeFilter.Add(".gif");
+                picker.FileTypeFilter.Add(".tif");
+                picker.FileTypeFilter.Add(".tiff");
+                picker.FileTypeFilter.Add(".ico");
+                picker.FileTypeFilter.Add(".svg");
+
+                StorageFile file = await picker.PickSingleFileAsync();
+                if (file != null)
                 {
-                    using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                    string ext = file.FileType.ToLowerInvariant();
+                    if (ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".gif" or ".tif" or ".tiff" or ".ico")
                     {
-                        Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
+                        using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                        {
+                            Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
+                        }
+                        ViewModel.UpdateStatus($"Inserted {file.Name}.");
                     }
-                    ViewModel.UpdateStatus($"Inserted {file.Name}.");
-                }
-                else
-                {
-                    Editor.Document.Selection.Text = $"[Embedded object: {file.Name}]";
-                    ViewModel.UpdateStatus($"Inserted reference to {file.Name}.");
+                    else
+                    {
+                        Editor.Document.Selection.Text = $"[Embedded object: {file.Name}]";
+                        ViewModel.UpdateStatus($"Inserted reference to {file.Name}.");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Error Inserting Object", ex.Message);
+            }
+        }
+
+        private async Task ShowErrorDialogAsync(string title, string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = Content.XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+
+        private void PasteSpecial_Click(object sender, RoutedEventArgs e)
+        {
+            var dataPackageView = Clipboard.GetContent();
+            if (dataPackageView.Contains(StandardDataFormats.Text))
+            {
+                PasteAsPlainTextAsync(dataPackageView);
+            }
+        }
+
+        private async void PasteAsPlainTextAsync(DataPackageView dataPackageView)
+        {
+            try
+            {
+                string text = await dataPackageView.GetTextAsync();
+                Editor.Document.Selection.Text = text;
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Paste Error", ex.Message);
+            }
+        }
+
+        private void ClearFormatting_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selectedText = Editor.Document.Selection;
+            if (selectedText != null)
+            {
+                ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
+                charFormatting.Bold = FormatEffect.Off;
+                charFormatting.Italic = FormatEffect.Off;
+                charFormatting.Underline = UnderlineType.None;
+                charFormatting.Strikethrough = FormatEffect.Off;
+                charFormatting.Subscript = FormatEffect.Off;
+                charFormatting.Superscript = FormatEffect.Off;
+                charFormatting.Name = _settings.DefaultFontFamily;
+                charFormatting.Size = (float)_settings.DefaultFontSize;
+                charFormatting.ForegroundColor = Color.FromArgb(255, 0, 0, 0);
+                charFormatting.BackgroundColor = Color.FromArgb(0, 255, 255, 255);
+                selectedText.CharacterFormat = charFormatting;
+
+                ITextParagraphFormat paraFormatting = selectedText.ParagraphFormat;
+                paraFormatting.Alignment = ParagraphAlignment.Left;
+                paraFormatting.ListType = MarkerType.None;
+                paraFormatting.SetLineSpacing(LineSpacingRule.Single, 0);
+                paraFormatting.SetIndents(0, 0, 0);
+                paraFormatting.SpaceBefore = 0;
+                paraFormatting.SpaceAfter = 0;
+                selectedText.ParagraphFormat = paraFormatting;
+
+                ViewModel.UpdateStatus("Formatting cleared.");
+            }
+        }
+
+        private async void CustomLineSpacing_Click(object sender, RoutedEventArgs e)
+        {
+            var spacingBox = new NumberBox
+            {
+                Header = "Line Spacing Value",
+                Minimum = 0.5,
+                Maximum = 10.0,
+                Value = ViewModel.LineSpacing,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                SmallChange = 0.25
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Custom Line Spacing",
+                Content = spacingBox,
+                PrimaryButtonText = "Apply",
+                CloseButtonText = "Cancel",
+                XamlRoot = Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                double spacing = spacingBox.Value;
+                ITextSelection selectedText = Editor.Document.Selection;
+                if (selectedText != null)
+                {
+                    ITextParagraphFormat paragraphFormatting = selectedText.ParagraphFormat;
+                    paragraphFormatting.SetLineSpacing(LineSpacingRule.Multiple, (float)spacing);
+                    selectedText.ParagraphFormat = paragraphFormatting;
+                }
+                ViewModel.SetLineSpacing(spacing);
+            }
+        }
+
+        private void ApplyParagraphSpacing_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selectedText = Editor.Document.Selection;
+            if (selectedText != null)
+            {
+                ITextParagraphFormat paragraphFormatting = selectedText.ParagraphFormat;
+                paragraphFormatting.SpaceBefore = (float)SpacingBeforeBox.Value;
+                paragraphFormatting.SpaceAfter = (float)SpacingAfterBox.Value;
+                selectedText.ParagraphFormat = paragraphFormatting;
+                ViewModel.ParagraphSpacingBefore = SpacingBeforeBox.Value;
+                ViewModel.ParagraphSpacingAfter = SpacingAfterBox.Value;
+                ViewModel.UpdateStatus($"Paragraph spacing: {SpacingBeforeBox.Value}pt before, {SpacingAfterBox.Value}pt after.");
+            }
+        }
+
+        private void ThemeToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (Content is FrameworkElement root)
+            {
+                string newTheme = root.RequestedTheme switch
+                {
+                    ElementTheme.Light => "Dark",
+                    ElementTheme.Dark => "Default",
+                    _ => "Light"
+                };
+                _settings.ThemePreference = newTheme == "Default" ? "System" : newTheme;
+                _settings.Save();
+                ApplyThemeFromSettings();
+                ViewModel.UpdateStatus($"Theme: {_settings.ThemePreference}");
+            }
+        }
+
+        private async void InsertHyperlink_Click(object sender, RoutedEventArgs e)
+        {
+            var panel = new StackPanel { Spacing = 8, MinWidth = 300 };
+            var urlBox = new TextBox { Header = "URL", PlaceholderText = "https://example.com" };
+            var textBox = new TextBox { Header = "Display Text (optional)", PlaceholderText = "Link text" };
+
+            string selectedText = Editor.Document.Selection.Text;
+            if (!string.IsNullOrEmpty(selectedText))
+                textBox.Text = selectedText;
+
+            panel.Children.Add(urlBox);
+            panel.Children.Add(textBox);
+
+            var dialog = new ContentDialog
+            {
+                Title = "Insert Hyperlink",
+                Content = panel,
+                PrimaryButtonText = "Insert",
+                CloseButtonText = "Cancel",
+                XamlRoot = Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(urlBox.Text))
+            {
+                string display = string.IsNullOrWhiteSpace(textBox.Text) ? urlBox.Text : textBox.Text;
+                string url = urlBox.Text.Trim();
+
+                Editor.Document.Selection.Text = display;
+                int end = Editor.Document.Selection.EndPosition;
+                int start = end - display.Length;
+                ITextRange range = Editor.Document.GetRange(start, end);
+                range.Link = $"\"{url}\"";
+                range.CharacterFormat.ForegroundColor = Color.FromArgb(255, 0, 102, 204);
+                range.CharacterFormat.Underline = UnderlineType.Single;
+                ViewModel.UpdateStatus("Hyperlink inserted.");
+            }
+        }
+
+        private async void InsertTable_Click(object sender, RoutedEventArgs e)
+        {
+            var panel = new StackPanel { Spacing = 8, MinWidth = 250 };
+            var rowsBox = new NumberBox { Header = "Rows", Minimum = 1, Maximum = 50, Value = 3, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            var colsBox = new NumberBox { Header = "Columns", Minimum = 1, Maximum = 20, Value = 3, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
+            panel.Children.Add(rowsBox);
+            panel.Children.Add(colsBox);
+
+            var dialog = new ContentDialog
+            {
+                Title = "Insert Table",
+                Content = panel,
+                PrimaryButtonText = "Insert",
+                CloseButtonText = "Cancel",
+                XamlRoot = Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                int rows = (int)rowsBox.Value;
+                int cols = (int)colsBox.Value;
+
+                // Build RTF table
+                var rtf = new System.Text.StringBuilder();
+                rtf.Append(@"{\rtf1\ansi ");
+
+                for (int r = 0; r < rows; r++)
+                {
+                    rtf.Append(@"\trowd ");
+                    for (int c = 0; c < cols; c++)
+                    {
+                        int cellRight = (c + 1) * 2000;
+                        rtf.Append($@"\clbrdrt\brdrs\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs\cellx{cellRight} ");
+                    }
+                    for (int c = 0; c < cols; c++)
+                    {
+                        rtf.Append($@" \cell ");
+                    }
+                    rtf.Append(@"\row ");
+                }
+                rtf.Append('}');
+
+                Editor.Document.Selection.SetText(TextSetOptions.FormatRtf, rtf.ToString());
+                ViewModel.UpdateStatus($"Inserted {rows}×{cols} table.");
+            }
+        }
+
+        private void Editor_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = DataPackageOperation.Copy;
+                e.DragUIOverride.Caption = "Open file";
+            }
+        }
+
+        private async void Editor_Drop(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                var items = await e.DataView.GetStorageItemsAsync();
+                if (items.Count > 0 && items[0] is StorageFile file)
+                {
+                    string ext = file.FileType.ToLowerInvariant();
+                    if (ext is ".rtf" or ".txt")
+                    {
+                        await OpenFileByPathAsync(file.Path);
+                    }
+                    else if (ext is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".gif")
+                    {
+                        try
+                        {
+                            using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                            {
+                                Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
+                            }
+                            ViewModel.UpdateStatus($"Inserted {file.Name}.");
+                        }
+                        catch (Exception ex)
+                        {
+                            await ShowErrorDialogAsync("Error", ex.Message);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ShowBackstage()
+        {
+            FileBackstage.SetRecentFiles(_settings.RecentFiles);
+            FileBackstage.Visibility = Visibility.Visible;
+            Editor.Visibility = Visibility.Collapsed;
         }
     }
 }

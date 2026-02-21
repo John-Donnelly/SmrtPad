@@ -54,6 +54,12 @@
                                 <KeyboardAccelerator Key="V" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="Paste Special" Click="PasteSpecial_Click">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="V" Modifiers="Control,Shift"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
                         <MenuFlyoutItem Text="Select All" Click="SelectAll_Click">
                             <MenuFlyoutItem.KeyboardAccelerators>
@@ -85,6 +91,10 @@
                 </Button>
                 <Button Click="Redo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Redo (Ctrl+Y)">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A6;" FontSize="14"/>
+                </Button>
+                <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
+                <Button x:Name="ThemeToggleButton" Click="ThemeToggle_Click" Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Toggle Theme">
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE793;" FontSize="14"/>
                 </Button>
             </StackPanel>
         </Grid>
@@ -129,7 +139,7 @@
                                 <TextBlock Text="Paste" FontSize="10" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <!-- Cut / Copy stacked -->
+                        <!-- Cut / Copy / Paste Special stacked -->
                         <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Top" Margin="0,4,0,0">
                             <Button Click="Cut_Click" Height="26" Padding="6,2" CornerRadius="4"
                                     Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Cut (Ctrl+X)"
@@ -272,6 +282,11 @@
                                 <Rectangle x:Name="HighlightColorIndicator" Grid.Row="1" Fill="#FFFF00" RadiusX="1" RadiusY="1" Margin="1,0"/>
                             </Grid>
                         </Button>
+                        <!-- Clear Formatting -->
+                        <Button Click="ClearFormatting_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Clear Formatting">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E6;" FontSize="16"/>
+                        </Button>
                     </StackPanel>
 
                     <TextBlock Grid.Row="2" Text="Font" FontSize="10" HorizontalAlignment="Center"
@@ -326,12 +341,39 @@
                                     <MenuFlyoutItem Text="1.15" Click="LineSpacing_Click" Tag="1.15"/>
                                     <MenuFlyoutItem Text="1.5" Click="LineSpacing_Click" Tag="1.5"/>
                                     <MenuFlyoutItem Text="2.0" Click="LineSpacing_Click" Tag="2.0"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem Text="Custom..." Click="CustomLineSpacing_Click"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8D4;" FontSize="14"/>
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70D;" FontSize="8" VerticalAlignment="Bottom"/>
                             </StackPanel>
+                        </Button>
+                        <!-- Paragraph spacing -->
+                        <Button Padding="4,3" CornerRadius="4" Height="28"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paragraph Spacing">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel Spacing="8" Width="200">
+                                        <TextBlock Text="Paragraph Spacing" FontSize="14" FontWeight="SemiBold"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <StackPanel>
+                                                <TextBlock Text="Before (pt)" FontSize="11"/>
+                                                <NumberBox x:Name="SpacingBeforeBox" Minimum="0" Maximum="100" Value="0"
+                                                           SpinButtonPlacementMode="Compact" SmallChange="1"/>
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <TextBlock Text="After (pt)" FontSize="11"/>
+                                                <NumberBox x:Name="SpacingAfterBox" Minimum="0" Maximum="100" Value="0"
+                                                           SpinButtonPlacementMode="Compact" SmallChange="1"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Button Content="Apply" Click="ApplyParagraphSpacing_Click" HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE1D0;" FontSize="14"/>
                         </Button>
                     </StackPanel>
 
@@ -381,6 +423,8 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <!-- Picture with dropdown -->
                         <Button Grid.Column="0" Click="InsertPicture_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
@@ -418,6 +462,24 @@
                                 <TextBlock Text="Date/Time" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <!-- Insert Hyperlink -->
+                        <Button Grid.Column="4" Click="InsertHyperlink_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Hyperlink"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE71B;" FontSize="22"/>
+                                <TextBlock Text="Link" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Insert Table -->
+                        <Button Grid.Column="5" Click="InsertTable_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Table"
+                                VerticalAlignment="Top">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE80A;" FontSize="22"/>
+                                <TextBlock Text="Table" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
                     <TextBlock Grid.Row="1" Text="Insert" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
@@ -441,7 +503,10 @@
                                     <StackPanel Spacing="6" Width="300">
                                         <TextBlock Text="Find" FontSize="14" FontWeight="SemiBold"/>
                                         <TextBox x:Name="FindTextBox" PlaceholderText="Text to look for"/>
+                                        <CheckBox x:Name="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"/>
+                                        <CheckBox x:Name="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                            <Button Content="Find Previous" Click="FindPrevious_Click"/>
                                             <Button Content="Find Next" Click="FindNext_Click"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -492,17 +557,32 @@
 
         <!-- ═══ EDITOR + BACKSTAGE ═══ -->
         <Grid Grid.Row="2" Margin="10">
-            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" />
+            <RichEditBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap"
+                         AllowDrop="True" DragOver="Editor_DragOver" Drop="Editor_Drop"/>
             <views:FileBackstageView x:Name="FileBackstage" Visibility="Collapsed" />
         </Grid>
 
         <!-- ═══ STATUS BAR ═══ -->
         <Grid Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
-                <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
-                           HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-            </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock x:Name="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                    <TextBlock x:Name="WordCountText" Text="Words: 0" VerticalAlignment="Center" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="CharCountText" Text="Characters: 0" VerticalAlignment="Center" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="LineColText" Text="Ln 1, Col 1" VerticalAlignment="Center" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

@@ -41,6 +41,7 @@
         <Grid Grid.Column="1" Padding="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -48,9 +49,18 @@
 
             <Border Grid.Row="1"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    CornerRadius="8" Padding="16">
+                    CornerRadius="8" Padding="16" Margin="0,8,0,0">
                 <TextBlock x:Name="BodyText" TextWrapping="Wrap"
                            Text="Choose an option on the left." />
+            </Border>
+
+            <Border x:Name="RecentFilesPanel" Grid.Row="2" Visibility="Collapsed"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Recent Files" FontSize="16" FontWeight="SemiBold"/>
+                    <ItemsControl x:Name="RecentFilesList"/>
+                </StackPanel>
             </Border>
         </Grid>
     </Grid>

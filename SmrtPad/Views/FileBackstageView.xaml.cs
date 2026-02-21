@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -13,6 +14,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? PrintRequested;
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
+    public event EventHandler<string>? RecentFileRequested;
 
     private bool _suppressSelectionEvent = true;
 
@@ -21,6 +23,38 @@ public sealed partial class FileBackstageView : UserControl
         InitializeComponent();
         Nav.SelectedItem = Nav.MenuItems[0];
         _suppressSelectionEvent = false;
+    }
+
+    public void SetRecentFiles(List<string> recentFiles)
+    {
+        RecentFilesList.Items.Clear();
+        if (recentFiles.Count == 0)
+        {
+            RecentFilesList.Items.Add(new TextBlock { Text = "No recent files.", Opacity = 0.5 });
+            return;
+        }
+        foreach (var path in recentFiles)
+        {
+            var item = new MenuFlyoutItem { Text = System.IO.Path.GetFileName(path), Tag = path };
+            var btn = new Button
+            {
+                Content = System.IO.Path.GetFileName(path),
+                Tag = path,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0)),
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(8, 6, 8, 6)
+            };
+            var tip = new ToolTip { Content = path };
+            ToolTipService.SetToolTip(btn, tip);
+            btn.Click += (s, e) =>
+            {
+                if (s is Button b && b.Tag is string filePath)
+                    RecentFileRequested?.Invoke(this, filePath);
+            };
+            RecentFilesList.Items.Add(btn);
+        }
     }
 
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -33,6 +67,8 @@ public sealed partial class FileBackstageView : UserControl
 
         var tag = item.Tag as string;
         HeaderText.Text = tag is null ? "File" : tag;
+        RecentFilesPanel.Visibility = Visibility.Collapsed;
+        BodyText.Visibility = Visibility.Visible;
 
         switch (tag)
         {
@@ -41,7 +77,8 @@ public sealed partial class FileBackstageView : UserControl
                 NewRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Open":
-                BodyText.Text = "Open an existing document.";
+                BodyText.Text = "Open an existing document, or select a recent file below.";
+                RecentFilesPanel.Visibility = Visibility.Visible;
                 OpenRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Save":
