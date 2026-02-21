@@ -56,6 +56,7 @@ namespace SmrtPad
             };
 
             InitializeFonts();
+            LoadSettings();
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
             Editor.TextChanged += (s, e) =>
@@ -172,6 +173,22 @@ namespace SmrtPad
             var sizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
             FontSizeComboBox.ItemsSource = sizes;
             FontSizeComboBox.SelectedItem = 11.0;
+        }
+
+        private void LoadSettings()
+        {
+            bool wordWrap = SettingsHelper.WordWrap;
+            Editor.TextWrapping = wordWrap ? TextWrapping.Wrap : TextWrapping.NoWrap;
+            ViewModel.IsWordWrap = wordWrap;
+
+            string fontFamily = SettingsHelper.DefaultFontFamily;
+            if (FontFamilyComboBox.ItemsSource is System.Collections.Generic.IEnumerable<string> fonts
+                && fonts.Contains(fontFamily))
+                FontFamilyComboBox.SelectedItem = fontFamily;
+
+            double fontSize = SettingsHelper.DefaultFontSize;
+            FontSizeComboBox.Text = ((int)fontSize).ToString();
+            ViewModel.FontSize = fontSize;
         }
 
         private void FontFamilyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -386,14 +403,66 @@ namespace SmrtPad
 
         private async void Options_Click(object sender, RoutedEventArgs e)
         {
+            var fontFamilies = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies().OrderBy(f => f).ToList();
+
+            var fontFamilyCombo = new ComboBox
+            {
+                Width = 200,
+                PlaceholderText = "Font",
+                ItemsSource = fontFamilies,
+                SelectedItem = SettingsHelper.DefaultFontFamily
+            };
+
+            var fontSizeSizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
+            var fontSizeCombo = new ComboBox
+            {
+                Width = 80,
+                IsEditable = true,
+                ItemsSource = fontSizeSizes,
+                SelectedItem = SettingsHelper.DefaultFontSize
+            };
+            if (fontSizeCombo.SelectedItem == null)
+                fontSizeCombo.Text = ((int)SettingsHelper.DefaultFontSize).ToString();
+
+            var wordWrapCheck = new CheckBox
+            {
+                Content = "Word wrap by default",
+                IsChecked = SettingsHelper.WordWrap
+            };
+
+            var fontRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            fontRow.Children.Add(fontFamilyCombo);
+            fontRow.Children.Add(fontSizeCombo);
+
+            var panel = new StackPanel { Spacing = 12, MinWidth = 320 };
+            panel.Children.Add(new TextBlock { Text = "Default font:" });
+            panel.Children.Add(fontRow);
+            panel.Children.Add(wordWrapCheck);
+
             var dialog = new ContentDialog
             {
                 Title = "Options",
-                Content = "Options are not yet implemented. This feature will be available in a future update.",
-                CloseButtonText = "OK",
+                Content = panel,
+                PrimaryButtonText = "OK",
+                CloseButtonText = "Cancel",
                 XamlRoot = Content.XamlRoot
             };
-            await dialog.ShowAsync();
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                if (fontFamilyCombo.SelectedItem is string newFont)
+                    SettingsHelper.DefaultFontFamily = newFont;
+
+                if (fontSizeCombo.SelectedItem is double newSize)
+                    SettingsHelper.DefaultFontSize = newSize;
+                else if (double.TryParse(fontSizeCombo.Text, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double parsedSize) && parsedSize > 0)
+                    SettingsHelper.DefaultFontSize = parsedSize;
+
+                SettingsHelper.WordWrap = wordWrapCheck.IsChecked == true;
+                ViewModel.UpdateStatus("Options saved.");
+            }
         }
 
         private void Cut_Click(object sender, RoutedEventArgs e)
