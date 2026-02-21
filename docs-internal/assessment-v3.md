@@ -1,7 +1,7 @@
 # SmrtPad — Comprehensive Project Assessment v3
 
 **Generated:** 2025-07-17 (full ground-truth audit of every authored file)  
-**Branch:** `master` — 17 commits ahead of `origin/master`
+**Branch:** `master` — 19 commits ahead of `origin/master`
 **Stack:** WinUI 3 · .NET 10 · Windows App SDK 1.8.260209005 · CommunityToolkit.Mvvm 8.4  
 **Projects:** `SmrtPad` (main app) · `SmrtPad.Tests` (unit tests, xUnit 2.6.6)
 
@@ -82,7 +82,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Zoom In / Out | ✅ | `ScaleTransform` on `EditorContainer` for true visual zoom (not font-size change); rulers scale with zoom; `Ctrl+Plus`/`Ctrl+Minus` keyboard accelerators; `Ctrl+Scroll wheel` via `PointerWheelChanged` |
+| Zoom In / Out | ✅ | `ScaleTransform` (top-left origin) on `EditorContainer` for true visual zoom; viewport-aware container sizing keeps content left-aligned in default view and centered in page view at all zoom levels; rulers scale with zoom; `Ctrl+Plus`/`Ctrl+Minus` keyboard accelerators; `Ctrl+Scroll wheel` via `PointerWheelChanged`; recalculates on window resize |
 | Word Wrap | ✅ | `ToggleMenuFlyoutItem` → `Editor.TextWrapping` |
 | Status bar zoom display | ✅ | `ZoomText.Text` updated in `ApplyZoom()` |
 | Focus mode | ✅ | `FocusModeToggle` in View menu hides `RibbonBar` + `StatusBar` for distraction-free writing |
@@ -362,6 +362,7 @@
 | Ruler toggle | `9e91077` | `Canvas`-based ruler with inch/half-inch/quarter-inch ticks and labels; `ToggleMenuFlyoutItem` in View menu; localized across 9 locales |
 | Page View toggle | `9e91077` | Centered 816px `Border` with card background and page padding; constrains editor `MaxWidth`; localized across 9 locales |
 | Zoom overhaul | `34a744f` | `ScaleTransform` replaces font-size hack; rulers scale with zoom; `Ctrl+Scroll`, `Ctrl+Plus`, `Ctrl+Minus` shortcuts; font selector shows default on load |
+| Zoom alignment + font fix | `f7f3e53` | Top-left `RenderTransformOrigin` with viewport-aware container sizing prevents drift when zooming out; `FontFamilyComboBox` `x:Uid` removed to prevent `PlaceholderText` override; `Text` synced in `SelectionChanged` |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -460,9 +461,11 @@
 
 ---
 
-## Appendix B — Commit History (17 commits ahead of origin)
+## Appendix B — Commit History (19 commits ahead of origin)
 
 ```
+f7f3e53 fix: zoom alignment uses top-left origin with viewport-aware sizing, font selector always shows current font name
+0e1f33b docs: update assessment for zoom overhaul and keyboard shortcuts
 34a744f fix: zoom uses ScaleTransform instead of font size, add Ctrl+scroll and Ctrl+/- shortcuts, fix font selector display, scale rulers with zoom
 67d5052 docs: update assessment for ruler/page view overhaul
 a495cc7 feat: overhaul rulers with horizontal+vertical, inches/cm option, and fix page view layout to fill printable area
