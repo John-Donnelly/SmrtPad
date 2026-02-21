@@ -20,6 +20,7 @@
                 PaneDisplayMode="Left"
                 IsPaneOpen="True"
                 IsBackButtonVisible="Collapsed"
+                IsPaneToggleButtonVisible="False"
                 IsSettingsVisible="False"
                 SelectionChanged="Nav_SelectionChanged">
                 <NavigationView.MenuItems>
