@@ -34,7 +34,7 @@ namespace SmrtPad
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        private StorageFile _currentFile;
+        private StorageFile? _currentFile;
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
 
         // reserved for future image selection tracking
@@ -58,6 +58,7 @@ namespace SmrtPad
             InitializeFonts();
 
             // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
+            Editor.TextChanged += (s, e) => { ViewModel.IsModified = true; };
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
@@ -65,7 +66,7 @@ namespace SmrtPad
             FileBackstage.SaveAsRequested += (s, e) => { HideBackstage(); SaveAs_Click(this, new RoutedEventArgs()); };
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
-            FileBackstage.ExitRequested += (s, e) => { Close(); };
+            FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
         }
 
         // Image hosting now uses native RichEdit OLE objects.
@@ -121,8 +122,35 @@ namespace SmrtPad
             }
         }
 
-        private void New_Click(object sender, RoutedEventArgs e)
+        private async Task<bool> PromptSaveChangesAsync()
         {
+            if (!ViewModel.IsModified)
+                return true;
+
+            var dialog = new ContentDialog
+            {
+                Title = "Unsaved Changes",
+                Content = $"Do you want to save changes to {ViewModel.DocumentTitle}?",
+                PrimaryButtonText = "Save",
+                SecondaryButtonText = "Don't Save",
+                CloseButtonText = "Cancel",
+                XamlRoot = Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                Save_Click(this, new RoutedEventArgs());
+                return true;
+            }
+            return result == ContentDialogResult.Secondary;
+        }
+
+        private async void New_Click(object sender, RoutedEventArgs e)
+        {
+            if (!await PromptSaveChangesAsync())
+                return;
+
             Editor.Document.SetText(TextSetOptions.None, string.Empty);
             _currentFile = null;
             ViewModel.NewDocument();
@@ -138,6 +166,9 @@ namespace SmrtPad
 
         private async void Open_Click(object sender, RoutedEventArgs e)
         {
+            if (!await PromptSaveChangesAsync())
+                return;
+
             var picker = new FileOpenPicker();
             InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
             picker.ViewMode = PickerViewMode.List;
@@ -157,11 +188,12 @@ namespace SmrtPad
                 }
                 _currentFile = file;
                 ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
                 ViewModel.UpdateStatus($"Opened {file.Name}");
             }
         }
 
-        private async void Save_Click(object sender, RoutedEventArgs e)
+        private async void Save_Click
         {
             if (_currentFile == null)
             {
@@ -185,6 +217,7 @@ namespace SmrtPad
                     {
                         _currentFile = file;
                         ViewModel.DocumentTitle = file.Name;
+                        ViewModel.IsModified = false;
                         ViewModel.UpdateStatus($"Saved {file.Name}");
                     }
                 }
@@ -195,11 +228,12 @@ namespace SmrtPad
                 {
                     Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
                 }
+                ViewModel.IsModified = false;
                 ViewModel.UpdateStatus($"Saved {_currentFile.Name}");
             }
         }
 
-        private async void SaveAs_Click(object sender, RoutedEventArgs e)
+        private async void SaveAs_Click
         {
             var picker = new FileSavePicker();
             InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
@@ -224,12 +258,13 @@ namespace SmrtPad
                 {
                     _currentFile = file;
                     ViewModel.DocumentTitle = file.Name;
+                    ViewModel.IsModified = false;
                     ViewModel.UpdateStatus($"Saved {file.Name}");
                 }
             }
         }
 
-        private async void Print_Click(object sender, RoutedEventArgs e)
+        private async void Print_Click
         {
             var dialog = new ContentDialog
             {
@@ -364,8 +399,10 @@ namespace SmrtPad
             }
         }
 
-        private void Exit_Click(object sender, RoutedEventArgs e)
+        private async void Exit_Click(object sender, RoutedEventArgs e)
         {
+            if (!await PromptSaveChangesAsync())
+                return;
             Close();
         }
 
