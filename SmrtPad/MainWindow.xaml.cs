@@ -360,8 +360,6 @@ namespace SmrtPad
             var fonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
             FontFamilyComboBox.ItemsSource = fonts.OrderBy(f => f).ToList();
             FontFamilyComboBox.SelectedItem = _settings.DefaultFontFamily;
-            // For editable combo boxes, also set Text to ensure the display shows the value
-            FontFamilyComboBox.Text = _settings.DefaultFontFamily;
 
             var sizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
             FontSizeComboBox.ItemsSource = sizes;
@@ -370,6 +368,13 @@ namespace SmrtPad
 
             FontSizeComboBox.KeyDown += FontSizeComboBox_KeyDown;
             FontSizeComboBox.LostFocus += FontSizeComboBox_LostFocus;
+        }
+
+        private void FontFamilyComboBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Editable ComboBox in WinUI 3 doesn't reliably display SelectedItem text
+            // until the control is fully loaded. Set the Text property explicitly here.
+            FontFamilyComboBox.Text = _settings.DefaultFontFamily;
         }
 
         private void ApplyFontSizeFromText()

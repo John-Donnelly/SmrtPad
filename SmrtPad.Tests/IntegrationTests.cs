@@ -1557,6 +1557,78 @@ namespace SmrtPad.Tests
             Assert.NotNull(method);
             Assert.Equal(typeof(Task), method!.ReturnType);
         }
+
+        [Fact]
+        public void MainWindow_HasFontFamilyComboBoxLoadedHandler()
+        {
+            var type = typeof(SmrtPad.MainWindow);
+            var method = type.GetMethod("FontFamilyComboBox_Loaded",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(method);
+            var parameters = method!.GetParameters();
+            Assert.Equal(2, parameters.Length);
+            Assert.Equal(typeof(object), parameters[0].ParameterType);
+        }
+
+        [Fact]
+        public void MainWindow_HasInitializeFonts()
+        {
+            var type = typeof(SmrtPad.MainWindow);
+            var method = type.GetMethod("InitializeFonts",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_FontFamilyHasItemTemplate()
+        {
+            // Verify the XAML file contains the ItemTemplate for font family preview
+            string? xamlPath = FindXamlPath();
+            if (xamlPath == null) return;
+
+            string xaml = File.ReadAllText(xamlPath);
+            Assert.Contains("FontFamilyComboBox", xaml);
+            Assert.Contains("ItemTemplate", xaml);
+            Assert.Contains("FontFamily=\"{x:Bind}\"", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_AlignmentUsesGrid()
+        {
+            // Verify alignment buttons use Grid layout (equal spacing) not StackPanel
+            string? xamlPath = FindXamlPath();
+            if (xamlPath == null) return;
+
+            string xaml = File.ReadAllText(xamlPath);
+            // The alignment section should contain Grid columns, not a StackPanel
+            Assert.Contains("AlignLeftToggle", xaml);
+            Assert.Contains("Grid.Column=\"0\"", xaml);
+            Assert.Contains("Grid.Column=\"3\"", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_FontSizeComboBox_IsCompact()
+        {
+            string? xamlPath = FindXamlPath();
+            if (xamlPath == null) return;
+
+            string xaml = File.ReadAllText(xamlPath);
+            // Font size ComboBox should be narrow (62px, not 112px)
+            Assert.Contains("FontSizeComboBox", xaml);
+            Assert.Contains("Width=\"62\"", xaml);
+        }
+
+        private static string? FindXamlPath()
+        {
+            string? dir = Directory.GetCurrentDirectory();
+            while (dir != null)
+            {
+                string candidate = Path.Combine(dir, "SmrtPad", "MainWindow.xaml");
+                if (File.Exists(candidate)) return candidate;
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return null;
+        }
     }
 
     // ═══ ParagraphStyleHelper Tests ═══

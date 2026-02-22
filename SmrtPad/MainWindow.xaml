@@ -190,8 +190,16 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="3" Margin="0,0,0,3">
                         <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
-                                  IsEditable="True"/>
-                        <ComboBox x:Name="FontSizeComboBox" Width="112" Height="28" FontSize="12"
+                                  IsEditable="True" MaxDropDownHeight="350"
+                                  Loaded="FontFamilyComboBox_Loaded">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <TextBlock Text="{x:Bind}" FontFamily="{x:Bind}" FontSize="13"
+                                               TextTrimming="CharacterEllipsis" MaxWidth="220"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <ComboBox x:Name="FontSizeComboBox" Width="62" Height="28" FontSize="12"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
                                   IsEditable="True"/>
                         <Button Click="GrowFont_Click" Width="28" Height="28" Padding="0" CornerRadius="4"
@@ -418,32 +426,42 @@
                     </StackPanel>
 
                     <!-- Row 2: alignment buttons (toggle-style, mutually exclusive in code-behind) -->
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
-                        <ToggleButton x:Name="AlignLeftToggle" Click="AlignLeft_Click"
-                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                    <Grid Grid.Row="1" HorizontalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ToggleButton x:Name="AlignLeftToggle" Grid.Column="0" Click="AlignLeft_Click"
+                                      Height="32" Padding="0" CornerRadius="4"
                                       IsChecked="True" ToolTipService.ToolTip="Align Left"
+                                      HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E4;" FontSize="14"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="AlignCenterToggle" Click="AlignCenter_Click"
-                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                        <ToggleButton x:Name="AlignCenterToggle" Grid.Column="1" Click="AlignCenter_Click"
+                                      Height="32" Padding="0" CornerRadius="4"
                                       ToolTipService.ToolTip="Align Center"
+                                      HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E3;" FontSize="14"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="AlignRightToggle" Click="AlignRight_Click"
-                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                        <ToggleButton x:Name="AlignRightToggle" Grid.Column="2" Click="AlignRight_Click"
+                                      Height="32" Padding="0" CornerRadius="4"
                                       ToolTipService.ToolTip="Align Right"
+                                      HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E2;" FontSize="14"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="AlignJustifyToggle" Click="AlignJustify_Click"
-                                      Width="32" Height="32" Padding="0" CornerRadius="4"
+                        <ToggleButton x:Name="AlignJustifyToggle" Grid.Column="3" Click="AlignJustify_Click"
+                                      Height="32" Padding="0" CornerRadius="4"
                                       ToolTipService.ToolTip="Justify"
+                                      HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE700;" FontSize="14"/>
                         </ToggleButton>
-                    </StackPanel>
+                    </Grid>
 
                     <TextBlock x:Uid="ParagraphGroupLabel" Grid.Row="2" Text="Paragraph" FontSize="10" HorizontalAlignment="Center"
                                VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
