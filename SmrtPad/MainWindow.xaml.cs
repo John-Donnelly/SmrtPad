@@ -65,6 +65,7 @@ namespace SmrtPad
         private readonly MacroHelper _macro = new();
 
         private static readonly char[] s_wordSeparators = [' ', '\r', '\n', '\t'];
+        private bool _suppressFontComboChange;
         private DocumentTab ActiveTab => _tabs[_activeTabIndex];
         private RichEditBox Editor => ActiveTab.Editor;
         private ScrollViewer EditorScrollViewer => ActiveTab.ScrollViewer;
@@ -475,8 +476,9 @@ namespace SmrtPad
             if (!string.IsNullOrEmpty(charFormat.Name))
             {
                 ViewModel.FontFamily = charFormat.Name;
-                FontFamilyComboBox.SelectedItem = charFormat.Name;
+                _suppressFontComboChange = true;
                 FontFamilyComboBox.Text = charFormat.Name;
+                _suppressFontComboChange = false;
             }
             if (charFormat.Size > 0)
             {
@@ -513,7 +515,9 @@ namespace SmrtPad
         {
             var fonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
             FontFamilyComboBox.ItemsSource = fonts.OrderBy(f => f).ToList();
+            _suppressFontComboChange = true;
             FontFamilyComboBox.SelectedItem = _settings.DefaultFontFamily;
+            _suppressFontComboChange = false;
 
             var sizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
             FontSizeComboBox.ItemsSource = sizes;
@@ -531,7 +535,9 @@ namespace SmrtPad
             // internal TextBox is fully initialized before we set its Text.
             DispatcherQueue.TryEnqueue(() =>
             {
+                _suppressFontComboChange = true;
                 FontFamilyComboBox.Text = _settings.DefaultFontFamily;
+                _suppressFontComboChange = false;
             });
         }
 
@@ -587,6 +593,7 @@ namespace SmrtPad
 
         private void FontFamilyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_suppressFontComboChange) return;
             if (FontFamilyComboBox.SelectedItem is string fontName)
             {
                 ITextSelection selectedText = Editor.Document.Selection;
