@@ -754,4 +754,21 @@
     <value>No</value>
   </data>
 
+  <!-- ═══ Built-in drawing dialog ═══ -->
+  <data name="DrawingTitle" xml:space="preserve">
+    <value>Draw</value>
+  </data>
+  <data name="DrawingInsert" xml:space="preserve">
+    <value>Insert</value>
+  </data>
+  <data name="DrawingClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="DrawingColor" xml:space="preserve">
+    <value>Stroke Color</value>
+  </data>
+  <data name="DrawingStrokeWidth" xml:space="preserve">
+    <value>Stroke Width</value>
+  </data>
+
 </root>

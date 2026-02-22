@@ -322,6 +322,19 @@ namespace SmrtPad.Tests
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
+        [Theory]
+        [InlineData("DrawingTitle")]
+        [InlineData("DrawingInsert")]
+        [InlineData("DrawingClear")]
+        [InlineData("DrawingColor")]
+        [InlineData("DrawingStrokeWidth")]
+        public void ReswFile_ContainsDrawingKeys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =

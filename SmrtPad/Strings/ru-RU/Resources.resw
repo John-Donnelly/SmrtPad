@@ -723,5 +723,20 @@
   <data name="DocPropNo" xml:space="preserve">
     <value>Нет</value>
   </data>
+  <data name="DrawingTitle" xml:space="preserve">
+    <value>Рисование</value>
+  </data>
+  <data name="DrawingInsert" xml:space="preserve">
+    <value>Вставить</value>
+  </data>
+  <data name="DrawingClear" xml:space="preserve">
+    <value>Очистить</value>
+  </data>
+  <data name="DrawingColor" xml:space="preserve">
+    <value>Цвет линии</value>
+  </data>
+  <data name="DrawingStrokeWidth" xml:space="preserve">
+    <value>Толщина линии</value>
+  </data>
 
 </root>

@@ -723,5 +723,20 @@
   <data name="DocPropNo" xml:space="preserve">
     <value>否</value>
   </data>
+  <data name="DrawingTitle" xml:space="preserve">
+    <value>绘图</value>
+  </data>
+  <data name="DrawingInsert" xml:space="preserve">
+    <value>插入</value>
+  </data>
+  <data name="DrawingClear" xml:space="preserve">
+    <value>清除</value>
+  </data>
+  <data name="DrawingColor" xml:space="preserve">
+    <value>笔触颜色</value>
+  </data>
+  <data name="DrawingStrokeWidth" xml:space="preserve">
+    <value>笔触宽度</value>
+  </data>
 
 </root>

@@ -723,5 +723,20 @@
   <data name="DocPropNo" xml:space="preserve">
     <value>Nein</value>
   </data>
+  <data name="DrawingTitle" xml:space="preserve">
+    <value>Zeichnen</value>
+  </data>
+  <data name="DrawingInsert" xml:space="preserve">
+    <value>Einfügen</value>
+  </data>
+  <data name="DrawingClear" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="DrawingColor" xml:space="preserve">
+    <value>Strichfarbe</value>
+  </data>
+  <data name="DrawingStrokeWidth" xml:space="preserve">
+    <value>Strichbreite</value>
+  </data>
 
 </root>

@@ -723,5 +723,20 @@
   <data name="DocPropNo" xml:space="preserve">
     <value>نہیں</value>
   </data>
+  <data name="DrawingTitle" xml:space="preserve">
+    <value>ڈرائنگ</value>
+  </data>
+  <data name="DrawingInsert" xml:space="preserve">
+    <value>داخل کریں</value>
+  </data>
+  <data name="DrawingClear" xml:space="preserve">
+    <value>صاف کریں</value>
+  </data>
+  <data name="DrawingColor" xml:space="preserve">
+    <value>لکیر کا رنگ</value>
+  </data>
+  <data name="DrawingStrokeWidth" xml:space="preserve">
+    <value>لکیر کی چوڑائی</value>
+  </data>
 
 </root>

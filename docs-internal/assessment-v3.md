@@ -147,13 +147,13 @@
 |---|---|---|
 | Insert picture | ✅ | `FileOpenPicker` (JPG/JPEG/PNG/BMP) → `InsertImage` |
 | Insert date/time | ✅ | `ListView` dialog with 12 format strings; inserts selected format |
-| Paint drawing (SmrtDoodle) | ⚠️ | Launches external `SmrtDoodle.exe`; `Win32Exception` catch with user-friendly dialog; works if SmrtDoodle installed |
+| Paint drawing | ✅ | Tries external `SmrtDoodle.exe` first; falls back to built-in Canvas-based drawing dialog with color picker, stroke width slider, clear button; renders via `RenderTargetBitmap` → PNG → inserts image |
 | Insert object (raster images) | ✅ | PNG/JPG/BMP/GIF/TIF/ICO via `InsertImage`; SVG falls back to text placeholder |
 | Insert table | ✅ | `NumberBox` dialog → RTF table generation with `\trowd`, `\cellx`, border control words |
 | Insert hyperlink | ✅ | URL + display text dialog → `ITextRange.Link` with blue underlined formatting |
 | Insert symbol | ✅ | `GridView` dialog with 60 common symbols (copyright, currency, arrows, Greek, math, fractions); inserts at cursor |
 
-**Section: 93% (6/7 fully working, 1 external dependency)**
+**Section: 100% (7/7)**
 
 ---
 
@@ -415,7 +415,7 @@
 | Ribbon — Clipboard | **100%** |
 | Ribbon — Font | **100%** |
 | Ribbon — Paragraph | **100%** |
-| Ribbon — Insert | 93% |
+| Ribbon — Insert | **100%** |
 | Ribbon — Editing | **100%** |
 | File backstage view | **100%** |
 | Status bar | **100%** |
@@ -425,7 +425,7 @@
 | Architecture / code quality | **100%** |
 | **Unit test coverage (ViewModel + helpers + services)** | **~98%** |
 | **Unit test coverage (overall app, including UI code-behind)** | **~35%** |
-| **OVERALL PROJECT** | **~97%** |
+| **OVERALL PROJECT** | **~99%** |
 
 ---
 
