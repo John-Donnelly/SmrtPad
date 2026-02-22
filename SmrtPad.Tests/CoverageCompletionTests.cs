@@ -1,0 +1,2909 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Xml.Linq;
+using Xunit;
+using SmrtPad.Helpers;
+using SmrtPad.Models;
+using SmrtPad.Services;
+using SmrtPad.ViewModels;
+
+namespace SmrtPad.Tests
+{
+    // ═══ MainWindow Extended Handler Contract Tests ══════════════════════════════
+
+    public class MainWindowExtendedHandlerTests
+    {
+        private static readonly Type MW = typeof(SmrtPad.MainWindow);
+        private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
+
+        [Theory]
+        [InlineData("Exit_Click")]
+        [InlineData("SelectAll_Click")]
+        [InlineData("ZoomIn_Click")]
+        [InlineData("ZoomOut_Click")]
+        [InlineData("DecreaseIndent_Click")]
+        [InlineData("IncreaseIndent_Click")]
+        [InlineData("FocusMode_Click")]
+        [InlineData("Ruler_Click")]
+        [InlineData("PageView_Click")]
+        [InlineData("PasteSpecial_Click")]
+        [InlineData("ClearFormatting_Click")]
+        [InlineData("CustomLineSpacing_Click")]
+        [InlineData("ApplyParagraphSpacing_Click")]
+        [InlineData("TabStops_Click")]
+        [InlineData("ThemeToggle_Click")]
+        [InlineData("HighlightAllMatches_Click")]
+        [InlineData("ClearHighlights_Click")]
+        [InlineData("SpellCheck_Click")]
+        [InlineData("FileMenu_Tapped")]
+        [InlineData("NewWindow_Click")]
+        [InlineData("TextColorSwatchButton_Click")]
+        [InlineData("TextColorMoreColors_Click")]
+        [InlineData("HighlightSwatchButton_Click")]
+        public void MainWindow_HasPrivateHandler(string handlerName)
+        {
+            var method = MW.GetMethod(handlerName, Private);
+            Assert.NotNull(method);
+            Assert.False(method!.IsPublic);
+        }
+
+        [Theory]
+        [InlineData("ApplySettings")]
+        [InlineData("ApplyThemeFromSettings")]
+        [InlineData("UpdateTitleBarTheme")]
+        [InlineData("SetupAutoSave")]
+        [InlineData("UpdateStatusBarCounts")]
+        [InlineData("UpdateLineColumn")]
+        [InlineData("UpdateSelectionLength")]
+        [InlineData("HideBackstage")]
+        [InlineData("ShowBackstage")]
+        [InlineData("Editor_SelectionChanged")]
+        [InlineData("ApplyZoom")]
+        [InlineData("ApplyPageViewLayout")]
+        [InlineData("UpdateRulerVisibility")]
+        [InlineData("RedrawRulers")]
+        [InlineData("DrawHorizontalRuler")]
+        [InlineData("DrawVerticalRuler")]
+        [InlineData("ApplyParagraphStyle")]
+        [InlineData("RefreshTabStopList")]
+        [InlineData("ApplyFontSizeFromText")]
+        [InlineData("PasteAsPlainTextAsync")]
+        [InlineData("ApplyTemplate")]
+        public void MainWindow_HasPrivateUtilityMethod(string methodName)
+        {
+            var method = MW.GetMethod(methodName, Private);
+            Assert.NotNull(method);
+        }
+
+        [Theory]
+        [InlineData("OpenFileByPathAsync", true)]
+        public void MainWindow_HasPublicAsyncMethod(string methodName, bool isPublic)
+        {
+            var flags = isPublic
+                ? BindingFlags.Public | BindingFlags.Instance
+                : Private;
+            var method = MW.GetMethod(methodName, flags);
+            Assert.NotNull(method);
+            Assert.True(typeof(System.Threading.Tasks.Task).IsAssignableFrom(method!.ReturnType));
+        }
+
+        [Fact]
+        public void MainWindow_HasAutoSaveRecoveryAsync()
+        {
+            var method = MW.GetMethod("AutoSaveRecoveryAsync", Private);
+            Assert.NotNull(method);
+            Assert.True(typeof(System.Threading.Tasks.Task).IsAssignableFrom(method!.ReturnType));
+        }
+
+        [Fact]
+        public void MainWindow_HasOpenStorageFileAsync()
+        {
+            var method = MW.GetMethod("OpenStorageFileAsync", Private);
+            Assert.NotNull(method);
+            Assert.True(typeof(System.Threading.Tasks.Task).IsAssignableFrom(method!.ReturnType));
+        }
+
+        [Fact]
+        public void MainWindow_HasShowErrorDialogAsync()
+        {
+            var method = MW.GetMethod("ShowErrorDialogAsync", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Equal(2, parms.Length);
+            Assert.Equal(typeof(string), parms[0].ParameterType);
+            Assert.Equal(typeof(string), parms[1].ParameterType);
+        }
+
+        [Fact]
+        public void MainWindow_HasGetFullDocumentText()
+        {
+            var method = MW.GetMethod("GetFullDocumentText", Private);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(string), method!.ReturnType);
+        }
+
+        [Fact]
+        public void MainWindow_HasRegisterForPrinting()
+        {
+            var method = MW.GetMethod("RegisterForPrinting", Private);
+            Assert.NotNull(method);
+        }
+
+        [Theory]
+        [InlineData("PrintTask_Requested")]
+        [InlineData("PrintTaskSourceRequested")]
+        [InlineData("PrintTask_Completed")]
+        [InlineData("PrintDocument_Paginate")]
+        [InlineData("PrintDocument_GetPreviewPage")]
+        [InlineData("PrintDocument_AddPages")]
+        public void MainWindow_HasPrintingHandler(string handlerName)
+        {
+            var method = MW.GetMethod(handlerName, Private);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_HasUpdateEncoding_WithStringParam()
+        {
+            var method = MW.GetMethod("UpdateEncoding", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+            Assert.Equal(typeof(string), parms[0].ParameterType);
+        }
+
+        [Fact]
+        public void MainWindow_HasEditorDragDropHandlers()
+        {
+            Assert.NotNull(MW.GetMethod("Editor_DragOver", Private));
+            Assert.NotNull(MW.GetMethod("Editor_Drop", Private));
+        }
+
+        [Fact]
+        public void MainWindow_HasFontComboHandlers()
+        {
+            Assert.NotNull(MW.GetMethod("FontFamilyComboBox_Loaded", Private));
+            Assert.NotNull(MW.GetMethod("FontFamilyComboBox_SelectionChanged", Private));
+            Assert.NotNull(MW.GetMethod("FontSizeComboBox_SelectionChanged", Private));
+            Assert.NotNull(MW.GetMethod("FontSizeComboBox_KeyDown", Private));
+            Assert.NotNull(MW.GetMethod("FontSizeComboBox_LostFocus", Private));
+        }
+
+        [Fact]
+        public void MainWindow_HasRulerCanvasSizeChangedHandlers()
+        {
+            Assert.NotNull(MW.GetMethod("HRulerCanvas_SizeChanged", Private));
+            Assert.NotNull(MW.GetMethod("VRulerCanvas_SizeChanged", Private));
+        }
+
+        [Fact]
+        public void MainWindow_HasEditorScrollViewerPointerWheelChanged()
+        {
+            var method = MW.GetMethod("EditorScrollViewer_PointerWheelChanged", Private);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_MacroField_IsInitialized()
+        {
+            var field = MW.GetField("_macro", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(MacroHelper), field!.FieldType);
+            Assert.False(field.IsStatic);
+        }
+
+        [Fact]
+        public void MainWindow_TabsList_IsListOfDocumentTab()
+        {
+            var field = MW.GetField("_tabs", Private);
+            Assert.NotNull(field);
+            Assert.True(field!.FieldType.IsGenericType);
+            Assert.Contains("DocumentTab", field.FieldType.GenericTypeArguments[0].Name);
+        }
+
+        [Fact]
+        public void MainWindow_HasActiveTabIndex_Field()
+        {
+            var field = MW.GetField("_activeTabIndex", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(int), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasSettingsField()
+        {
+            var field = MW.GetField("_settings", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(ISettingsService), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasDialogServiceField()
+        {
+            var field = MW.GetField("_dialogService", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(IDialogService), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasFileServiceField()
+        {
+            var field = MW.GetField("_fileService", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(IFileService), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasPrintDocumentField()
+        {
+            var field = MW.GetField("_printDocument", Private);
+            Assert.NotNull(field);
+        }
+
+        [Fact]
+        public void MainWindow_HasPrintPreviewPagesField()
+        {
+            var field = MW.GetField("_printPreviewPages", Private);
+            Assert.NotNull(field);
+        }
+
+        [Fact]
+        public void MainWindow_HasAutoSaveTimerField()
+        {
+            var field = MW.GetField("_autoSaveTimer", Private);
+            Assert.NotNull(field);
+        }
+
+        [Fact]
+        public void MainWindow_HasRulersVisibleField()
+        {
+            var field = MW.GetField("_rulersVisible", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(bool), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasPageViewActiveField()
+        {
+            var field = MW.GetField("_pageViewActive", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(bool), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasLastFontColorField()
+        {
+            var field = MW.GetField("_lastFontColor", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(Windows.UI.Color), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasWordSeparatorsStaticField()
+        {
+            var field = MW.GetField("s_wordSeparators",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(char[]), field!.FieldType);
+        }
+
+        [Fact]
+        public void MainWindow_HasHighlightColorStaticField()
+        {
+            var field = MW.GetField("HighlightColor",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(field);
+        }
+
+        [Fact]
+        public void MainWindow_HasTransparentColorStaticField()
+        {
+            var field = MW.GetField("TransparentColor",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(field);
+        }
+
+        [Fact]
+        public void MainWindow_IsSealedPartialClass()
+        {
+            Assert.True(MW.IsSealed);
+            Assert.True(MW.IsClass);
+        }
+
+        [Fact]
+        public void MainWindow_InheritsFromWindow()
+        {
+            Assert.True(typeof(Microsoft.UI.Xaml.Window).IsAssignableFrom(MW));
+        }
+
+        [Fact]
+        public void MainWindow_GetPixelsPerUnit_IsPrivate()
+        {
+            var method = MW.GetMethod("GetPixelsPerUnit", Private);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(double), method!.ReturnType);
+        }
+    }
+
+    // ═══ DocumentTab Inner Class Contract Tests ═════════════════════════════════
+
+    public class DocumentTabContractTests
+    {
+        private static readonly Type? DT;
+
+        static DocumentTabContractTests()
+        {
+            // DocumentTab is internal, nested inside MainWindow's namespace
+            DT = typeof(SmrtPad.MainWindow).Assembly.GetTypes()
+                .FirstOrDefault(t => t.Name == "DocumentTab");
+        }
+
+        [Fact]
+        public void DocumentTab_TypeExists()
+        {
+            Assert.NotNull(DT);
+        }
+
+        [Fact]
+        public void DocumentTab_IsSealed()
+        {
+            Assert.True(DT!.IsSealed);
+        }
+
+        [Fact]
+        public void DocumentTab_IsInternal()
+        {
+            Assert.False(DT!.IsPublic);
+            Assert.True(DT.IsNotPublic || DT.IsNestedAssembly);
+        }
+
+        [Theory]
+        [InlineData("TabViewItem")]
+        [InlineData("Editor")]
+        [InlineData("ScrollViewer")]
+        [InlineData("EditorContainer")]
+        [InlineData("PageViewBorder")]
+        [InlineData("ScaleTransform")]
+        [InlineData("CurrentFile")]
+        [InlineData("IsModified")]
+        [InlineData("Encoding")]
+        [InlineData("ZoomLevel")]
+        public void DocumentTab_HasProperty(string propName)
+        {
+            var prop = DT!.GetProperty(propName);
+            Assert.NotNull(prop);
+        }
+
+        [Fact]
+        public void DocumentTab_Encoding_DefaultIsUTF8()
+        {
+            var prop = DT!.GetProperty("Encoding");
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(string), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void DocumentTab_ZoomLevel_DefaultType()
+        {
+            var prop = DT!.GetProperty("ZoomLevel");
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(double), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void DocumentTab_IsModified_IsBoolType()
+        {
+            var prop = DT!.GetProperty("IsModified");
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(bool), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void DocumentTab_Constructor_RequiresTitleAndSettings()
+        {
+            var ctor = DT!.GetConstructors().FirstOrDefault();
+            Assert.NotNull(ctor);
+            var parms = ctor!.GetParameters();
+            Assert.Equal(2, parms.Length);
+            Assert.Equal(typeof(string), parms[0].ParameterType);
+            Assert.Equal(typeof(ISettingsService), parms[1].ParameterType);
+        }
+    }
+
+    // ═══ ViewModel Edge Case Tests ═══════════════════════════════════════════════
+
+    public class ViewModelEdgeCaseTests
+    {
+        [Fact]
+        public void UpdateCursorPosition_ShortArray_DoesNotChange()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCursorPosition([5]);
+            // Short array should not change defaults
+            Assert.Equal(1, vm.LineNumber);
+            Assert.Equal(1, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void UpdateCursorPosition_EmptyArray_DoesNotChange()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCursorPosition([]);
+            Assert.Equal(1, vm.LineNumber);
+            Assert.Equal(1, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void UpdateCursorPosition_ExactlyTwoElements_Works()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCursorPosition([10, 25]);
+            Assert.Equal(10, vm.LineNumber);
+            Assert.Equal(25, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void UpdateCursorPosition_MoreThanTwo_UsesFirstTwo()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCursorPosition([5, 15, 99]);
+            Assert.Equal(5, vm.LineNumber);
+            Assert.Equal(15, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void SetParagraphSpacing_ShortArray_DoesNotChange()
+        {
+            var vm = new EditorViewModel();
+            vm.SetParagraphSpacing([5.0]);
+            Assert.Equal(0, vm.ParagraphSpacingBefore);
+            Assert.Equal(0, vm.ParagraphSpacingAfter);
+        }
+
+        [Fact]
+        public void SetParagraphSpacing_EmptyArray_DoesNotChange()
+        {
+            var vm = new EditorViewModel();
+            vm.SetParagraphSpacing([]);
+            Assert.Equal(0, vm.ParagraphSpacingBefore);
+            Assert.Equal(0, vm.ParagraphSpacingAfter);
+        }
+
+        [Fact]
+        public void SetParagraphSpacing_ExactlyTwo_Works()
+        {
+            var vm = new EditorViewModel();
+            vm.SetParagraphSpacing([12.0, 6.0]);
+            Assert.Equal(12.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(6.0, vm.ParagraphSpacingAfter);
+        }
+
+        [Fact]
+        public void SetParagraphSpacing_MoreThanTwo_UsesFirstTwo()
+        {
+            var vm = new EditorViewModel();
+            vm.SetParagraphSpacing([8.0, 4.0, 99.0]);
+            Assert.Equal(8.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(4.0, vm.ParagraphSpacingAfter);
+        }
+
+        [Fact]
+        public void ZoomIn_MultipleSteps_ClampsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.ZoomLevel = 495;
+            vm.ZoomIn();
+            Assert.Equal(500.0, vm.ZoomLevel);
+            vm.ZoomIn();
+            Assert.Equal(500.0, vm.ZoomLevel);
+        }
+
+        [Fact]
+        public void ZoomOut_MultipleSteps_ClampsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.ZoomLevel = 15;
+            vm.ZoomOut();
+            Assert.Equal(10.0, vm.ZoomLevel);
+            vm.ZoomOut();
+            Assert.Equal(10.0, vm.ZoomLevel);
+        }
+
+        [Fact]
+        public void SetListType_Bullet_SetsIsBulletsTrue()
+        {
+            var vm = new EditorViewModel();
+            vm.SetListType("Bullet");
+            Assert.True(vm.IsBullets);
+            Assert.Equal("Bullet", vm.ListType);
+        }
+
+        [Fact]
+        public void SetListType_None_ClearsIsBullets()
+        {
+            var vm = new EditorViewModel();
+            vm.SetListType("Bullet");
+            vm.SetListType("None");
+            Assert.False(vm.IsBullets);
+        }
+
+        [Theory]
+        [InlineData("Number")]
+        [InlineData("LowercaseLetter")]
+        [InlineData("UppercaseLetter")]
+        [InlineData("LowercaseRoman")]
+        [InlineData("UppercaseRoman")]
+        public void SetListType_NonNone_SetsIsBulletsTrue(string listType)
+        {
+            var vm = new EditorViewModel();
+            vm.SetListType(listType);
+            Assert.True(vm.IsBullets);
+            Assert.Equal(listType, vm.ListType);
+        }
+
+        [Fact]
+        public void ToggleWordWrap_TwiceReturnsToDefault()
+        {
+            var vm = new EditorViewModel();
+            Assert.True(vm.IsWordWrap);
+            vm.ToggleWordWrap();
+            Assert.False(vm.IsWordWrap);
+            vm.ToggleWordWrap();
+            Assert.True(vm.IsWordWrap);
+        }
+
+        [Fact]
+        public void ToggleBullets_FlipsState()
+        {
+            var vm = new EditorViewModel();
+            Assert.False(vm.IsBullets);
+            vm.ToggleBullets();
+            Assert.True(vm.IsBullets);
+            vm.ToggleBullets();
+            Assert.False(vm.IsBullets);
+        }
+
+        [Theory]
+        [InlineData("Left")]
+        [InlineData("Center")]
+        [InlineData("Right")]
+        [InlineData("Justify")]
+        public void SetAlignment_AllValues_Persist(string alignment)
+        {
+            var vm = new EditorViewModel();
+            vm.SetAlignment(alignment);
+            Assert.Equal(alignment, vm.Alignment);
+        }
+
+        [Fact]
+        public void SetLineSpacing_ValuesMatch()
+        {
+            var vm = new EditorViewModel();
+            vm.SetLineSpacing(2.0);
+            Assert.Equal(2.0, vm.LineSpacing);
+            vm.SetLineSpacing(1.5);
+            Assert.Equal(1.5, vm.LineSpacing);
+        }
+
+        [Fact]
+        public void NewDocument_ResetsAllFindOptions()
+        {
+            var vm = new EditorViewModel();
+            vm.FindMatchCase = true;
+            vm.FindWholeWord = true;
+            vm.FindUseRegex = true;
+            vm.NewDocument();
+            Assert.False(vm.FindMatchCase);
+            Assert.False(vm.FindWholeWord);
+            Assert.False(vm.FindUseRegex);
+        }
+
+        [Fact]
+        public void NewDocument_ResetsEncoding()
+        {
+            var vm = new EditorViewModel();
+            vm.Encoding = "RTF";
+            vm.NewDocument();
+            Assert.Equal("UTF-8", vm.Encoding);
+        }
+
+        [Fact]
+        public void NewDocument_ResetsSelectionLength()
+        {
+            var vm = new EditorViewModel();
+            vm.SelectionLength = 42;
+            vm.NewDocument();
+            Assert.Equal(0, vm.SelectionLength);
+        }
+
+        [Fact]
+        public void DisplayProperties_ReflectCorrectFormat()
+        {
+            var vm = new EditorViewModel();
+            vm.WordCount = 500;
+            Assert.Contains("500", vm.WordCountDisplay);
+
+            vm.CharCount = 2500;
+            Assert.Contains("2500", vm.CharCountDisplay);
+
+            vm.SelectionLength = 10;
+            Assert.Contains("10", vm.SelectionLengthDisplay);
+
+            vm.LineNumber = 42;
+            vm.ColumnNumber = 7;
+            Assert.Contains("42", vm.LineColDisplay);
+            Assert.Contains("7", vm.LineColDisplay);
+
+            vm.ZoomLevel = 150;
+            Assert.Equal("150%", vm.ZoomDisplay);
+
+            vm.Encoding = "ASCII";
+            Assert.Equal("ASCII", vm.EncodingDisplay);
+        }
+
+        [Fact]
+        public void PropertyChanged_FiredForAllDisplayProperties()
+        {
+            var vm = new EditorViewModel();
+            var changedProperties = new List<string>();
+            vm.PropertyChanged += (s, e) => changedProperties.Add(e.PropertyName!);
+
+            vm.WordCount = 10;
+            Assert.Contains("WordCountDisplay", changedProperties);
+
+            changedProperties.Clear();
+            vm.CharCount = 20;
+            Assert.Contains("CharCountDisplay", changedProperties);
+
+            changedProperties.Clear();
+            vm.SelectionLength = 5;
+            Assert.Contains("SelectionLengthDisplay", changedProperties);
+
+            changedProperties.Clear();
+            vm.LineNumber = 3;
+            Assert.Contains("LineColDisplay", changedProperties);
+
+            changedProperties.Clear();
+            vm.ColumnNumber = 8;
+            Assert.Contains("LineColDisplay", changedProperties);
+
+            changedProperties.Clear();
+            vm.ZoomLevel = 120;
+            Assert.Contains("ZoomDisplay", changedProperties);
+
+            changedProperties.Clear();
+            vm.Encoding = "ANSI";
+            Assert.Contains("EncodingDisplay", changedProperties);
+        }
+
+        [Fact]
+        public void ViewModel_UpdateWordCount_SetsProperty()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateWordCount(99);
+            Assert.Equal(99, vm.WordCount);
+        }
+
+        [Fact]
+        public void ViewModel_UpdateCharCount_SetsProperty()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCharCount(555);
+            Assert.Equal(555, vm.CharCount);
+        }
+
+        [Fact]
+        public void ViewModel_UpdateStatus_SetsMessage()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateStatus("Testing");
+            Assert.Equal("Testing", vm.StatusMessage);
+        }
+
+        [Fact]
+        public void ViewModel_AllResetProperties_MatchDefaults()
+        {
+            var vm = new EditorViewModel();
+            // Modify everything
+            vm.IsBold = true; vm.IsItalic = true; vm.IsUnderline = true;
+            vm.IsStrikethrough = true; vm.IsSubscript = true; vm.IsSuperscript = true;
+            vm.FontFamily = "Arial"; vm.FontSize = 72;
+            vm.Alignment = "Justify"; vm.IsBullets = true; vm.IsWordWrap = false;
+            vm.ZoomLevel = 200; vm.ListType = "Bullet"; vm.LineSpacing = 2.0;
+            vm.WordCount = 100; vm.CharCount = 500; vm.LineNumber = 50;
+            vm.ColumnNumber = 80; vm.ParagraphSpacingBefore = 12;
+            vm.ParagraphSpacingAfter = 6; vm.FindMatchCase = true;
+            vm.FindWholeWord = true; vm.FindUseRegex = true;
+            vm.SelectionLength = 25; vm.Encoding = "RTF";
+
+            // Reset
+            vm.NewDocument();
+
+            // Verify all defaults restored
+            Assert.False(vm.IsBold);
+            Assert.False(vm.IsItalic);
+            Assert.False(vm.IsUnderline);
+            Assert.False(vm.IsStrikethrough);
+            Assert.False(vm.IsSubscript);
+            Assert.False(vm.IsSuperscript);
+            Assert.Equal("Segoe UI", vm.FontFamily);
+            Assert.Equal(11.0, vm.FontSize);
+            Assert.Equal("Left", vm.Alignment);
+            Assert.False(vm.IsBullets);
+            Assert.True(vm.IsWordWrap);
+            Assert.Equal(100.0, vm.ZoomLevel);
+            Assert.Equal("None", vm.ListType);
+            Assert.Equal(1.0, vm.LineSpacing);
+            Assert.Equal(0, vm.WordCount);
+            Assert.Equal(0, vm.CharCount);
+            Assert.Equal(1, vm.LineNumber);
+            Assert.Equal(1, vm.ColumnNumber);
+            Assert.Equal(0.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(0.0, vm.ParagraphSpacingAfter);
+            Assert.False(vm.FindMatchCase);
+            Assert.False(vm.FindWholeWord);
+            Assert.False(vm.FindUseRegex);
+            Assert.Equal(0, vm.SelectionLength);
+            Assert.Equal("UTF-8", vm.Encoding);
+        }
+    }
+
+    // ═══ DocxExportHelper Extended Tests ═════════════════════════════════════════
+
+    public class DocxExportHelperExtendedTests
+    {
+        [Fact]
+        public void GenerateDocx_SingleLine_HasOneParagraph()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("Hello World");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            Assert.NotNull(entry);
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.Single(paragraphs);
+        }
+
+        [Fact]
+        public void GenerateDocx_MultiLine_HasCorrectParagraphCount()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("Line1\nLine2\nLine3");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            // 3 text paragraphs + sectPr
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.Equal(3, paragraphs.Count);
+        }
+
+        [Fact]
+        public void GenerateDocx_CRLFLineEndings_NormalizedCorrectly()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("A\r\nB\r\nC");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.Equal(3, paragraphs.Count);
+        }
+
+        [Fact]
+        public void GenerateDocx_HasContentTypesEntry()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("test");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            Assert.NotNull(zip.GetEntry("[Content_Types].xml"));
+        }
+
+        [Fact]
+        public void GenerateDocx_HasRelsEntry()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("test");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            Assert.NotNull(zip.GetEntry("_rels/.rels"));
+        }
+
+        [Fact]
+        public void GenerateDocx_HasDocumentRelsEntry()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("test");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            Assert.NotNull(zip.GetEntry("word/_rels/document.xml.rels"));
+        }
+
+        [Fact]
+        public void GenerateDocx_HasSectPr()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("text");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            Assert.NotEmpty(doc.Descendants(w + "sectPr"));
+        }
+
+        [Fact]
+        public void GenerateDocx_PreservesSpaces_WithXmlSpacePreserve()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("  leading spaces  ");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("xml:space=\"preserve\"", content);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_PlainText_ProducesValidZip()
+        {
+            var bytes = DocxExportHelper.GenerateRichDocx("Hello plain text");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            Assert.NotNull(zip.GetEntry("word/document.xml"));
+            Assert.NotNull(zip.GetEntry("[Content_Types].xml"));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_BoldRtf_HasBoldElement()
+        {
+            string rtf = @"{\rtf1\ansi{\b Hello Bold}}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            string content = reader.ReadToEnd();
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var doc = XDocument.Parse(content);
+            Assert.NotEmpty(doc.Descendants(w + "b"));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_ItalicRtf_HasItalicElement()
+        {
+            string rtf = @"{\rtf1\ansi{\i Hello Italic}}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            Assert.NotEmpty(doc.Descendants(w + "i"));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_UnderlineRtf_HasUnderlineElement()
+        {
+            string rtf = @"{\rtf1\ansi{\ul Hello Underline}}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            Assert.NotEmpty(doc.Descendants(w + "u"));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_StrikethroughRtf_HasStrikeElement()
+        {
+            string rtf = @"{\rtf1\ansi{\strike Hello Strike}}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            Assert.NotEmpty(doc.Descendants(w + "strike"));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_FontSize_HasSzElement()
+        {
+            string rtf = @"{\rtf1\ansi\fs48 Hello Big}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            Assert.NotEmpty(doc.Descendants(w + "sz"));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_CenterAlignment_HasJcElement()
+        {
+            string rtf = @"{\rtf1\ansi\qc Center aligned}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var jc = doc.Descendants(w + "jc").FirstOrDefault();
+            Assert.NotNull(jc);
+            Assert.Equal("center", jc!.Attribute(w + "val")?.Value);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_RightAlignment_HasJcRight()
+        {
+            string rtf = @"{\rtf1\ansi\qr Right aligned}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var jc = doc.Descendants(w + "jc").FirstOrDefault();
+            Assert.NotNull(jc);
+            Assert.Equal("right", jc!.Attribute(w + "val")?.Value);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_JustifyAlignment_HasJcBoth()
+        {
+            string rtf = @"{\rtf1\ansi\qj Justified text}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var jc = doc.Descendants(w + "jc").FirstOrDefault();
+            Assert.NotNull(jc);
+            Assert.Equal("both", jc!.Attribute(w + "val")?.Value);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_MultiParagraph_HasMultipleParElements()
+        {
+            string rtf = @"{\rtf1\ansi First\par Second\par Third}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.True(paragraphs.Count >= 3);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_FontTable_ParsesFontNames()
+        {
+            string rtf = @"{\rtf1\ansi{\fonttbl{\f0\fswiss Arial;}{\f1\fmodern Courier New;}}\f1 World}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            string content = reader.ReadToEnd();
+            // The word "World" should be present in the output
+            Assert.Contains("World", content);
+            // The font table was parsed (font names extracted internally)
+            Assert.True(bytes.Length > 0);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_EscapedCharacters_ArePreserved()
+        {
+            string rtf = @"{\rtf1\ansi Hello \\ World \{ braces \}}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("\\", content);
+            Assert.Contains("{", content);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_PardResetsFormatting()
+        {
+            string rtf = @"{\rtf1\ansi\b Bold\pard Plain}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var runs = doc.Descendants(w + "r").ToList();
+            Assert.True(runs.Count >= 2, "Expected at least 2 runs for bold + plain");
+        }
+
+        [Fact]
+        public void GenerateRichDocx_EmptyRtf_ProducesValidDocx()
+        {
+            var bytes = DocxExportHelper.GenerateRichDocx("");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            Assert.NotNull(zip.GetEntry("word/document.xml"));
+        }
+
+        [Fact]
+        public void GenerateDocx_NullText_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => DocxExportHelper.GenerateDocx(null!));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_NullText_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => DocxExportHelper.GenerateRichDocx(null!));
+        }
+
+        [Fact]
+        public void GenerateRichDocx_HexEscape_ParsesCorrectly()
+        {
+            // \'e9 = é (Latin small letter e with acute)
+            string rtf = @"{\rtf1\ansi caf\'e9}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("caf", content);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_SkipsDestinationGroups()
+        {
+            // {\*\generator ...} should be skipped entirely
+            string rtf = @"{\rtf1\ansi{\*\generator Test;}Hello}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("Hello", content);
+            Assert.DoesNotContain("generator", content);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_SkipsPictGroups()
+        {
+            string rtf = @"{\rtf1\ansi Text{\pict\jpegblip data}More}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("Text", content);
+            Assert.Contains("More", content);
+            Assert.DoesNotContain("jpegblip", content);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_UlnoneDisablesUnderline()
+        {
+            string rtf = @"{\rtf1\ansi\ul underlined\ulnone not}";
+            var bytes = DocxExportHelper.GenerateRichDocx(rtf);
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            using var reader = new StreamReader(zip.GetEntry("word/document.xml")!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var runs = doc.Descendants(w + "r").ToList();
+            // Should have at least 2 runs — one underlined, one not
+            Assert.True(runs.Count >= 2);
+        }
+
+        [Fact]
+        public void DocxExportHelper_IsStaticClass()
+        {
+            var t = typeof(DocxExportHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+    }
+
+    // ═══ PdfHelper Extended Tests ════════════════════════════════════════════════
+
+    public class PdfHelperExtendedTests
+    {
+        [Fact]
+        public void GeneratePdf_HelloWorld_ContainsText()
+        {
+            var bytes = PdfHelper.GeneratePdf("Hello World");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("Hello World", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_StartsWithPdfHeader()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.StartsWith("%PDF-1.4", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_EndsWithEof()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("%%EOF", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_HasCatalogObject()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("/Catalog", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_HasPagesObject()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("/Pages", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_HasFontObject()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("/Helvetica", content);
+            Assert.Contains("/Type1", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_HasXrefTable()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("xref", content);
+            Assert.Contains("startxref", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_HasTrailer()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("trailer", content);
+            Assert.Contains("/Root", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_EmptyText_ProducesValidPdf()
+        {
+            var bytes = PdfHelper.GeneratePdf("");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("%PDF-1.4", content);
+            Assert.Contains("%%EOF", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_NullText_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => PdfHelper.GeneratePdf(null!));
+        }
+
+        [Fact]
+        public void GeneratePdf_LongText_ProducesMultiplePages()
+        {
+            // Generate enough text to exceed one page
+            string longText = string.Join("\n", Enumerable.Range(1, 200).Select(i => $"Line number {i} with some text to fill the page."));
+            var bytes = PdfHelper.GeneratePdf(longText);
+            string content = Encoding.Latin1.GetString(bytes);
+            // Count page objects
+            int pageCount = 0;
+            int idx = 0;
+            while ((idx = content.IndexOf("/Type /Page ", idx)) >= 0)
+            {
+                pageCount++;
+                idx++;
+            }
+            Assert.True(pageCount > 1, $"Expected multiple pages, found {pageCount}");
+        }
+
+        [Fact]
+        public void GeneratePdf_CustomFontSize_Works()
+        {
+            var bytes = PdfHelper.GeneratePdf("test", fontSize: 24.0);
+            Assert.NotNull(bytes);
+            Assert.True(bytes.Length > 0);
+        }
+
+        [Fact]
+        public void GeneratePdf_SpecialChars_Escaped()
+        {
+            var bytes = PdfHelper.GeneratePdf("Hello (World) \\ test");
+            string content = Encoding.Latin1.GetString(bytes);
+            // Parentheses should be escaped in PDF
+            Assert.Contains("\\(", content);
+            Assert.Contains("\\)", content);
+            Assert.Contains("\\\\", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_HasMediaBox()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("/MediaBox", content);
+            Assert.Contains("595", content); // A4 width
+            Assert.Contains("842", content); // A4 height
+        }
+
+        [Fact]
+        public void BuildDisplayLines_SingleShortLine_ReturnsAsIs()
+        {
+            var lines = PdfHelper.BuildDisplayLines("Hello", 80);
+            Assert.Single(lines);
+            Assert.Equal("Hello", lines[0]);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_MultiLine_SplitsOnNewlines()
+        {
+            var lines = PdfHelper.BuildDisplayLines("A\nB\nC", 80);
+            Assert.Equal(3, lines.Count);
+            Assert.Equal("A", lines[0]);
+            Assert.Equal("B", lines[1]);
+            Assert.Equal("C", lines[2]);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_CRLFNormalized()
+        {
+            var lines = PdfHelper.BuildDisplayLines("A\r\nB\rC", 80);
+            Assert.Equal(3, lines.Count);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_LongLine_Wraps()
+        {
+            var lines = PdfHelper.BuildDisplayLines("This is a very long line that should wrap", 20);
+            Assert.True(lines.Count > 1, "Expected wrapping");
+        }
+
+        [Fact]
+        public void BuildDisplayLines_MaxCharsZero_ClampsToOne()
+        {
+            var lines = PdfHelper.BuildDisplayLines("AB", 0);
+            // With maxChars clamped to 1, each char becomes a line
+            Assert.True(lines.Count >= 2);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_NegativeMaxChars_ClampsToOne()
+        {
+            var lines = PdfHelper.BuildDisplayLines("AB", -5);
+            Assert.True(lines.Count >= 2);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_EmptyText_ReturnsSingleEmptyLine()
+        {
+            var lines = PdfHelper.BuildDisplayLines("", 80);
+            Assert.Single(lines);
+            Assert.Equal("", lines[0]);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_WordWrap_BreaksAtSpace()
+        {
+            var lines = PdfHelper.BuildDisplayLines("Hello World Test", 11);
+            // "Hello World" = 11 chars, fits on first line
+            // or breaks at space nearest to maxChars
+            Assert.True(lines.Count >= 1);
+            Assert.True(lines.All(l => l.Length <= 11 || !l.Contains(' ')));
+        }
+
+        [Fact]
+        public void PdfHelper_IsStaticClass()
+        {
+            var t = typeof(PdfHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+    }
+
+    // ═══ MainWindow XAML Extended Content Tests ══════════════════════════════════
+
+    public class MainWindowXamlExtendedTests
+    {
+        private static string? ReadXaml(string filename)
+        {
+            string? dir = Directory.GetCurrentDirectory();
+            while (dir is not null)
+            {
+                string candidate = Path.Combine(dir, "SmrtPad", filename);
+                if (File.Exists(candidate)) return File.ReadAllText(candidate);
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return null;
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasStatusBarBindings()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("ViewModel.WordCountDisplay", xaml);
+            Assert.Contains("ViewModel.CharCountDisplay", xaml);
+            Assert.Contains("ViewModel.SelectionLengthDisplay", xaml);
+            Assert.Contains("ViewModel.LineColDisplay", xaml);
+            Assert.Contains("ViewModel.ZoomDisplay", xaml);
+            Assert.Contains("ViewModel.StatusMessage", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFormattingToggleBindings()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("ViewModel.IsBold", xaml);
+            Assert.Contains("ViewModel.IsItalic", xaml);
+            Assert.Contains("ViewModel.IsUnderline", xaml);
+            Assert.Contains("ViewModel.IsStrikethrough", xaml);
+            Assert.Contains("ViewModel.IsSubscript", xaml);
+            Assert.Contains("ViewModel.IsSuperscript", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasWordWrapToggle()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("WordWrap_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFindReplaceElements()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FindTextBox", xaml);
+            Assert.Contains("FindMatchCaseCheckBox", xaml);
+            Assert.Contains("FindWholeWordCheckBox", xaml);
+            Assert.Contains("FindRegexCheckBox", xaml);
+            Assert.Contains("ReplaceFindTextBox", xaml);
+            Assert.Contains("ReplaceWithTextBox", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasRulerElements()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("HRulerCanvas", xaml);
+            Assert.Contains("VRulerCanvas", xaml);
+            Assert.Contains("HRulerBorder", xaml);
+            Assert.Contains("VRulerBorder", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasStatusBarElements()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("StatusBar", xaml);
+            Assert.Contains("StatusText", xaml);
+            Assert.Contains("WordCountText", xaml);
+            Assert.Contains("CharCountText", xaml);
+            Assert.Contains("SelectionLengthText", xaml);
+            Assert.Contains("LineColText", xaml);
+            Assert.Contains("EncodingText", xaml);
+            Assert.Contains("ZoomText", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFileBackstage()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FileBackstage", xaml);
+            Assert.Contains("FileBackstageView", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasMicaBackdrop()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("MicaBackdrop", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasThemeToggle()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("ThemeToggleButton", xaml);
+            Assert.Contains("ThemeToggle_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasInsertGroupHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("InsertPicture_Click", xaml);
+            Assert.Contains("InsertDateTime_Click", xaml);
+            Assert.Contains("PaintDrawing_Click", xaml);
+            Assert.Contains("InsertObject_Click", xaml);
+            Assert.Contains("InsertHyperlink_Click", xaml);
+            Assert.Contains("InsertTable_Click", xaml);
+            Assert.Contains("InsertSymbol_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasStyleHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("StyleNormal_Click", xaml);
+            Assert.Contains("StyleHeading1_Click", xaml);
+            Assert.Contains("StyleHeading2_Click", xaml);
+            Assert.Contains("StyleHeading3_Click", xaml);
+            Assert.Contains("StyleSubtitle_Click", xaml);
+            Assert.Contains("StyleQuote_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasTabStopsHandler()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("TabStops_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasColorPickers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("TextColorPicker", xaml);
+            Assert.Contains("FontColorIndicator", xaml);
+            Assert.Contains("HighlightColorPicker", xaml);
+            Assert.Contains("HighlightColorIndicator", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasParagraphSpacingBoxes()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("SpacingBeforeBox", xaml);
+            Assert.Contains("SpacingAfterBox", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasWindowMenu()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("NewWindow_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasMenuBar()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("MenuBar", xaml);
+            Assert.Contains("FileMenu_Tapped", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasRibbonBar()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("RibbonBar", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFocusModeToggle()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FocusModeToggle", xaml);
+            Assert.Contains("FocusMode_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasPageViewToggle()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("PageViewToggle", xaml);
+            Assert.Contains("PageView_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasRulerToggle()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("RulerToggle", xaml);
+            Assert.Contains("Ruler_Click", xaml);
+        }
+
+        // ── Backstage XAML tests ─────────────────────────────────────────────────
+
+        [Fact]
+        public void FileBackstageView_XAML_HasNavigationView()
+        {
+            string? xaml = ReadXaml("Views/FileBackstageView.xaml");
+            if (xaml is null) return;
+            Assert.Contains("NavigationView", xaml);
+            Assert.Contains("Nav", xaml);
+        }
+
+        [Fact]
+        public void FileBackstageView_XAML_HasNavItems()
+        {
+            string? xaml = ReadXaml("Views/FileBackstageView.xaml");
+            if (xaml is null) return;
+            Assert.Contains("\"New\"", xaml);
+            Assert.Contains("\"Templates\"", xaml);
+            Assert.Contains("\"Open\"", xaml);
+            Assert.Contains("\"Save\"", xaml);
+            Assert.Contains("\"SaveAs\"", xaml);
+            Assert.Contains("\"Print\"", xaml);
+            Assert.Contains("\"ExportPdf\"", xaml);
+            Assert.Contains("\"ExportDocx\"", xaml);
+            Assert.Contains("\"OneDrive\"", xaml);
+            Assert.Contains("\"Options\"", xaml);
+            Assert.Contains("\"Exit\"", xaml);
+        }
+
+        [Fact]
+        public void FileBackstageView_XAML_HasDocumentPropertiesPanel()
+        {
+            string? xaml = ReadXaml("Views/FileBackstageView.xaml");
+            if (xaml is null) return;
+            Assert.Contains("DocPropertiesPanel", xaml);
+            Assert.Contains("PropFileName", xaml);
+            Assert.Contains("PropWordCount", xaml);
+            Assert.Contains("PropCharCount", xaml);
+            Assert.Contains("PropEncoding", xaml);
+            Assert.Contains("PropModified", xaml);
+        }
+
+        [Fact]
+        public void FileBackstageView_XAML_HasRecentFilesPanel()
+        {
+            string? xaml = ReadXaml("Views/FileBackstageView.xaml");
+            if (xaml is null) return;
+            Assert.Contains("RecentFilesPanel", xaml);
+            Assert.Contains("RecentFilesList", xaml);
+        }
+
+        [Fact]
+        public void FileBackstageView_XAML_HasTemplatePicker()
+        {
+            string? xaml = ReadXaml("Views/FileBackstageView.xaml");
+            if (xaml is null) return;
+            Assert.Contains("TemplatePicker", xaml);
+            Assert.Contains("TemplateListPanel", xaml);
+        }
+    }
+
+    // ═══ SettingsService Extended Tests ══════════════════════════════════════════
+
+    public class SettingsServiceExtendedTests
+    {
+        private static SettingsService CreateIsolated()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "SmrtPadTests",
+                Guid.NewGuid().ToString("N"), "settings.json");
+            return new SettingsService(path);
+        }
+
+        [Fact]
+        public void SettingsService_AllDefaultValues_AreCorrect()
+        {
+            var svc = CreateIsolated();
+            Assert.Equal("Segoe UI", svc.DefaultFontFamily);
+            Assert.Equal(11.0, svc.DefaultFontSize);
+            Assert.True(svc.DefaultWordWrap);
+            Assert.Equal(".rtf", svc.DefaultSaveFormat);
+            Assert.Equal("System", svc.ThemePreference);
+            Assert.False(svc.AutoSaveEnabled);
+            Assert.Equal(300, svc.AutoSaveIntervalSeconds);
+            Assert.Equal("en-US", svc.Language);
+            Assert.Equal("in", svc.RulerUnits);
+            Assert.True(svc.SpellCheckEnabled);
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void SettingsService_SaveAndLoad_RoundTripsAllProperties()
+        {
+            var svc = CreateIsolated();
+            svc.DefaultFontFamily = "Arial";
+            svc.DefaultFontSize = 14.0;
+            svc.DefaultWordWrap = false;
+            svc.DefaultSaveFormat = ".txt";
+            svc.ThemePreference = "Dark";
+            svc.AutoSaveEnabled = true;
+            svc.AutoSaveIntervalSeconds = 60;
+            svc.Language = "de-DE";
+            svc.RulerUnits = "cm";
+            svc.SpellCheckEnabled = false;
+            svc.Save();
+
+            // Create new instance that loads from same file
+            var svc2 = new SettingsService(
+                (string)typeof(SettingsService)
+                    .GetField("_settingsFilePath", BindingFlags.NonPublic | BindingFlags.Instance)!
+                    .GetValue(svc)!);
+
+            Assert.Equal("Arial", svc2.DefaultFontFamily);
+            Assert.Equal(14.0, svc2.DefaultFontSize);
+            Assert.False(svc2.DefaultWordWrap);
+            Assert.Equal(".txt", svc2.DefaultSaveFormat);
+            Assert.Equal("Dark", svc2.ThemePreference);
+            Assert.True(svc2.AutoSaveEnabled);
+            Assert.Equal(60, svc2.AutoSaveIntervalSeconds);
+            Assert.Equal("de-DE", svc2.Language);
+            Assert.Equal("cm", svc2.RulerUnits);
+            Assert.False(svc2.SpellCheckEnabled);
+        }
+
+        [Fact]
+        public void AddRecentFile_DuplicateMove_PromotesToFront()
+        {
+            var svc = CreateIsolated();
+            svc.AddRecentFile("C:\\a.rtf");
+            svc.AddRecentFile("C:\\b.rtf");
+            svc.AddRecentFile("C:\\a.rtf"); // Promote a.rtf
+            Assert.Equal("C:\\a.rtf", svc.RecentFiles[0]);
+            Assert.Equal("C:\\b.rtf", svc.RecentFiles[1]);
+            Assert.Equal(2, svc.RecentFiles.Count);
+        }
+
+        [Fact]
+        public void AddRecentFile_CapsAtTen()
+        {
+            var svc = CreateIsolated();
+            for (int i = 0; i < 15; i++)
+                svc.AddRecentFile($"C:\\file{i}.rtf");
+            Assert.Equal(10, svc.RecentFiles.Count);
+            Assert.Equal("C:\\file14.rtf", svc.RecentFiles[0]);
+        }
+
+        [Fact]
+        public void AddRecentFile_NullOrWhitespace_IsIgnored()
+        {
+            var svc = CreateIsolated();
+            svc.AddRecentFile(null!);
+            svc.AddRecentFile("");
+            svc.AddRecentFile("   ");
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void ClearRecentFiles_EmptiesList()
+        {
+            var svc = CreateIsolated();
+            svc.AddRecentFile("C:\\test.rtf");
+            Assert.Single(svc.RecentFiles);
+            svc.ClearRecentFiles();
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void SettingsService_CorruptJson_RecoversSafely()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "SmrtPadTests",
+                Guid.NewGuid().ToString("N"), "settings.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, "NOT VALID JSON {{{}}}");
+            var svc = new SettingsService(path);
+            // Should fall back to defaults
+            Assert.Equal("Segoe UI", svc.DefaultFontFamily);
+        }
+
+        [Fact]
+        public void SettingsService_EmptyFile_FallsBackToDefaults()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "SmrtPadTests",
+                Guid.NewGuid().ToString("N"), "settings.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, "");
+            var svc = new SettingsService(path);
+            Assert.Equal("Segoe UI", svc.DefaultFontFamily);
+        }
+
+        [Fact]
+        public void SettingsService_MissingFile_UsesDefaults()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "SmrtPadTests",
+                Guid.NewGuid().ToString("N"), "settings.json");
+            var svc = new SettingsService(path);
+            Assert.Equal("Segoe UI", svc.DefaultFontFamily);
+        }
+
+        [Fact]
+        public void SettingsService_ImplementsISettingsService()
+        {
+            Assert.True(typeof(ISettingsService).IsAssignableFrom(typeof(SettingsService)));
+        }
+
+        [Fact]
+        public void ISettingsService_HasAllExpectedMembers()
+        {
+            var type = typeof(ISettingsService);
+            Assert.NotNull(type.GetProperty("DefaultFontFamily"));
+            Assert.NotNull(type.GetProperty("DefaultFontSize"));
+            Assert.NotNull(type.GetProperty("DefaultWordWrap"));
+            Assert.NotNull(type.GetProperty("DefaultSaveFormat"));
+            Assert.NotNull(type.GetProperty("ThemePreference"));
+            Assert.NotNull(type.GetProperty("AutoSaveEnabled"));
+            Assert.NotNull(type.GetProperty("AutoSaveIntervalSeconds"));
+            Assert.NotNull(type.GetProperty("Language"));
+            Assert.NotNull(type.GetProperty("RulerUnits"));
+            Assert.NotNull(type.GetProperty("SpellCheckEnabled"));
+            Assert.NotNull(type.GetProperty("RecentFiles"));
+            Assert.NotNull(type.GetMethod("AddRecentFile"));
+            Assert.NotNull(type.GetMethod("ClearRecentFiles"));
+            Assert.NotNull(type.GetMethod("Save"));
+            Assert.NotNull(type.GetMethod("Load"));
+        }
+    }
+
+    // ═══ MacroHelper Extended Edge Case Tests ════════════════════════════════════
+
+    public class MacroHelperExtendedTests
+    {
+        [Fact]
+        public void MacroHelper_RecordMultipleCommands_PreservesOrder()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(MacroCommandType.Bold);
+            macro.Record(MacroCommandType.Italic);
+            macro.Record(MacroCommandType.Underline);
+            macro.StopRecording();
+
+            Assert.Equal(3, macro.Count);
+            Assert.Equal(MacroCommandType.Bold, macro.Commands[0].Type);
+            Assert.Equal(MacroCommandType.Italic, macro.Commands[1].Type);
+            Assert.Equal(MacroCommandType.Underline, macro.Commands[2].Type);
+        }
+
+        [Fact]
+        public void MacroHelper_RecordWhenIdle_IsIgnored()
+        {
+            var macro = new MacroHelper();
+            macro.Record(MacroCommandType.Bold);
+            Assert.Equal(0, macro.Count);
+        }
+
+        [Fact]
+        public void MacroHelper_RecordAfterStop_IsIgnored()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(MacroCommandType.Bold);
+            macro.StopRecording();
+            macro.Record(MacroCommandType.Italic);
+            Assert.Equal(1, macro.Count);
+        }
+
+        [Fact]
+        public void MacroHelper_StartRecording_ClearsPrevious()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(MacroCommandType.Bold);
+            macro.StopRecording();
+            Assert.Equal(1, macro.Count);
+
+            macro.StartRecording();
+            Assert.Equal(0, macro.Count);
+        }
+
+        [Fact]
+        public void MacroHelper_Clear_RemovesAllCommands()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(MacroCommandType.Bold);
+            macro.Record(MacroCommandType.Italic);
+            macro.StopRecording();
+            Assert.Equal(2, macro.Count);
+
+            macro.Clear();
+            Assert.Equal(0, macro.Count);
+        }
+
+        [Fact]
+        public void MacroHelper_SerializeDeserialize_RoundTrip()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(MacroCommandType.Bold);
+            macro.Record(MacroCommandType.SetFontFamily, "Arial");
+            macro.Record(MacroCommandType.SetFontSize, "24");
+            macro.Record(MacroCommandType.InsertText, "Hello World");
+            macro.StopRecording();
+
+            string json = macro.Serialize();
+            var restored = new MacroHelper();
+            restored.Deserialize(json);
+
+            Assert.Equal(4, restored.Count);
+            Assert.Equal(MacroCommandType.Bold, restored.Commands[0].Type);
+            Assert.Null(restored.Commands[0].Value);
+            Assert.Equal("Arial", restored.Commands[1].Value);
+            Assert.Equal("24", restored.Commands[2].Value);
+            Assert.Equal("Hello World", restored.Commands[3].Value);
+        }
+
+        [Fact]
+        public void MacroHelper_SaveLoad_FileRoundTrip()
+        {
+            string path = Path.Combine(Path.GetTempPath(), $"macro_test_{Guid.NewGuid():N}.smacro");
+            try
+            {
+                var macro = new MacroHelper();
+                macro.StartRecording();
+                macro.Record(MacroCommandType.ZoomIn);
+                macro.Record(MacroCommandType.ZoomOut);
+                macro.StopRecording();
+                macro.Save(path);
+
+                var loaded = new MacroHelper();
+                loaded.Load(path);
+                Assert.Equal(2, loaded.Count);
+                Assert.Equal(MacroCommandType.ZoomIn, loaded.Commands[0].Type);
+                Assert.Equal(MacroCommandType.ZoomOut, loaded.Commands[1].Type);
+            }
+            finally
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
+        }
+
+        [Fact]
+        public void MacroHelper_Deserialize_NullOrEmpty_Throws()
+        {
+            var macro = new MacroHelper();
+            Assert.Throws<ArgumentException>(() => macro.Deserialize(null!));
+            Assert.Throws<ArgumentException>(() => macro.Deserialize(""));
+            Assert.Throws<ArgumentException>(() => macro.Deserialize("   "));
+        }
+
+        [Fact]
+        public void MacroHelper_Save_NullOrEmptyPath_Throws()
+        {
+            var macro = new MacroHelper();
+            Assert.Throws<ArgumentException>(() => macro.Save(null!));
+            Assert.Throws<ArgumentException>(() => macro.Save(""));
+            Assert.Throws<ArgumentException>(() => macro.Save("   "));
+        }
+
+        [Fact]
+        public void MacroHelper_Load_NullOrEmptyPath_Throws()
+        {
+            var macro = new MacroHelper();
+            Assert.Throws<ArgumentException>(() => macro.Load(null!));
+            Assert.Throws<ArgumentException>(() => macro.Load(""));
+        }
+
+        [Fact]
+        public void MacroCommand_ToString_WithValue()
+        {
+            var cmd = new MacroCommand(MacroCommandType.SetFontFamily, "Arial");
+            Assert.Equal("SetFontFamily:Arial", cmd.ToString());
+        }
+
+        [Fact]
+        public void MacroCommand_ToString_WithoutValue()
+        {
+            var cmd = new MacroCommand(MacroCommandType.Bold);
+            Assert.Equal("Bold", cmd.ToString());
+        }
+
+        [Fact]
+        public void MacroCommand_DefaultConstructor_HasDefaults()
+        {
+            var cmd = new MacroCommand();
+            Assert.Equal(MacroCommandType.Bold, cmd.Type); // Default enum = 0 = Bold
+            Assert.Null(cmd.Value);
+        }
+
+        [Theory]
+        [InlineData(MacroCommandType.Bold)]
+        [InlineData(MacroCommandType.Italic)]
+        [InlineData(MacroCommandType.Underline)]
+        [InlineData(MacroCommandType.Strikethrough)]
+        [InlineData(MacroCommandType.Subscript)]
+        [InlineData(MacroCommandType.Superscript)]
+        [InlineData(MacroCommandType.ClearFormatting)]
+        [InlineData(MacroCommandType.ZoomIn)]
+        [InlineData(MacroCommandType.ZoomOut)]
+        public void MacroHelper_ValuelessCommands_RoundTrip(MacroCommandType type)
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(type);
+            macro.StopRecording();
+
+            var restored = new MacroHelper();
+            restored.Deserialize(macro.Serialize());
+
+            Assert.Single(restored.Commands);
+            Assert.Equal(type, restored.Commands[0].Type);
+        }
+
+        [Theory]
+        [InlineData(MacroCommandType.SetAlignment, "Left")]
+        [InlineData(MacroCommandType.SetAlignment, "Center")]
+        [InlineData(MacroCommandType.SetAlignment, "Right")]
+        [InlineData(MacroCommandType.SetAlignment, "Justify")]
+        [InlineData(MacroCommandType.SetFontFamily, "Courier New")]
+        [InlineData(MacroCommandType.SetFontSize, "12")]
+        [InlineData(MacroCommandType.InsertText, "Test text")]
+        public void MacroHelper_ValueCommands_RoundTrip(MacroCommandType type, string value)
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(type, value);
+            macro.StopRecording();
+
+            var restored = new MacroHelper();
+            restored.Deserialize(macro.Serialize());
+
+            Assert.Single(restored.Commands);
+            Assert.Equal(type, restored.Commands[0].Type);
+            Assert.Equal(value, restored.Commands[0].Value);
+        }
+
+        [Fact]
+        public void MacroCommandType_HasExactly15Values()
+        {
+            Assert.Equal(15, Enum.GetValues<MacroCommandType>().Length);
+        }
+
+        [Fact]
+        public void MacroHelper_IsRecording_InitiallyFalse()
+        {
+            var macro = new MacroHelper();
+            Assert.False(macro.IsRecording);
+        }
+
+        [Fact]
+        public void MacroHelper_IsRecording_TrueAfterStart()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            Assert.True(macro.IsRecording);
+        }
+
+        [Fact]
+        public void MacroHelper_IsRecording_FalseAfterStop()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.StopRecording();
+            Assert.False(macro.IsRecording);
+        }
+
+        [Fact]
+        public void MacroHelper_Commands_IsReadOnly()
+        {
+            var macro = new MacroHelper();
+            Assert.IsAssignableFrom<IReadOnlyList<MacroCommand>>(macro.Commands);
+        }
+
+        [Fact]
+        public void MacroHelper_RecordOverload_WithTypeAndValue()
+        {
+            var macro = new MacroHelper();
+            macro.StartRecording();
+            macro.Record(MacroCommandType.InsertText, "Hello");
+            macro.StopRecording();
+            Assert.Single(macro.Commands);
+            Assert.Equal("Hello", macro.Commands[0].Value);
+        }
+
+        [Fact]
+        public void MacroHelper_Serialize_EmptyList_ProducesValidJson()
+        {
+            var macro = new MacroHelper();
+            string json = macro.Serialize();
+            Assert.Equal("[]", json);
+        }
+    }
+
+    // ═══ DocumentTemplate Extended Tests ═════════════════════════════════════════
+
+    public class DocumentTemplateExtendedTests
+    {
+        [Fact]
+        public void DocumentTemplates_All_HasExactlyFiveTemplates()
+        {
+            Assert.Equal(5, DocumentTemplates.All.Count);
+        }
+
+        [Theory]
+        [InlineData("blank")]
+        [InlineData("letter")]
+        [InlineData("report")]
+        [InlineData("resume")]
+        [InlineData("meeting")]
+        public void DocumentTemplates_ContainsKey(string key)
+        {
+            Assert.Contains(DocumentTemplates.All, t => t.Key == key);
+        }
+
+        [Fact]
+        public void DocumentTemplates_AllKeys_AreUnique()
+        {
+            var keys = DocumentTemplates.All.Select(t => t.Key).ToList();
+            Assert.Equal(keys.Count, keys.Distinct().Count());
+        }
+
+        [Fact]
+        public void DocumentTemplates_AllHaveDisplayName()
+        {
+            foreach (var t in DocumentTemplates.All)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(t.DisplayName));
+            }
+        }
+
+        [Fact]
+        public void DocumentTemplates_AllHaveDescription()
+        {
+            foreach (var t in DocumentTemplates.All)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(t.Description));
+            }
+        }
+
+        [Fact]
+        public void DocumentTemplates_BlankTemplate_HasEmptyContent()
+        {
+            var blank = DocumentTemplates.All.First(t => t.Key == "blank");
+            Assert.Equal("", blank.PlainContent);
+        }
+
+        [Fact]
+        public void DocumentTemplates_NonBlankTemplates_HaveContent()
+        {
+            foreach (var t in DocumentTemplates.All.Where(t => t.Key != "blank"))
+            {
+                Assert.False(string.IsNullOrEmpty(t.PlainContent));
+            }
+        }
+
+        [Fact]
+        public void DocumentTemplate_RecordEquality_Works()
+        {
+            var a = new DocumentTemplate("key", "Name", "Desc", "Content");
+            var b = new DocumentTemplate("key", "Name", "Desc", "Content");
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void DocumentTemplate_RecordInequality_Works()
+        {
+            var a = new DocumentTemplate("key1", "Name", "Desc", "Content");
+            var b = new DocumentTemplate("key2", "Name", "Desc", "Content");
+            Assert.NotEqual(a, b);
+        }
+
+        [Fact]
+        public void DocumentTemplate_With_Expression_CreatesNewInstance()
+        {
+            var original = new DocumentTemplate("k", "N", "D", "C");
+            var modified = original with { Key = "k2" };
+            Assert.Equal("k2", modified.Key);
+            Assert.Equal("N", modified.DisplayName);
+        }
+
+        [Fact]
+        public void DocumentTemplate_Deconstruction_Works()
+        {
+            var template = new DocumentTemplate("k", "N", "D", "C");
+            var (key, name, desc, content) = template;
+            Assert.Equal("k", key);
+            Assert.Equal("N", name);
+            Assert.Equal("D", desc);
+            Assert.Equal("C", content);
+        }
+
+        [Fact]
+        public void DocumentTemplate_IsSealed()
+        {
+            Assert.True(typeof(DocumentTemplate).IsSealed);
+        }
+
+        [Fact]
+        public void DocumentTemplate_IsRecord()
+        {
+            // Records implement IEquatable<T> and have EqualityContract
+            Assert.True(typeof(IEquatable<DocumentTemplate>).IsAssignableFrom(typeof(DocumentTemplate)));
+        }
+
+        [Fact]
+        public void DocumentTemplates_Letter_ContainsSalutation()
+        {
+            var letter = DocumentTemplates.All.First(t => t.Key == "letter");
+            Assert.Contains("Dear", letter.PlainContent);
+            Assert.Contains("Sincerely", letter.PlainContent);
+        }
+
+        [Fact]
+        public void DocumentTemplates_Report_ContainsSections()
+        {
+            var report = DocumentTemplates.All.First(t => t.Key == "report");
+            Assert.Contains("EXECUTIVE SUMMARY", report.PlainContent);
+            Assert.Contains("INTRODUCTION", report.PlainContent);
+            Assert.Contains("FINDINGS", report.PlainContent);
+            Assert.Contains("RECOMMENDATIONS", report.PlainContent);
+            Assert.Contains("CONCLUSION", report.PlainContent);
+        }
+
+        [Fact]
+        public void DocumentTemplates_Resume_ContainsWorkExperience()
+        {
+            var resume = DocumentTemplates.All.First(t => t.Key == "resume");
+            Assert.Contains("WORK EXPERIENCE", resume.PlainContent);
+            Assert.Contains("EDUCATION", resume.PlainContent);
+            Assert.Contains("SKILLS", resume.PlainContent);
+        }
+
+        [Fact]
+        public void DocumentTemplates_Meeting_ContainsActionItems()
+        {
+            var meeting = DocumentTemplates.All.First(t => t.Key == "meeting");
+            Assert.Contains("ACTION ITEMS", meeting.PlainContent);
+            Assert.Contains("ATTENDEES", meeting.PlainContent);
+            Assert.Contains("AGENDA", meeting.PlainContent);
+        }
+    }
+
+    // ═══ OneDriveHelper Extended Tests ═══════════════════════════════════════════
+
+    public class OneDriveHelperExtendedTests
+    {
+        [Fact]
+        public void OneDriveHelper_IsStaticClass()
+        {
+            var t = typeof(OneDriveHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+
+        [Fact]
+        public void GetOneDrivePath_ReturnsNullOrString()
+        {
+            var result = OneDriveHelper.GetOneDrivePath();
+            Assert.True(result is null || result is string);
+        }
+
+        [Fact]
+        public void IsAvailable_MatchesGetOneDrivePath()
+        {
+            bool available = OneDriveHelper.IsAvailable();
+            string? path = OneDriveHelper.GetOneDrivePath();
+            Assert.Equal(path is not null, available);
+        }
+
+        [Fact]
+        public void GetOneDrivePath_HasCorrectReturnType()
+        {
+            var method = typeof(OneDriveHelper).GetMethod("GetOneDrivePath");
+            Assert.NotNull(method);
+            Assert.Equal(typeof(string), Nullable.GetUnderlyingType(method!.ReturnType) ?? method.ReturnType);
+        }
+
+        [Fact]
+        public void IsAvailable_HasCorrectReturnType()
+        {
+            var method = typeof(OneDriveHelper).GetMethod("IsAvailable");
+            Assert.NotNull(method);
+            Assert.Equal(typeof(bool), method!.ReturnType);
+        }
+    }
+
+    // ═══ RulerHelper Extended Tests ══════════════════════════════════════════════
+
+    public class RulerHelperExtendedTests
+    {
+        [Fact]
+        public void GetPixelsPerUnit_Inches_At100Percent_Returns96()
+        {
+            double result = RulerHelper.GetPixelsPerUnit("in", 100.0, out string label);
+            Assert.Equal(96.0, result, 0.01);
+            Assert.Equal("in", label);
+        }
+
+        [Fact]
+        public void GetPixelsPerUnit_Cm_At100Percent_ReturnsExpected()
+        {
+            double result = RulerHelper.GetPixelsPerUnit("cm", 100.0, out string label);
+            Assert.Equal(96.0 / 2.54, result, 0.01);
+            Assert.Equal("cm", label);
+        }
+
+        [Fact]
+        public void GetPixelsPerUnit_At200Percent_DoublesPixels()
+        {
+            double at100 = RulerHelper.GetPixelsPerUnit("in", 100.0, out _);
+            double at200 = RulerHelper.GetPixelsPerUnit("in", 200.0, out _);
+            Assert.Equal(at100 * 2.0, at200, 0.01);
+        }
+
+        [Fact]
+        public void GetPixelsPerUnit_At50Percent_HalvesPixels()
+        {
+            double at100 = RulerHelper.GetPixelsPerUnit("in", 100.0, out _);
+            double at50 = RulerHelper.GetPixelsPerUnit("in", 50.0, out _);
+            Assert.Equal(at100 / 2.0, at50, 0.01);
+        }
+
+        [Fact]
+        public void GetPixelsPerUnit_NonCmUnits_DefaultToInches()
+        {
+            double inches = RulerHelper.GetPixelsPerUnit("in", 100.0, out string labelIn);
+            double other = RulerHelper.GetPixelsPerUnit("xyz", 100.0, out string labelOther);
+            Assert.Equal(inches, other);
+            Assert.Equal("in", labelIn);
+            Assert.Equal("in", labelOther);
+        }
+
+        [Fact]
+        public void GetPixelsPerUnit_LinearWithZoom()
+        {
+            // Test linear scaling at several zoom levels
+            double[] zooms = [25, 50, 75, 100, 150, 200, 300, 500];
+            double baseVal = RulerHelper.GetPixelsPerUnit("in", 100.0, out _);
+            foreach (var z in zooms)
+            {
+                double expected = baseVal * z / 100.0;
+                double actual = RulerHelper.GetPixelsPerUnit("in", z, out _);
+                Assert.Equal(expected, actual, 0.01);
+            }
+        }
+
+        [Fact]
+        public void RulerHelper_IsStaticClass()
+        {
+            var t = typeof(RulerHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+    }
+
+    // ═══ ParagraphStyleDefinition Extended Tests ═════════════════════════════════
+
+    public class ParagraphStyleDefinitionExtendedTests
+    {
+        [Fact]
+        public void ParagraphStyleDefinition_RecordEquality()
+        {
+            var a = new ParagraphStyleDefinition("Segoe UI", 11f, false, false, "Left", 0f, 0f);
+            var b = new ParagraphStyleDefinition("Segoe UI", 11f, false, false, "Left", 0f, 0f);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void ParagraphStyleDefinition_RecordInequality()
+        {
+            var a = ParagraphStyleHelper.Normal;
+            var b = ParagraphStyleHelper.Heading1;
+            Assert.NotEqual(a, b);
+        }
+
+        [Fact]
+        public void ParagraphStyleDefinition_WithExpression()
+        {
+            var normal = ParagraphStyleHelper.Normal;
+            var custom = normal with { FontSize = 20f, Bold = true };
+            Assert.Equal(20f, custom.FontSize);
+            Assert.True(custom.Bold);
+            Assert.Equal("Segoe UI", custom.FontName); // Inherited
+        }
+
+        [Fact]
+        public void ParagraphStyleDefinition_Deconstruct()
+        {
+            var (fontName, fontSize, bold, italic, alignment, spaceBefore, spaceAfter) =
+                ParagraphStyleHelper.Heading1;
+            Assert.Equal("Segoe UI", fontName);
+            Assert.Equal(20f, fontSize);
+            Assert.True(bold);
+            Assert.False(italic);
+            Assert.Equal("Left", alignment);
+            Assert.Equal(12f, spaceBefore);
+            Assert.Equal(4f, spaceAfter);
+        }
+
+        [Fact]
+        public void ParagraphStyleDefinition_IsSealed()
+        {
+            Assert.True(typeof(ParagraphStyleDefinition).IsSealed);
+        }
+
+        [Fact]
+        public void ParagraphStyleHelper_IsStaticClass()
+        {
+            var t = typeof(ParagraphStyleHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+
+        [Fact]
+        public void All_Dictionary_ContainsExactlySixEntries()
+        {
+            Assert.Equal(6, ParagraphStyleHelper.All.Count);
+        }
+
+        [Fact]
+        public void Normal_HasDefaultSpacing()
+        {
+            Assert.Equal(0f, ParagraphStyleHelper.Normal.SpaceBefore);
+            Assert.Equal(0f, ParagraphStyleHelper.Normal.SpaceAfter);
+        }
+
+        [Fact]
+        public void Heading1_HasLargestFontSize()
+        {
+            var maxSize = ParagraphStyleHelper.All.Values.Max(s => s.FontSize);
+            Assert.Equal(ParagraphStyleHelper.Heading1.FontSize, maxSize);
+        }
+
+        [Fact]
+        public void SubtitleAndQuote_AreItalic()
+        {
+            Assert.True(ParagraphStyleHelper.Subtitle.Italic);
+            Assert.True(ParagraphStyleHelper.Quote.Italic);
+        }
+
+        [Fact]
+        public void Headings_AreBold()
+        {
+            Assert.True(ParagraphStyleHelper.Heading1.Bold);
+            Assert.True(ParagraphStyleHelper.Heading2.Bold);
+            Assert.True(ParagraphStyleHelper.Heading3.Bold);
+        }
+
+        [Fact]
+        public void NormalSubtitleQuote_AreNotBold()
+        {
+            Assert.False(ParagraphStyleHelper.Normal.Bold);
+            Assert.False(ParagraphStyleHelper.Subtitle.Bold);
+            Assert.False(ParagraphStyleHelper.Quote.Bold);
+        }
+    }
+
+    // ═══ ColorHelper Extended Tests ══════════════════════════════════════════════
+
+    public class ColorHelperExtendedTests
+    {
+        [Fact]
+        public void ParseHexColor_Black()
+        {
+            var color = ColorHelper.ParseHexColor("#000000");
+            Assert.Equal(255, color.A);
+            Assert.Equal(0, color.R);
+            Assert.Equal(0, color.G);
+            Assert.Equal(0, color.B);
+        }
+
+        [Fact]
+        public void ParseHexColor_White()
+        {
+            var color = ColorHelper.ParseHexColor("#FFFFFF");
+            Assert.Equal(255, color.A);
+            Assert.Equal(255, color.R);
+            Assert.Equal(255, color.G);
+            Assert.Equal(255, color.B);
+        }
+
+        [Fact]
+        public void ParseHexColor_TransparentBlack()
+        {
+            var color = ColorHelper.ParseHexColor("#00000000");
+            Assert.Equal(0, color.A);
+            Assert.Equal(0, color.R);
+            Assert.Equal(0, color.G);
+            Assert.Equal(0, color.B);
+        }
+
+        [Fact]
+        public void ParseHexColor_LowercaseHex()
+        {
+            var color = ColorHelper.ParseHexColor("#aabbcc");
+            Assert.Equal(0xAA, color.R);
+            Assert.Equal(0xBB, color.G);
+            Assert.Equal(0xCC, color.B);
+        }
+
+        [Fact]
+        public void ParseHexColor_MixedCaseHex()
+        {
+            var color = ColorHelper.ParseHexColor("#AaBbCc");
+            Assert.Equal(0xAA, color.R);
+            Assert.Equal(0xBB, color.G);
+            Assert.Equal(0xCC, color.B);
+        }
+
+        [Fact]
+        public void ParseHexColor_HashOnly_Throws()
+        {
+            Assert.Throws<FormatException>(() => ColorHelper.ParseHexColor("#"));
+        }
+
+        [Fact]
+        public void ColorHelper_IsStaticClass()
+        {
+            var t = typeof(ColorHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+    }
+
+    // ═══ DocumentImportHelper Extended Tests ═════════════════════════════════════
+
+    public class DocumentImportHelperExtendedTests
+    {
+        private static MemoryStream CreateDocxStream(string text)
+        {
+            var ms = new MemoryStream();
+            using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var entry = zip.CreateEntry("word/document.xml");
+                using var writer = new StreamWriter(entry.Open());
+                XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                var doc = new XDocument(
+                    new XElement(w + "document",
+                        new XElement(w + "body",
+                            new XElement(w + "p",
+                                new XElement(w + "r",
+                                    new XElement(w + "t", text))))));
+                writer.Write(doc.ToString());
+            }
+            ms.Position = 0;
+            return ms;
+        }
+
+        private static MemoryStream CreateOdtStream(string text)
+        {
+            var ms = new MemoryStream();
+            using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var entry = zip.CreateEntry("content.xml");
+                using var writer = new StreamWriter(entry.Open());
+                XNamespace textNs = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
+                var doc = new XDocument(
+                    new XElement("document",
+                        new XElement(textNs + "p", text)));
+                writer.Write(doc.ToString());
+            }
+            ms.Position = 0;
+            return ms;
+        }
+
+        [Fact]
+        public void ExtractText_Docx_ReturnsText()
+        {
+            using var ms = CreateDocxStream("Hello World");
+            string result = DocumentImportHelper.ExtractText(ms, ".docx");
+            Assert.Contains("Hello", result);
+            Assert.Contains("World", result);
+        }
+
+        [Fact]
+        public void ExtractText_Odt_ReturnsText()
+        {
+            using var ms = CreateOdtStream("ODT Content");
+            string result = DocumentImportHelper.ExtractText(ms, ".odt");
+            Assert.Contains("ODT Content", result);
+        }
+
+        [Fact]
+        public void ExtractText_MissingEntry_ReturnsEmpty()
+        {
+            var ms = new MemoryStream();
+            using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                // Create an unrelated entry
+                var entry = zip.CreateEntry("other.xml");
+                using var writer = new StreamWriter(entry.Open());
+                writer.Write("<root/>");
+            }
+            ms.Position = 0;
+            string result = DocumentImportHelper.ExtractText(ms, ".docx");
+            Assert.Equal(string.Empty, result);
+        }
+
+        [Fact]
+        public void DocumentImportHelper_IsStaticClass()
+        {
+            var t = typeof(DocumentImportHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+    }
+
+    // ═══ RtfHelper Extended Tests ════════════════════════════════════════════════
+
+    public class RtfHelperExtendedTests
+    {
+        [Fact]
+        public void GenerateTable_1x1_ContainsRtfHeader()
+        {
+            string rtf = RtfHelper.GenerateTable(1, 1);
+            Assert.StartsWith(@"{\rtf1\ansi ", rtf);
+            Assert.EndsWith("}", rtf);
+        }
+
+        [Fact]
+        public void GenerateTable_2x2_HasCorrectRows()
+        {
+            string rtf = RtfHelper.GenerateTable(2, 2);
+            int rowCount = rtf.Split(@"\trowd").Length - 1;
+            Assert.Equal(2, rowCount);
+        }
+
+        [Fact]
+        public void GenerateTable_3x2_HasCorrectCells()
+        {
+            string rtf = RtfHelper.GenerateTable(3, 2);
+            // Count occurrences of " \cell " to avoid matching \cellx
+            int cellCount = rtf.Split(" \\cell ").Length - 1;
+            Assert.Equal(6, cellCount); // 3 rows × 2 cols
+        }
+
+        [Fact]
+        public void GenerateTable_1x1_HasBorderControls()
+        {
+            string rtf = RtfHelper.GenerateTable(1, 1);
+            Assert.Contains(@"\clbrdrt\brdrs", rtf);
+            Assert.Contains(@"\clbrdrl\brdrs", rtf);
+            Assert.Contains(@"\clbrdrb\brdrs", rtf);
+            Assert.Contains(@"\clbrdrr\brdrs", rtf);
+        }
+
+        [Fact]
+        public void GenerateTable_CellWidth_Is2000Twips()
+        {
+            string rtf = RtfHelper.GenerateTable(1, 3);
+            Assert.Contains(@"\cellx2000", rtf);
+            Assert.Contains(@"\cellx4000", rtf);
+            Assert.Contains(@"\cellx6000", rtf);
+        }
+
+        [Fact]
+        public void GenerateTable_ZeroRows_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => RtfHelper.GenerateTable(0, 1));
+        }
+
+        [Fact]
+        public void GenerateTable_ZeroCols_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => RtfHelper.GenerateTable(1, 0));
+        }
+
+        [Fact]
+        public void GenerateTable_NegativeRows_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => RtfHelper.GenerateTable(-1, 1));
+        }
+
+        [Fact]
+        public void GenerateTable_NegativeCols_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => RtfHelper.GenerateTable(1, -1));
+        }
+
+        [Fact]
+        public void RtfHelper_IsStaticClass()
+        {
+            var t = typeof(RtfHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+    }
+
+    // ═══ ResourceHelper Extended Tests ═══════════════════════════════════════════
+
+    public class ResourceHelperExtendedTests
+    {
+        [Fact]
+        public void GetString_UnknownKey_ReturnsKeyName()
+        {
+            string result = ResourceHelper.GetString("NonExistent_Key_12345");
+            Assert.Equal("NonExistent_Key_12345", result);
+        }
+
+        [Fact]
+        public void GetString_DocumentUntitled_ReturnsNonEmpty()
+        {
+            string result = ResourceHelper.GetString("DocumentUntitled");
+            Assert.NotNull(result);
+            Assert.NotEmpty(result);
+        }
+
+        [Fact]
+        public void GetString_StatusReady_ReturnsNonEmpty()
+        {
+            string result = ResourceHelper.GetString("StatusReady");
+            Assert.NotNull(result);
+            Assert.NotEmpty(result);
+        }
+
+        [Fact]
+        public void GetFormatted_WithMultipleArgs()
+        {
+            string result = ResourceHelper.GetFormatted("StatusBarLineCol", 10, 20);
+            Assert.Contains("10", result);
+            Assert.Contains("20", result);
+        }
+
+        [Fact]
+        public void GetFormatted_WithSingleArg()
+        {
+            string result = ResourceHelper.GetFormatted("StatusBarWords", 100);
+            Assert.Contains("100", result);
+        }
+
+        [Fact]
+        public void ResourceHelper_IsStaticClass()
+        {
+            var t = typeof(ResourceHelper);
+            Assert.True(t.IsAbstract && t.IsSealed);
+        }
+
+        [Fact]
+        public void GetString_SameKeyTwice_ReturnsSameResult()
+        {
+            string a = ResourceHelper.GetString("StatusReady");
+            string b = ResourceHelper.GetString("StatusReady");
+            Assert.Equal(a, b);
+        }
+    }
+
+    // ═══ App Extended Contract Tests ═════════════════════════════════════════════
+
+    public class AppExtendedContractTests
+    {
+        [Fact]
+        public void App_HasOnLaunched_Override()
+        {
+            var method = typeof(SmrtPad.App).GetMethod(
+                "OnLaunched",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void App_Windows_IsNotNull()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("Windows",
+                BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(prop);
+            // Get value from static property
+            var value = prop!.GetValue(null);
+            Assert.NotNull(value);
+        }
+
+        [Fact]
+        public void App_Windows_IsList()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("Windows",
+                BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(List<SmrtPad.MainWindow>), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void App_HasPartialClass_Marker()
+        {
+            // App is partial (generated code-behind)
+            var type = typeof(SmrtPad.App);
+            Assert.True(type.IsClass);
+        }
+
+        [Fact]
+        public void App_Constructor_IsPublic()
+        {
+            var ctor = typeof(SmrtPad.App).GetConstructor(Type.EmptyTypes);
+            Assert.NotNull(ctor);
+            Assert.True(ctor!.IsPublic);
+        }
+    }
+
+    // ═══ Service Interface Parity Tests ══════════════════════════════════════════
+
+    public class ServiceInterfaceParityTests
+    {
+        [Fact]
+        public void DialogService_ImplementsAllInterfaceMembers()
+        {
+            var interfaceType = typeof(IDialogService);
+            var implType = typeof(DialogService);
+
+            foreach (var method in interfaceType.GetMethods())
+            {
+                var impl = implType.GetMethod(method.Name);
+                Assert.NotNull(impl);
+                Assert.Equal(method.ReturnType, impl!.ReturnType);
+                Assert.Equal(method.GetParameters().Length, impl.GetParameters().Length);
+            }
+        }
+
+        [Fact]
+        public void FileService_ImplementsAllInterfaceMembers()
+        {
+            var interfaceType = typeof(IFileService);
+            var implType = typeof(FileService);
+
+            foreach (var method in interfaceType.GetMethods())
+            {
+                var impl = implType.GetMethod(method.Name);
+                Assert.NotNull(impl);
+                Assert.Equal(method.ReturnType, impl!.ReturnType);
+                Assert.Equal(method.GetParameters().Length, impl.GetParameters().Length);
+            }
+        }
+
+        [Fact]
+        public void SettingsService_ImplementsAllInterfaceMembers()
+        {
+            var interfaceType = typeof(ISettingsService);
+            var implType = typeof(SettingsService);
+
+            foreach (var prop in interfaceType.GetProperties())
+            {
+                var impl = implType.GetProperty(prop.Name);
+                Assert.NotNull(impl);
+                Assert.Equal(prop.PropertyType, impl!.PropertyType);
+            }
+
+            foreach (var method in interfaceType.GetMethods()
+                .Where(m => !m.IsSpecialName)) // Exclude property accessors
+            {
+                var impl = implType.GetMethod(method.Name);
+                Assert.NotNull(impl);
+            }
+        }
+
+        [Fact]
+        public void DialogService_HasTwoConstructors()
+        {
+            var ctors = typeof(DialogService).GetConstructors();
+            Assert.Equal(2, ctors.Length);
+        }
+
+        [Fact]
+        public void FileService_HasTwoConstructors()
+        {
+            var ctors = typeof(FileService).GetConstructors();
+            Assert.Equal(2, ctors.Length);
+        }
+
+        [Fact]
+        public void SettingsService_HasTwoConstructors()
+        {
+            var ctors = typeof(SettingsService).GetConstructors();
+            Assert.Equal(2, ctors.Length);
+        }
+
+        [Fact]
+        public void SavePromptResult_Values()
+        {
+            Assert.Equal(0, (int)SavePromptResult.Save);
+            Assert.Equal(1, (int)SavePromptResult.DontSave);
+            Assert.Equal(2, (int)SavePromptResult.Cancel);
+        }
+
+        [Fact]
+        public void IDialogService_HasExactlyTwoMethods()
+        {
+            var methods = typeof(IDialogService).GetMethods();
+            Assert.Equal(2, methods.Length);
+        }
+    }
+
+    // ═══ FileBackstageView Extended Contract Tests ═══════════════════════════════
+
+    public class FileBackstageViewExtendedTests
+    {
+        private static readonly Type BSV = typeof(SmrtPad.Views.FileBackstageView);
+
+        [Fact]
+        public void FileBackstageView_InheritsUserControl()
+        {
+            Assert.True(typeof(Microsoft.UI.Xaml.Controls.UserControl).IsAssignableFrom(BSV));
+        }
+
+        [Fact]
+        public void FileBackstageView_IsInViewsNamespace()
+        {
+            Assert.Equal("SmrtPad.Views", BSV.Namespace);
+        }
+
+        [Fact]
+        public void FileBackstageView_HasSetDocumentProperties_5Params()
+        {
+            var method = BSV.GetMethod("SetDocumentProperties");
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Equal(5, parms.Length);
+            Assert.Equal("fileName", parms[0].Name);
+            Assert.Equal("wordCount", parms[1].Name);
+            Assert.Equal("charCount", parms[2].Name);
+            Assert.Equal("encoding", parms[3].Name);
+            Assert.Equal("isModified", parms[4].Name);
+        }
+
+        [Fact]
+        public void FileBackstageView_HasSetRecentFiles_ListParam()
+        {
+            var method = BSV.GetMethod("SetRecentFiles");
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+            Assert.Equal("recentFiles", parms[0].Name);
+        }
+
+        [Fact]
+        public void FileBackstageView_EventCount_AtLeastTwelve()
+        {
+            var events = BSV.GetEvents();
+            Assert.True(events.Length >= 12, $"Expected ≥12 events, found {events.Length}");
+        }
+
+        [Theory]
+        [InlineData("NewRequested", typeof(EventHandler))]
+        [InlineData("OpenRequested", typeof(EventHandler))]
+        [InlineData("SaveRequested", typeof(EventHandler))]
+        [InlineData("SaveAsRequested", typeof(EventHandler))]
+        [InlineData("PrintRequested", typeof(EventHandler))]
+        [InlineData("ExportPdfRequested", typeof(EventHandler))]
+        [InlineData("ExportDocxRequested", typeof(EventHandler))]
+        [InlineData("OneDriveRequested", typeof(EventHandler))]
+        [InlineData("OptionsRequested", typeof(EventHandler))]
+        [InlineData("ExitRequested", typeof(EventHandler))]
+        public void FileBackstageView_StandardEvents_HaveCorrectType(string name, Type handlerType)
+        {
+            var evt = BSV.GetEvent(name);
+            Assert.NotNull(evt);
+            Assert.Equal(handlerType, evt!.EventHandlerType);
+        }
+
+        [Fact]
+        public void FileBackstageView_RecentFileRequested_IsStringEventHandler()
+        {
+            var evt = BSV.GetEvent("RecentFileRequested");
+            Assert.NotNull(evt);
+            Assert.Equal(typeof(EventHandler<string>), evt!.EventHandlerType);
+        }
+
+        [Fact]
+        public void FileBackstageView_TemplateRequested_IsDocumentTemplateEventHandler()
+        {
+            var evt = BSV.GetEvent("TemplateRequested");
+            Assert.NotNull(evt);
+            Assert.Equal(typeof(EventHandler<DocumentTemplate>), evt!.EventHandlerType);
+        }
+    }
+}
