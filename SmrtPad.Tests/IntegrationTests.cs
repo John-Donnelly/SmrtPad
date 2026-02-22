@@ -2121,6 +2121,148 @@ namespace SmrtPad.Tests
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
                         Assert.Equal(3, doc.Descendants(w + "p").Count());
                     }
+
+                    // ── GenerateRichDocx tests ────────────────────────────────────
+
+                    [Fact]
+                    public void GenerateRichDocx_NullRtf_Throws()
+                    {
+                        Assert.Throws<ArgumentNullException>(() => DocxExportHelper.GenerateRichDocx(null!));
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_EmptyRtf_ReturnsValidZip()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(string.Empty);
+                        Assert.True(docx.Length > 0);
+                        using var ms = new MemoryStream(docx);
+                        var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        Assert.NotNull(zip.GetEntry("word/document.xml"));
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_PlainRtf_ContainsText()
+                    {
+                        string rtf = @"{\rtf1\ansi{\fonttbl{\f0 Arial;}}\pard Hello World\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        string xml = new System.IO.StreamReader(stream).ReadToEnd();
+                        Assert.Contains("Hello World", xml);
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_BoldRtf_EmitsBoldElement()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard \b bold text\b0 normal\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        Assert.True(doc.Descendants(w + "b").Any());
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_ItalicRtf_EmitsItalicElement()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard \i italic\i0 normal\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        Assert.True(doc.Descendants(w + "i").Any());
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_UnderlineRtf_EmitsUnderlineElement()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard \ul underlined\ulnone normal\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        Assert.True(doc.Descendants(w + "u").Any());
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_StrikethroughRtf_EmitsStrikeElement()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard \strike struck\strike0 normal\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        Assert.True(doc.Descendants(w + "strike").Any());
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_FontSize_EmitsSzElement()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard \fs48 Large Text\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        var sz = doc.Descendants(w + "sz").FirstOrDefault();
+                        Assert.NotNull(sz);
+                        Assert.Equal("48", sz.Attribute(w + "val")?.Value);
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_MultiParagraph_CorrectParagraphCount()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard Para1\par Para2\par Para3\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        Assert.True(doc.Descendants(w + "p").Count() >= 3);
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_CenterAlignment_EmitsJcCenter()
+                    {
+                        string rtf = @"{\rtf1\ansi\pard\qc Centered text\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        var jc = doc.Descendants(w + "jc").FirstOrDefault();
+                        Assert.NotNull(jc);
+                        Assert.Equal("center", jc.Attribute(w + "val")?.Value);
+                    }
+
+                    [Fact]
+                    public void GenerateRichDocx_RtfParser_RunsCoalesceIdenticalFormat()
+                    {
+                        // Two consecutive chars with same format should merge into one run
+                        string rtf = @"{\rtf1\ansi\pard \b AB\par}";
+                        byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        using var stream = zip.GetEntry("word/document.xml")!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        // "AB" should be a single <w:t> element, not two separate runs
+                        var runs = doc.Descendants(w + "r").ToList();
+                        Assert.True(runs.Any(r => r.Descendants(w + "t").Any(t => t.Value.Contains("AB")
+                            || (t.Value.Contains("A") && t.Value.Contains("B")))));
+                    }
                 }
 
                 // â•â•â• OneDriveHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

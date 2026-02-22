@@ -1044,8 +1044,8 @@ namespace SmrtPad
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file == null) return;
 
-                Editor.Document.GetText(TextGetOptions.None, out string text);
-                byte[] docx = DocxExportHelper.GenerateDocx(text.TrimEnd('\r'));
+                Editor.Document.GetText(TextGetOptions.FormatRtf, out string rtf);
+                byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
 
                 CachedFileManager.DeferUpdates(file);
                 using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
