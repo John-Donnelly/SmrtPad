@@ -214,5 +214,122 @@ namespace SmrtPad.UITests.Tests
                 MobileBy.AccessibilityId("ThemeToggleButton"));
             Assert.NotNull(btn);
         }
+
+        [SkippableFact]
+        public void FindTextBox_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var box = _driver!.FindElement(
+                MobileBy.AccessibilityId("FindTextBox"));
+            Assert.NotNull(box);
+        }
+
+        [SkippableFact]
+        public void FindMatchCaseCheckBox_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var chk = _driver!.FindElement(
+                MobileBy.AccessibilityId("FindMatchCaseCheckBox"));
+            Assert.NotNull(chk);
+        }
+
+        [SkippableFact]
+        public void FindWholeWordCheckBox_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var chk = _driver!.FindElement(
+                MobileBy.AccessibilityId("FindWholeWordCheckBox"));
+            Assert.NotNull(chk);
+        }
+
+        [SkippableFact]
+        public void FindRegexCheckBox_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var chk = _driver!.FindElement(
+                MobileBy.AccessibilityId("FindRegexCheckBox"));
+            Assert.NotNull(chk);
+        }
+
+        [SkippableFact]
+        public void HighlightAllButton_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var btn = _driver!.FindElement(
+                MobileBy.AccessibilityId("HighlightAllButton"));
+            Assert.NotNull(btn);
+        }
+
+        [SkippableFact]
+        public void ClearHighlightsButton_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var btn = _driver!.FindElement(
+                MobileBy.AccessibilityId("ClearHighlightsButton"));
+            Assert.NotNull(btn);
+        }
+
+        [SkippableFact]
+        public void FindNextButton_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var btn = _driver!.FindElement(
+                MobileBy.AccessibilityId("FindNextButton"));
+            Assert.NotNull(btn);
+        }
+
+        [SkippableFact]
+        public void ReplaceFindTextBox_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var box = _driver!.FindElement(
+                MobileBy.AccessibilityId("ReplaceFindTextBox"));
+            Assert.NotNull(box);
+        }
+
+        [SkippableFact]
+        public void ReplaceWithTextBox_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var box = _driver!.FindElement(
+                MobileBy.AccessibilityId("ReplaceWithTextBox"));
+            Assert.NotNull(box);
+        }
+
+        [SkippableFact]
+        public void ReplaceButton_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var btn = _driver!.FindElement(
+                MobileBy.AccessibilityId("ReplaceButton"));
+            Assert.NotNull(btn);
+        }
+
+        [SkippableFact]
+        public void ReplaceAllButton_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var btn = _driver!.FindElement(
+                MobileBy.AccessibilityId("ReplaceAllButton"));
+            Assert.NotNull(btn);
+        }
+
+        [SkippableFact]
+        public void ZoomText_IsPresent_InStatusBar()
+        {
+            RequireDriver();
+            var text = _driver!.FindElement(
+                MobileBy.AccessibilityId("ZoomText"));
+            Assert.NotNull(text);
+        }
+
+        [SkippableFact]
+        public void FileBackstage_IsPresent()
+        {
+            RequireDriver();
+            var backstage = _driver!.FindElement(
+                MobileBy.AccessibilityId("FileBackstage"));
+            Assert.NotNull(backstage);
+        }
     }
 }
