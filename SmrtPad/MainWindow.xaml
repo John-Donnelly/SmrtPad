@@ -29,6 +29,8 @@
               BorderThickness="0,0,0,1"
               Height="34">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="0">
+                <!-- App logo -->
+                <Image Source="Assets/SmrtPad.png" Width="22" Height="22" Margin="8,0,4,0" VerticalAlignment="Center" />
                 <!-- File → backstage -->
                 <Button x:Uid="FileMenuButton" Content="File" Click="FileMenu_Tapped"
                         Padding="10,5" Background="Transparent" BorderThickness="0"
@@ -517,14 +519,11 @@
                                 <TextBlock x:Uid="PictureRibbonLabel" Text="Picture" FontSize="9" HorizontalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <!-- Paint drawing -->
-                        <Button Grid.Column="1" Click="PaintDrawing_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paint Drawing"
+                        <!-- SmrtDoodle -->
+                        <Button Grid.Column="1" Click="PaintDrawing_Click" Width="56" Height="48" Padding="2" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="SmrtDoodle – Paint Drawing"
                                 VerticalAlignment="Top">
-                            <StackPanel HorizontalAlignment="Center" Spacing="2">
-                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xED54;" FontSize="22"/>
-                                <TextBlock x:Uid="PaintRibbonLabel" Text="Paint" FontSize="9" HorizontalAlignment="Center"/>
-                            </StackPanel>
+                            <Image Source="Assets/SmrtDoodle.png" Height="40" Stretch="Uniform"/>
                         </Button>
                         <!-- Insert object -->
                         <Button Grid.Column="2" Click="InsertObject_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
