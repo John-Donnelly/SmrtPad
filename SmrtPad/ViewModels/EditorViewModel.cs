@@ -97,6 +97,23 @@ namespace SmrtPad.ViewModels
         [ObservableProperty]
         private string _encoding = "UTF-8";
 
+        // ── Display-formatted properties for {x:Bind} ──
+
+        public string WordCountDisplay => Res.GetFormatted("StatusBarWords", WordCount);
+        public string CharCountDisplay => Res.GetFormatted("StatusBarCharacters", CharCount);
+        public string SelectionLengthDisplay => Res.GetFormatted("StatusBarSelection", SelectionLength);
+        public string LineColDisplay => Res.GetFormatted("StatusBarLineCol", LineNumber, ColumnNumber);
+        public string ZoomDisplay => $"{ZoomLevel:0}%";
+        public string EncodingDisplay => Encoding;
+
+        partial void OnWordCountChanged(int value) => OnPropertyChanged(nameof(WordCountDisplay));
+        partial void OnCharCountChanged(int value) => OnPropertyChanged(nameof(CharCountDisplay));
+        partial void OnSelectionLengthChanged(int value) => OnPropertyChanged(nameof(SelectionLengthDisplay));
+        partial void OnLineNumberChanged(int value) => OnPropertyChanged(nameof(LineColDisplay));
+        partial void OnColumnNumberChanged(int value) => OnPropertyChanged(nameof(LineColDisplay));
+        partial void OnZoomLevelChanged(double value) => OnPropertyChanged(nameof(ZoomDisplay));
+        partial void OnEncodingChanged(string value) => OnPropertyChanged(nameof(EncodingDisplay));
+
         public EditorViewModel()
         {
         }

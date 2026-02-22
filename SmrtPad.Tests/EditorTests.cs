@@ -844,6 +844,95 @@ namespace SmrtPad.Tests
             Assert.Equal(0, vm.SelectionLength);
             Assert.Equal("UTF-8", vm.Encoding);
         }
+
+        // ── Display property tests ──
+
+        [Fact]
+        public void WordCountDisplay_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.WordCount = 42;
+            Assert.Contains("42", vm.WordCountDisplay);
+        }
+
+        [Fact]
+        public void CharCountDisplay_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.CharCount = 256;
+            Assert.Contains("256", vm.CharCountDisplay);
+        }
+
+        [Fact]
+        public void SelectionLengthDisplay_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.SelectionLength = 15;
+            Assert.Contains("15", vm.SelectionLengthDisplay);
+        }
+
+        [Fact]
+        public void LineColDisplay_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.LineNumber = 5;
+            vm.ColumnNumber = 10;
+            Assert.Contains("5", vm.LineColDisplay);
+            Assert.Contains("10", vm.LineColDisplay);
+        }
+
+        [Fact]
+        public void ZoomDisplay_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal("100%", vm.ZoomDisplay);
+            vm.ZoomLevel = 150.0;
+            Assert.Equal("150%", vm.ZoomDisplay);
+        }
+
+        [Fact]
+        public void EncodingDisplay_MatchesEncoding()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal("UTF-8", vm.EncodingDisplay);
+            vm.Encoding = "RTF";
+            Assert.Equal("RTF", vm.EncodingDisplay);
+        }
+
+        [Fact]
+        public void DisplayProperties_FirePropertyChanged()
+        {
+            var vm = new EditorViewModel();
+            var changed = new List<string>();
+            vm.PropertyChanged += (s, e) => { if (e.PropertyName != null) changed.Add(e.PropertyName); };
+
+            vm.WordCount = 10;
+            Assert.Contains(nameof(EditorViewModel.WordCountDisplay), changed);
+
+            changed.Clear();
+            vm.CharCount = 20;
+            Assert.Contains(nameof(EditorViewModel.CharCountDisplay), changed);
+
+            changed.Clear();
+            vm.SelectionLength = 5;
+            Assert.Contains(nameof(EditorViewModel.SelectionLengthDisplay), changed);
+
+            changed.Clear();
+            vm.LineNumber = 3;
+            Assert.Contains(nameof(EditorViewModel.LineColDisplay), changed);
+
+            changed.Clear();
+            vm.ColumnNumber = 7;
+            Assert.Contains(nameof(EditorViewModel.LineColDisplay), changed);
+
+            changed.Clear();
+            vm.ZoomLevel = 200;
+            Assert.Contains(nameof(EditorViewModel.ZoomDisplay), changed);
+
+            changed.Clear();
+            vm.Encoding = "RTF";
+            Assert.Contains(nameof(EditorViewModel.EncodingDisplay), changed);
+        }
     }
 
     // ═══ Settings Service Tests ═══

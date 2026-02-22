@@ -206,28 +206,28 @@
 
                     <!-- Row 2: B  I  U  S  x₂  x²  FontColor  Highlight -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
-                        <ToggleButton x:Name="BoldToggle" Click="Bold_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Bold (Ctrl+B)">
+                        <ToggleButton x:Name="BoldToggle" IsChecked="{x:Bind ViewModel.IsBold, Mode=TwoWay}" Click="Bold_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Bold (Ctrl+B)">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DD;" FontSize="16"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="ItalicToggle" Click="Italic_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Italic (Ctrl+I)">
+                        <ToggleButton x:Name="ItalicToggle" IsChecked="{x:Bind ViewModel.IsItalic, Mode=TwoWay}" Click="Italic_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Italic (Ctrl+I)">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DB;" FontSize="16"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="UnderlineToggle" Click="Underline_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Underline (Ctrl+U)">
+                        <ToggleButton x:Name="UnderlineToggle" IsChecked="{x:Bind ViewModel.IsUnderline, Mode=TwoWay}" Click="Underline_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Underline (Ctrl+U)">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DC;" FontSize="16"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="StrikethroughToggle" Click="Strikethrough_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Strikethrough">
+                        <ToggleButton x:Name="StrikethroughToggle" IsChecked="{x:Bind ViewModel.IsStrikethrough, Mode=TwoWay}" Click="Strikethrough_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Strikethrough">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xEDE0;" FontSize="16"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="SubscriptToggle" Click="Subscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Subscript">
+                        <ToggleButton x:Name="SubscriptToggle" IsChecked="{x:Bind ViewModel.IsSubscript, Mode=TwoWay}" Click="Subscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Subscript">
                             <TextBlock FontSize="13" Text="x&#x2082;"/>
                         </ToggleButton>
-                        <ToggleButton x:Name="SuperscriptToggle" Click="Superscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                      Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
+                        <ToggleButton x:Name="SuperscriptToggle" IsChecked="{x:Bind ViewModel.IsSuperscript, Mode=TwoWay}" Click="Superscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
                             <TextBlock FontSize="13" Text="x&#xB2;"/>
                         </ToggleButton>
                         <!-- Font Color with swatch grid -->
@@ -670,20 +670,20 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
-                    <TextBlock x:Name="StatusText" x:Uid="StatusText" Text="Ready" VerticalAlignment="Center" FontSize="11"/>
+                    <TextBlock x:Name="StatusText" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
-                    <TextBlock x:Name="WordCountText" Text="Words: 0" VerticalAlignment="Center" FontSize="11"
+                    <TextBlock x:Name="WordCountText" Text="{x:Bind ViewModel.WordCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock x:Name="CharCountText" Text="Characters: 0" VerticalAlignment="Center" FontSize="11"
+                    <TextBlock x:Name="CharCountText" Text="{x:Bind ViewModel.CharCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock x:Name="SelectionLengthText" Text="Sel: 0" VerticalAlignment="Center" FontSize="11"
+                    <TextBlock x:Name="SelectionLengthText" Text="{x:Bind ViewModel.SelectionLengthDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock x:Name="LineColText" Text="Ln 1, Col 1" VerticalAlignment="Center" FontSize="11"
+                    <TextBlock x:Name="LineColText" Text="{x:Bind ViewModel.LineColDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock x:Name="EncodingText" Text="UTF-8" VerticalAlignment="Center" FontSize="11"
+                    <TextBlock x:Name="EncodingText" Text="{x:Bind ViewModel.EncodingDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock x:Name="ZoomText" Text="100%" VerticalAlignment="Center" FontSize="11"
+                    <TextBlock x:Name="ZoomText" Text="{x:Bind ViewModel.ZoomDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
             </Grid>

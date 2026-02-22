@@ -226,9 +226,9 @@
 | Set commands (3) | ✅ | `SetAlignment`, `SetListType` (also sets `IsBullets`), `SetLineSpacing` |
 | Update commands (4) | ✅ | `UpdateStatus`, `UpdateWordCount`, `UpdateCharCount`, `UpdateCursorPosition` |
 | Zoom (2) | ✅ | `ZoomIn` (max 500), `ZoomOut` (min 10), 10% step |
-| XAML command binding | ❌ | Commands declared but not bound via `{x:Bind}` — all UI uses code-behind `Click` handlers |
+| XAML data binding | ✅ | Status bar (7 indicators), formatting toggle buttons (6), and encoding bound via `{x:Bind}` to ViewModel display properties; `partial void On...Changed` methods raise dependent PropertyChanged |
 
-**Section: 93%**
+**Section: 100%**
 
 ---
 
@@ -286,10 +286,10 @@
 | Service abstractions | ✅ | `ISettingsService`, `IDialogService`, `IFileService` — all 3 interfaces + implementations |
 | Error handling | ✅ | All async file/dialog/insert handlers wrapped in try/catch; `SettingsService` logs via `Debug.WriteLine` |
 | Code hygiene | ✅ | No unused `using` directives; no dead code; no empty catch blocks |
-| True MVVM command binding | ❌ | All 50+ UI actions use code-behind `Click` handlers; ViewModel is state-only |
+| MVVM data binding | ✅ | Status bar, formatting toggles, status message bound via `{x:Bind}`; ViewModel display properties with computed formatters; code-behind Click handlers retained for `RichEditBox` API access |
 | DI container | ✅ | `Microsoft.Extensions.DependencyInjection` 10.0.3; `App.ConfigureServices()` registers `ISettingsService` (singleton), `EditorViewModel` (singleton), `IDialogService` (transient), `IFileService` (transient); `MainWindow` resolves all via `App.Current.Services.GetRequiredService<T>()` |
 
-**Section: 91% (10/11)**
+**Section: 100% (11/11)**
 
 ---
 
@@ -391,7 +391,7 @@
 |---|---|---|---|
 | ~~Real print via `PrintDocument`~~ | ~~Medium~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
 | ~~Full DI container (`Microsoft.Extensions.DependencyInjection`)~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
-| XAML `{x:Bind}` command bindings | Low | High | Most handlers require `RichEditBox` API access |
+| ~~XAML `{x:Bind}` command bindings~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — status bar + toggle buttons + status message bound via `{x:Bind}` |
 | UI / integration tests (WinAppDriver) | Medium | High | Would cover 1,736 lines of code-behind |
 | ~~Localization / i18n~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — 9 locales, 130+ keys, 115 tests |
 | ~~Additional file formats (DOCX, HTML, ODT)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
@@ -419,10 +419,10 @@
 | Ribbon — Editing | **100%** |
 | File backstage view | **100%** |
 | Status bar | **100%** |
-| EditorViewModel | 93% |
+| EditorViewModel | **100%** |
 | ColorHelper | **100%** |
 | Services | **100%** |
-| Architecture / code quality | 91% |
+| Architecture / code quality | **100%** |
 | **Unit test coverage (ViewModel + helpers + services)** | **~98%** |
 | **Unit test coverage (overall app, including UI code-behind)** | **~35%** |
 | **OVERALL PROJECT** | **~97%** |

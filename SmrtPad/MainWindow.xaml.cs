@@ -71,10 +71,6 @@ namespace SmrtPad
                 {
                     Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
                 }
-                else if (e.PropertyName == nameof(ViewModel.StatusMessage))
-                {
-                    StatusText.Text = ViewModel.StatusMessage;
-                }
             };
 
             InitializeFonts();
@@ -279,8 +275,6 @@ namespace SmrtPad
 
             ViewModel.WordCount = wordCount;
             ViewModel.CharCount = charCount;
-            WordCountText.Text = Res.GetFormatted("StatusBarWords", wordCount);
-            CharCountText.Text = Res.GetFormatted("StatusBarCharacters", charCount);
         }
 
         private void UpdateLineColumn()
@@ -299,7 +293,6 @@ namespace SmrtPad
 
             ViewModel.LineNumber = line;
             ViewModel.ColumnNumber = col;
-            LineColText.Text = Res.GetFormatted("StatusBarLineCol", line, col);
         }
 
         private void UpdateSelectionLength()
@@ -309,7 +302,6 @@ namespace SmrtPad
 
             int length = Math.Abs(selection.EndPosition - selection.StartPosition);
             ViewModel.SelectionLength = length;
-            SelectionLengthText.Text = Res.GetFormatted("StatusBarSelection", length);
         }
 
         private void UpdateEncoding(string encoding)
@@ -333,13 +325,7 @@ namespace SmrtPad
 
             ITextCharacterFormat charFormat = selection.CharacterFormat;
 
-            BoldToggle.IsChecked = charFormat.Bold == FormatEffect.On;
-            ItalicToggle.IsChecked = charFormat.Italic == FormatEffect.On;
-            UnderlineToggle.IsChecked = charFormat.Underline != UnderlineType.None;
-            StrikethroughToggle.IsChecked = charFormat.Strikethrough == FormatEffect.On;
-            SubscriptToggle.IsChecked = charFormat.Subscript == FormatEffect.On;
-            SuperscriptToggle.IsChecked = charFormat.Superscript == FormatEffect.On;
-
+            // Update ViewModel properties — toggle buttons sync via {x:Bind} TwoWay
             ViewModel.IsBold = charFormat.Bold == FormatEffect.On;
             ViewModel.IsItalic = charFormat.Italic == FormatEffect.On;
             ViewModel.IsUnderline = charFormat.Underline != UnderlineType.None;
@@ -974,19 +960,11 @@ namespace SmrtPad
             _editorScaleTransform.ScaleY = scale;
 
             // Compute container width so the scaled content fills the viewport.
-            // The ScrollViewer allocates ActualWidth for the column; dividing by scale
-            // makes the content (after transform) exactly fill that width.
             double viewportWidth = EditorScrollViewer.ActualWidth;
             if (viewportWidth > 0)
             {
                 EditorContainer.Width = viewportWidth / scale;
             }
-
-            // In page view the content is centered; in default view it's left-aligned.
-            // After scaling the container to fill viewport/scale, both modes stay correct
-            // because the container itself stretches and internal alignment is preserved.
-
-            ZoomText.Text = $"{ViewModel.ZoomLevel:0}%";
 
             // Redraw rulers at the new scale
             if (_rulersVisible)
