@@ -10,6 +10,7 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!--
       MVVMTK0045: The WinUI XAML build pipeline uses a two-pass compilation where the first pass
       skips source generators (/skipanalyzers+). Partial property [ObservableProperty] declarations

@@ -110,11 +110,13 @@ namespace SmrtPad.Services
             Save();
         }
 
+        private static readonly JsonSerializerOptions s_jsonOpts = new() { WriteIndented = true };
+
         public void Save()
         {
             try
             {
-                var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(_data, s_jsonOpts);
                 File.WriteAllText(_settingsFilePath, json);
             }
             catch (Exception ex)
@@ -152,7 +154,7 @@ namespace SmrtPad.Services
             public string Language { get; set; } = "en-US";
             public string RulerUnits { get; set; } = "in";
             public bool SpellCheckEnabled { get; set; } = true;
-            public List<string> RecentFiles { get; set; } = new();
+            public List<string> RecentFiles { get; set; } = [];
         }
     }
 }

@@ -16,7 +16,7 @@ namespace SmrtPad
         public static Window MainWindow { get; private set; } = null!;
 
         /// <summary>All currently open <see cref="MainWindow"/> instances.</summary>
-        public static System.Collections.Generic.List<MainWindow> Windows { get; } = new();
+        public static System.Collections.Generic.List<MainWindow> Windows { get; } = [];
 
         /// <summary>Opens a new editor window and activates it.</summary>
         public static MainWindow NewWindow()
@@ -31,7 +31,7 @@ namespace SmrtPad
         /// <summary>
         /// Gets the <see cref="IServiceProvider"/> for the application.
         /// </summary>
-        public IServiceProvider Services { get; }
+        public ServiceProvider Services { get; }
 
         /// <summary>
         /// Gets the current <see cref="App"/> instance.
@@ -47,7 +47,7 @@ namespace SmrtPad
             InitializeComponent();
         }
 
-        private static IServiceProvider ConfigureServices()
+        private static ServiceProvider ConfigureServices()
         {
             var services = new ServiceCollection();
 

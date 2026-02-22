@@ -16,11 +16,11 @@ namespace SmrtPad.Helpers
         public static string? GetOneDrivePath()
         {
             string?[] candidates =
-            {
+            [
                 Environment.GetEnvironmentVariable("OneDriveConsumer"),
                 Environment.GetEnvironmentVariable("OneDriveCommercial"),
                 Environment.GetEnvironmentVariable("OneDrive"),
-            };
+            ];
 
             foreach (var path in candidates)
             {

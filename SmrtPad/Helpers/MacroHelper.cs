@@ -51,7 +51,7 @@ namespace SmrtPad.Helpers
     /// </summary>
     public class MacroHelper
     {
-        private readonly List<MacroCommand> _commands = new();
+        private readonly List<MacroCommand> _commands = [];
         private bool _isRecording;
 
         private static readonly JsonSerializerOptions JsonOpts = new()

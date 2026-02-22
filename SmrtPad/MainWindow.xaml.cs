@@ -53,17 +53,18 @@ namespace SmrtPad
         private DispatcherTimer? _autoSaveTimer;
         private PrintDocument? _printDocument;
         private IPrintDocumentSource? _printDocumentSource;
-        private readonly List<UIElement> _printPreviewPages = new();
+        private readonly List<UIElement> _printPreviewPages = [];
         private bool _rulersVisible;
         private bool _pageViewActive;
         private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
         private bool _fontDropdownStyled;
 
         // ?? Tab management ??????????????????????????????????????????????????????
-        private readonly List<DocumentTab> _tabs = new();
+        private readonly List<DocumentTab> _tabs = [];
         private int _activeTabIndex = -1;
         private readonly MacroHelper _macro = new();
 
+        private static readonly char[] s_wordSeparators = [' ', '\r', '\n', '\t'];
         private DocumentTab ActiveTab => _tabs[_activeTabIndex];
         private RichEditBox Editor => ActiveTab.Editor;
         private ScrollViewer EditorScrollViewer => ActiveTab.ScrollViewer;
@@ -397,7 +398,7 @@ namespace SmrtPad
             text = text.TrimEnd('\r');
             int wordCount = string.IsNullOrWhiteSpace(text)
                 ? 0
-                : text.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+                : text.Split(s_wordSeparators, StringSplitOptions.RemoveEmptyEntries).Length;
             int charCount = text.Length;
 
             ViewModel.WordCount = wordCount;
@@ -413,7 +414,7 @@ namespace SmrtPad
             int pos = selection.StartPosition;
             if (pos > fullText.Length) pos = fullText.Length;
 
-            string textBefore = fullText.Substring(0, pos);
+            string textBefore = fullText[..pos];
             int line = 1 + textBefore.Count(c => c == '\r');
             int lastNewLine = textBefore.LastIndexOf('\r');
             int col = (lastNewLine >= 0) ? pos - lastNewLine : pos + 1;
@@ -456,7 +457,7 @@ namespace SmrtPad
             FileBackstage.SetRecentFiles(_settings.RecentFiles);
         }
 
-        private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
+        private void Editor_SelectionChanged(object _sender, RoutedEventArgs _e)
         {
             ITextSelection selection = Editor.Document.Selection;
             if (selection == null) return;
@@ -696,8 +697,8 @@ namespace SmrtPad
                     var picker = new FileSavePicker();
                     InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                     picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                    picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string>() { ".rtf" });
-                    picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string>() { ".txt" });
+                    picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
+                    picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
                     picker.SuggestedFileName = Res.GetString("FileDefaultName");
 
                     StorageFile file = await picker.PickSaveFileAsync();
@@ -742,8 +743,8 @@ namespace SmrtPad
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string>() { ".rtf" });
-                picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string>() { ".txt" });
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
@@ -774,7 +775,7 @@ namespace SmrtPad
             }
         }
 
-        private async void Print_Click(object sender, RoutedEventArgs e)
+        private async void Print_Click(object _sender, RoutedEventArgs _e)
         {
             if (!PrintManager.IsSupported())
             {
@@ -901,7 +902,7 @@ namespace SmrtPad
             printDoc.AddPagesComplete();
         }
 
-        private async void Options_Click(object sender, RoutedEventArgs e)
+        private async void Options_Click(object _sender, RoutedEventArgs _e)
         {
             var panel = new StackPanel { Spacing = 12, MinWidth = 350 };
 
@@ -1017,14 +1018,14 @@ namespace SmrtPad
 
         // ── Export to PDF ────────────────────────────────────────────────────────
 
-        private async void ExportPdf_Click(object sender, RoutedEventArgs e)
+        private async void ExportPdf_Click(object _sender, RoutedEventArgs _e)
         {
             try
             {
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add(Res.GetString("FileTypePdf"), new List<string> { ".pdf" });
+                picker.FileTypeChoices.Add(Res.GetString("FileTypePdf"), [".pdf"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
@@ -1037,7 +1038,7 @@ namespace SmrtPad
                 using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
                 using (var writer = stream.AsStreamForWrite())
                 {
-                    await writer.WriteAsync(pdf, 0, pdf.Length);
+                    await writer.WriteAsync(pdf.AsMemory());
                     await writer.FlushAsync();
                     stream.Size = (ulong)pdf.Length;
                 }
@@ -1052,14 +1053,14 @@ namespace SmrtPad
 
         // ── Export to DOCX ───────────────────────────────────────────────────────
 
-        private async void ExportDocx_Click(object sender, RoutedEventArgs e)
+        private async void ExportDocx_Click(object _sender, RoutedEventArgs _e)
         {
             try
             {
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), new List<string> { ".docx" });
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), [".docx"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
@@ -1072,7 +1073,7 @@ namespace SmrtPad
                 using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
                 using (var writer = stream.AsStreamForWrite())
                 {
-                    await writer.WriteAsync(docx, 0, docx.Length);
+                    await writer.WriteAsync(docx.AsMemory());
                     await writer.FlushAsync();
                     stream.Size = (ulong)docx.Length;
                 }
@@ -1087,7 +1088,7 @@ namespace SmrtPad
 
         // ── Save to OneDrive ─────────────────────────────────────────────────────
 
-        private async void SaveToOneDrive_Click(object sender, RoutedEventArgs e)
+        private async void SaveToOneDrive_Click(object _sender, RoutedEventArgs _e)
         {
             try
             {
@@ -1102,8 +1103,8 @@ namespace SmrtPad
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string> { ".rtf" });
-                picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string> { ".txt" });
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
@@ -1134,7 +1135,7 @@ namespace SmrtPad
 
         // ── Macro recording & playback ───────────────────────────────────────────
 
-        private void MacroRecord_Click(object sender, RoutedEventArgs e)
+        private void MacroRecord_Click(object _sender, RoutedEventArgs _e)
         {
             _macro.StartRecording();
             MacroRecordItem.Text = Res.GetString("MacroRecord");
@@ -1143,7 +1144,7 @@ namespace SmrtPad
             ViewModel.UpdateStatus(Res.GetString("StatusMacroRecording"));
         }
 
-        private void MacroStop_Click(object sender, RoutedEventArgs e)
+        private void MacroStop_Click(object _sender, RoutedEventArgs _e)
         {
             _macro.StopRecording();
             MacroStopItem.IsEnabled = false;
@@ -1234,7 +1235,7 @@ namespace SmrtPad
                 var picker = new FileSavePicker();
                 InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeChoices.Add(Res.GetString("MacroFilter"), new List<string> { ".smacro" });
+                picker.FileTypeChoices.Add(Res.GetString("MacroFilter"), [".smacro"]);
                 picker.SuggestedFileName = "macro";
 
                 StorageFile file = await picker.PickSaveFileAsync();
@@ -1388,12 +1389,12 @@ namespace SmrtPad
             _macro.Record(MacroCommandType.Superscript);
         }
 
-        private void NewWindow_Click(object sender, RoutedEventArgs e)
+        private void NewWindow_Click(object _sender, RoutedEventArgs _e)
         {
             App.NewWindow();
         }
 
-        private async void Exit_Click(object sender, RoutedEventArgs e)
+        private async void Exit_Click(object _sender, RoutedEventArgs _e)
         {
             if (!await PromptSaveChangesAsync())
                 return;
@@ -1686,10 +1687,8 @@ namespace SmrtPad
             StorageFile file = await picker.PickSingleFileAsync();
             if (file != null)
             {
-                using (var randAccStream = await file.OpenAsync(FileAccessMode.Read))
-                {
-                    Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, randAccStream);
-                }
+                using var randAccStream = await file.OpenAsync(FileAccessMode.Read);
+                Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, randAccStream);
             }
         }
 
@@ -1716,9 +1715,9 @@ namespace SmrtPad
             {
                 ItemsSource = formats,
                 SelectionMode = ListViewSelectionMode.Single,
-                Height = 250
+                Height = 250,
+                SelectedIndex = 0
             };
-            listBox.SelectedIndex = 0;
 
             var dialog = new ContentDialog
             {
@@ -1940,7 +1939,7 @@ namespace SmrtPad
                 {
                     var regex = new Regex(textToFind, GetRegexOptions());
                     string text = GetFullDocumentText();
-                    int count = regex.Matches(text).Count;
+                    int count = regex.Count(text);
                     string replaced = regex.Replace(text, replaceWith);
                     Editor.Document.SetText(TextSetOptions.None, replaced);
                     ViewModel.UpdateStatus(Res.GetFormatted("StatusReplaced", count));
@@ -2567,7 +2566,7 @@ namespace SmrtPad
             var alignmentCombo = new ComboBox
             {
                 Header = Res.GetString("TabStopAlignment"),
-                ItemsSource = new[] { Res.GetString("TabAlignLeft"), Res.GetString("TabAlignCenter"), Res.GetString("TabAlignRight"), Res.GetString("TabAlignDecimal") },
+                ItemsSource = new string[] { Res.GetString("TabAlignLeft"), Res.GetString("TabAlignCenter"), Res.GetString("TabAlignRight"), Res.GetString("TabAlignDecimal") },
                 SelectedIndex = 0,
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
@@ -2575,7 +2574,7 @@ namespace SmrtPad
             var leaderCombo = new ComboBox
             {
                 Header = Res.GetString("TabStopLeader"),
-                ItemsSource = new[] { Res.GetString("TabLeaderNone"), Res.GetString("TabLeaderDots"), Res.GetString("TabLeaderDashes"), Res.GetString("TabLeaderLines") },
+                ItemsSource = new string[] { Res.GetString("TabLeaderNone"), Res.GetString("TabLeaderDots"), Res.GetString("TabLeaderDashes"), Res.GetString("TabLeaderLines") },
                 SelectedIndex = 0,
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };

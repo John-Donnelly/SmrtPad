@@ -27,7 +27,7 @@ namespace SmrtPad.Helpers
         /// <summary>Generates a PDF byte array from plain text content.</summary>
         public static byte[] GeneratePdf(string text, double fontSize = DefaultFontSize)
         {
-            if (text == null) throw new ArgumentNullException(nameof(text));
+            ArgumentNullException.ThrowIfNull(text);
 
             double lineHeight = fontSize * LineHeightFactor;
             int linesPerPage = Math.Max(1, (int)(ContentHeight / lineHeight));
@@ -39,13 +39,13 @@ namespace SmrtPad.Helpers
             var displayLines = BuildDisplayLines(text, charsPerLine);
 
             // Partition display lines into pages
-            var pages = new List<List<string>>();
+            List<List<string>> pages = [];
             for (int i = 0; i < displayLines.Count; i += linesPerPage)
             {
                 int count = Math.Min(linesPerPage, displayLines.Count - i);
                 pages.Add(displayLines.GetRange(i, count));
             }
-            if (pages.Count == 0) pages.Add(new List<string>());
+            if (pages.Count == 0) pages.Add([]);
 
             // ── Build PDF object table ──────────────────────────────────────────
             // Objects:

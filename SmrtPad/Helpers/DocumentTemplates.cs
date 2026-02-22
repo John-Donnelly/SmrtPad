@@ -8,8 +8,8 @@ namespace SmrtPad.Helpers;
 /// </summary>
 public static class DocumentTemplates
 {
-    public static IReadOnlyList<DocumentTemplate> All { get; } = new[]
-    {
+    public static IReadOnlyList<DocumentTemplate> All { get; } =
+    [
         new DocumentTemplate(
             Key:         "blank",
             DisplayName: "Blank Document",
@@ -145,5 +145,5 @@ public static class DocumentTemplates
                 "NEXT MEETING\n" +
                 "\n" +
                 "Date: [Date]   Time: [Time]   Location: [Location]"),
-    };
+    ];
 }

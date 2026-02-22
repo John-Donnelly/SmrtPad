@@ -23,7 +23,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler<string>? RecentFileRequested;
     public event EventHandler<DocumentTemplate>? TemplateRequested;
 
-    private bool _suppressSelectionEvent = true;
+    private readonly bool _suppressSelectionEvent = true;
 
     public FileBackstageView()
     {

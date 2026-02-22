@@ -31,7 +31,7 @@ namespace SmrtPad.Helpers
         /// <summary>Plain text → .docx (backwards-compatible). Each line break becomes a paragraph.</summary>
         public static byte[] GenerateDocx(string plainText)
         {
-            if (plainText == null) throw new ArgumentNullException(nameof(plainText));
+            ArgumentNullException.ThrowIfNull(plainText);
 
             using var ms = new MemoryStream();
             using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
@@ -50,7 +50,7 @@ namespace SmrtPad.Helpers
         /// </summary>
         public static byte[] GenerateRichDocx(string rtfContent)
         {
-            if (rtfContent == null) throw new ArgumentNullException(nameof(rtfContent));
+            ArgumentNullException.ThrowIfNull(rtfContent);
             var paragraphs = RtfParser.Parse(rtfContent);
 
             using var ms = new MemoryStream();
@@ -164,7 +164,7 @@ namespace SmrtPad.Helpers
                 .TrimEnd('\n');
 
             string[] paragraphs = normalized.Length == 0
-                ? new[] { string.Empty }
+                ? [string.Empty]
                 : normalized.Split('\n');
 
             var body = new XElement(W + "body");
@@ -204,7 +204,7 @@ namespace SmrtPad.Helpers
 
     internal sealed class RtfParagraph
     {
-        public List<RtfRun> Runs  { get; } = new();
+        public List<RtfRun> Runs  { get; } = [];
         public string Alignment   { get; set; } = "left";
     }
 
@@ -212,18 +212,29 @@ namespace SmrtPad.Helpers
     /// Minimal RTF 1.9 parser: extracts bold/italic/underline/strikethrough/font/
     /// font-size/alignment and paragraph breaks from a well-formed RTF string.
     /// </summary>
-    internal static class RtfParser
+    internal static partial class RtfParser
     {
+        [GeneratedRegex(@"\{\\fonttbl[^}]*(\{[^}]*\})*[^}]*\}")]
+        private static partial Regex FontTblRemoveRegex();
+        [GeneratedRegex(@"\{\\colortbl[^}]*\}")]
+        private static partial Regex ColorTblRemoveRegex();
+        [GeneratedRegex(@"\{\\fonttbl(.+?)\}", RegexOptions.Singleline)]
+        private static partial Regex FontTblMatchRegex();
+        [GeneratedRegex(@"\{\\f(\d+)[^;]*;\s*([^}]+)\}")]
+        private static partial Regex FontEntryRegex();
+        [GeneratedRegex(@"\\[a-z]+\d*\s?")]
+        private static partial Regex FontNameCleanRegex();
+
         public static List<RtfParagraph> Parse(string rtf)
         {
-            var result = new List<RtfParagraph>();
+            List<RtfParagraph> result = [];
             if (string.IsNullOrEmpty(rtf)) return result;
 
             var fonts = ParseFontTable(rtf);
 
             // Remove the font/colour tables so their text doesn't become runs
-            string body = Regex.Replace(rtf, @"\{\\fonttbl[^}]*(\{[^}]*\})*[^}]*\}", "");
-            body = Regex.Replace(body, @"\{\\colortbl[^}]*\}", "");
+            string body = FontTblRemoveRegex().Replace(rtf, "");
+            body = ColorTblRemoveRegex().Replace(body, "");
 
             var cur   = new RtfParagraph(); result.Add(cur);
             bool bold = false, italic = false, ul = false, strike = false;
@@ -247,7 +258,7 @@ namespace SmrtPad.Helpers
                         if (body[i + 2] == '*') { i = SkipGroup(body, i); continue; }
                         int look = i + 2;
                         while (look < body.Length && char.IsLetter(body[look])) look++;
-                        string gw = body.Substring(i + 2, look - i - 2);
+                        var gw = body.AsSpan(i + 2, look - i - 2);
                         if (gw is "pict" or "object" or "header" or "footer"
                                  or "info" or "stylesheet" or "listtext"
                                  or "listtable" or "listoverridetable")
@@ -282,18 +293,18 @@ namespace SmrtPad.Helpers
                     else { i++; }
                     continue;
                 }
-                if ("*~-_|:!;".IndexOf(nx) >= 0) { i++; continue; }
+                if ("*~-_|:!;".Contains(nx)) { i++; continue; }
 
                 int ws = i;
                 while (i < body.Length && char.IsLetter(body[i])) i++;
-                string word = body.Substring(ws, i - ws);
+                string word = body[ws..i];
 
                 int param = int.MinValue;
                 if (i < body.Length && (body[i] == '-' || char.IsDigit(body[i])))
                 {
                     int ns = i; if (body[i] == '-') i++;
                     while (i < body.Length && char.IsDigit(body[i])) i++;
-                    int.TryParse(body.Substring(ns, i - ns), out param);
+                    if (!int.TryParse(body.AsSpan(ns, i - ns), out param)) param = int.MinValue;
                 }
                 if (i < body.Length && body[i] == ' ') i++;
 
@@ -320,7 +331,7 @@ namespace SmrtPad.Helpers
             // Trim empty paragraphs introduced by RTF header/footer noise
             while (result.Count > 1 && result[0].Runs.Count == 0)
                 result.RemoveAt(0);
-            while (result.Count > 1 && result[result.Count - 1].Runs.Count == 0)
+            while (result.Count > 1 && result[^1].Runs.Count == 0)
                 result.RemoveAt(result.Count - 1);
             if (result.Count == 0) result.Add(new RtfParagraph());
 
@@ -334,11 +345,11 @@ namespace SmrtPad.Helpers
             var    runs = para.Runs;
             if (runs.Count > 0)
             {
-                var last = runs[runs.Count - 1];
+                var last = runs[^1];
                 if (last.Bold == bold && last.Italic == italic && last.Underline == ul &&
                     last.Strikethrough == strike && last.FontName == fn &&
                     last.FontSizeHalfPts == fshp)
-                { runs[runs.Count - 1] = last with { Text = last.Text + ch }; return; }
+                { runs[^1] = last with { Text = last.Text + ch }; return; }
             }
             runs.Add(new RtfRun(ch.ToString(), bold, italic, ul, strike, fn, fshp));
         }
@@ -346,12 +357,12 @@ namespace SmrtPad.Helpers
         private static Dictionary<int, string> ParseFontTable(string rtf)
         {
             var d = new Dictionary<int, string>();
-            var m = Regex.Match(rtf, @"\{\\fonttbl(.+?)\}", RegexOptions.Singleline);
+            var m = FontTblMatchRegex().Match(rtf);
             if (!m.Success) return d;
-            foreach (Match e in Regex.Matches(m.Value, @"\{\\f(\d+)[^;]*;\s*([^}]+)\}"))
+            foreach (Match e in FontEntryRegex().Matches(m.Value))
                 if (int.TryParse(e.Groups[1].Value, out int idx))
                 {
-                    string name = Regex.Replace(e.Groups[2].Value, @"\\[a-z]+\d*\s?", "").Trim();
+                    string name = FontNameCleanRegex().Replace(e.Groups[2].Value, "").Trim();
                     if (name.Length > 0) d[idx] = name;
                 }
             return d;
