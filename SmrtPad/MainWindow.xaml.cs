@@ -31,6 +31,7 @@ using Microsoft.UI.Text;
 using Windows.UI;
 using WinRT.Interop;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
 using SmrtPad.Helpers;
 using SmrtPad.Models;
 using SmrtPad.ViewModels;
@@ -115,6 +116,7 @@ namespace SmrtPad
 
             // Intercept the window close button (X) to prompt for unsaved changes
             AppWindow.Closing += AppWindow_Closing;
+            AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "SmrtPad.ico"));
         }
 
         private async void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
@@ -2262,6 +2264,22 @@ namespace SmrtPad
 
         private async void PaintDrawing_Click(object sender, RoutedEventArgs e)
         {
+            if (!IsSmrtDoodleInstalled())
+            {
+                var notInstalledDialog = new ContentDialog
+                {
+                    Title = Res.GetString("SmrtDoodleNotFound"),
+                    Content = Res.GetString("SmrtDoodleNotFoundMessage"),
+                    PrimaryButtonText = Res.GetString("SmrtDoodleGetFromStore"),
+                    CloseButtonText = Res.GetString("DlgOK"),
+                    XamlRoot = Content.XamlRoot
+                };
+                var notInstalledResult = await notInstalledDialog.ShowAsync();
+                if (notInstalledResult == ContentDialogResult.Primary)
+                    await Launcher.LaunchUriAsync(new Uri("ms-windows-store://search/?query=SmrtDoodle"));
+                return;
+            }
+
             string tempDir = Path.Combine(Path.GetTempPath(), "SmrtPad");
             Directory.CreateDirectory(tempDir);
             string tempFile = Path.Combine(tempDir, $"drawing_{DateTime.Now:yyyyMMdd_HHmmss}.png");
@@ -2291,7 +2309,7 @@ namespace SmrtPad
             }
             catch (System.ComponentModel.Win32Exception)
             {
-                await ShowBuiltInDrawingDialogAsync(tempFile);
+                ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
             }
             finally
             {
@@ -2299,151 +2317,16 @@ namespace SmrtPad
             }
         }
 
-        private async Task ShowBuiltInDrawingDialogAsync(string tempFile)
+        private static bool IsSmrtDoodleInstalled()
         {
-            var drawingCanvas = new Canvas
-            {
-                Width = 600,
-                Height = 400,
-                Background = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))
-            };
+            var windowsAppsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Microsoft", "WindowsApps", "SmrtDoodle.exe");
+            if (File.Exists(windowsAppsPath)) return true;
 
-            Microsoft.UI.Xaml.Shapes.Polyline? currentStroke = null;
-            var strokeBrush = new SolidColorBrush(Color.FromArgb(255, 0, 0, 0));
-            double strokeThickness = 2.0;
-
-            // Stroke color selector
-            var colorPicker = new ColorPicker
-            {
-                Color = Color.FromArgb(255, 0, 0, 0),
-                IsAlphaEnabled = false,
-                IsMoreButtonVisible = false
-            };
-            colorPicker.ColorChanged += (s, args) =>
-            {
-                strokeBrush = new SolidColorBrush(args.NewColor);
-            };
-
-            // Stroke thickness selector
-            var thicknessSlider = new Slider
-            {
-                Minimum = 1,
-                Maximum = 10,
-                Value = 2,
-                Width = 120,
-                Header = Res.GetString("DrawingStrokeWidth")
-            };
-            thicknessSlider.ValueChanged += (s, args) =>
-            {
-                strokeThickness = args.NewValue;
-            };
-
-            // Clear button
-            var clearButton = new Button { Content = Res.GetString("DrawingClear") };
-            clearButton.Click += (s, args) => drawingCanvas.Children.Clear();
-
-            drawingCanvas.PointerPressed += (s, args) =>
-            {
-                var pt = args.GetCurrentPoint(drawingCanvas).Position;
-                currentStroke = new Microsoft.UI.Xaml.Shapes.Polyline
-                {
-                    Stroke = strokeBrush,
-                    StrokeThickness = strokeThickness,
-                    StrokeLineJoin = PenLineJoin.Round,
-                    StrokeStartLineCap = PenLineCap.Round,
-                    StrokeEndLineCap = PenLineCap.Round
-                };
-                currentStroke.Points.Add(pt);
-                drawingCanvas.Children.Add(currentStroke);
-                args.Handled = true;
-            };
-
-            drawingCanvas.PointerMoved += (s, args) =>
-            {
-                if (currentStroke != null && args.GetCurrentPoint(drawingCanvas).Properties.IsLeftButtonPressed)
-                {
-                    currentStroke.Points.Add(args.GetCurrentPoint(drawingCanvas).Position);
-                    args.Handled = true;
-                }
-            };
-
-            drawingCanvas.PointerReleased += (s, args) =>
-            {
-                currentStroke = null;
-                args.Handled = true;
-            };
-
-            // Toolbar
-            var toolbar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 0, 0, 8) };
-            toolbar.Children.Add(thicknessSlider);
-            toolbar.Children.Add(clearButton);
-
-            // Color picker in expander
-            var colorExpander = new Expander
-            {
-                Header = Res.GetString("DrawingColor"),
-                Content = colorPicker,
-                IsExpanded = false,
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-
-            var canvasBorder = new Border
-            {
-                BorderBrush = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)),
-                BorderThickness = new Thickness(1),
-                Child = drawingCanvas,
-                CornerRadius = new CornerRadius(4)
-            };
-
-            var layout = new StackPanel { Spacing = 8 };
-            layout.Children.Add(toolbar);
-            layout.Children.Add(canvasBorder);
-            layout.Children.Add(colorExpander);
-
-            var dialog = new ContentDialog
-            {
-                Title = Res.GetString("DrawingTitle"),
-                Content = layout,
-                PrimaryButtonText = Res.GetString("DrawingInsert"),
-                CloseButtonText = Res.GetString("ButtonCancel"),
-                XamlRoot = Content.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary && drawingCanvas.Children.Count > 0)
-            {
-                var renderTarget = new RenderTargetBitmap();
-                await renderTarget.RenderAsync(drawingCanvas);
-                var pixelBuffer = await renderTarget.GetPixelsAsync();
-
-                var file = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(
-                    System.IO.Path.GetFileName(tempFile),
-                    CreationCollisionOption.ReplaceExisting);
-
-                using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                {
-                    var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                    encoder.SetPixelData(
-                        BitmapPixelFormat.Bgra8,
-                        BitmapAlphaMode.Premultiplied,
-                        (uint)renderTarget.PixelWidth,
-                        (uint)renderTarget.PixelHeight,
-                        96, 96,
-                        pixelBuffer.ToArray());
-                    await encoder.FlushAsync();
-                }
-
-                using (var readStream = await file.OpenAsync(FileAccessMode.Read))
-                {
-                    Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, readStream);
-                }
-                ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
-            }
-            else
-            {
-                ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
-            }
+            var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? [];
+            return pathDirs.Any(dir => !string.IsNullOrWhiteSpace(dir) &&
+                File.Exists(Path.Combine(dir.Trim(), "SmrtDoodle.exe")));
         }
 
         private async void InsertObject_Click(object sender, RoutedEventArgs e)

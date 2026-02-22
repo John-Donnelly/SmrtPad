@@ -492,7 +492,10 @@
     <value>SmrtDoodle Not Found</value>
   </data>
   <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
-    <value>SmrtDoodle is not installed or could not be found in the system PATH. Please install SmrtDoodle to use the Paint Drawing feature.</value>
+    <value>SmrtDoodle is not installed. Please install it from the Microsoft Store to use the Create A Drawing feature.</value>
+  </data>
+  <data name="SmrtDoodleGetFromStore" xml:space="preserve">
+    <value>Get from Store</value>
   </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>Insert Hyperlink</value>

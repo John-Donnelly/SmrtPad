@@ -518,10 +518,13 @@
                             </StackPanel>
                         </Button>
                         <!-- SmrtDoodle -->
-                        <Button Grid.Column="1" Click="PaintDrawing_Click" Width="72" Height="48" Padding="2" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="SmrtDoodle – Paint Drawing"
+                        <Button Grid.Column="1" Click="PaintDrawing_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="SmrtDoodle - Create A Drawing"
                                 VerticalAlignment="Top">
-                            <Image Source="{ThemeResource SmrtDoodleSource}" Height="44" Stretch="Uniform"/>
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <Image Source="{ThemeResource SmrtDoodleSource}" Height="22" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                <TextBlock Text="SmrtDoodle" FontSize="9" HorizontalAlignment="Center"/>
+                            </StackPanel>
                         </Button>
                         <!-- Insert object -->
                         <Button Grid.Column="2" Click="InsertObject_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
