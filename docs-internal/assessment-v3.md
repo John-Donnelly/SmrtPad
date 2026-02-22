@@ -15,8 +15,8 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **3,937** (2,423 C# app · 673 XAML · 841 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **265** (all passing) |
-| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 26 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 11 · `LocalizationTests` 160) |
+| Unit tests | **305** (all passing) |
+| Test classes | 9 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 33 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 11 · `LocalizationTests` 170 · `ViewModelDisplayPropertyTests` 8 · `SettingsServiceEdgeCaseTests` 6 · `ViewModelCommandScenarioTests` 9) |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | UI / integration tests | 0 |
 | NuGet packages (app) | 6 — CommunityToolkit.Mvvm 8.4, Microsoft.Extensions.DependencyInjection 10.0.3, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
@@ -295,16 +295,19 @@
 
 ## 16. Testing
 
-### Test Summary: **265 tests · 265 passed · 0 failed · 0 skipped**
+### Test Summary: **305 tests · 305 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
 | `EditorTests` | 45 | All ViewModel commands, property changes, state reset, zoom clamping, list types, line spacing, alignment, formatting toggles |
 | `ParseHexColorTests` | 14 | 6-digit, 8-digit, without `#`, 7 swatch values, null/empty/bad-length/bad-char/hash-only error cases |
-| `EditorViewModelNewPropertiesTests` | 26 | WordCount, CharCount, LineNumber, ColumnNumber, ParagraphSpacing, FindMatchCase, FindWholeWord, FindUseRegex, RecentFiles, SelectionLength, Encoding — property changes, cursor update, paragraph spacing, NewDocument reset |
+| `EditorViewModelNewPropertiesTests` | 33 | WordCount, CharCount, LineNumber, ColumnNumber, ParagraphSpacing, FindMatchCase, FindWholeWord, FindUseRegex, RecentFiles, SelectionLength, Encoding, display property formatting and PropertyChanged |
 | `SettingsServiceTests` | 9 | Default values, AddRecentFile ordering/dedup/cap/null-guard, ClearRecentFiles, property round-trip (all isolated via temp directory) |
+| `SettingsServiceEdgeCaseTests` | 6 | Corrupt JSON recovery, empty file, missing file, full property round-trip, partial JSON merge, auto-save on AddRecentFile/ClearRecentFiles |
 | `ServiceAbstractionTests` | 11 | `SavePromptResult` enum values, `IDialogService`/`IFileService`/`ISettingsService` interface members, `DialogService`/`FileService`/`SettingsService` implementation verification, DI container registration/resolution/singleton tests |
-| `LocalizationTests` | 160 | Key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, paragraph style keys, doc properties keys, satellite locale coverage |
+| `ViewModelDisplayPropertyTests` | 8 | Default display values (WordCount/CharCount/SelectionLength/LineCol/Zoom/Encoding), NewDocument reset, source-to-display sync |
+| `ViewModelCommandScenarioTests` | 9 | Toggle-twice idempotency, Sub↔Super mutual exclusion, zoom boundary clamping, zoom roundtrip, ListType→IsBullets, empty/short array guards, combined NewDocument+modify scenario, multi-property event firing |
+| `LocalizationTests` | 170 | Key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, paragraph style keys, doc properties keys, drawing keys, satellite locale coverage |
 
 ### Coverage Gaps
 
@@ -369,7 +372,10 @@
 | Tab stop configuration | `0ac6347` | `ContentDialog` with `NumberBox` (position in inches), `ComboBox` for alignment and leader; `AddTab`/`ClearAllTabs` on `ITextParagraphFormat`; current stops listed in `ListBox`; 17 localized resource keys across 9 locales |
 | Paragraph styles | `c8c1adb` | Styles dropdown with Normal, Heading 1/2/3, Subtitle, Quote; `ApplyParagraphStyle` helper sets font, size, bold/italic, alignment, space before/after; 7 localized resource keys across 9 locales |
 | Backstage document properties | `c1489fa` | `SetDocumentProperties` populates file name, word count, char count, encoding, modified status; document properties panel shown on New/Save/SaveAs/Print; 8 localized resource keys across 9 locales |
-| DI container | `(pending)` | `Microsoft.Extensions.DependencyInjection` 10.0.3; `App.ConfigureServices()` registers all services; `MainWindow` resolves via `GetRequiredService<T>()`; parameterless constructors added to `DialogService`/`FileService` for DI; 4 new tests |
+| DI container | `1641787` | `Microsoft.Extensions.DependencyInjection` 10.0.3; `App.ConfigureServices()` registers all services; `MainWindow` resolves via `GetRequiredService<T>()`; parameterless constructors added to `DialogService`/`FileService` for DI; 4 new tests |
+| XAML `{x:Bind}` data bindings | `c4850ed` | Status bar (7 indicators), formatting toggle buttons (6) bound via `{x:Bind}`; ViewModel display properties with computed formatters (`WordCountDisplay`, `CharCountDisplay`, `LineColDisplay`, `ZoomDisplay`, `EncodingDisplay`, `SelectionLengthDisplay`); `partial void On...Changed` methods; simplified code-behind; 7 new tests |
+| Built-in drawing dialog | `cf42b09` | Canvas-based freehand drawing with `Polyline` shapes, `ColorPicker`, stroke width `Slider`, Clear button; `RenderTargetBitmap` → PNG export → inserts image; falls back from SmrtDoodle.exe; 5 localization keys across 9 locales |
+| Expanded test coverage | `(pending)` | 3 new test classes: `ViewModelDisplayPropertyTests` (8), `SettingsServiceEdgeCaseTests` (6), `ViewModelCommandScenarioTests` (9); covers corrupt/empty/partial JSON, display property defaults/resets, toggle idempotency, zoom boundaries, mutual exclusion |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -381,7 +387,8 @@
 | After Section 4 + Options work | 219 (+8 tests) |
 | After ruler/page view overhaul | 223 (+4 tests) |
 | After font color shortcut + regex + tab stops | 246 (+23 tests) |
-| After paragraph styles + backstage + DI container | **265** (+19 tests) |
+| After paragraph styles + backstage + DI container | 265 (+19 tests) |
+| After {x:Bind} + drawing dialog + expanded tests | **305** (+40 tests) |
 
 ---
 
@@ -392,7 +399,7 @@
 | ~~Real print via `PrintDocument`~~ | ~~Medium~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
 | ~~Full DI container (`Microsoft.Extensions.DependencyInjection`)~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
 | ~~XAML `{x:Bind}` command bindings~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — status bar + toggle buttons + status message bound via `{x:Bind}` |
-| UI / integration tests (WinAppDriver) | Medium | High | Would cover 1,736 lines of code-behind |
+| UI / integration tests (WinAppDriver) | Low | High | Would cover remaining 1,736 lines of code-behind; all testable ViewModel + service + helper code now covered by 305 tests |
 | ~~Localization / i18n~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — 9 locales, 130+ keys, 115 tests |
 | ~~Additional file formats (DOCX, HTML, ODT)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
 | ~~Ruler / page view mode~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `9e91077` |
@@ -423,8 +430,8 @@
 | ColorHelper | **100%** |
 | Services | **100%** |
 | Architecture / code quality | **100%** |
-| **Unit test coverage (ViewModel + helpers + services)** | **~98%** |
-| **Unit test coverage (overall app, including UI code-behind)** | **~35%** |
+| **Unit test coverage (ViewModel + helpers + services)** | **~99%** |
+| **Unit test coverage (overall app, including UI code-behind)** | **~40%** |
 | **OVERALL PROJECT** | **~99%** |
 
 ---
@@ -470,12 +477,15 @@
 
 ---
 
-## Appendix B — Commit History (25 commits ahead of origin)
+## Appendix B — Commit History (29 commits ahead of origin)
 
 ```
-(pending) feat: add DI container with Microsoft.Extensions.DependencyInjection
-c1489fa feat: add backstage document properties panel with file info, word/char count, encoding, modified status across 9 locales
-c8c1adb feat: add paragraph styles (Normal, Heading 1/2/3, Subtitle, Quote) with localized labels across 9 locales
+(pending) test: expand test coverage with 3 new test classes (display properties, edge cases, command scenarios)
+cf42b09 feat: add built-in Canvas drawing dialog as fallback when SmrtDoodle not found
+c4850ed feat: add {x:Bind} data bindings for status bar, formatting toggles, and display properties
+1641787 feat: add DI container with Microsoft.Extensions.DependencyInjection
+c1489fa feat: add backstage document properties panel
+c8c1adb feat: add paragraph styles (Normal, Heading 1/2/3, Subtitle, Quote)
 0ac6347 feat: add tab stop configuration dialog with alignment and leader options, localized across 9 locales
 c2e797e feat: add regex support to Find and Replace with localized labels across 9 locales
 6497185 feat: add font color keyboard shortcut (Ctrl+Shift+C) to apply last-used color
