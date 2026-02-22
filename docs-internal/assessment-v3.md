@@ -15,8 +15,8 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **3,937** (2,423 C# app · 673 XAML · 841 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **381** (all passing) |
-| Test classes | 18 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 33 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 11 · `LocalizationTests` 170 · `ViewModelDisplayPropertyTests` 8 · `SettingsServiceEdgeCaseTests` 6 · `ViewModelCommandScenarioTests` 9 · `ViewModelWorkflowTests` 7 · `DIContainerIntegrationTests` 8 · `ArchiveExtractionTests` 5 · `SettingsViewModelIntegrationTests` 6 · `ResourceHelperIntegrationTests` 7 · `ViewModelPropertyTrackingTests` 4 · `ColorHelperExhaustiveTests` 23 · `BackstageEventContractTests` 4 · `RelayCommandTests` 5) |
+| Unit tests | **418** (all passing) |
+| Test classes | 24 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 33 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 11 · `LocalizationTests` 170 · `ViewModelDisplayPropertyTests` 8 · `SettingsServiceEdgeCaseTests` 6 · `ViewModelCommandScenarioTests` 9 · `ViewModelWorkflowTests` 7 · `DIContainerIntegrationTests` 8 · `ArchiveExtractionTests` 5 · `SettingsViewModelIntegrationTests` 6 · `ResourceHelperIntegrationTests` 7 · `ViewModelPropertyTrackingTests` 4 · `ColorHelperExhaustiveTests` 23 · `BackstageEventContractTests` 4 · `RelayCommandTests` 5 · `RtfTableGenerationTests` 7 · `ViewModelDefaultContractTests` 4 · `AppConfigureServiceParityTests` 2 · `SettingsServiceConcurrencyTests` 4 · `LocalizationDrawingKeySatelliteTests` 16 · `MainWindowContractTests` 3) |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | UI / integration tests | 0 |
 | NuGet packages (app) | 6 — CommunityToolkit.Mvvm 8.4, Microsoft.Extensions.DependencyInjection 10.0.3, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
@@ -295,7 +295,7 @@
 
 ## 16. Testing
 
-### Test Summary: **381 tests · 381 passed · 0 failed · 0 skipped**
+### Test Summary: **418 tests · 418 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
@@ -317,6 +317,12 @@
 | `ColorHelperExhaustiveTests` | 23 | 7 standard colors, 3 alpha colors, 3 without-hash, null/empty, 7 invalid lengths, 3 invalid chars, case insensitivity |
 | `BackstageEventContractTests` | 4 | 8 events exist with correct types, `SetDocumentProperties` signature (5 params), `SetRecentFiles` signature |
 | `RelayCommandTests` | 5 | 19 generated commands exist, CanExecute returns true, command execution changes state, parameterised commands |
+| `RtfTableGenerationTests` | 7 | 1×1 structure, 3×3 row count, 2×4 cell positions, border control words, various sizes (1×1 to 50×20) with cell count validation |
+| `ViewModelDefaultContractTests` | 4 | Exhaustive verification of all 29 property defaults, all 6 display defaults, full NewDocument→defaults restoration, observable field count ≥29 |
+| `AppConfigureServiceParityTests` | 2 | DI registration types match `App.ConfigureServices()`, singleton/transient lifetimes verified |
+| `SettingsServiceConcurrencyTests` | 4 | Rapid 20-file add (caps at 10), rapid save/load cycles, multiple instance last-write-wins, JSON validity after save |
+| `LocalizationDrawingKeySatelliteTests` | 16 | All 5 drawing keys exist in each of 8 satellite locales, translation verification (not identical to en-US) |
+| `MainWindowContractTests` | 3 | `ViewModel` property type, 42 expected Click handlers exist, `OpenFileByPathAsync` signature |
 
 ### Coverage Gaps
 
@@ -383,7 +389,7 @@
 | XAML `{x:Bind}` data bindings | `c4850ed` | Status bar (7 indicators), formatting toggle buttons (6) bound via `{x:Bind}`; ViewModel display properties with computed formatters (`WordCountDisplay`, `CharCountDisplay`, `LineColDisplay`, `ZoomDisplay`, `EncodingDisplay`, `SelectionLengthDisplay`); `partial void On...Changed` methods; simplified code-behind; 7 new tests |
 | Built-in drawing dialog | `cf42b09` | Canvas-based freehand drawing with `Polyline` shapes, `ColorPicker`, stroke width `Slider`, Clear button; `RenderTargetBitmap` → PNG export → inserts image; falls back from SmrtDoodle.exe; 5 localization keys across 9 locales |
 | Expanded test coverage | `b801f88` | 3 new test classes: `ViewModelDisplayPropertyTests` (8), `SettingsServiceEdgeCaseTests` (6), `ViewModelCommandScenarioTests` (9); covers corrupt/empty/partial JSON, display property defaults/resets, toggle idempotency, zoom boundaries, mutual exclusion |
-| UI / integration tests | `(pending)` | 8 new test classes in `IntegrationTests.cs`: `ViewModelWorkflowTests` (7), `DIContainerIntegrationTests` (8), `ArchiveExtractionTests` (5), `SettingsViewModelIntegrationTests` (6), `ResourceHelperIntegrationTests` (7), `ViewModelPropertyTrackingTests` (4), `ColorHelperExhaustiveTests` (23), `BackstageEventContractTests` (4), `RelayCommandTests` (5); covers full editing workflows, DI lifetime, DOCX/ODT extraction, settings persistence, resource key validation, property change tracking, backstage event contracts, relay command execution |
+| UI / integration tests | `(pending)` | 15 new test classes in `IntegrationTests.cs` (113 tests): workflows (7), DI container (8), archive extraction (5), settings integration (6), resource helper (7), property tracking (4), color exhaustive (23), backstage contract (4), relay commands (5), RTF table generation (7), ViewModel default contract (4), App.ConfigureServices parity (2), settings concurrency (4), drawing key satellite (16), MainWindow contract (3) |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -397,7 +403,7 @@
 | After font color shortcut + regex + tab stops | 246 (+23 tests) |
 | After paragraph styles + backstage + DI container | 265 (+19 tests) |
 | After {x:Bind} + drawing dialog + expanded tests | 305 (+40 tests) |
-| After UI / integration tests | **381** (+76 tests) |
+| After UI / integration tests | **418** (+113 tests) |
 
 ---
 
@@ -440,7 +446,7 @@
 | Services | **100%** |
 | Architecture / code quality | **100%** |
 | **Unit test coverage (ViewModel + helpers + services)** | **~99%** |
-| **Unit test coverage (overall app, including UI code-behind)** | **~50%** |
+| **Unit test coverage (overall app, including UI code-behind)** | **~55%** |
 | **OVERALL PROJECT** | **~100%** |
 
 ---
@@ -489,7 +495,7 @@
 ## Appendix B — Commit History (32 commits ahead of origin)
 
 ```
-(pending) test: add comprehensive UI/integration tests — 76 new tests across 9 classes (381 total)
+(pending) test: add comprehensive UI/integration tests — 113 new tests across 15 classes (418 total)
 b801f88 test: expand test coverage with 3 new test classes (display properties, edge cases, command scenarios)
 cf42b09 feat: add built-in Canvas drawing dialog as fallback when SmrtDoodle not found
 c4850ed feat: add {x:Bind} data bindings for status bar, formatting toggles, and display properties
