@@ -1,36 +1,66 @@
 # SmrtPad
 
-A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface.
+A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, and a full suite of export options.
 
 ## Features
 
-### Ribbon Toolbar (WordPad-style)
-- **Clipboard** — Large Paste button with stacked Cut/Copy, matching the classic WordPad layout
-- **Font** — Font family picker, font size selector, grow/shrink buttons, toggle buttons for Bold, Italic, Underline, Strikethrough, Subscript, and Superscript, plus color swatch grids for font color and text highlight
-- **Paragraph** — Indent increase/decrease, list type dropdown (None, Bullet, Numbers, Letters, Roman numerals), line spacing selector (1.0, 1.15, 1.5, 2.0), and toggle-style alignment buttons (Left, Center, Right, Justify)
-- **Insert** — Picture, Paint Drawing, Insert Object, and Date/Time with large icon+label buttons
-- **Editing** — Find and Replace with flyout dialogs, and Select All
+### Ribbon Toolbar
+- **Clipboard** — Large Paste button with stacked Cut/Copy and Paste Special (plain text)
+- **Font** — Font family picker, size selector, grow/shrink buttons, Bold/Italic/Underline/Strikethrough/Subscript/Superscript toggles, font color and text highlight color swatch grids
+- **Paragraph** — Indent increase/decrease, list type dropdown (None, Bullet, Numbers, Lowercase/Uppercase Letters, Lowercase/Uppercase Roman numerals), line spacing selector (1.0, 1.15, 1.5, 2.0), alignment toggle buttons (Left, Center, Right, Justify)
+- **Insert** — Picture, SmrtDoodle drawing, Insert Object (images), Date/Time — all with large icon + label buttons
+- **Editing** — Find and Replace with flyout dialogs, Select All
 
 ### Editor
-- Rich text editing via WinUI `RichEditBox`
-- RTF and TXT file format support (open and save)
-- Undo/Redo support
-- Word wrap toggle
-- Zoom in/out with level display in the status bar
+- Rich text editing via WinUI 3 `RichEditBox` (RTF and TXT open/save)
+- **Tabbed documents** — multiple documents open simultaneously; per-tab file, modified, encoding and zoom state
+- Undo/Redo, Word wrap toggle, spell check toggle (persisted in settings)
+- **True visual zoom** via `ScaleTransform` — Ctrl+Plus/Minus and Ctrl+Scroll; per-tab zoom level
+- Horizontal and vertical rulers (inches and centimetres)
+- Page view mode (US Letter with 1-inch margins)
+- Focus mode (hides ribbon and status bar)
+- Drag-and-drop open (RTF, TXT, DOCX, HTML, ODT) and inline image insert
+
+### File Operations
+- New, Open (RTF, TXT, DOCX, HTML, ODT), Save, Save As, Print
+- **Export to PDF** — multi-page PDF 1.4 (Helvetica, A4, 72 pt margins)
+- **Export to DOCX** — valid OOXML `.docx` via `ZipArchive` + `XDocument`
+- **Save to OneDrive** — saves via standard file picker to the user's OneDrive folder; guarded with availability check
+- Auto-save to recovery folder for unnamed documents; saves in-place for named documents
+- Recent files list (MRU, max 10) in the backstage
 
 ### File Backstage
-- WordPad-style backstage view for New, Open, Save, Save As, Print, Options, and Exit
+- WordPad-style backstage for New, Templates, Open, Save, Save As, Print, Export PDF, Export DOCX, OneDrive, Options, and Exit
+- **Document Templates** — 5 built-in templates (Blank, Letter, Meeting Notes, To-Do List, Report)
+- Fully opaque overlay that covers the tab strip and editor when open
 
-### UI
-- Mica backdrop for a modern Windows 11 appearance
+### SmrtDoodle Integration
+- **SmrtDoodle** ribbon button launches the SmrtDoodle companion drawing app, awaits exit, and inserts the resulting image into the document
+- Pre-launch installation check; if not installed a dialog offers a **Get from Store** button that opens the Microsoft Store search for SmrtDoodle
+
+### Macros
+- Macro recording and playback — record a sequence of typing and formatting actions, then replay them; persisted in settings
+
+### Multi-Window
+- Open multiple editor windows (`Ctrl+Shift+N` / Window menu); each window is fully independent
+
+### UI & Theming
+- **Mica backdrop** for a modern Windows 11 appearance
+- Light / Dark / System theme toggle (persisted in settings); theme-aware title bar caption button colours
 - Segoe Fluent Icons throughout the ribbon
-- Status bar with document status and zoom level indicator
+- **App icon** (`SmrtPad.ico`) shown in the taskbar, title bar, and Alt-Tab thumbnail
+- Status bar — document status, word count, character count, selection length, line/column, encoding, and zoom level
+- Localization in **9 languages** — English, German, Spanish, French, Japanese, Simplified Chinese, Arabic, Russian, Urdu
+
+### Options
+- Font, size, word wrap, save format, theme, auto-save interval, language, ruler units, and spell check — all persisted via `SettingsService` (JSON at `%LOCALAPPDATA%\SmrtPad\settings.json`)
 
 ## Requirements
 
 - Windows 10 version 1809 (build 17763) or later
 - .NET 10 SDK
 - Windows App SDK 1.8+
+- (Optional) [SmrtDoodle](https://www.microsoft.com/store/apps) for in-document drawing
 
 ## Building
 
@@ -38,9 +68,9 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
    ```
    git clone https://github.com/John-Donnelly/SmrtPad.git
    ```
-2. Open `SmrtPad.sln` in Visual Studio 2022 or later.
+2. Open `SmrtPad.slnx` in Visual Studio 2022 or later.
 3. Set the platform to **x64** (or ARM64).
-4. Build and run the `SmrtPad` project.
+4. Build and run the **SmrtPad (Package)** project for a fully packaged experience, or the **SmrtPad** project for unpackaged debug.
 
 ## Running Tests
 
@@ -48,31 +78,47 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite includes 59 tests covering:
-- ViewModel default values and property change notifications
+The test suite has **574 tests** across 34 test classes covering:
+- ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
-- Alignment setting for all four modes
-- List type selection for all seven marker types
-- Line spacing for all standard values
-- Zoom in/out with min/max clamping
-- Word wrap toggle
-- NewDocument full state reset
-- Hex color parsing for 6-digit and 8-digit formats
-- Negative/error-case tests for ColorHelper input validation
+- Alignment, list type, and line spacing for all defined values
+- Zoom in/out with min/max clamping; word wrap; spell check settings
+- `NewDocument` full state reset
+- `ColorHelper` hex parsing (6-digit, 8-digit, error cases)
+- PDF generation (page count, header content, byte-array structure)
+- DOCX generation (ZIP structure, `word/document.xml` content, paragraph mapping)
+- OneDrive availability detection
+- Document import (DOCX, ODT text extraction)
+- Macro recording and playback
+- Settings persistence, concurrency, and recent-files MRU
+- Localization — all 9 locales, all 251 resource keys present and non-empty
 
 ## Project Structure
 
 ```
 SmrtPad/
 ├── SmrtPad/
-│   ├── Helpers/             # Utility classes (ColorHelper)
-│   ├── ViewModels/          # MVVM view models (EditorViewModel)
-│   ├── Views/               # User controls (FileBackstageView)
+│   ├── Assets/              # App icon (SmrtPad.ico/.png), SmrtDoodle icons
+│   ├── Helpers/             # ColorHelper, DocxExportHelper, DocumentImportHelper,
+│   │                        # DocumentTemplates, MacroHelper, OneDriveHelper,
+│   │                        # ParagraphStyleHelper, PdfHelper, ResourceHelper,
+│   │                        # RtfHelper, RulerHelper
+│   ├── Models/              # DocumentTemplate
+│   ├── Services/            # DialogService, FileService, SettingsService
+│   │                        # (+ IDialogService, IFileService, ISettingsService)
+│   ├── Strings/             # 9 locale .resw files (en-US, de-DE, es-ES, fr-FR,
+│   │                        # ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK)
+│   ├── ViewModels/          # EditorViewModel
+│   ├── Views/               # FileBackstageView
 │   ├── MainWindow.xaml      # Main window with ribbon UI
-│   ├── MainWindow.xaml.cs   # Code-behind with editor logic
-│   └── App.xaml             # Application entry point
+│   ├── MainWindow.xaml.cs   # Code-behind — editor logic, ribbon handlers
+│   ├── App.xaml             # Application resources and ThemeDictionaries
+│   └── App.xaml.cs          # Entry point, DI container, multi-window factory
+├── SmrtPad (Package)/       # MSIX packaging project
 ├── SmrtPad.Tests/
-│   └── EditorTests.cs       # Unit tests
+│   ├── EditorTests.cs       # ViewModel unit tests
+│   ├── IntegrationTests.cs  # Helper + service integration tests
+│   └── LocalizationTests.cs # Locale completeness tests
 ├── README.md
 └── CHANGELOG.md
 ```
@@ -84,3 +130,4 @@ Ribbon design inspired by [UltraPad](https://github.com/lixkote/ultrapad), a mod
 ## License
 
 See repository for license details.
+
