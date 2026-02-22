@@ -396,6 +396,25 @@
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Tab Stops">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7FD;" FontSize="14"/>
                         </Button>
+                        <!-- Paragraph Styles -->
+                        <Button Padding="4,3" CornerRadius="4" Height="28"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Styles">
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem x:Uid="StyleNormalItem" Text="Normal" Click="StyleNormal_Click"/>
+                                    <MenuFlyoutItem x:Uid="StyleHeading1Item" Text="Heading 1" Click="StyleHeading1_Click"/>
+                                    <MenuFlyoutItem x:Uid="StyleHeading2Item" Text="Heading 2" Click="StyleHeading2_Click"/>
+                                    <MenuFlyoutItem x:Uid="StyleHeading3Item" Text="Heading 3" Click="StyleHeading3_Click"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem x:Uid="StyleSubtitleItem" Text="Subtitle" Click="StyleSubtitle_Click"/>
+                                    <MenuFlyoutItem x:Uid="StyleQuoteItem" Text="Quote" Click="StyleQuote_Click"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8D2;" FontSize="14"/>
+                                <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70D;" FontSize="8" VerticalAlignment="Bottom"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- Row 2: alignment buttons (toggle-style, mutually exclusive in code-behind) -->

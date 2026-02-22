@@ -135,9 +135,9 @@
 | Paragraph spacing (before/after) | ✅ | `NumberBox` flyout → `SpaceBefore` / `SpaceAfter` |
 | Alignment (Left/Center/Right/Justify) | ✅ | Mutually-exclusive `ToggleButton` set managed by `SetAlignmentToggle` |
 | Tab stop configuration | ✅ | `ContentDialog` with `NumberBox` (position in inches), `ComboBox` for alignment (Left/Center/Right/Decimal) and leader (None/Dots/Dashes/Lines); `AddTab`/`ClearAllTabs` on `ITextParagraphFormat`; current stops listed in `ListBox`; localized across 9 locales |
-| Paragraph styles | ❌ | |
+| Paragraph styles | ✅ | Styles dropdown with Normal, Heading 1/2/3, Subtitle, Quote; `ApplyParagraphStyle` helper sets font, size, bold/italic, alignment, space before/after; localized across 9 locales |
 
-**Section: 88% (7/8)**
+**Section: 100% (8/8)**
 
 ---
 
@@ -395,7 +395,7 @@
 | ~~Find — regex support~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `c2e797e` |
 | ~~Font color keyboard shortcut~~ | ~~Low~~ | ~~Low~~ | ✅ **Completed** — commit `6497185` |
 | ~~Tab stop configuration~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `0ac6347` |
-| Paragraph styles (Heading 1, Normal, etc.) | Low | Medium | |
+| ~~Paragraph styles (Heading 1, Normal, etc.)~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
 | Document properties / backstage rich panels | Low | Medium | |
 
 ---
@@ -410,7 +410,7 @@
 | View menu | **100%** |
 | Ribbon — Clipboard | **100%** |
 | Ribbon — Font | **100%** |
-| Ribbon — Paragraph | 88% |
+| Ribbon — Paragraph | **100%** |
 | Ribbon — Insert | 93% |
 | Ribbon — Editing | **100%** |
 | File backstage view | 72% |

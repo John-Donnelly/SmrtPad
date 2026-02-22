@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>Tabulaciones actualizadas.</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>Título 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>Título 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>Título 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>Subtítulo</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>Cita</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>Estilo aplicado.</value>
+  </data>
 
 </root>

@@ -2075,6 +2075,63 @@ namespace SmrtPad
                 listBox.Items.Add(Res.GetString("TabStopNone"));
         }
 
+        private void ApplyParagraphStyle(string fontName, float fontSize, bool bold, bool italic, ParagraphAlignment alignment, float spaceBefore, float spaceAfter)
+        {
+            ITextSelection selectedText = Editor.Document.Selection;
+            if (selectedText == null) return;
+
+            ITextCharacterFormat cf = selectedText.CharacterFormat;
+            cf.Name = fontName;
+            cf.Size = fontSize;
+            cf.Bold = bold ? FormatEffect.On : FormatEffect.Off;
+            cf.Italic = italic ? FormatEffect.On : FormatEffect.Off;
+            cf.Underline = UnderlineType.None;
+            cf.Strikethrough = FormatEffect.Off;
+            selectedText.CharacterFormat = cf;
+
+            ITextParagraphFormat pf = selectedText.ParagraphFormat;
+            pf.Alignment = alignment;
+            pf.SpaceBefore = spaceBefore;
+            pf.SpaceAfter = spaceAfter;
+            selectedText.ParagraphFormat = pf;
+        }
+
+        private void StyleNormal_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyParagraphStyle("Segoe UI", 11f, false, false, ParagraphAlignment.Left, 0f, 0f);
+            ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
+        }
+
+        private void StyleHeading1_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyParagraphStyle("Segoe UI", 20f, true, false, ParagraphAlignment.Left, 12f, 4f);
+            ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
+        }
+
+        private void StyleHeading2_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyParagraphStyle("Segoe UI", 16f, true, false, ParagraphAlignment.Left, 10f, 3f);
+            ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
+        }
+
+        private void StyleHeading3_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyParagraphStyle("Segoe UI", 13f, true, false, ParagraphAlignment.Left, 8f, 2f);
+            ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
+        }
+
+        private void StyleSubtitle_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyParagraphStyle("Segoe UI", 14f, false, true, ParagraphAlignment.Left, 6f, 4f);
+            ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
+        }
+
+        private void StyleQuote_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyParagraphStyle("Segoe UI", 11f, false, true, ParagraphAlignment.Left, 8f, 8f);
+            ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
+        }
+
         private void ThemeToggle_Click(object sender, RoutedEventArgs e)
         {
             if (Content is FrameworkElement root)

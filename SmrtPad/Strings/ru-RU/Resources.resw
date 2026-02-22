@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>Позиции табуляции обновлены.</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>Обычный</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>Заголовок 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>Заголовок 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>Заголовок 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>Подзаголовок</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>Цитата</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>Стиль применён.</value>
+  </data>
 
 </root>

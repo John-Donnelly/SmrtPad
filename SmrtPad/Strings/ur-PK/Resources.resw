@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>ٹیب اسٹاپز اپ ڈیٹ ہو گئے۔</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>عام</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>سرخی 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>سرخی 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>سرخی 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>ضمنی عنوان</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>اقتباس</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>اسٹائل لاگو ہو گیا۔</value>
+  </data>
 
 </root>

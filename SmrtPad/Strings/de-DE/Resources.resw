@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>Tabstopps aktualisiert.</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>Überschrift 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>Überschrift 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>Überschrift 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>Untertitel</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>Zitat</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>Formatvorlage angewendet.</value>
+  </data>
 
 </root>

@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>制表位已更新。</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>正文</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>标题 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>标题 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>标题 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>副标题</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>已应用样式。</value>
+  </data>
 
 </root>

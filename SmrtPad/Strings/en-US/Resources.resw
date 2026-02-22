@@ -705,4 +705,27 @@
     <value>Tab stops updated.</value>
   </data>
 
+  <!-- ═══ XAML: Paragraph styles ═══ -->
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>Heading 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>Heading 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>Heading 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>Subtitle</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>Quote</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>Style applied.</value>
+  </data>
+
 </root>

@@ -291,6 +291,21 @@ namespace SmrtPad.Tests
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
+        [Theory]
+        [InlineData("StyleNormalItem.Text")]
+        [InlineData("StyleHeading1Item.Text")]
+        [InlineData("StyleHeading2Item.Text")]
+        [InlineData("StyleHeading3Item.Text")]
+        [InlineData("StyleSubtitleItem.Text")]
+        [InlineData("StyleQuoteItem.Text")]
+        [InlineData("StatusStyleApplied")]
+        public void ReswFile_ContainsParagraphStyleKeys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =

@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>تم تحديث علامات الجدولة.</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>عادي</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>عنوان 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>عنوان 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>عنوان 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>عنوان فرعي</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>اقتباس</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>تم تطبيق النمط.</value>
+  </data>
 
 </root>

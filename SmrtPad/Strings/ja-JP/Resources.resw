@@ -678,5 +678,26 @@
   <data name="StatusTabStopsUpdated" xml:space="preserve">
     <value>タブ位置を更新しました。</value>
   </data>
+  <data name="StyleNormalItem.Text" xml:space="preserve">
+    <value>標準</value>
+  </data>
+  <data name="StyleHeading1Item.Text" xml:space="preserve">
+    <value>見出し 1</value>
+  </data>
+  <data name="StyleHeading2Item.Text" xml:space="preserve">
+    <value>見出し 2</value>
+  </data>
+  <data name="StyleHeading3Item.Text" xml:space="preserve">
+    <value>見出し 3</value>
+  </data>
+  <data name="StyleSubtitleItem.Text" xml:space="preserve">
+    <value>副題</value>
+  </data>
+  <data name="StyleQuoteItem.Text" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="StatusStyleApplied" xml:space="preserve">
+    <value>スタイルを適用しました。</value>
+  </data>
 
 </root>
