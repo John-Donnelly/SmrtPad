@@ -626,4 +626,57 @@
     <value>Aucun fichier récent.</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND : Tabulations ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>Tabulations</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>Position (pouces)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>Alignement</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>Points de suite</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>Gauche</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>Centre</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>Droite</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>Décimal</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>Aucun</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>Tirets</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>Lignes</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>Ajouter</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>Tout effacer</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>Tabulations actuelles</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(Aucune tabulation personnalisée)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>Tabulations mises à jour.</value>
+  </data>
+
 </root>

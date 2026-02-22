@@ -626,4 +626,57 @@
     <value>Нет последних файлов.</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: Позиции табуляции ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>Позиции табуляции</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>Позиция (дюймы)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>Выравнивание</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>Заполнитель</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>По левому краю</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>По центру</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>По правому краю</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>По разделителю</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>Нет</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>Точки</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>Тире</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>Линии</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>Добавить</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>Очистить все</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>Текущие позиции табуляции</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(Нет пользовательских позиций табуляции)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>Позиции табуляции обновлены.</value>
+  </data>
+
 </root>

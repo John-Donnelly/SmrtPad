@@ -652,4 +652,57 @@
     <value>No recent files.</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: Tab stops ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>Tab Stops</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>Position (inches)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>Alignment</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>Leader</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>Center</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>Decimal</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>Dots</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>Dashes</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>Lines</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>Clear All</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>Current tab stops</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(No custom tab stops)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>Tab stops updated.</value>
+  </data>
+
 </root>

@@ -626,4 +626,57 @@
     <value>کوئی حالیہ فائلیں نہیں ہیں۔</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: ٹیب اسٹاپز ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>ٹیب اسٹاپز</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>پوزیشن (انچ)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>سیدھ</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>لیڈر</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>بائیں</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>مرکز</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>دائیں</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>اعشاریہ</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>کوئی نہیں</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>نقطے</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>ڈیشز</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>لائنیں</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>شامل کریں</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>سب صاف کریں</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>موجودہ ٹیب اسٹاپز</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(کوئی اپنی مرضی کے ٹیب اسٹاپز نہیں)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>ٹیب اسٹاپز اپ ڈیٹ ہو گئے۔</value>
+  </data>
+
 </root>

@@ -266,6 +266,31 @@ namespace SmrtPad.Tests
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
+        [Theory]
+        [InlineData("TabStopTitle")]
+        [InlineData("TabStopPosition")]
+        [InlineData("TabStopAlignment")]
+        [InlineData("TabStopLeader")]
+        [InlineData("TabAlignLeft")]
+        [InlineData("TabAlignCenter")]
+        [InlineData("TabAlignRight")]
+        [InlineData("TabAlignDecimal")]
+        [InlineData("TabLeaderNone")]
+        [InlineData("TabLeaderDots")]
+        [InlineData("TabLeaderDashes")]
+        [InlineData("TabLeaderLines")]
+        [InlineData("TabStopAdd")]
+        [InlineData("TabStopClearAll")]
+        [InlineData("TabStopCurrent")]
+        [InlineData("TabStopNone")]
+        [InlineData("StatusTabStopsUpdated")]
+        public void ReswFile_ContainsTabStopKeys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =

@@ -1961,6 +1961,120 @@ namespace SmrtPad
             }
         }
 
+        private async void TabStops_Click(object sender, RoutedEventArgs e)
+        {
+            var positionBox = new NumberBox
+            {
+                Header = Res.GetString("TabStopPosition"),
+                Minimum = 0.1,
+                Maximum = 22.0,
+                Value = 0.5,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                SmallChange = 0.25
+            };
+
+            var alignmentCombo = new ComboBox
+            {
+                Header = Res.GetString("TabStopAlignment"),
+                ItemsSource = new[] { Res.GetString("TabAlignLeft"), Res.GetString("TabAlignCenter"), Res.GetString("TabAlignRight"), Res.GetString("TabAlignDecimal") },
+                SelectedIndex = 0,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var leaderCombo = new ComboBox
+            {
+                Header = Res.GetString("TabStopLeader"),
+                ItemsSource = new[] { Res.GetString("TabLeaderNone"), Res.GetString("TabLeaderDots"), Res.GetString("TabLeaderDashes"), Res.GetString("TabLeaderLines") },
+                SelectedIndex = 0,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var tabListBox = new ListBox { MaxHeight = 120, MinHeight = 60, HorizontalAlignment = HorizontalAlignment.Stretch };
+            RefreshTabStopList(tabListBox);
+
+            var addButton = new Button { Content = Res.GetString("TabStopAdd"), HorizontalAlignment = HorizontalAlignment.Right };
+            addButton.Click += (s, args) =>
+            {
+                float positionPts = (float)(positionBox.Value * 72.0);
+                var align = alignmentCombo.SelectedIndex switch
+                {
+                    1 => TabAlignment.Center,
+                    2 => TabAlignment.Right,
+                    3 => TabAlignment.Decimal,
+                    _ => TabAlignment.Left
+                };
+                var leader = leaderCombo.SelectedIndex switch
+                {
+                    1 => TabLeader.Dots,
+                    2 => TabLeader.Dashes,
+                    3 => TabLeader.Lines,
+                    _ => TabLeader.Spaces
+                };
+
+                ITextSelection sel = Editor.Document.Selection;
+                if (sel != null)
+                {
+                    ITextParagraphFormat pf = sel.ParagraphFormat;
+                    pf.AddTab(positionPts, align, leader);
+                    sel.ParagraphFormat = pf;
+                }
+                RefreshTabStopList(tabListBox);
+            };
+
+            var clearButton = new Button { Content = Res.GetString("TabStopClearAll"), HorizontalAlignment = HorizontalAlignment.Right };
+            clearButton.Click += (s, args) =>
+            {
+                ITextSelection sel = Editor.Document.Selection;
+                if (sel != null)
+                {
+                    ITextParagraphFormat pf = sel.ParagraphFormat;
+                    pf.ClearAllTabs();
+                    sel.ParagraphFormat = pf;
+                }
+                RefreshTabStopList(tabListBox);
+            };
+
+            var panel = new StackPanel { Spacing = 8, MinWidth = 280 };
+            panel.Children.Add(positionBox);
+            panel.Children.Add(alignmentCombo);
+            panel.Children.Add(leaderCombo);
+            var buttonRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 6 };
+            buttonRow.Children.Add(addButton);
+            buttonRow.Children.Add(clearButton);
+            panel.Children.Add(buttonRow);
+            panel.Children.Add(new TextBlock { Text = Res.GetString("TabStopCurrent"), FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            panel.Children.Add(tabListBox);
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("TabStopTitle"),
+                Content = panel,
+                CloseButtonText = Res.GetString("DlgOK"),
+                XamlRoot = Content.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+            ViewModel.UpdateStatus(Res.GetString("StatusTabStopsUpdated"));
+        }
+
+        private void RefreshTabStopList(ListBox listBox)
+        {
+            listBox.Items.Clear();
+            ITextSelection sel = Editor.Document.Selection;
+            if (sel == null) return;
+
+            ITextParagraphFormat pf = sel.ParagraphFormat;
+            for (int i = 0; i < pf.TabCount; i++)
+            {
+                pf.GetTab(i, out float pos, out TabAlignment align, out TabLeader leader);
+                double inches = pos / 72.0;
+                listBox.Items.Add($"{inches:F2}\" — {align} — {leader}");
+            }
+
+            if (pf.TabCount == 0)
+                listBox.Items.Add(Res.GetString("TabStopNone"));
+        }
+
         private void ThemeToggle_Click(object sender, RoutedEventArgs e)
         {
             if (Content is FrameworkElement root)

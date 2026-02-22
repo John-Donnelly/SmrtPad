@@ -391,6 +391,11 @@
                             </Button.Flyout>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE1D0;" FontSize="14"/>
                         </Button>
+                        <!-- Tab Stops -->
+                        <Button Click="TabStops_Click" Padding="4,3" CornerRadius="4" Height="28"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Tab Stops">
+                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7FD;" FontSize="14"/>
+                        </Button>
                     </StackPanel>
 
                     <!-- Row 2: alignment buttons (toggle-style, mutually exclusive in code-behind) -->

@@ -626,4 +626,57 @@
     <value>Keine zuletzt verwendeten Dateien.</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: Tabstopps ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>Tabstopps</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>Position (Zoll)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>Ausrichtung</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>Füllzeichen</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>Links</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>Zentriert</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>Rechts</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>Dezimal</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>Keine</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>Punkte</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>Striche</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>Linien</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>Hinzufügen</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>Alle löschen</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>Aktuelle Tabstopps</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(Keine benutzerdefinierten Tabstopps)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>Tabstopps aktualisiert.</value>
+  </data>
+
 </root>

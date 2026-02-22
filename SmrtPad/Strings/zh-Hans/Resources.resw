@@ -626,4 +626,57 @@
     <value>没有最近的文件。</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: 制表位 ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>制表位</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>位置 (英寸)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>对齐方式</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>前导符</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>左对齐</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>居中</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>右对齐</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>小数点对齐</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>点</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>破折号</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>线</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>全部清除</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>当前制表位</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(无自定义制表位)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>制表位已更新。</value>
+  </data>
+
 </root>

@@ -626,4 +626,57 @@
     <value>لا توجد ملفات حديثة.</value>
   </data>
 
+  <!-- ═══ CODE-BEHIND: علامات الجدولة ═══ -->
+  <data name="TabStopTitle" xml:space="preserve">
+    <value>علامات الجدولة</value>
+  </data>
+  <data name="TabStopPosition" xml:space="preserve">
+    <value>الموضع (بوصة)</value>
+  </data>
+  <data name="TabStopAlignment" xml:space="preserve">
+    <value>المحاذاة</value>
+  </data>
+  <data name="TabStopLeader" xml:space="preserve">
+    <value>حرف الملء</value>
+  </data>
+  <data name="TabAlignLeft" xml:space="preserve">
+    <value>يسار</value>
+  </data>
+  <data name="TabAlignCenter" xml:space="preserve">
+    <value>وسط</value>
+  </data>
+  <data name="TabAlignRight" xml:space="preserve">
+    <value>يمين</value>
+  </data>
+  <data name="TabAlignDecimal" xml:space="preserve">
+    <value>عشري</value>
+  </data>
+  <data name="TabLeaderNone" xml:space="preserve">
+    <value>بدون</value>
+  </data>
+  <data name="TabLeaderDots" xml:space="preserve">
+    <value>نقاط</value>
+  </data>
+  <data name="TabLeaderDashes" xml:space="preserve">
+    <value>شرطات</value>
+  </data>
+  <data name="TabLeaderLines" xml:space="preserve">
+    <value>خطوط</value>
+  </data>
+  <data name="TabStopAdd" xml:space="preserve">
+    <value>إضافة</value>
+  </data>
+  <data name="TabStopClearAll" xml:space="preserve">
+    <value>مسح الكل</value>
+  </data>
+  <data name="TabStopCurrent" xml:space="preserve">
+    <value>علامات الجدولة الحالية</value>
+  </data>
+  <data name="TabStopNone" xml:space="preserve">
+    <value>(لا توجد علامات جدولة مخصصة)</value>
+  </data>
+  <data name="StatusTabStopsUpdated" xml:space="preserve">
+    <value>تم تحديث علامات الجدولة.</value>
+  </data>
+
 </root>
