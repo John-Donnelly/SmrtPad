@@ -67,7 +67,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
             var bar = _driver!.FindElement(
-                MobileBy.AccessibilityId("StatusBarPanel"));
+                MobileBy.AccessibilityId("StatusBar"));
             Assert.NotNull(bar);
         }
 

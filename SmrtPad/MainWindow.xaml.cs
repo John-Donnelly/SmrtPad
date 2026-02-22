@@ -2873,6 +2873,7 @@ namespace SmrtPad
                 VerticalAlignment = VerticalAlignment.Stretch,
                 MinHeight = 200,
             };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(Editor, "Editor");
 
             PageViewBorder = new Border
             {
