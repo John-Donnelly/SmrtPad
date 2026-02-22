@@ -287,7 +287,7 @@ namespace SmrtPad.Helpers
                 if (nx == '\'')
                 {
                     if (i + 2 < body.Length &&
-                        int.TryParse(body.Substring(i+1, 2),
+                        int.TryParse(body.AsSpan(i+1, 2),
                             System.Globalization.NumberStyles.HexNumber, null, out int code))
                     { AddChar(cur,bold,italic,ul,strike,fonts,fi,fshp,(char)code); i += 3; }
                     else { i++; }
