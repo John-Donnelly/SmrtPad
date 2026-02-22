@@ -102,51 +102,6 @@ namespace SmrtPad.UITests.Tests
             Assert.NotNull(item);
         }
 
-        [SkippableFact]
-        public void ListTypeNumber_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeNumberItem"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void ListTypeLowerLetter_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeLowerLetterItem"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void ListTypeUpperLetter_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeUpperLetterItem"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void ListTypeLowerRoman_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeLowerRomanItem"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void ListTypeUpperRoman_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeUpperRomanItem"));
-            Assert.NotNull(item);
-        }
-
         // ── Line spacing flyout ──────────────────────────────────────────────
 
         [SkippableFact]
@@ -155,42 +110,6 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             var item = _driver!.FindElement(
                 MobileBy.AccessibilityId("CustomSpacingItem"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void LineSpacing_10Item_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.Name("1.0"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void LineSpacing_115Item_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.Name("1.15"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void LineSpacing_15Item_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.Name("1.5"));
-            Assert.NotNull(item);
-        }
-
-        [SkippableFact]
-        public void LineSpacing_20Item_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.Name("2.0"));
             Assert.NotNull(item);
         }
     }

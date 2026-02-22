@@ -2906,4 +2906,814 @@ namespace SmrtPad.Tests
             Assert.Equal(typeof(EventHandler<DocumentTemplate>), evt!.EventHandlerType);
         }
     }
+
+    // ═══ MainWindow Remaining Handler Contract Tests ════════════════════════════
+
+    public class MainWindowRemainingHandlerTests
+    {
+        private static readonly Type MW = typeof(SmrtPad.MainWindow);
+        private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
+
+        [Theory]
+        [InlineData("ApplyTextColor")]
+        [InlineData("ApplyHighlightColor")]
+        [InlineData("ApplyLastFontColor_Invoked")]
+        [InlineData("TextColorPicker_ColorChanged")]
+        [InlineData("HighlightColorPicker_ColorChanged")]
+        [InlineData("FindNextRegex")]
+        [InlineData("SetAlignmentToggle")]
+        [InlineData("ExecuteMacroCommand")]
+        [InlineData("ApplyListType")]
+        public void MainWindow_HasRemainingPrivateMethod(string methodName)
+        {
+            var method = MW.GetMethod(methodName, Private);
+            Assert.NotNull(method);
+        }
+
+        [Theory]
+        [InlineData("ListTypeNone_Click")]
+        [InlineData("ListTypeBullet_Click")]
+        [InlineData("ListTypeNumber_Click")]
+        [InlineData("ListTypeLowerLetter_Click")]
+        [InlineData("ListTypeUpperLetter_Click")]
+        [InlineData("ListTypeLowerRoman_Click")]
+        [InlineData("ListTypeUpperRoman_Click")]
+        [InlineData("LineSpacing_Click")]
+        public void MainWindow_HasListAndSpacingHandler(string handlerName)
+        {
+            var method = MW.GetMethod(handlerName, Private);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void ApplyTextColor_HasColorParam()
+        {
+            var method = MW.GetMethod("ApplyTextColor", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+            Assert.Equal(typeof(Windows.UI.Color), parms[0].ParameterType);
+        }
+
+        [Fact]
+        public void ApplyHighlightColor_HasColorParam()
+        {
+            var method = MW.GetMethod("ApplyHighlightColor", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+            Assert.Equal(typeof(Windows.UI.Color), parms[0].ParameterType);
+        }
+
+        [Fact]
+        public void FindNextRegex_HasPatternAndForwardParams()
+        {
+            var method = MW.GetMethod("FindNextRegex", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Equal(2, parms.Length);
+            Assert.Equal(typeof(string), parms[0].ParameterType);
+            Assert.Equal(typeof(bool), parms[1].ParameterType);
+        }
+
+        [Fact]
+        public void ExecuteMacroCommand_HasMacroCommandParam()
+        {
+            var method = MW.GetMethod("ExecuteMacroCommand", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+            Assert.Equal(typeof(MacroCommand), parms[0].ParameterType);
+        }
+
+        [Fact]
+        public void SetAlignmentToggle_HasToggleButtonParam()
+        {
+            var method = MW.GetMethod("SetAlignmentToggle", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+        }
+
+        [Fact]
+        public void MainWindow_HasCreateTab_WithTitleParam()
+        {
+            var method = MW.GetMethod("CreateTab", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Single(parms);
+            Assert.Equal(typeof(string), parms[0].ParameterType);
+        }
+
+        [Theory]
+        [InlineData("Save_Click")]
+        [InlineData("SaveAs_Click")]
+        [InlineData("Open_Click")]
+        [InlineData("Print_Click")]
+        [InlineData("InsertPicture_Click")]
+        [InlineData("InsertDateTime_Click")]
+        [InlineData("PaintDrawing_Click")]
+        [InlineData("InsertObject_Click")]
+        [InlineData("InsertHyperlink_Click")]
+        [InlineData("InsertSymbol_Click")]
+        [InlineData("InsertTable_Click")]
+        [InlineData("ExportPdf_Click")]
+        [InlineData("ExportDocx_Click")]
+        [InlineData("SaveToOneDrive_Click")]
+        [InlineData("MacroSave_Click")]
+        [InlineData("MacroLoad_Click")]
+        [InlineData("Options_Click")]
+        [InlineData("CustomLineSpacing_Click")]
+        [InlineData("TabStops_Click")]
+        [InlineData("New_Click")]
+        public void MainWindow_AsyncHandler_ReturnsVoid(string handlerName)
+        {
+            var method = MW.GetMethod(handlerName, Private);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method!.ReturnType);
+        }
+
+        [Theory]
+        [InlineData("Editor_Drop")]
+        [InlineData("DocumentTabs_TabCloseRequested")]
+        public void MainWindow_AsyncHandler_NotNull(string handlerName)
+        {
+            var method = MW.GetMethod(handlerName, Private);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasListTypeFlyoutItems()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("ListTypeNone_Click", xaml);
+            Assert.Contains("ListTypeBullet_Click", xaml);
+            Assert.Contains("ListTypeNumber_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasLineSpacingFlyout()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("LineSpacing_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_HasExportPdfAndDocxMethods()
+        {
+            // Export handlers are wired via backstage events, not directly in XAML
+            Assert.NotNull(MW.GetMethod("ExportPdf_Click", Private));
+            Assert.NotNull(MW.GetMethod("ExportDocx_Click", Private));
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasColorPickerHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("TextColorPicker_ColorChanged", xaml);
+            Assert.Contains("HighlightColorPicker_ColorChanged", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasZoomButtons()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("ZoomIn_Click", xaml);
+            Assert.Contains("ZoomOut_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasUndoRedo()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("Undo_Click", xaml);
+            Assert.Contains("Redo_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasCutCopyPaste()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("Cut_Click", xaml);
+            Assert.Contains("Copy_Click", xaml);
+            Assert.Contains("Paste_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFindNextPreviousButtons()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FindNext_Click", xaml);
+            Assert.Contains("FindPrevious_Click", xaml);
+            Assert.Contains("Replace_Click", xaml);
+            Assert.Contains("ReplaceAll_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasGrowShrinkFont()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("GrowFont_Click", xaml);
+            Assert.Contains("ShrinkFont_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFormattingHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("Bold_Click", xaml);
+            Assert.Contains("Italic_Click", xaml);
+            Assert.Contains("Underline_Click", xaml);
+            Assert.Contains("Strikethrough_Click", xaml);
+            Assert.Contains("Subscript_Click", xaml);
+            Assert.Contains("Superscript_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasAlignmentHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("AlignLeft_Click", xaml);
+            Assert.Contains("AlignCenter_Click", xaml);
+            Assert.Contains("AlignRight_Click", xaml);
+            Assert.Contains("AlignJustify_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasIndentHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("DecreaseIndent_Click", xaml);
+            Assert.Contains("IncreaseIndent_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasHighlightButtons()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("HighlightAllMatches_Click", xaml);
+            Assert.Contains("ClearHighlights_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasClearFormattingButton()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("ClearFormatting_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasPasteSpecialButton()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("PasteSpecial_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasSelectAllHandler()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("SelectAll_Click", xaml);
+        }
+
+        private static string? ReadXaml(string filename)
+        {
+            string? dir = Directory.GetCurrentDirectory();
+            while (dir is not null)
+            {
+                string candidate = Path.Combine(dir, "SmrtPad", filename);
+                if (File.Exists(candidate)) return File.ReadAllText(candidate);
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return null;
+        }
+    }
+
+    // ═══ EditorViewModel Command Parameter Tests ════════════════════════════════
+
+    public class EditorViewModelCommandParamTests
+    {
+        [Fact]
+        public void ToggleSubscript_ClearsSuperscript()
+        {
+            var vm = new EditorViewModel();
+            vm.IsSuperscript = true;
+            vm.ToggleSubscript();
+            Assert.True(vm.IsSubscript);
+            Assert.False(vm.IsSuperscript);
+        }
+
+        [Fact]
+        public void ToggleSuperscript_ClearsSubscript()
+        {
+            var vm = new EditorViewModel();
+            vm.IsSubscript = true;
+            vm.ToggleSuperscript();
+            Assert.True(vm.IsSuperscript);
+            Assert.False(vm.IsSubscript);
+        }
+
+        [Fact]
+        public void SetAlignmentCommand_Execute_SetsAlignment()
+        {
+            var vm = new EditorViewModel();
+            vm.SetAlignmentCommand.Execute("Center");
+            Assert.Equal("Center", vm.Alignment);
+        }
+
+        [Fact]
+        public void SetListTypeCommand_Execute_SetsListType()
+        {
+            var vm = new EditorViewModel();
+            vm.SetListTypeCommand.Execute("Number");
+            Assert.Equal("Number", vm.ListType);
+            Assert.True(vm.IsBullets);
+        }
+
+        [Fact]
+        public void SetLineSpacingCommand_Execute_SetsSpacing()
+        {
+            var vm = new EditorViewModel();
+            vm.SetLineSpacingCommand.Execute(2.0);
+            Assert.Equal(2.0, vm.LineSpacing);
+        }
+
+        [Fact]
+        public void SetParagraphSpacingCommand_Execute_SetsBothValues()
+        {
+            var vm = new EditorViewModel();
+            vm.SetParagraphSpacingCommand.Execute(new double[] { 12.0, 6.0 });
+            Assert.Equal(12.0, vm.ParagraphSpacingBefore);
+            Assert.Equal(6.0, vm.ParagraphSpacingAfter);
+        }
+
+        [Fact]
+        public void UpdateCursorPositionCommand_Execute_SetsLineCol()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCursorPositionCommand.Execute(new int[] { 5, 10 });
+            Assert.Equal(5, vm.LineNumber);
+            Assert.Equal(10, vm.ColumnNumber);
+        }
+
+        [Fact]
+        public void UpdateWordCountCommand_Execute_SetsCount()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateWordCountCommand.Execute(42);
+            Assert.Equal(42, vm.WordCount);
+        }
+
+        [Fact]
+        public void UpdateCharCountCommand_Execute_SetsCount()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateCharCountCommand.Execute(256);
+            Assert.Equal(256, vm.CharCount);
+        }
+
+        [Fact]
+        public void ToggleBulletsCommand_Execute_FlipsBullets()
+        {
+            var vm = new EditorViewModel();
+            Assert.False(vm.IsBullets);
+            vm.ToggleBulletsCommand.Execute(null);
+            Assert.True(vm.IsBullets);
+        }
+
+        [Fact]
+        public void ToggleWordWrapCommand_Execute_FlipsWrap()
+        {
+            var vm = new EditorViewModel();
+            Assert.True(vm.IsWordWrap);
+            vm.ToggleWordWrapCommand.Execute(null);
+            Assert.False(vm.IsWordWrap);
+        }
+
+        [Fact]
+        public void ToggleStrikethroughCommand_Execute_FlipsStrike()
+        {
+            var vm = new EditorViewModel();
+            vm.ToggleStrikethroughCommand.Execute(null);
+            Assert.True(vm.IsStrikethrough);
+        }
+
+        [Fact]
+        public void ToggleSubscriptCommand_Execute_FlipsSub()
+        {
+            var vm = new EditorViewModel();
+            vm.ToggleSubscriptCommand.Execute(null);
+            Assert.True(vm.IsSubscript);
+        }
+
+        [Fact]
+        public void ToggleSuperscriptCommand_Execute_FlipsSuper()
+        {
+            var vm = new EditorViewModel();
+            vm.ToggleSuperscriptCommand.Execute(null);
+            Assert.True(vm.IsSuperscript);
+        }
+
+        [Fact]
+        public void ToggleUnderlineCommand_Execute_FlipsUnderline()
+        {
+            var vm = new EditorViewModel();
+            vm.ToggleUnderlineCommand.Execute(null);
+            Assert.True(vm.IsUnderline);
+        }
+
+        [Fact]
+        public void ZoomInCommand_Execute_IncrementsBy10()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal(100.0, vm.ZoomLevel);
+            vm.ZoomInCommand.Execute(null);
+            Assert.Equal(110.0, vm.ZoomLevel);
+        }
+
+        [Fact]
+        public void ZoomOutCommand_Execute_DecrementsBy10()
+        {
+            var vm = new EditorViewModel();
+            Assert.Equal(100.0, vm.ZoomLevel);
+            vm.ZoomOutCommand.Execute(null);
+            Assert.Equal(90.0, vm.ZoomLevel);
+        }
+    }
+
+    // ═══ RtfParser Direct Tests ═════════════════════════════════════════════════
+
+    public class RtfParserDirectTests
+    {
+        [Fact]
+        public void Parse_EmptyString_ReturnsEmptyList()
+        {
+            var result = RtfParser.Parse("");
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Parse_NullString_ReturnsEmptyList()
+        {
+            var result = RtfParser.Parse(null!);
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Parse_PlainText_ReturnsOneParagraphOneRun()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi Hello}");
+            Assert.True(result.Count >= 1);
+            Assert.True(result[0].Runs.Count >= 1);
+        }
+
+        [Fact]
+        public void Parse_BoldText_SetsBoldFlag()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\b Bold Text}");
+            Assert.True(result.Count >= 1);
+            var boldRun = result.SelectMany(p => p.Runs).FirstOrDefault(r => r.Bold);
+            Assert.NotNull(boldRun);
+        }
+
+        [Fact]
+        public void Parse_ItalicText_SetsItalicFlag()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\i Italic}");
+            var italicRun = result.SelectMany(p => p.Runs).FirstOrDefault(r => r.Italic);
+            Assert.NotNull(italicRun);
+        }
+
+        [Fact]
+        public void Parse_UnderlineText_SetsUnderlineFlag()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\ul Under}");
+            var ulRun = result.SelectMany(p => p.Runs).FirstOrDefault(r => r.Underline);
+            Assert.NotNull(ulRun);
+        }
+
+        [Fact]
+        public void Parse_StrikeText_SetsStrikeFlag()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\strike Strike}");
+            var stRun = result.SelectMany(p => p.Runs).FirstOrDefault(r => r.Strikethrough);
+            Assert.NotNull(stRun);
+        }
+
+        [Fact]
+        public void Parse_FontSize_SetsHalfPoints()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\fs48 Big}");
+            var run = result.SelectMany(p => p.Runs).FirstOrDefault(r => r.FontSizeHalfPts == 48);
+            Assert.NotNull(run);
+        }
+
+        [Fact]
+        public void Parse_CenterAlignment_SetsAlignmentCenter()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\qc Centered}");
+            Assert.Contains(result, p => p.Alignment == "center");
+        }
+
+        [Fact]
+        public void Parse_RightAlignment_SetsAlignmentRight()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\qr Right}");
+            Assert.Contains(result, p => p.Alignment == "right");
+        }
+
+        [Fact]
+        public void Parse_JustifyAlignment_SetsAlignmentJustify()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\qj Justified}");
+            Assert.Contains(result, p => p.Alignment == "justify");
+        }
+
+        [Fact]
+        public void Parse_LeftAlignment_SetsAlignmentLeft()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\ql Left}");
+            Assert.Contains(result, p => p.Alignment == "left");
+        }
+
+        [Fact]
+        public void Parse_Par_CreatesParagraphs()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi First\par Second\par Third}");
+            Assert.True(result.Count >= 3);
+        }
+
+        [Fact]
+        public void Parse_Line_CreatesParagraph()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi Before\line After}");
+            Assert.True(result.Count >= 2);
+        }
+
+        [Fact]
+        public void Parse_Pard_ResetsBold()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\b Bold\pard Plain}");
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            Assert.Contains(runs, r => r.Bold);
+            Assert.Contains(runs, r => !r.Bold);
+        }
+
+        [Fact]
+        public void Parse_UlnoneDisablesUnderline()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\ul Under\ulnone Not}");
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            Assert.Contains(runs, r => r.Underline);
+            Assert.Contains(runs, r => !r.Underline);
+        }
+
+        [Fact]
+        public void Parse_BoldOff_DisablesBold()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\b Bold\b0 Off}");
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            Assert.Contains(runs, r => !r.Bold);
+        }
+
+        [Fact]
+        public void Parse_EscapedBackslash_ProducesBackslash()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi test\\more}");
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("\\", text);
+        }
+
+        [Fact]
+        public void Parse_EscapedBraces_ProducesBraces()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi \{ and \}}");
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("{", text);
+            Assert.Contains("}", text);
+        }
+
+        [Fact]
+        public void Parse_HexEscape_ProducesCorrectChar()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi \'41}");
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("A", text);
+        }
+
+        [Fact]
+        public void Parse_DestinationGroup_IsSkipped()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi{\*\generator Test;}Hello}");
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+            Assert.DoesNotContain("generator", text);
+        }
+
+        [Fact]
+        public void Parse_PictGroup_IsSkipped()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi Text{\pict data}More}");
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Text", text);
+            Assert.Contains("More", text);
+            Assert.DoesNotContain("data", text);
+        }
+
+        [Fact]
+        public void Parse_FontTable_ExtractsFontNames()
+        {
+            var result = RtfParser.Parse(
+                @"{\rtf1\ansi{\fonttbl{\f0\fswiss Arial;}}Hello}");
+            var run = result.SelectMany(p => p.Runs).FirstOrDefault();
+            Assert.NotNull(run);
+        }
+
+        [Fact]
+        public void RtfRun_RecordEquality()
+        {
+            var a = new RtfRun("text", true, false, false, false, "Arial", 24);
+            var b = new RtfRun("text", true, false, false, false, "Arial", 24);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void RtfRun_RecordInequality()
+        {
+            var a = new RtfRun("text", true, false, false, false, "Arial", 24);
+            var b = new RtfRun("text", false, false, false, false, "Arial", 24);
+            Assert.NotEqual(a, b);
+        }
+
+        [Fact]
+        public void RtfParagraph_DefaultAlignment_IsLeft()
+        {
+            var para = new RtfParagraph();
+            Assert.Equal("left", para.Alignment);
+        }
+
+        [Fact]
+        public void RtfParagraph_DefaultRuns_IsEmpty()
+        {
+            var para = new RtfParagraph();
+            Assert.Empty(para.Runs);
+        }
+
+        [Fact]
+        public void Parse_RunCoalescing_MergesIdenticalFormattingRuns()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi AB}");
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            var combinedText = string.Join("", runs.Select(r => r.Text));
+            Assert.Contains("AB", combinedText);
+            var abRun = runs.FirstOrDefault(r => r.Text.Contains("AB"));
+            Assert.NotNull(abRun);
+        }
+
+        [Fact]
+        public void Parse_TrimsLeadingEmptyParagraphs()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\par\par Content}");
+            Assert.True(result.Count >= 1);
+            Assert.Contains(result, p => p.Runs.Count > 0);
+        }
+
+        [Fact]
+        public void Parse_TrimsTrailingEmptyParagraphs()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi Content\par\par }");
+            Assert.True(result.Count >= 1);
+            Assert.Contains(result, p => p.Runs.Count > 0);
+        }
+
+        [Fact]
+        public void Parse_Striked_AlsoSetsStrikethrough()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\striked Strike}");
+            var stRun = result.SelectMany(p => p.Runs).FirstOrDefault(r => r.Strikethrough);
+            Assert.NotNull(stRun);
+        }
+
+        [Fact]
+        public void Parse_SpecialChars_AreSkipped()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi Hello\~World}");
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+            Assert.Contains("World", text);
+        }
+    }
+
+    // ═══ DocxExportHelper GenerateDocx Edge Cases ════════════════════════════════
+
+    public class DocxExportEdgeCaseTests
+    {
+        [Fact]
+        public void GenerateDocx_TrailingNewlines_AreTrimmed()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("Hello\n\n\n");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.Single(paragraphs);
+        }
+
+        [Fact]
+        public void GenerateDocx_CROnly_NormalizedCorrectly()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("A\rB\rC");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.Equal(3, paragraphs.Count);
+        }
+
+        [Fact]
+        public void GenerateDocx_UnicodeContent_Preserved()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("日本語テスト");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("日本語テスト", content);
+        }
+
+        [Fact]
+        public void GenerateDocx_EmptyContent_HasOneParagraph()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("word/document.xml");
+            using var reader = new StreamReader(entry!.Open());
+            var doc = XDocument.Parse(reader.ReadToEnd());
+            XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var paragraphs = doc.Descendants(w + "p").ToList();
+            Assert.Single(paragraphs);
+        }
+
+        [Fact]
+        public void GenerateDocx_ContentTypes_HasCorrectElements()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("test");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("[Content_Types].xml");
+            using var reader = new StreamReader(entry!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("rels", content);
+            Assert.Contains("xml", content);
+            Assert.Contains("wordprocessingml", content);
+        }
+
+        [Fact]
+        public void GenerateDocx_RootRels_HasRelationship()
+        {
+            var bytes = DocxExportHelper.GenerateDocx("test");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("_rels/.rels");
+            using var reader = new StreamReader(entry!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("officeDocument", content);
+            Assert.Contains("word/document.xml", content);
+        }
+
+        [Fact]
+        public void GenerateRichDocx_ContentTypes_HasCorrectElements()
+        {
+            var bytes = DocxExportHelper.GenerateRichDocx("test");
+            using var ms = new MemoryStream(bytes);
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var entry = zip.GetEntry("[Content_Types].xml");
+            using var reader = new StreamReader(entry!.Open());
+            string content = reader.ReadToEnd();
+            Assert.Contains("wordprocessingml", content);
+        }
+    }
 }

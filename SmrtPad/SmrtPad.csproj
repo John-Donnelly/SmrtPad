@@ -21,6 +21,10 @@
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="SmrtPad.Tests" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
