@@ -89,21 +89,21 @@
                         <ToggleMenuFlyoutItem x:Name="FocusModeToggle" x:Uid="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click" />
                     </MenuBarItem>
                     <MenuBarItem x:Uid="MacroMenuBar" Title="Macro">
-                        <MenuFlyoutItem x:Name="MacroRecordItem" Click="MacroRecord_Click">
+                        <MenuFlyoutItem x:Name="MacroRecordItem" Text="Record Macro" Click="MacroRecord_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7C8;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Name="MacroStopItem" Click="MacroStop_Click" IsEnabled="False">
+                        <MenuFlyoutItem x:Name="MacroStopItem" Text="Stop Recording" Click="MacroStop_Click" IsEnabled="False">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE71A;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="MacroRunItem" Click="MacroRun_Click">
+                        <MenuFlyoutItem x:Name="MacroRunItem" Text="Run Macro" Click="MacroRun_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="MacroSaveItem" Click="MacroSave_Click">
+                        <MenuFlyoutItem x:Name="MacroSaveItem" Text="Save Macro" Click="MacroSave_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74E;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Name="MacroLoadItem" Click="MacroLoad_Click">
+                        <MenuFlyoutItem x:Name="MacroLoadItem" Text="Load Macro" Click="MacroLoad_Click">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                     </MenuBarItem>
