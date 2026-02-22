@@ -43,6 +43,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -55,7 +56,39 @@
                            Text="Choose an option on the left." />
             </Border>
 
-            <Border x:Name="RecentFilesPanel" Grid.Row="2" Visibility="Collapsed"
+            <!-- Document properties panel -->
+            <Border x:Name="DocPropertiesPanel" Grid.Row="2" Visibility="Collapsed"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                <StackPanel Spacing="6">
+                    <TextBlock x:Uid="BackstageDocPropertiesHeader" Text="Document Properties" FontSize="16" FontWeight="SemiBold"/>
+                    <Grid ColumnSpacing="12" RowSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Uid="DocPropFileName" Grid.Row="0" Grid.Column="0" Text="File name:" Opacity="0.7"/>
+                        <TextBlock x:Name="PropFileName" Grid.Row="0" Grid.Column="1"/>
+                        <TextBlock x:Uid="DocPropWordCount" Grid.Row="1" Grid.Column="0" Text="Words:" Opacity="0.7"/>
+                        <TextBlock x:Name="PropWordCount" Grid.Row="1" Grid.Column="1"/>
+                        <TextBlock x:Uid="DocPropCharCount" Grid.Row="2" Grid.Column="0" Text="Characters:" Opacity="0.7"/>
+                        <TextBlock x:Name="PropCharCount" Grid.Row="2" Grid.Column="1"/>
+                        <TextBlock x:Uid="DocPropEncoding" Grid.Row="3" Grid.Column="0" Text="Encoding:" Opacity="0.7"/>
+                        <TextBlock x:Name="PropEncoding" Grid.Row="3" Grid.Column="1"/>
+                        <TextBlock x:Uid="DocPropModified" Grid.Row="4" Grid.Column="0" Text="Modified:" Opacity="0.7"/>
+                        <TextBlock x:Name="PropModified" Grid.Row="4" Grid.Column="1"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="RecentFilesPanel" Grid.Row="3" Visibility="Collapsed"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="8" Padding="16" Margin="0,8,0,0">
                 <StackPanel Spacing="8">

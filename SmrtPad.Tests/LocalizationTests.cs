@@ -306,6 +306,22 @@ namespace SmrtPad.Tests
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
+        [Theory]
+        [InlineData("BackstageDocPropertiesHeader.Text")]
+        [InlineData("DocPropFileName.Text")]
+        [InlineData("DocPropWordCount.Text")]
+        [InlineData("DocPropCharCount.Text")]
+        [InlineData("DocPropEncoding.Text")]
+        [InlineData("DocPropModified.Text")]
+        [InlineData("DocPropYes")]
+        [InlineData("DocPropNo")]
+        public void ReswFile_ContainsDocPropertiesKeys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
         // ── Satellite locale parity tests ──
 
         private static readonly string[] SatelliteLocales =

@@ -699,5 +699,29 @@
   <data name="StatusStyleApplied" xml:space="preserve">
     <value>Стиль применён.</value>
   </data>
+  <data name="BackstageDocPropertiesHeader.Text" xml:space="preserve">
+    <value>Свойства документа</value>
+  </data>
+  <data name="DocPropFileName.Text" xml:space="preserve">
+    <value>Имя файла:</value>
+  </data>
+  <data name="DocPropWordCount.Text" xml:space="preserve">
+    <value>Слова:</value>
+  </data>
+  <data name="DocPropCharCount.Text" xml:space="preserve">
+    <value>Символы:</value>
+  </data>
+  <data name="DocPropEncoding.Text" xml:space="preserve">
+    <value>Кодировка:</value>
+  </data>
+  <data name="DocPropModified.Text" xml:space="preserve">
+    <value>Изменён:</value>
+  </data>
+  <data name="DocPropYes" xml:space="preserve">
+    <value>Да</value>
+  </data>
+  <data name="DocPropNo" xml:space="preserve">
+    <value>Нет</value>
+  </data>
 
 </root>

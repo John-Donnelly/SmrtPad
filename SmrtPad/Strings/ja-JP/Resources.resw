@@ -699,5 +699,29 @@
   <data name="StatusStyleApplied" xml:space="preserve">
     <value>スタイルを適用しました。</value>
   </data>
+  <data name="BackstageDocPropertiesHeader.Text" xml:space="preserve">
+    <value>ドキュメントのプロパティ</value>
+  </data>
+  <data name="DocPropFileName.Text" xml:space="preserve">
+    <value>ファイル名:</value>
+  </data>
+  <data name="DocPropWordCount.Text" xml:space="preserve">
+    <value>単語数:</value>
+  </data>
+  <data name="DocPropCharCount.Text" xml:space="preserve">
+    <value>文字数:</value>
+  </data>
+  <data name="DocPropEncoding.Text" xml:space="preserve">
+    <value>エンコーディング:</value>
+  </data>
+  <data name="DocPropModified.Text" xml:space="preserve">
+    <value>変更済み:</value>
+  </data>
+  <data name="DocPropYes" xml:space="preserve">
+    <value>はい</value>
+  </data>
+  <data name="DocPropNo" xml:space="preserve">
+    <value>いいえ</value>
+  </data>
 
 </root>

@@ -699,5 +699,29 @@
   <data name="StatusStyleApplied" xml:space="preserve">
     <value>اسٹائل لاگو ہو گیا۔</value>
   </data>
+  <data name="BackstageDocPropertiesHeader.Text" xml:space="preserve">
+    <value>دستاویز کی خصوصیات</value>
+  </data>
+  <data name="DocPropFileName.Text" xml:space="preserve">
+    <value>فائل کا نام:</value>
+  </data>
+  <data name="DocPropWordCount.Text" xml:space="preserve">
+    <value>الفاظ:</value>
+  </data>
+  <data name="DocPropCharCount.Text" xml:space="preserve">
+    <value>حروف:</value>
+  </data>
+  <data name="DocPropEncoding.Text" xml:space="preserve">
+    <value>انکوڈنگ:</value>
+  </data>
+  <data name="DocPropModified.Text" xml:space="preserve">
+    <value>ترمیم شدہ:</value>
+  </data>
+  <data name="DocPropYes" xml:space="preserve">
+    <value>ہاں</value>
+  </data>
+  <data name="DocPropNo" xml:space="preserve">
+    <value>نہیں</value>
+  </data>
 
 </root>

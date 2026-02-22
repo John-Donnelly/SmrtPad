@@ -728,4 +728,30 @@
     <value>Style applied.</value>
   </data>
 
+  <!-- ═══ XAML: Backstage document properties ═══ -->
+  <data name="BackstageDocPropertiesHeader.Text" xml:space="preserve">
+    <value>Document Properties</value>
+  </data>
+  <data name="DocPropFileName.Text" xml:space="preserve">
+    <value>File name:</value>
+  </data>
+  <data name="DocPropWordCount.Text" xml:space="preserve">
+    <value>Words:</value>
+  </data>
+  <data name="DocPropCharCount.Text" xml:space="preserve">
+    <value>Characters:</value>
+  </data>
+  <data name="DocPropEncoding.Text" xml:space="preserve">
+    <value>Encoding:</value>
+  </data>
+  <data name="DocPropModified.Text" xml:space="preserve">
+    <value>Modified:</value>
+  </data>
+  <data name="DocPropYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="DocPropNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+
 </root>

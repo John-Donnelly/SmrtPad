@@ -2319,6 +2319,12 @@ namespace SmrtPad
         private void ShowBackstage()
         {
             FileBackstage.SetRecentFiles(_settings.RecentFiles);
+            FileBackstage.SetDocumentProperties(
+                _currentFile?.Name ?? ViewModel.DocumentTitle,
+                ViewModel.WordCount,
+                ViewModel.CharCount,
+                ViewModel.Encoding,
+                ViewModel.IsModified);
             FileBackstage.Visibility = Visibility.Visible;
             Editor.Visibility = Visibility.Collapsed;
         }

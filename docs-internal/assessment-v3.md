@@ -184,10 +184,10 @@
 | Event delegation (8 events) | ✅ | `New/Open/Save/SaveAs/Print/Options/Exit/RecentFileRequested` |
 | `_suppressSelectionEvent` guard | ✅ | Prevents `NewRequested` firing during constructor |
 | Recent files panel (Open view) | ✅ | `SetRecentFiles()` populates `RecentFilesList` `ItemsControl` with `Button` children; `ToolTip` shows full path |
-| Rich content panels per nav item | ⚠️ | `TextBlock` description + recent files for Open; no info/preview panels for other items |
-| Document properties / Print preview | ❌ | |
+| Rich content panels per nav item | ✅ | New/Save/SaveAs/Print show document properties panel alongside description; Open shows recent files panel |
+| Document properties | ✅ | `SetDocumentProperties` populates file name, word count, char count, encoding, modified status; localized property labels across 9 locales |
 
-**Section: 72% (4/6 fully working, 1 partial, 1 not started)**
+**Section: 100% (6/6)**
 
 ---
 
@@ -396,7 +396,7 @@
 | ~~Font color keyboard shortcut~~ | ~~Low~~ | ~~Low~~ | ✅ **Completed** — commit `6497185` |
 | ~~Tab stop configuration~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `0ac6347` |
 | ~~Paragraph styles (Heading 1, Normal, etc.)~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
-| Document properties / backstage rich panels | Low | Medium | |
+| ~~Document properties / backstage rich panels~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
 
 ---
 
@@ -413,7 +413,7 @@
 | Ribbon — Paragraph | **100%** |
 | Ribbon — Insert | 93% |
 | Ribbon — Editing | **100%** |
-| File backstage view | 72% |
+| File backstage view | **100%** |
 | Status bar | **100%** |
 | EditorViewModel | 93% |
 | ColorHelper | **100%** |

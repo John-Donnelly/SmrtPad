@@ -26,6 +26,15 @@ public sealed partial class FileBackstageView : UserControl
         _suppressSelectionEvent = false;
     }
 
+    public void SetDocumentProperties(string fileName, int wordCount, int charCount, string encoding, bool isModified)
+    {
+        PropFileName.Text = fileName;
+        PropWordCount.Text = wordCount.ToString("N0");
+        PropCharCount.Text = charCount.ToString("N0");
+        PropEncoding.Text = encoding;
+        PropModified.Text = isModified ? Res.GetString("DocPropYes") : Res.GetString("DocPropNo");
+    }
+
     public void SetRecentFiles(List<string> recentFiles)
     {
         RecentFilesList.Items.Clear();
@@ -69,12 +78,14 @@ public sealed partial class FileBackstageView : UserControl
         var tag = item.Tag as string;
         HeaderText.Text = tag is null ? Res.GetString("BackstageFile") : tag;
         RecentFilesPanel.Visibility = Visibility.Collapsed;
+        DocPropertiesPanel.Visibility = Visibility.Collapsed;
         BodyText.Visibility = Visibility.Visible;
 
         switch (tag)
         {
             case "New":
                 BodyText.Text = Res.GetString("BackstageNewDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
                 NewRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Open":
@@ -84,14 +95,17 @@ public sealed partial class FileBackstageView : UserControl
                 break;
             case "Save":
                 BodyText.Text = Res.GetString("BackstageSaveDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
                 SaveRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "SaveAs":
                 BodyText.Text = Res.GetString("BackstageSaveAsDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
                 SaveAsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Print":
                 BodyText.Text = Res.GetString("BackstagePrintDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
                 PrintRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Options":
