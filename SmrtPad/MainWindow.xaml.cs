@@ -1290,10 +1290,29 @@ namespace SmrtPad
             return options;
         }
 
+        private RegexOptions GetRegexOptions()
+        {
+            var options = RegexOptions.None;
+            if (FindMatchCaseCheckBox.IsChecked != true) options |= RegexOptions.IgnoreCase;
+            return options;
+        }
+
+        private string GetFullDocumentText()
+        {
+            Editor.Document.GetText(TextGetOptions.None, out string text);
+            return text;
+        }
+
         private void FindNext_Click(object sender, RoutedEventArgs e)
         {
             string textToFind = FindTextBox.Text;
-            if (!string.IsNullOrEmpty(textToFind))
+            if (string.IsNullOrEmpty(textToFind)) return;
+
+            if (FindRegexCheckBox.IsChecked == true)
+            {
+                FindNextRegex(textToFind, forward: true);
+            }
+            else
             {
                 int found = Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, GetFindOptions());
                 if (found == 0)
@@ -1304,11 +1323,58 @@ namespace SmrtPad
         private void FindPrevious_Click(object sender, RoutedEventArgs e)
         {
             string textToFind = FindTextBox.Text;
-            if (!string.IsNullOrEmpty(textToFind))
+            if (string.IsNullOrEmpty(textToFind)) return;
+
+            if (FindRegexCheckBox.IsChecked == true)
+            {
+                FindNextRegex(textToFind, forward: false);
+            }
+            else
             {
                 int found = Editor.Document.Selection.FindText(textToFind, -TextConstants.MaxUnitCount, GetFindOptions());
                 if (found == 0)
                     ViewModel.UpdateStatus(Res.GetString("StatusNoMatch"));
+            }
+        }
+
+        private void FindNextRegex(string pattern, bool forward)
+        {
+            try
+            {
+                var regex = new Regex(pattern, GetRegexOptions());
+                string text = GetFullDocumentText();
+                var matches = regex.Matches(text);
+                if (matches.Count == 0)
+                {
+                    ViewModel.UpdateStatus(Res.GetString("StatusNoMatch"));
+                    return;
+                }
+
+                int currentPos = forward ? Editor.Document.Selection.EndPosition : Editor.Document.Selection.StartPosition;
+                Match? target = null;
+
+                if (forward)
+                {
+                    foreach (Match m in matches)
+                    {
+                        if (m.Index >= currentPos) { target = m; break; }
+                    }
+                    target ??= matches[0];
+                }
+                else
+                {
+                    for (int i = matches.Count - 1; i >= 0; i--)
+                    {
+                        if (matches[i].Index < currentPos) { target = matches[i]; break; }
+                    }
+                    target ??= matches[^1];
+                }
+
+                Editor.Document.Selection.SetRange(target.Index, target.Index + target.Length);
+            }
+            catch (ArgumentException)
+            {
+                ViewModel.UpdateStatus(Res.GetString("StatusInvalidRegex"));
             }
         }
 
@@ -1320,18 +1386,40 @@ namespace SmrtPad
             string textToFind = FindTextBox.Text;
             if (string.IsNullOrEmpty(textToFind)) return;
 
-            var options = GetFindOptions();
             int count = 0;
 
             // Save current selection
             int savedStart = Editor.Document.Selection.StartPosition;
             int savedEnd = Editor.Document.Selection.EndPosition;
 
-            Editor.Document.Selection.SetRange(0, 0);
-            while (Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, options) > 0)
+            if (FindRegexCheckBox.IsChecked == true)
             {
-                Editor.Document.Selection.CharacterFormat.BackgroundColor = HighlightColor;
-                count++;
+                try
+                {
+                    var regex = new Regex(textToFind, GetRegexOptions());
+                    string text = GetFullDocumentText();
+                    foreach (Match m in regex.Matches(text))
+                    {
+                        Editor.Document.Selection.SetRange(m.Index, m.Index + m.Length);
+                        Editor.Document.Selection.CharacterFormat.BackgroundColor = HighlightColor;
+                        count++;
+                    }
+                }
+                catch (ArgumentException)
+                {
+                    ViewModel.UpdateStatus(Res.GetString("StatusInvalidRegex"));
+                    return;
+                }
+            }
+            else
+            {
+                var options = GetFindOptions();
+                Editor.Document.Selection.SetRange(0, 0);
+                while (Editor.Document.Selection.FindText(textToFind, TextConstants.MaxUnitCount, options) > 0)
+                {
+                    Editor.Document.Selection.CharacterFormat.BackgroundColor = HighlightColor;
+                    count++;
+                }
             }
 
             // Restore selection
@@ -1354,7 +1442,26 @@ namespace SmrtPad
         {
             string textToFind = ReplaceFindTextBox.Text;
             string replaceWith = ReplaceWithTextBox.Text;
-            if (!string.IsNullOrEmpty(textToFind))
+            if (string.IsNullOrEmpty(textToFind)) return;
+
+            if (FindRegexCheckBox.IsChecked == true)
+            {
+                try
+                {
+                    var regex = new Regex(textToFind, GetRegexOptions());
+                    string selectedText = Editor.Document.Selection.Text;
+                    if (!string.IsNullOrEmpty(selectedText) && regex.IsMatch(selectedText))
+                    {
+                        Editor.Document.Selection.Text = regex.Replace(selectedText, replaceWith);
+                    }
+                    FindNextRegex(textToFind, forward: true);
+                }
+                catch (ArgumentException)
+                {
+                    ViewModel.UpdateStatus(Res.GetString("StatusInvalidRegex"));
+                }
+            }
+            else
             {
                 var options = GetFindOptions();
                 if (Editor.Document.Selection.FindText(textToFind, 0, options) > 0
@@ -1371,7 +1478,25 @@ namespace SmrtPad
         {
             string textToFind = ReplaceFindTextBox.Text;
             string replaceWith = ReplaceWithTextBox.Text;
-            if (!string.IsNullOrEmpty(textToFind))
+            if (string.IsNullOrEmpty(textToFind)) return;
+
+            if (FindRegexCheckBox.IsChecked == true)
+            {
+                try
+                {
+                    var regex = new Regex(textToFind, GetRegexOptions());
+                    string text = GetFullDocumentText();
+                    int count = regex.Matches(text).Count;
+                    string replaced = regex.Replace(text, replaceWith);
+                    Editor.Document.SetText(TextSetOptions.None, replaced);
+                    ViewModel.UpdateStatus(Res.GetFormatted("StatusReplaced", count));
+                }
+                catch (ArgumentException)
+                {
+                    ViewModel.UpdateStatus(Res.GetString("StatusInvalidRegex"));
+                }
+            }
+            else
             {
                 var options = GetFindOptions();
                 int count = 0;

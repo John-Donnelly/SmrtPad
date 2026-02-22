@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>{0} 件を置換しました。</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>無効な正規表現です。</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>正規表現を使用</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: 集中モード ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

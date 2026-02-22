@@ -114,6 +114,7 @@ namespace SmrtPad.Tests
         [InlineData("EditingGroupLabel.Text")]
         [InlineData("FindMatchCaseCheckBox.Content")]
         [InlineData("FindWholeWordCheckBox.Content")]
+        [InlineData("FindRegexCheckBox.Content")]
         [InlineData("NewNavItem.Content")]
         [InlineData("OpenNavItem.Content")]
         [InlineData("SaveNavItem.Content")]
@@ -249,6 +250,16 @@ namespace SmrtPad.Tests
         [InlineData("StatusEnabled")]
         [InlineData("StatusDisabled")]
         public void ReswFile_ContainsSection4Keys(string key)
+        {
+            var entries = LoadResw();
+            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
+        }
+
+        [Theory]
+        [InlineData("StatusInvalidRegex")]
+        [InlineData("FindRegexCheckBox.Content")]
+        public void ReswFile_ContainsRegexKeys(string key)
         {
             var entries = LoadResw();
             Assert.True(entries.ContainsKey(key), $"Missing key: {key}");

@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>{0} occurrences remplacées.</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>Expression régulière non valide.</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>Utiliser les expressions régulières</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND : Mode concentration ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

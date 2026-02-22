@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>已替换 {0} 处。</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>无效的正则表达式。</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>使用正则表达式</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: 专注模式 ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

@@ -446,6 +446,14 @@
     <value>Replaced {0} occurrences.</value>
     <comment>{0} = replacement count</comment>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>Invalid regular expression.</value>
+  </data>
+
+  <!-- ═══ XAML: Find regex checkbox ═══ -->
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>Use regular expressions</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: Focus mode ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

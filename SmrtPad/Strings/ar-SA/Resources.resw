@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>تم استبدال {0} تكرار(ات).</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>تعبير عادي غير صالح.</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>استخدام التعبيرات العادية</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: وضع التركيز ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

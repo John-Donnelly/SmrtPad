@@ -86,6 +86,9 @@ namespace SmrtPad.ViewModels
         private bool _findWholeWord;
 
         [ObservableProperty]
+        private bool _findUseRegex;
+
+        [ObservableProperty]
         private List<string> _recentFiles = new();
 
         [ObservableProperty]
@@ -126,6 +129,7 @@ namespace SmrtPad.ViewModels
             ParagraphSpacingAfter = 0;
             FindMatchCase = false;
             FindWholeWord = false;
+            FindUseRegex = false;
             SelectionLength = 0;
             Encoding = "UTF-8";
         }

@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>{0} واقعات تبدیل کیے گئے۔</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>غلط ریگولر ایکسپریشن۔</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>ریگولر ایکسپریشنز استعمال کریں</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: توجہ موڈ ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

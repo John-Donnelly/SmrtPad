@@ -531,6 +531,7 @@
                                         <TextBox x:Name="FindTextBox" x:Uid="FindTextBox" PlaceholderText="Text to look for"/>
                                         <CheckBox x:Name="FindMatchCaseCheckBox" x:Uid="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"/>
                                         <CheckBox x:Name="FindWholeWordCheckBox" x:Uid="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"/>
+                                        <CheckBox x:Name="FindRegexCheckBox" x:Uid="FindRegexCheckBox" Content="Use regular expressions" IsChecked="False"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
                                             <Button x:Uid="HighlightAllButton" Content="Highlight All" Click="HighlightAllMatches_Click"/>
                                             <Button x:Uid="ClearHighlightsButton" Content="Clear Highlights" Click="ClearHighlights_Click"/>

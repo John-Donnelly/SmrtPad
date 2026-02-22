@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>Заменено вхождений: {0}.</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>Недопустимое регулярное выражение.</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>Использовать регулярные выражения</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: Режим фокусировки ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

@@ -435,6 +435,12 @@
   <data name="StatusReplaced" xml:space="preserve">
     <value>{0} Vorkommen ersetzt.</value>
   </data>
+  <data name="StatusInvalidRegex" xml:space="preserve">
+    <value>Ungültiger regulärer Ausdruck.</value>
+  </data>
+  <data name="FindRegexCheckBox.Content" xml:space="preserve">
+    <value>Reguläre Ausdrücke verwenden</value>
+  </data>
 
   <!-- ═══ CODE-BEHIND: Fokusmodus ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">

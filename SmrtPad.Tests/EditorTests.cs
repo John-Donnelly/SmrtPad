@@ -737,6 +737,33 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
+        public void FindUseRegex_DefaultIsFalse()
+        {
+            var vm = new EditorViewModel();
+            Assert.False(vm.FindUseRegex);
+        }
+
+        [Fact]
+        public void FindUseRegex_PropertyChange()
+        {
+            var vm = new EditorViewModel();
+            var changed = new List<string>();
+            vm.PropertyChanged += (s, e) => changed.Add(e.PropertyName!);
+            vm.FindUseRegex = true;
+            Assert.Contains(nameof(EditorViewModel.FindUseRegex), changed);
+            Assert.True(vm.FindUseRegex);
+        }
+
+        [Fact]
+        public void NewDocument_ResetsFindUseRegex()
+        {
+            var vm = new EditorViewModel();
+            vm.FindUseRegex = true;
+            vm.NewDocument();
+            Assert.False(vm.FindUseRegex);
+        }
+
+        [Fact]
         public void SetLineSpacing_CustomValue()
         {
             var vm = new EditorViewModel();
