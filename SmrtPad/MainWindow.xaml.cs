@@ -543,6 +543,7 @@ namespace SmrtPad
                     charFormatting.Size = (float)size;
                     selectedText.CharacterFormat = charFormatting;
                     ViewModel.FontSize = size;
+                    _macro.Record(MacroCommandType.SetFontSize, size.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
             }
         }
@@ -571,6 +572,7 @@ namespace SmrtPad
                     ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
                     charFormatting.Name = fontName;
                     selectedText.CharacterFormat = charFormatting;
+                    _macro.Record(MacroCommandType.SetFontFamily, fontName);
                 }
             }
         }
@@ -585,6 +587,7 @@ namespace SmrtPad
                     ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
                     charFormatting.Size = (float)fontSize;
                     selectedText.CharacterFormat = charFormatting;
+                    _macro.Record(MacroCommandType.SetFontSize, fontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
             }
         }
@@ -1172,6 +1175,34 @@ namespace SmrtPad
                 }
                 case MacroCommandType.InsertText when cmd.Value is not null:
                     Editor.Document.Selection.Text = cmd.Value; break;
+                case MacroCommandType.SetListType when cmd.Value is not null:
+                {
+                    var marker = cmd.Value switch
+                    {
+                        "Bullet"          => MarkerType.Bullet,
+                        "Number"          => MarkerType.Arabic,
+                        "LowercaseLetter" => MarkerType.LowercaseEnglishLetter,
+                        "UppercaseLetter" => MarkerType.UppercaseEnglishLetter,
+                        "LowercaseRoman"  => MarkerType.LowercaseRoman,
+                        "UppercaseRoman"  => MarkerType.UppercaseRoman,
+                        _                 => MarkerType.None,
+                    };
+                    ApplyListType(marker, cmd.Value);
+                    break;
+                }
+                case MacroCommandType.SetLineSpacing when cmd.Value is not null
+                     && double.TryParse(cmd.Value, System.Globalization.NumberStyles.Any,
+                         System.Globalization.CultureInfo.InvariantCulture, out double sp):
+                {
+                    var pf = Editor.Document.Selection.ParagraphFormat;
+                    if (sp == 1.0)      pf.SetLineSpacing(LineSpacingRule.Single, 0);
+                    else if (sp == 1.5) pf.SetLineSpacing(LineSpacingRule.OneAndHalf, 0);
+                    else if (sp == 2.0) pf.SetLineSpacing(LineSpacingRule.Double, 0);
+                    else                pf.SetLineSpacing(LineSpacingRule.Multiple, (float)sp);
+                    Editor.Document.Selection.ParagraphFormat = pf;
+                    ViewModel.SetLineSpacing(sp);
+                    break;
+                }
             }
         }
 
@@ -1243,6 +1274,7 @@ namespace SmrtPad
                 charFormatting.Bold = FormatEffect.Toggle;
                 selectedText.CharacterFormat = charFormatting;
             }
+            _macro.Record(MacroCommandType.Bold);
         }
 
         private void Italic_Click(object sender, RoutedEventArgs e)
@@ -1254,6 +1286,7 @@ namespace SmrtPad
                 charFormatting.Italic = FormatEffect.Toggle;
                 selectedText.CharacterFormat = charFormatting;
             }
+            _macro.Record(MacroCommandType.Italic);
         }
 
         private void Underline_Click(object sender, RoutedEventArgs e)
@@ -1272,6 +1305,7 @@ namespace SmrtPad
                 }
                 selectedText.CharacterFormat = charFormatting;
             }
+            _macro.Record(MacroCommandType.Underline);
         }
 
         private void Strikethrough_Click(object sender, RoutedEventArgs e)
@@ -1290,6 +1324,7 @@ namespace SmrtPad
                 }
                 selectedText.CharacterFormat = charFormatting;
             }
+            _macro.Record(MacroCommandType.Strikethrough);
         }
 
         private void Subscript_Click(object sender, RoutedEventArgs e)
@@ -1309,6 +1344,7 @@ namespace SmrtPad
                 }
                 selectedText.CharacterFormat = charFormatting;
             }
+            _macro.Record(MacroCommandType.Subscript);
         }
 
         private void Superscript_Click(object sender, RoutedEventArgs e)
@@ -1328,6 +1364,7 @@ namespace SmrtPad
                 }
                 selectedText.CharacterFormat = charFormatting;
             }
+            _macro.Record(MacroCommandType.Superscript);
         }
 
         private async void Exit_Click(object sender, RoutedEventArgs e)
@@ -1346,12 +1383,14 @@ namespace SmrtPad
         {
             ViewModel.ZoomIn();
             ApplyZoom();
+            _macro.Record(MacroCommandType.ZoomIn);
         }
 
         private void ZoomOut_Click(object sender, RoutedEventArgs e)
         {
             ViewModel.ZoomOut();
             ApplyZoom();
+            _macro.Record(MacroCommandType.ZoomOut);
         }
 
         private void ApplyZoom()
@@ -1411,6 +1450,7 @@ namespace SmrtPad
             }
             ViewModel.SetAlignment("Left");
             SetAlignmentToggle(AlignLeftToggle);
+            _macro.Record(MacroCommandType.SetAlignment, "Left");
         }
 
         private void AlignCenter_Click(object sender, RoutedEventArgs e)
@@ -1424,6 +1464,7 @@ namespace SmrtPad
             }
             ViewModel.SetAlignment("Center");
             SetAlignmentToggle(AlignCenterToggle);
+            _macro.Record(MacroCommandType.SetAlignment, "Center");
         }
 
         private void AlignRight_Click(object sender, RoutedEventArgs e)
@@ -1437,6 +1478,7 @@ namespace SmrtPad
             }
             ViewModel.SetAlignment("Right");
             SetAlignmentToggle(AlignRightToggle);
+            _macro.Record(MacroCommandType.SetAlignment, "Right");
         }
 
         private void AlignJustify_Click(object sender, RoutedEventArgs e)
@@ -1450,6 +1492,7 @@ namespace SmrtPad
             }
             ViewModel.SetAlignment("Justify");
             SetAlignmentToggle(AlignJustifyToggle);
+            _macro.Record(MacroCommandType.SetAlignment, "Justify");
         }
 
         private void DecreaseIndent_Click(object sender, RoutedEventArgs e)
@@ -1503,6 +1546,7 @@ namespace SmrtPad
                 selectedText.ParagraphFormat = paragraphFormatting;
             }
             ViewModel.SetListType(listTypeName);
+            _macro.Record(MacroCommandType.SetListType, listTypeName);
         }
 
         private void ListTypeNone_Click(object sender, RoutedEventArgs e) => ApplyListType(MarkerType.None, "None");
@@ -1532,6 +1576,7 @@ namespace SmrtPad
                     selectedText.ParagraphFormat = paragraphFormatting;
                 }
                 ViewModel.SetLineSpacing(spacing);
+                _macro.Record(MacroCommandType.SetLineSpacing, spacing.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
         }
 
@@ -2426,6 +2471,7 @@ namespace SmrtPad
 
                 ViewModel.UpdateStatus(Res.GetString("StatusFormattingCleared"));
             }
+            _macro.Record(MacroCommandType.ClearFormatting);
         }
 
         private async void CustomLineSpacing_Click(object sender, RoutedEventArgs e)
@@ -2461,6 +2507,7 @@ namespace SmrtPad
                     selectedText.ParagraphFormat = paragraphFormatting;
                 }
                 ViewModel.SetLineSpacing(spacing);
+                _macro.Record(MacroCommandType.SetLineSpacing, spacing.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
         }
 

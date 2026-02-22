@@ -2376,6 +2376,85 @@ namespace SmrtPad.Tests
                         Assert.Equal(1, restored.Count);
                         Assert.Equal(type, restored.Commands[0].Type);
                     }
+
+                    [Theory]
+                    [InlineData(MacroCommandType.SetListType, "Bullet")]
+                    [InlineData(MacroCommandType.SetListType, "Number")]
+                    [InlineData(MacroCommandType.SetListType, "LowercaseLetter")]
+                    [InlineData(MacroCommandType.SetListType, "UppercaseLetter")]
+                    [InlineData(MacroCommandType.SetListType, "LowercaseRoman")]
+                    [InlineData(MacroCommandType.SetListType, "UppercaseRoman")]
+                    [InlineData(MacroCommandType.SetListType, "None")]
+                    public void SetListType_AllVariants_RoundTrip(MacroCommandType type, string value)
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(type, value);
+                        macro.StopRecording();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(macro.Serialize());
+
+                        Assert.Equal(type, restored.Commands[0].Type);
+                        Assert.Equal(value, restored.Commands[0].Value);
+                    }
+
+                    [Theory]
+                    [InlineData("1")]
+                    [InlineData("1.5")]
+                    [InlineData("2")]
+                    [InlineData("1.15")]
+                    public void SetLineSpacing_AllPresets_RoundTrip(string spacing)
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.SetLineSpacing, spacing);
+                        macro.StopRecording();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(macro.Serialize());
+
+                        Assert.Equal(MacroCommandType.SetLineSpacing, restored.Commands[0].Type);
+                        Assert.Equal(spacing, restored.Commands[0].Value);
+                    }
+
+                    [Fact]
+                    public void Record_WhenNotRecording_NeverAddsCommands()
+                    {
+                        var macro = new MacroHelper();
+                        macro.Record(MacroCommandType.Bold);
+                        macro.Record(MacroCommandType.SetListType, "Bullet");
+                        macro.Record(MacroCommandType.SetLineSpacing, "2");
+                        Assert.Equal(0, macro.Count);
+                    }
+
+                    [Fact]
+                    public void MacroCommandType_SetListType_Exists()
+                    {
+                        Assert.True(Enum.IsDefined(typeof(MacroCommandType), "SetListType"));
+                    }
+
+                    [Fact]
+                    public void MacroCommandType_SetLineSpacing_Exists()
+                    {
+                        Assert.True(Enum.IsDefined(typeof(MacroCommandType), "SetLineSpacing"));
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasExecuteMacroCommand_Private()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("ExecuteMacroCommand",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MacroCommandType_HasExpected15Types()
+                    {
+                        var values = Enum.GetValues<MacroCommandType>();
+                        Assert.Equal(15, values.Length);
+                    }
                 }
 
                 // â•â•â• SpellCheck Settings Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
