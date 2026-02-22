@@ -77,7 +77,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsKey_WithExpectedValue(string key, string expectedValue)
         {
             var dict = LoadResw();
-            Assert.True(dict.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, dict.Keys);
             Assert.Equal(expectedValue, dict[key]);
         }
 
@@ -96,7 +96,7 @@ namespace SmrtPad.Tests
         public void ReswFile_FormatStrings_ContainPlaceholders(string key)
         {
             var dict = LoadResw();
-            Assert.True(dict.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, dict.Keys);
             Assert.Contains("{0}", dict[key]);
         }
 
@@ -124,7 +124,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsXamlUidEntries(string key)
         {
             var dict = LoadResw();
-            Assert.True(dict.ContainsKey(key), $"Missing x:Uid key: {key}");
+            Assert.Contains(key, dict.Keys);
             Assert.False(string.IsNullOrWhiteSpace(dict[key]), $"Empty value for x:Uid key: {key}");
         }
 
@@ -229,7 +229,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsSection2Keys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -252,7 +252,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsSection4Keys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -262,7 +262,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsRegexKeys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -287,7 +287,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsTabStopKeys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -302,7 +302,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsParagraphStyleKeys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -318,7 +318,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsDocPropertiesKeys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -331,7 +331,7 @@ namespace SmrtPad.Tests
         public void ReswFile_ContainsDrawingKeys(string key)
         {
             var entries = LoadResw();
-            Assert.True(entries.ContainsKey(key), $"Missing key: {key}");
+            Assert.Contains(key, entries.Keys);
             Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key {key} has empty value");
         }
 
@@ -422,8 +422,7 @@ namespace SmrtPad.Tests
             var satellite = LoadReswFrom(path);
 
             var missing = enUs.Keys.Except(satellite.Keys).ToList();
-            Assert.True(missing.Count == 0,
-                $"{locale} is missing keys: {string.Join(", ", missing)}");
+            Assert.Empty(missing);
         }
 
         [Theory]
@@ -444,8 +443,7 @@ namespace SmrtPad.Tests
             var satellite = LoadReswFrom(path);
 
             var extra = satellite.Keys.Except(enUs.Keys).ToList();
-            Assert.True(extra.Count == 0,
-                $"{locale} has extra keys: {string.Join(", ", extra)}");
+            Assert.Empty(extra);
         }
 
         [Theory]
@@ -466,8 +464,7 @@ namespace SmrtPad.Tests
 
             var empty = satellite.Where(kv => string.IsNullOrWhiteSpace(kv.Value))
                                  .Select(kv => kv.Key).ToList();
-            Assert.True(empty.Count == 0,
-                $"{locale} has empty values: {string.Join(", ", empty)}");
+            Assert.Empty(empty);
         }
 
         [Theory]
@@ -493,7 +490,7 @@ namespace SmrtPad.Tests
 
             foreach (var key in formatKeys)
             {
-                Assert.True(satellite.ContainsKey(key), $"{locale} missing format key: {key}");
+                Assert.Contains(key, satellite.Keys);
 
                 // Count placeholders in en-US
                 int enCount = 0;
@@ -532,8 +529,7 @@ namespace SmrtPad.Tests
                                  .Where(g => g.Count() > 1)
                                  .Select(g => g.Key)
                                  .ToList();
-            Assert.True(duplicates.Count == 0,
-                $"{locale} has duplicate keys: {string.Join(", ", duplicates!)}");
+            Assert.Empty(duplicates);
         }
     }
 }

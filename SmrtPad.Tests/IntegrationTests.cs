@@ -1469,7 +1469,7 @@ namespace SmrtPad.Tests
 
             foreach (var key in DrawingKeys)
             {
-                Assert.True(entries.ContainsKey(key), $"Key '{key}' missing in {locale}");
+                Assert.Contains(key, entries.Keys);
                 Assert.False(string.IsNullOrWhiteSpace(entries[key]), $"Key '{key}' is empty in {locale}");
             }
         }
@@ -1744,7 +1744,7 @@ namespace SmrtPad.Tests
         [InlineData("Quote")]
         public void All_ContainsKey(string key)
         {
-            Assert.True(ParagraphStyleHelper.All.ContainsKey(key));
+            Assert.Contains(key, ParagraphStyleHelper.All.Keys);
             Assert.NotNull(ParagraphStyleHelper.All[key]);
         }
 
@@ -2167,7 +2167,7 @@ namespace SmrtPad.Tests
                         using var stream = zip.GetEntry("word/document.xml")!.Open();
                         var doc = XDocument.Load(stream);
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-                        Assert.True(doc.Descendants(w + "b").Any());
+                        Assert.NotEmpty(doc.Descendants(w + "b"));
                     }
 
                     [Fact]
@@ -2180,7 +2180,7 @@ namespace SmrtPad.Tests
                         using var stream = zip.GetEntry("word/document.xml")!.Open();
                         var doc = XDocument.Load(stream);
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-                        Assert.True(doc.Descendants(w + "i").Any());
+                        Assert.NotEmpty(doc.Descendants(w + "i"));
                     }
 
                     [Fact]
@@ -2193,7 +2193,7 @@ namespace SmrtPad.Tests
                         using var stream = zip.GetEntry("word/document.xml")!.Open();
                         var doc = XDocument.Load(stream);
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-                        Assert.True(doc.Descendants(w + "u").Any());
+                        Assert.NotEmpty(doc.Descendants(w + "u"));
                     }
 
                     [Fact]
@@ -2206,7 +2206,7 @@ namespace SmrtPad.Tests
                         using var stream = zip.GetEntry("word/document.xml")!.Open();
                         var doc = XDocument.Load(stream);
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-                        Assert.True(doc.Descendants(w + "strike").Any());
+                        Assert.NotEmpty(doc.Descendants(w + "strike"));
                     }
 
                     [Fact]
@@ -2234,7 +2234,7 @@ namespace SmrtPad.Tests
                         using var stream = zip.GetEntry("word/document.xml")!.Open();
                         var doc = XDocument.Load(stream);
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-                        Assert.True(doc.Descendants(w + "p").Count() >= 3);
+                        Assert.InRange(doc.Descendants(w + "p").Count(), 3, int.MaxValue);
                     }
 
                     [Fact]
@@ -2265,8 +2265,8 @@ namespace SmrtPad.Tests
                         XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
                         // "AB" should be a single <w:t> element, not two separate runs
                         var runs = doc.Descendants(w + "r").ToList();
-                        Assert.True(runs.Any(r => r.Descendants(w + "t").Any(t => t.Value.Contains("AB")
-                            || (t.Value.Contains("A") && t.Value.Contains("B")))));
+                        Assert.Contains(runs, r => r.Descendants(w + "t").Any(t => t.Value.Contains("AB")
+                            || (t.Value.Contains("A") && t.Value.Contains("B"))));
                     }
                 }
 
@@ -2291,7 +2291,7 @@ namespace SmrtPad.Tests
                     [Fact]
                     public void App_Windows_StartsEmpty_InTestContext()
                     {
-                        Assert.Equal(0, SmrtPad.App.Windows.Count);
+                        Assert.Empty(SmrtPad.App.Windows);
                     }
 
                     [Fact]
@@ -2358,7 +2358,7 @@ namespace SmrtPad.Tests
                     [Fact]
                     public void All_ContainsFiveTemplates()
                     {
-                        Assert.Equal(5, DocumentTemplates.All.Count);
+                        Assert.Equal(5, DocumentTemplates.All.Count); // 5 named templates — Assert.Collection not used as it would duplicate key assertions below
                     }
 
                     [Fact]
@@ -2572,7 +2572,7 @@ namespace SmrtPad.Tests
                     {
                         var macro = new MacroHelper();
                         Assert.False(macro.IsRecording);
-                        Assert.Equal(0, macro.Count);
+                        Assert.Empty(macro.Commands);
                     }
 
                     [Fact]
@@ -2598,7 +2598,7 @@ namespace SmrtPad.Tests
                         var macro = new MacroHelper();
                         macro.StartRecording();
                         macro.Record(MacroCommandType.Bold);
-                        Assert.Equal(1, macro.Count);
+                        Assert.Single(macro.Commands);
                         Assert.Equal(MacroCommandType.Bold, macro.Commands[0].Type);
                     }
 
@@ -2607,7 +2607,7 @@ namespace SmrtPad.Tests
                     {
                         var macro = new MacroHelper();
                         macro.Record(MacroCommandType.Italic);
-                        Assert.Equal(0, macro.Count);
+                        Assert.Empty(macro.Commands);
                     }
 
                     [Fact]
@@ -2628,7 +2628,7 @@ namespace SmrtPad.Tests
                         macro.StopRecording();
 
                         macro.StartRecording();
-                        Assert.Equal(0, macro.Count);
+                        Assert.Empty(macro.Commands);
                     }
 
                     [Fact]
@@ -2640,7 +2640,7 @@ namespace SmrtPad.Tests
                         macro.Record(MacroCommandType.Italic);
                         macro.StopRecording();
                         macro.Clear();
-                        Assert.Equal(0, macro.Count);
+                        Assert.Empty(macro.Commands);
                     }
 
                     [Fact]
@@ -2670,7 +2670,7 @@ namespace SmrtPad.Tests
 
                         var restored = new MacroHelper();
                         restored.Deserialize(json);
-                        Assert.Equal(2, restored.Count);
+                        Assert.Equal(2, restored.Commands.Count);
                         Assert.Equal(MacroCommandType.Italic, restored.Commands[0].Type);
                         Assert.Equal(MacroCommandType.SetAlignment, restored.Commands[1].Type);
                         Assert.Equal("Center", restored.Commands[1].Value);
@@ -2691,7 +2691,7 @@ namespace SmrtPad.Tests
 
                             var loaded = new MacroHelper();
                             loaded.Load(path);
-                            Assert.Equal(2, loaded.Count);
+                            Assert.Equal(2, loaded.Commands.Count);
                             Assert.Equal(MacroCommandType.ZoomIn, loaded.Commands[0].Type);
                             Assert.Equal(MacroCommandType.InsertText, loaded.Commands[1].Type);
                             Assert.Equal("Hello macro", loaded.Commands[1].Value);
@@ -2751,7 +2751,7 @@ namespace SmrtPad.Tests
                         var restored = new MacroHelper();
                         restored.Deserialize(json);
 
-                        Assert.Equal(1, restored.Count);
+                        Assert.Single(restored.Commands);
                         Assert.Equal(type, restored.Commands[0].Type);
                     }
 
@@ -2803,7 +2803,7 @@ namespace SmrtPad.Tests
                         macro.Record(MacroCommandType.Bold);
                         macro.Record(MacroCommandType.SetListType, "Bullet");
                         macro.Record(MacroCommandType.SetLineSpacing, "2");
-                        Assert.Equal(0, macro.Count);
+                        Assert.Empty(macro.Commands);
                     }
 
                     [Fact]
@@ -2976,7 +2976,7 @@ namespace SmrtPad.Tests
                     public void EnUs_ContainsNewKey(string key)
                     {
                         var dict = LoadResw("en-US");
-                        Assert.True(dict.ContainsKey(key), $"Missing key in en-US: {key}");
+                        Assert.Contains(key, dict.Keys);
                         Assert.False(string.IsNullOrWhiteSpace(dict[key]), $"Empty value for: {key}");
                     }
 
@@ -2997,7 +2997,7 @@ namespace SmrtPad.Tests
 
                         foreach (var key in NewKeys)
                         {
-                            Assert.True(locDict.ContainsKey(key), $"Missing key '{key}' in {locale}");
+                            Assert.Contains(key, locDict.Keys);
                             Assert.False(string.IsNullOrWhiteSpace(locDict[key]), $"Empty value for '{key}' in {locale}");
                         }
                     }
@@ -3009,7 +3009,7 @@ namespace SmrtPad.Tests
                     public void NewFormatStrings_ContainPlaceholder(string key)
                     {
                         var dict = LoadResw("en-US");
-                        Assert.True(dict.ContainsKey(key), $"Missing key: {key}");
+                        Assert.Contains(key, dict.Keys);
                         Assert.Contains("{0}", dict[key]);
                     }
 
