@@ -321,7 +321,7 @@ namespace SmrtPad
             ViewModel.FontFamily = _settings.DefaultFontFamily;
             ViewModel.FontSize = _settings.DefaultFontSize;
             Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
-            if (SpellCheckToggle != null) SpellCheckToggle.IsChecked = _settings.SpellCheckEnabled;
+            SpellCheckToggle?.IsChecked = _settings.SpellCheckEnabled;
             ApplyThemeFromSettings();
         }
 
@@ -457,7 +457,7 @@ namespace SmrtPad
             FileBackstage.SetRecentFiles(_settings.RecentFiles);
         }
 
-        private void Editor_SelectionChanged(object _sender, RoutedEventArgs _e)
+        private void Editor_SelectionChanged(object _, RoutedEventArgs _1)
         {
             ITextSelection selection = Editor.Document.Selection;
             if (selection == null) return;
@@ -476,6 +476,7 @@ namespace SmrtPad
             {
                 ViewModel.FontFamily = charFormat.Name;
                 FontFamilyComboBox.SelectedItem = charFormat.Name;
+                FontFamilyComboBox.Text = charFormat.Name;
             }
             if (charFormat.Size > 0)
             {
@@ -658,7 +659,7 @@ namespace SmrtPad
                 ShowBackstage();
         }
 
-        private async void Open_Click(object sender, RoutedEventArgs e)
+        private async void Open_Click(object _, RoutedEventArgs _1)
         {
             try
             {
@@ -736,7 +737,7 @@ namespace SmrtPad
             }
         }
 
-        private async void SaveAs_Click(object sender, RoutedEventArgs e)
+        private async void SaveAs_Click(object _, RoutedEventArgs _1)
         {
             try
             {
@@ -775,7 +776,7 @@ namespace SmrtPad
             }
         }
 
-        private async void Print_Click(object _sender, RoutedEventArgs _e)
+        private async void Print_Click(object _, RoutedEventArgs _1)
         {
             if (!PrintManager.IsSupported())
             {
@@ -902,7 +903,7 @@ namespace SmrtPad
             printDoc.AddPagesComplete();
         }
 
-        private async void Options_Click(object _sender, RoutedEventArgs _e)
+        private async void Options_Click(object _, RoutedEventArgs _1)
         {
             var panel = new StackPanel { Spacing = 12, MinWidth = 350 };
 
@@ -991,7 +992,7 @@ namespace SmrtPad
                 _settings.RulerUnits = rulerUnitsBox.SelectedIndex == 1 ? "cm" : "in";
                 _settings.SpellCheckEnabled = spellCheckBox.IsChecked == true;
                 Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
-                if (SpellCheckToggle != null) SpellCheckToggle.IsChecked = _settings.SpellCheckEnabled;
+                SpellCheckToggle?.IsChecked = _settings.SpellCheckEnabled;
                 _settings.Save();
                 ApplyThemeFromSettings();
                 SetupAutoSave();
@@ -1018,7 +1019,7 @@ namespace SmrtPad
 
         // ── Export to PDF ────────────────────────────────────────────────────────
 
-        private async void ExportPdf_Click(object _sender, RoutedEventArgs _e)
+        private async void ExportPdf_Click(object _, RoutedEventArgs _1)
         {
             try
             {
@@ -1053,7 +1054,7 @@ namespace SmrtPad
 
         // ── Export to DOCX ───────────────────────────────────────────────────────
 
-        private async void ExportDocx_Click(object _sender, RoutedEventArgs _e)
+        private async void ExportDocx_Click(object _, RoutedEventArgs _1)
         {
             try
             {
@@ -1088,7 +1089,7 @@ namespace SmrtPad
 
         // ── Save to OneDrive ─────────────────────────────────────────────────────
 
-        private async void SaveToOneDrive_Click(object _sender, RoutedEventArgs _e)
+        private async void SaveToOneDrive_Click(object _, RoutedEventArgs _1)
         {
             try
             {
@@ -1394,7 +1395,7 @@ namespace SmrtPad
             App.NewWindow();
         }
 
-        private async void Exit_Click(object _sender, RoutedEventArgs _e)
+        private async void Exit_Click(object _, RoutedEventArgs _1)
         {
             if (!await PromptSaveChangesAsync())
                 return;
