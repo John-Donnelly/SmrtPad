@@ -779,35 +779,36 @@ namespace SmrtPad.Tests
         [Fact]
         public void NewDocument_Fires_MultiplePropertyChangedEvents()
         {
-            var vm = new EditorViewModel();
-
             // Set many properties to non-default values
-            vm.DocumentTitle = "Test.rtf";
-            vm.IsModified = true;
-            vm.IsBold = true;
-            vm.IsItalic = true;
-            vm.IsUnderline = true;
-            vm.IsStrikethrough = true;
-            vm.IsSubscript = true;
-            vm.FontFamily = "Arial";
-            vm.FontSize = 16;
-            vm.Alignment = "Center";
-            vm.ZoomLevel = 200;
-            vm.WordCount = 100;
-            vm.CharCount = 500;
-            vm.LineNumber = 10;
-            vm.ColumnNumber = 25;
-            vm.IsBullets = true;
-            vm.ListType = "Bullet";
-            vm.LineSpacing = 2.0;
-            vm.IsWordWrap = false;
-            vm.FindMatchCase = true;
-            vm.FindWholeWord = true;
-            vm.FindUseRegex = true;
-            vm.ParagraphSpacingBefore = 12;
-            vm.ParagraphSpacingAfter = 6;
-            vm.SelectionLength = 20;
-            vm.Encoding = "RTF";
+            var vm = new EditorViewModel
+            {
+                DocumentTitle = "Test.rtf",
+                IsModified = true,
+                IsBold = true,
+                IsItalic = true,
+                IsUnderline = true,
+                IsStrikethrough = true,
+                IsSubscript = true,
+                FontFamily = "Arial",
+                FontSize = 16,
+                Alignment = "Center",
+                ZoomLevel = 200,
+                WordCount = 100,
+                CharCount = 500,
+                LineNumber = 10,
+                ColumnNumber = 25,
+                IsBullets = true,
+                ListType = "Bullet",
+                LineSpacing = 2.0,
+                IsWordWrap = false,
+                FindMatchCase = true,
+                FindWholeWord = true,
+                FindUseRegex = true,
+                ParagraphSpacingBefore = 12,
+                ParagraphSpacingAfter = 6,
+                SelectionLength = 20,
+                Encoding = "RTF"
+            };
 
             var changedCount = 0;
             vm.PropertyChanged += (s, e) => changedCount++;
@@ -1187,36 +1188,37 @@ namespace SmrtPad.Tests
         [Fact]
         public void NewDocument_RestoredExactDefaults()
         {
-            var vm = new EditorViewModel();
-
             // Modify everything to non-default
-            vm.DocumentTitle = "Modified.rtf";
-            vm.IsModified = true;
-            vm.FontFamily = "Comic Sans MS";
-            vm.FontSize = 72;
-            vm.IsBold = true;
-            vm.IsItalic = true;
-            vm.IsUnderline = true;
-            vm.IsStrikethrough = true;
-            vm.IsSubscript = true;
-            vm.IsSuperscript = true;
-            vm.Alignment = "Justify";
-            vm.IsBullets = true;
-            vm.IsWordWrap = false;
-            vm.ZoomLevel = 500;
-            vm.ListType = "UppercaseRoman";
-            vm.LineSpacing = 3.0;
-            vm.WordCount = 9999;
-            vm.CharCount = 99999;
-            vm.LineNumber = 500;
-            vm.ColumnNumber = 200;
-            vm.ParagraphSpacingBefore = 24;
-            vm.ParagraphSpacingAfter = 18;
-            vm.FindMatchCase = true;
-            vm.FindWholeWord = true;
-            vm.FindUseRegex = true;
-            vm.SelectionLength = 100;
-            vm.Encoding = "RTF";
+            var vm = new EditorViewModel
+            {
+                DocumentTitle = "Modified.rtf",
+                IsModified = true,
+                FontFamily = "Comic Sans MS",
+                FontSize = 72,
+                IsBold = true,
+                IsItalic = true,
+                IsUnderline = true,
+                IsStrikethrough = true,
+                IsSubscript = true,
+                IsSuperscript = true,
+                Alignment = "Justify",
+                IsBullets = true,
+                IsWordWrap = false,
+                ZoomLevel = 500,
+                ListType = "UppercaseRoman",
+                LineSpacing = 3.0,
+                WordCount = 9999,
+                CharCount = 99999,
+                LineNumber = 500,
+                ColumnNumber = 200,
+                ParagraphSpacingBefore = 24,
+                ParagraphSpacingAfter = 18,
+                FindMatchCase = true,
+                FindWholeWord = true,
+                FindUseRegex = true,
+                SelectionLength = 100,
+                Encoding = "RTF"
+            };
 
             vm.NewDocument();
 
@@ -1456,7 +1458,7 @@ namespace SmrtPad.Tests
 
         /// <summary>Returns all resource-key names for <paramref name="locale"/>.</summary>
         public static IReadOnlyList<string> GetAllResourceKeys(string locale)
-            => LoadResw(locale).Keys.ToList();
+            => [..LoadResw(locale).Keys];
 
         [Theory]
         [InlineData("ar-SA")]
@@ -2928,7 +2930,7 @@ namespace SmrtPad.Tests
                             }
                             dir = Directory.GetParent(dir)?.FullName;
                         }
-                        return new Dictionary<string, string>();
+                        return [];
                     }
 
                     private static readonly string[] NewKeys =
