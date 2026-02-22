@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using SmrtPad.ViewModels;
 using SmrtPad.Helpers;
@@ -1045,6 +1046,60 @@ namespace SmrtPad.Tests
         public void SettingsService_ImplementsISettingsService()
         {
             Assert.True(typeof(ISettingsService).IsAssignableFrom(typeof(SettingsService)));
+        }
+
+        [Fact]
+        public void DIContainer_ResolvesISettingsService()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<ISettingsService, SettingsService>();
+            var provider = services.BuildServiceProvider();
+
+            var resolved = provider.GetService<ISettingsService>();
+            Assert.NotNull(resolved);
+            Assert.IsType<SettingsService>(resolved);
+        }
+
+        [Fact]
+        public void DIContainer_ResolvesEditorViewModel_AsSingleton()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<EditorViewModel>();
+            var provider = services.BuildServiceProvider();
+
+            var first = provider.GetService<EditorViewModel>();
+            var second = provider.GetService<EditorViewModel>();
+            Assert.NotNull(first);
+            Assert.Same(first, second);
+        }
+
+        [Fact]
+        public void DIContainer_SettingsService_IsSingleton()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<ISettingsService, SettingsService>();
+            var provider = services.BuildServiceProvider();
+
+            var first = provider.GetService<ISettingsService>();
+            var second = provider.GetService<ISettingsService>();
+            Assert.NotNull(first);
+            Assert.Same(first, second);
+        }
+
+        [Fact]
+        public void DIContainer_AllCoreServices_Registered()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<EditorViewModel>();
+            services.AddTransient<IDialogService, DialogService>();
+            services.AddTransient<IFileService, FileService>();
+            var provider = services.BuildServiceProvider();
+
+            Assert.NotNull(provider.GetService<ISettingsService>());
+            Assert.NotNull(provider.GetService<EditorViewModel>());
+            Assert.NotNull(provider.GetService<IDialogService>());
+            Assert.NotNull(provider.GetService<IFileService>());
         }
     }
 }

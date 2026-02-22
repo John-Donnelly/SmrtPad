@@ -15,11 +15,11 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **3,937** (2,423 C# app · 673 XAML · 841 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **246** (all passing) |
-| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 26 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 7 · `LocalizationTests` 145) |
+| Unit tests | **265** (all passing) |
+| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 26 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 11 · `LocalizationTests` 160) |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | UI / integration tests | 0 |
-| NuGet packages (app) | 5 — CommunityToolkit.Mvvm 8.4, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
+| NuGet packages (app) | 6 — CommunityToolkit.Mvvm 8.4, Microsoft.Extensions.DependencyInjection 10.0.3, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
 | NuGet packages (test) | 5 — xunit 2.6.6, runner 2.5.6, coverlet 6.0.0, Test.Sdk 17.8.0, WindowsAppSDK 1.8 |
 
 ---
@@ -287,15 +287,15 @@
 | Error handling | ✅ | All async file/dialog/insert handlers wrapped in try/catch; `SettingsService` logs via `Debug.WriteLine` |
 | Code hygiene | ✅ | No unused `using` directives; no dead code; no empty catch blocks |
 | True MVVM command binding | ❌ | All 50+ UI actions use code-behind `Click` handlers; ViewModel is state-only |
-| DI container | ❌ | No formal IoC container; services manually instantiated in `MainWindow` constructor |
+| DI container | ✅ | `Microsoft.Extensions.DependencyInjection` 10.0.3; `App.ConfigureServices()` registers `ISettingsService` (singleton), `EditorViewModel` (singleton), `IDialogService` (transient), `IFileService` (transient); `MainWindow` resolves all via `App.Current.Services.GetRequiredService<T>()` |
 
-**Section: 82% (9/11)**
+**Section: 91% (10/11)**
 
 ---
 
 ## 16. Testing
 
-### Test Summary: **246 tests · 246 passed · 0 failed · 0 skipped**
+### Test Summary: **265 tests · 265 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
@@ -303,8 +303,8 @@
 | `ParseHexColorTests` | 14 | 6-digit, 8-digit, without `#`, 7 swatch values, null/empty/bad-length/bad-char/hash-only error cases |
 | `EditorViewModelNewPropertiesTests` | 26 | WordCount, CharCount, LineNumber, ColumnNumber, ParagraphSpacing, FindMatchCase, FindWholeWord, FindUseRegex, RecentFiles, SelectionLength, Encoding — property changes, cursor update, paragraph spacing, NewDocument reset |
 | `SettingsServiceTests` | 9 | Default values, AddRecentFile ordering/dedup/cap/null-guard, ClearRecentFiles, property round-trip (all isolated via temp directory) |
-| `ServiceAbstractionTests` | 7 | `SavePromptResult` enum values, `IDialogService`/`IFileService`/`ISettingsService` interface members, `DialogService`/`FileService`/`SettingsService` implementation verification |
-| `LocalizationTests` | 145 | Key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, satellite locale coverage |
+| `ServiceAbstractionTests` | 11 | `SavePromptResult` enum values, `IDialogService`/`IFileService`/`ISettingsService` interface members, `DialogService`/`FileService`/`SettingsService` implementation verification, DI container registration/resolution/singleton tests |
+| `LocalizationTests` | 160 | Key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, paragraph style keys, doc properties keys, satellite locale coverage |
 
 ### Coverage Gaps
 
@@ -367,6 +367,9 @@
 | Font color keyboard shortcut | `6497185` | `Ctrl+Shift+C` applies last-used font color via `KeyboardAccelerator.Invoked`; `_lastFontColor` tracked across swatches and `ColorPicker` |
 | Find regex support | `c2e797e` | `FindRegexCheckBox` in Find flyout; `System.Text.RegularExpressions` for find next/previous, highlight all, replace, replace all; `FindUseRegex` ViewModel property; `StatusInvalidRegex` error feedback; localized across 9 locales |
 | Tab stop configuration | `0ac6347` | `ContentDialog` with `NumberBox` (position in inches), `ComboBox` for alignment and leader; `AddTab`/`ClearAllTabs` on `ITextParagraphFormat`; current stops listed in `ListBox`; 17 localized resource keys across 9 locales |
+| Paragraph styles | `c8c1adb` | Styles dropdown with Normal, Heading 1/2/3, Subtitle, Quote; `ApplyParagraphStyle` helper sets font, size, bold/italic, alignment, space before/after; 7 localized resource keys across 9 locales |
+| Backstage document properties | `c1489fa` | `SetDocumentProperties` populates file name, word count, char count, encoding, modified status; document properties panel shown on New/Save/SaveAs/Print; 8 localized resource keys across 9 locales |
+| DI container | `(pending)` | `Microsoft.Extensions.DependencyInjection` 10.0.3; `App.ConfigureServices()` registers all services; `MainWindow` resolves via `GetRequiredService<T>()`; parameterless constructors added to `DialogService`/`FileService` for DI; 4 new tests |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -377,7 +380,8 @@
 | After Section 2 work | 211 (+10 tests) |
 | After Section 4 + Options work | 219 (+8 tests) |
 | After ruler/page view overhaul | 223 (+4 tests) |
-| After font color shortcut + regex + tab stops | **246** (+23 tests) |
+| After font color shortcut + regex + tab stops | 246 (+23 tests) |
+| After paragraph styles + backstage + DI container | **265** (+19 tests) |
 
 ---
 
@@ -386,7 +390,7 @@
 | Item | Priority | Effort | Notes |
 |---|---|---|---|
 | ~~Real print via `PrintDocument`~~ | ~~Medium~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
-| Full DI container (`Microsoft.Extensions.DependencyInjection`) | Low | Medium | Services manually instantiated |
+| ~~Full DI container (`Microsoft.Extensions.DependencyInjection`)~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
 | XAML `{x:Bind}` command bindings | Low | High | Most handlers require `RichEditBox` API access |
 | UI / integration tests (WinAppDriver) | Medium | High | Would cover 1,736 lines of code-behind |
 | ~~Localization / i18n~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — 9 locales, 130+ keys, 115 tests |
@@ -418,10 +422,10 @@
 | EditorViewModel | 93% |
 | ColorHelper | **100%** |
 | Services | **100%** |
-| Architecture / code quality | 82% |
+| Architecture / code quality | 91% |
 | **Unit test coverage (ViewModel + helpers + services)** | **~98%** |
 | **Unit test coverage (overall app, including UI code-behind)** | **~35%** |
-| **OVERALL PROJECT** | **~95%** |
+| **OVERALL PROJECT** | **~97%** |
 
 ---
 
@@ -432,7 +436,7 @@
 | File | Lines | Purpose |
 |---|---|---|
 | `App.xaml` | 13 | Resource dictionaries, `XamlControlsResources` |
-| `App.xaml.cs` | 48 | Entry point, `OnLaunched`, startup file arg handling |
+| `App.xaml.cs` | 78 | Entry point, `OnLaunched`, startup file arg handling, DI container setup via `ConfigureServices()` |
 | `MainWindow.xaml` | 673 | Menu bar, ribbon (5 groups), horizontal+vertical rulers, editor with page view, backstage overlay, status bar (7 indicators) |
 | `MainWindow.xaml.cs` | 2,269 | 80+ event handlers, all UI logic — file ops, formatting, find/replace (with regex), insert, drag-drop, real print, DOCX/HTML/ODT import, dual rulers, page view, tab stop config |
 | `ViewModels/EditorViewModel.cs` | 256 | 29 observable properties, 15 relay commands, full `NewDocument()` reset |
@@ -458,7 +462,7 @@
 
 | File | Purpose |
 |---|---|
-| `SmrtPad.csproj` | .NET 10, WinUI 3, x86/x64/ARM64, 5 NuGet packages, ReadyToRun/Trim publish |
+| `SmrtPad.csproj` | .NET 10, WinUI 3, x86/x64/ARM64, 6 NuGet packages (incl. DI), ReadyToRun/Trim publish |
 | `SmrtPad.Tests.csproj` | .NET 10, x64, xUnit 2.6.6 + coverlet, project ref to SmrtPad |
 | `SmrtPad.slnx` | Solution file |
 | `.github/workflows/ci.yml` | GitHub Actions: build + test + coverage artifacts |
@@ -466,9 +470,12 @@
 
 ---
 
-## Appendix B — Commit History (22 commits ahead of origin)
+## Appendix B — Commit History (25 commits ahead of origin)
 
 ```
+(pending) feat: add DI container with Microsoft.Extensions.DependencyInjection
+c1489fa feat: add backstage document properties panel with file info, word/char count, encoding, modified status across 9 locales
+c8c1adb feat: add paragraph styles (Normal, Heading 1/2/3, Subtitle, Quote) with localized labels across 9 locales
 0ac6347 feat: add tab stop configuration dialog with alignment and leader options, localized across 9 locales
 c2e797e feat: add regex support to Find and Replace with localized labels across 9 locales
 6497185 feat: add font color keyboard shortcut (Ctrl+Shift+C) to apply last-used color

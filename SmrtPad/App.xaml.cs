@@ -1,4 +1,7 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
+using SmrtPad.Services;
+using SmrtPad.ViewModels;
 using System;
 
 namespace SmrtPad
@@ -13,11 +16,34 @@ namespace SmrtPad
         public static Window MainWindow { get; private set; } = null!;
 
         /// <summary>
+        /// Gets the <see cref="IServiceProvider"/> for the application.
+        /// </summary>
+        public IServiceProvider Services { get; }
+
+        /// <summary>
+        /// Gets the current <see cref="App"/> instance.
+        /// </summary>
+        public new static App Current => (App)Application.Current;
+
+        /// <summary>
         /// Initializes the singleton application object.
         /// </summary>
         public App()
         {
+            Services = ConfigureServices();
             InitializeComponent();
+        }
+
+        private static IServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<EditorViewModel>();
+            services.AddTransient<IDialogService, DialogService>();
+            services.AddTransient<IFileService, FileService>();
+
+            return services.BuildServiceProvider();
         }
 
         /// <summary>

@@ -12,6 +12,11 @@ namespace SmrtPad.Services
     {
         private readonly Func<Window> _windowProvider;
 
+        public FileService()
+        {
+            _windowProvider = () => App.MainWindow;
+        }
+
         public FileService(Func<Window> windowProvider)
         {
             _windowProvider = windowProvider;

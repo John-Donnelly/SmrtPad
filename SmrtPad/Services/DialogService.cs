@@ -10,6 +10,11 @@ namespace SmrtPad.Services
     {
         private readonly Func<XamlRoot> _xamlRootProvider;
 
+        public DialogService()
+        {
+            _xamlRootProvider = () => App.MainWindow.Content.XamlRoot;
+        }
+
         public DialogService(Func<XamlRoot> xamlRootProvider)
         {
             _xamlRootProvider = xamlRootProvider;

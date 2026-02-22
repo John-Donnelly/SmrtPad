@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -54,13 +55,14 @@ namespace SmrtPad
         private bool _pageViewActive;
         private readonly ScaleTransform _editorScaleTransform = new();
         private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
-        public EditorViewModel ViewModel { get; } = new EditorViewModel();
+        public EditorViewModel ViewModel { get; }
 
         public MainWindow()
         {
-            _settings = new SettingsService();
-            _dialogService = new DialogService(() => Content.XamlRoot);
-            _fileService = new FileService(() => this);
+            _settings = App.Current.Services.GetRequiredService<ISettingsService>();
+            _dialogService = App.Current.Services.GetRequiredService<IDialogService>();
+            _fileService = App.Current.Services.GetRequiredService<IFileService>();
+            ViewModel = App.Current.Services.GetRequiredService<EditorViewModel>();
             InitializeComponent();
             Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
             ViewModel.PropertyChanged += (s, e) =>
