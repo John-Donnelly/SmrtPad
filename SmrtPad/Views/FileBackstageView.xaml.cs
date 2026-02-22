@@ -13,6 +13,9 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? SaveRequested;
     public event EventHandler? SaveAsRequested;
     public event EventHandler? PrintRequested;
+    public event EventHandler? ExportPdfRequested;
+    public event EventHandler? ExportDocxRequested;
+    public event EventHandler? OneDriveRequested;
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
     public event EventHandler<string>? RecentFileRequested;
@@ -107,6 +110,21 @@ public sealed partial class FileBackstageView : UserControl
                 BodyText.Text = Res.GetString("BackstagePrintDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
                 PrintRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "ExportPdf":
+                BodyText.Text = Res.GetString("BackstageExportPdfDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
+                ExportPdfRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "ExportDocx":
+                BodyText.Text = Res.GetString("BackstageExportDocxDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
+                ExportDocxRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "OneDrive":
+                BodyText.Text = Res.GetString("BackstageSaveOneDriveDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
+                OneDriveRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Options":
                 BodyText.Text = Res.GetString("BackstageOptionsDesc");

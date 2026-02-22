@@ -29,6 +29,9 @@
                     <NavigationViewItem x:Uid="SaveNavItem" Content="Save"    Tag="Save"    Icon="Save" />
                     <NavigationViewItem x:Uid="SaveAsNavItem" Content="Save as" Tag="SaveAs"  Icon="SaveLocal" />
                     <NavigationViewItem x:Uid="PrintNavItem" Content="Print"   Tag="Print"   Icon="Print" />
+                    <NavigationViewItem x:Uid="ExportPdfNavItem" Content="Export to PDF" Tag="ExportPdf" Icon="Document" />
+                    <NavigationViewItem x:Uid="ExportDocxNavItem" Content="Export to DOCX" Tag="ExportDocx" Icon="Document" />
+                    <NavigationViewItem x:Uid="OneDriveNavItem" Content="Save to OneDrive" Tag="OneDrive" Icon="Upload" />
                     <NavigationViewItem x:Uid="OptionsNavItem" Content="Options" Tag="Options" Icon="Setting" />
                     <NavigationViewItem x:Uid="ExitNavItem" Content="Exit"    Tag="Exit"    Icon="LeaveChat" />
                 </NavigationView.MenuItems>
