@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -336,6 +337,46 @@ namespace SmrtPad
                     "Dark" => ElementTheme.Dark,
                     _ => ElementTheme.Default
                 };
+            }
+            UpdateTitleBarTheme();
+        }
+
+        private void UpdateTitleBarTheme()
+        {
+            if (!AppWindowTitleBar.IsCustomizationSupported()) return;
+
+            bool isDark = _settings.ThemePreference switch
+            {
+                "Dark"  => true,
+                "Light" => false,
+                _       => Application.Current.RequestedTheme == ApplicationTheme.Dark
+            };
+
+            var titleBar = AppWindow.TitleBar;
+            titleBar.ButtonBackgroundColor         = Color.FromArgb(0, 0, 0, 0);
+            titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(0, 0, 0, 0);
+
+            if (isDark)
+            {
+                titleBar.ForegroundColor               = Color.FromArgb(255, 255, 255, 255);
+                titleBar.InactiveForegroundColor       = Color.FromArgb(160, 255, 255, 255);
+                titleBar.ButtonForegroundColor         = Color.FromArgb(255, 255, 255, 255);
+                titleBar.ButtonHoverForegroundColor    = Color.FromArgb(255, 255, 255, 255);
+                titleBar.ButtonHoverBackgroundColor    = Color.FromArgb(25,  255, 255, 255);
+                titleBar.ButtonPressedForegroundColor  = Color.FromArgb(255, 255, 255, 255);
+                titleBar.ButtonPressedBackgroundColor  = Color.FromArgb(50,  255, 255, 255);
+                titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 255, 255, 255);
+            }
+            else
+            {
+                titleBar.ForegroundColor               = Color.FromArgb(255, 0, 0, 0);
+                titleBar.InactiveForegroundColor       = Color.FromArgb(160, 0, 0, 0);
+                titleBar.ButtonForegroundColor         = Color.FromArgb(255, 0, 0, 0);
+                titleBar.ButtonHoverForegroundColor    = Color.FromArgb(255, 0, 0, 0);
+                titleBar.ButtonHoverBackgroundColor    = Color.FromArgb(25,  0, 0, 0);
+                titleBar.ButtonPressedForegroundColor  = Color.FromArgb(255, 0, 0, 0);
+                titleBar.ButtonPressedBackgroundColor  = Color.FromArgb(50,  0, 0, 0);
+                titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 0, 0, 0);
             }
         }
 
