@@ -3181,5 +3181,599 @@ namespace SmrtPad.Tests
                         return null;
                     }
                 }
+
+                // ═══ DialogService Contract Tests ════════════════════════════════════════
+                public class DialogServiceContractTests
+                {
+                    [Fact]
+                    public void DialogService_ImplementsIDialogService()
+                    {
+                        Assert.True(typeof(IDialogService).IsAssignableFrom(typeof(DialogService)));
+                    }
+
+                    [Fact]
+                    public void DialogService_CanConstruct_WithFuncXamlRootProvider()
+                    {
+                        // Func<XamlRoot> overload stores the provider; no WinUI call occurs on construction
+                        var svc = new DialogService(() => null!);
+                        Assert.NotNull(svc);
+                    }
+
+                    [Fact]
+                    public void DialogService_HasDefaultConstructor()
+                    {
+                        var ctor = typeof(DialogService).GetConstructor(Type.EmptyTypes);
+                        Assert.NotNull(ctor);
+                    }
+
+                    [Fact]
+                    public void DialogService_HasFuncXamlRootConstructor()
+                    {
+                        var ctor = typeof(DialogService)
+                            .GetConstructor([typeof(Func<Microsoft.UI.Xaml.XamlRoot>)]);
+                        Assert.NotNull(ctor);
+                    }
+
+                    [Fact]
+                    public void SavePromptResult_HasExactlyThreeValues()
+                    {
+                        Assert.Equal(3, Enum.GetValues<SavePromptResult>().Length);
+                    }
+
+                    [Theory]
+                    [InlineData("Save",     0)]
+                    [InlineData("DontSave", 1)]
+                    [InlineData("Cancel",   2)]
+                    public void SavePromptResult_OrdinalValues_AreCorrect(string name, int expected)
+                    {
+                        var value = (SavePromptResult)Enum.Parse(typeof(SavePromptResult), name);
+                        Assert.Equal(expected, (int)value);
+                    }
+
+                    [Fact]
+                    public void DialogService_ShowErrorAsync_HasCorrectSignature()
+                    {
+                        var method = typeof(DialogService).GetMethod("ShowErrorAsync");
+                        Assert.NotNull(method);
+                        Assert.Equal(typeof(Task), method!.ReturnType);
+                        var parms = method.GetParameters();
+                        Assert.Equal(2, parms.Length);
+                        Assert.Equal(typeof(string), parms[0].ParameterType); // title
+                        Assert.Equal(typeof(string), parms[1].ParameterType); // message
+                    }
+
+                    [Fact]
+                    public void DialogService_ShowSavePromptAsync_HasCorrectSignature()
+                    {
+                        var method = typeof(DialogService).GetMethod("ShowSavePromptAsync");
+                        Assert.NotNull(method);
+                        Assert.Equal(typeof(Task<SavePromptResult>), method!.ReturnType);
+                        var parms = method.GetParameters();
+                        Assert.Single(parms);
+                        Assert.Equal(typeof(string), parms[0].ParameterType); // documentTitle
+                    }
+                }
+
+                // ═══ FileService Contract Tests ═══════════════════════════════════════════
+                public class FileServiceContractTests
+                {
+                    [Fact]
+                    public void FileService_ImplementsIFileService()
+                    {
+                        Assert.True(typeof(IFileService).IsAssignableFrom(typeof(FileService)));
+                    }
+
+                    [Fact]
+                    public void FileService_CanConstruct_WithFuncWindowProvider()
+                    {
+                        // Func<Window> overload stores the provider; no WinUI call occurs on construction
+                        var svc = new FileService(() => null!);
+                        Assert.NotNull(svc);
+                    }
+
+                    [Fact]
+                    public void FileService_HasDefaultConstructor()
+                    {
+                        var ctor = typeof(FileService).GetConstructor(Type.EmptyTypes);
+                        Assert.NotNull(ctor);
+                    }
+
+                    [Fact]
+                    public void FileService_HasFuncWindowConstructor()
+                    {
+                        var ctor = typeof(FileService)
+                            .GetConstructor([typeof(Func<Microsoft.UI.Xaml.Window>)]);
+                        Assert.NotNull(ctor);
+                    }
+
+                    [Fact]
+                    public void IFileService_HasExactlyThreeMethods()
+                    {
+                        Assert.Equal(3, typeof(IFileService).GetMethods().Length);
+                    }
+
+                    [Fact]
+                    public void FileService_PickOpenFileAsync_HasStringArrayParam()
+                    {
+                        var method = typeof(FileService).GetMethod("PickOpenFileAsync");
+                        Assert.NotNull(method);
+                        var parms = method!.GetParameters();
+                        Assert.Single(parms);
+                        Assert.Equal(typeof(string[]), parms[0].ParameterType);
+                    }
+
+                    [Fact]
+                    public void FileService_PickSaveFileAsync_HasTwoStringParams()
+                    {
+                        var method = typeof(FileService).GetMethod("PickSaveFileAsync");
+                        Assert.NotNull(method);
+                        var parms = method!.GetParameters();
+                        Assert.Equal(2, parms.Length);
+                        Assert.Equal(typeof(string), parms[0].ParameterType); // suggestedName
+                        Assert.Equal(typeof(string), parms[1].ParameterType); // defaultExtension
+                    }
+
+                    [Fact]
+                    public void FileService_GetFileFromPathAsync_HasSingleStringParam()
+                    {
+                        var method = typeof(FileService).GetMethod("GetFileFromPathAsync");
+                        Assert.NotNull(method);
+                        var parms = method!.GetParameters();
+                        Assert.Single(parms);
+                        Assert.Equal(typeof(string), parms[0].ParameterType);
+                    }
+                }
+
+                // ═══ FileBackstageView Full Event Contract Tests ══════════════════════════
+                public class FileBackstageViewFullEventContractTests
+                {
+                    [Fact]
+                    public void FileBackstageView_HasAllTwelveEvents()
+                    {
+                        var type = typeof(SmrtPad.Views.FileBackstageView);
+                        var expected = new[]
+                        {
+                            "NewRequested", "OpenRequested", "SaveRequested", "SaveAsRequested",
+                            "PrintRequested", "ExportPdfRequested", "ExportDocxRequested",
+                            "OneDriveRequested", "OptionsRequested", "ExitRequested",
+                            "RecentFileRequested", "TemplateRequested"
+                        };
+                        foreach (var name in expected)
+                            Assert.NotNull(type.GetEvent(name));
+                    }
+
+                    [Theory]
+                    [InlineData("NewRequested")]
+                    [InlineData("OpenRequested")]
+                    [InlineData("SaveRequested")]
+                    [InlineData("SaveAsRequested")]
+                    [InlineData("PrintRequested")]
+                    [InlineData("ExportPdfRequested")]
+                    [InlineData("ExportDocxRequested")]
+                    [InlineData("OneDriveRequested")]
+                    [InlineData("OptionsRequested")]
+                    [InlineData("ExitRequested")]
+                    public void FileBackstageView_StandardEvent_IsEventHandler(string eventName)
+                    {
+                        var evt = typeof(SmrtPad.Views.FileBackstageView).GetEvent(eventName);
+                        Assert.NotNull(evt);
+                        Assert.Equal(typeof(EventHandler), evt!.EventHandlerType);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_RecentFileRequested_IsGenericEventHandler()
+                    {
+                        var evt = typeof(SmrtPad.Views.FileBackstageView).GetEvent("RecentFileRequested");
+                        Assert.NotNull(evt);
+                        Assert.Equal(typeof(EventHandler<string>), evt!.EventHandlerType);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_TemplateRequested_IsGenericEventHandler()
+                    {
+                        var evt = typeof(SmrtPad.Views.FileBackstageView).GetEvent("TemplateRequested");
+                        Assert.NotNull(evt);
+                        Assert.Equal(typeof(EventHandler<DocumentTemplate>), evt!.EventHandlerType);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_HasNav_SelectionChanged_PrivateMethod()
+                    {
+                        var method = typeof(SmrtPad.Views.FileBackstageView).GetMethod(
+                            "Nav_SelectionChanged", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_HasPopulateTemplates_PrivateMethod()
+                    {
+                        var method = typeof(SmrtPad.Views.FileBackstageView).GetMethod(
+                            "PopulateTemplates", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_HasSuppressSelectionEventField()
+                    {
+                        var field = typeof(SmrtPad.Views.FileBackstageView).GetField(
+                            "_suppressSelectionEvent", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(field);
+                        Assert.Equal(typeof(bool), field!.FieldType);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_IsSealed()
+                    {
+                        Assert.True(typeof(SmrtPad.Views.FileBackstageView).IsSealed);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_TotalEventCount_AtLeastTwelve()
+                    {
+                        var count = typeof(SmrtPad.Views.FileBackstageView).GetEvents().Length;
+                        Assert.True(count >= 12, $"Expected ≥12 events, found {count}");
+                    }
+                }
+
+                // ═══ App Bootstrap Contract Tests ══════════════════════════════════════════
+                public class AppBootstrapContractTests
+                {
+                    [Fact]
+                    public void App_HasServicesProperty_OfTypeServiceProvider()
+                    {
+                        var prop = typeof(SmrtPad.App).GetProperty("Services");
+                        Assert.NotNull(prop);
+                        Assert.Equal(
+                            typeof(Microsoft.Extensions.DependencyInjection.ServiceProvider),
+                            prop!.PropertyType);
+                    }
+
+                    [Fact]
+                    public void App_Current_IsStaticProperty_ReturningApp()
+                    {
+                        var prop = typeof(SmrtPad.App).GetProperty(
+                            "Current", BindingFlags.Public | BindingFlags.Static);
+                        Assert.NotNull(prop);
+                        Assert.Equal(typeof(SmrtPad.App), prop!.PropertyType);
+                    }
+
+                    [Fact]
+                    public void App_MainWindow_IsStaticProperty_ReturningWindow()
+                    {
+                        var prop = typeof(SmrtPad.App).GetProperty(
+                            "MainWindow", BindingFlags.Public | BindingFlags.Static);
+                        Assert.NotNull(prop);
+                        Assert.Equal(typeof(Microsoft.UI.Xaml.Window), prop!.PropertyType);
+                    }
+
+                    [Fact]
+                    public void App_Windows_IsStaticProperty_ReturningListOfMainWindow()
+                    {
+                        var prop = typeof(SmrtPad.App).GetProperty(
+                            "Windows", BindingFlags.Public | BindingFlags.Static);
+                        Assert.NotNull(prop);
+                        Assert.Equal(
+                            typeof(System.Collections.Generic.List<SmrtPad.MainWindow>),
+                            prop!.PropertyType);
+                    }
+
+                    [Fact]
+                    public void App_ConfigureServices_IsPrivateStaticMethod()
+                    {
+                        var method = typeof(SmrtPad.App).GetMethod(
+                            "ConfigureServices", BindingFlags.NonPublic | BindingFlags.Static);
+                        Assert.NotNull(method);
+                        Assert.True(method!.IsStatic);
+                        Assert.False(method.IsPublic);
+                    }
+
+                    [Fact]
+                    public void App_ConfigureServices_ReturnsServiceProvider()
+                    {
+                        var method = typeof(SmrtPad.App).GetMethod(
+                            "ConfigureServices", BindingFlags.NonPublic | BindingFlags.Static);
+                        Assert.NotNull(method);
+                        Assert.Equal(
+                            typeof(Microsoft.Extensions.DependencyInjection.ServiceProvider),
+                            method!.ReturnType);
+                    }
+
+                    [Fact]
+                    public void App_InheritsFromMicrosoftUIXamlApplication()
+                    {
+                        Assert.True(
+                            typeof(Microsoft.UI.Xaml.Application)
+                                .IsAssignableFrom(typeof(SmrtPad.App)));
+                    }
+
+                    [Fact]
+                    public void App_NewWindow_IsPublicStaticAndReturnsMainWindow()
+                    {
+                        var method = typeof(SmrtPad.App).GetMethod(
+                            "NewWindow", BindingFlags.Public | BindingFlags.Static);
+                        Assert.NotNull(method);
+                        Assert.True(method!.IsStatic);
+                        Assert.Equal(typeof(SmrtPad.MainWindow), method.ReturnType);
+                    }
+                }
+
+                // ═══ ResourceHelper Edge-Case Tests ══════════════════════════════════════
+                public class ResourceHelperEdgeCaseTests
+                {
+                    [Fact]
+                    public void GetFormatted_ZeroArgs_MatchesGetString()
+                    {
+                        string direct    = ResourceHelper.GetString("StatusReady");
+                        string formatted = ResourceHelper.GetFormatted("StatusReady");
+                        Assert.Equal(direct, formatted);
+                    }
+
+                    [Fact]
+                    public void GetString_SameKey_ConsistentResult()
+                    {
+                        string a = ResourceHelper.GetString("DocumentUntitled");
+                        string b = ResourceHelper.GetString("DocumentUntitled");
+                        Assert.Equal(a, b);
+                    }
+
+                    [Fact]
+                    public void GetFormatted_SingleArg_InjectsValue()
+                    {
+                        string result = ResourceHelper.GetFormatted("StatusBarWords", 42);
+                        Assert.Contains("42", result);
+                    }
+
+                    [Fact]
+                    public void GetFormatted_TwoArgs_InjectsBothValues()
+                    {
+                        string result = ResourceHelper.GetFormatted("StatusBarLineCol", 3, 17);
+                        Assert.Contains("3",  result);
+                        Assert.Contains("17", result);
+                    }
+
+                    [Fact]
+                    public void GetString_KeyWithPropertySuffix_ReturnsNonEmpty()
+                    {
+                        // Keys like "CutMenuItem.Text" are stored with their full name in the .resw
+                        string result = ResourceHelper.GetString("CutMenuItem.Text");
+                        Assert.NotNull(result);
+                        Assert.NotEmpty(result);
+                    }
+
+                    [Fact]
+                    public void ResourceHelper_IsStaticClass()
+                    {
+                        var t = typeof(ResourceHelper);
+                        Assert.True(t.IsAbstract && t.IsSealed,
+                            "ResourceHelper must be a static (abstract + sealed) class");
+                    }
+                }
+
+                // ═══ MainWindow List & Line-Spacing Contract Tests ════════════════════════
+                public class MainWindowListSpacingContractTests
+                {
+                    [Theory]
+                    [InlineData("ListTypeNone_Click")]
+                    [InlineData("ListTypeBullet_Click")]
+                    [InlineData("ListTypeNumber_Click")]
+                    [InlineData("ListTypeLowerLetter_Click")]
+                    [InlineData("ListTypeUpperLetter_Click")]
+                    [InlineData("ListTypeLowerRoman_Click")]
+                    [InlineData("ListTypeUpperRoman_Click")]
+                    public void MainWindow_HasListTypeClickHandler(string handlerName)
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            handlerName, BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_ApplyListType_IsTwoParamPrivateMethod()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "ApplyListType", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                        Assert.Equal(2, method!.GetParameters().Length);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasLineSpacing_Click()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "LineSpacing_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasCustomLineSpacing_Click()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "CustomLineSpacing_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasApplyParagraphSpacing_Click()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "ApplyParagraphSpacing_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_XAML_HasAllListTypeFlyoutHandlers()
+                    {
+                        string? xaml = ReadMainWindowXaml();
+                        if (xaml is null) return;
+                        Assert.Contains("ListTypeNone_Click",        xaml);
+                        Assert.Contains("ListTypeBullet_Click",      xaml);
+                        Assert.Contains("ListTypeNumber_Click",      xaml);
+                        Assert.Contains("ListTypeLowerLetter_Click", xaml);
+                        Assert.Contains("ListTypeUpperLetter_Click", xaml);
+                        Assert.Contains("ListTypeLowerRoman_Click",  xaml);
+                        Assert.Contains("ListTypeUpperRoman_Click",  xaml);
+                    }
+
+                    [Fact]
+                    public void MainWindow_XAML_HasLineSpacingFlyoutWithTagValues()
+                    {
+                        string? xaml = ReadMainWindowXaml();
+                        if (xaml is null) return;
+                        Assert.Contains("LineSpacing_Click", xaml);
+                        Assert.Contains("Tag=\"1.0\"",       xaml);
+                        Assert.Contains("Tag=\"1.15\"",      xaml);
+                        Assert.Contains("Tag=\"1.5\"",       xaml);
+                        Assert.Contains("Tag=\"2.0\"",       xaml);
+                    }
+
+                    private static string? ReadMainWindowXaml()
+                    {
+                        string? dir = Directory.GetCurrentDirectory();
+                        while (dir is not null)
+                        {
+                            string candidate = Path.Combine(dir, "SmrtPad", "MainWindow.xaml");
+                            if (File.Exists(candidate)) return File.ReadAllText(candidate);
+                            dir = Directory.GetParent(dir)?.FullName;
+                        }
+                        return null;
+                    }
+                }
+
+                // ═══ Macro Toolbar Wiring Contract Tests ══════════════════════════════════
+                public class MacroToolbarWiringContractTests
+                {
+                    [Fact]
+                    public void MainWindow_HasMacroField_OfTypeMacroHelper()
+                    {
+                        var field = typeof(SmrtPad.MainWindow).GetField(
+                            "_macro", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(field);
+                        Assert.Equal(typeof(MacroHelper), field!.FieldType);
+                    }
+
+                    [Fact]
+                    public void ExecuteMacroCommand_AcceptsMacroCommandParameter()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "ExecuteMacroCommand", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                        var parms = method!.GetParameters();
+                        Assert.Single(parms);
+                        Assert.Equal(typeof(MacroCommand), parms[0].ParameterType);
+                    }
+
+                    [Fact]
+                    public void ApplyListType_SecondParam_IsNamedListTypeName()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "ApplyListType", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                        var parms = method!.GetParameters();
+                        Assert.Equal(2, parms.Length);
+                        Assert.Equal("listTypeName", parms[1].Name);
+                    }
+
+                    [Fact]
+                    public void MacroRecord_SetListType_RoundTripsCorrectly()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.SetListType, "Bullet");
+                        macro.StopRecording();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(macro.Serialize());
+
+                        Assert.Single(restored.Commands);
+                        Assert.Equal(MacroCommandType.SetListType, restored.Commands[0].Type);
+                        Assert.Equal("Bullet", restored.Commands[0].Value);
+                    }
+
+                    [Fact]
+                    public void MacroRecord_SetLineSpacing_RoundTripsCorrectly()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.SetLineSpacing, "1.5");
+                        macro.StopRecording();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(macro.Serialize());
+
+                        Assert.Single(restored.Commands);
+                        Assert.Equal(MacroCommandType.SetLineSpacing, restored.Commands[0].Type);
+                        Assert.Equal("1.5", restored.Commands[0].Value);
+                    }
+
+                    [Theory]
+                    [InlineData("None")]
+                    [InlineData("Bullet")]
+                    [InlineData("Number")]
+                    [InlineData("LowercaseLetter")]
+                    [InlineData("UppercaseLetter")]
+                    [InlineData("LowercaseRoman")]
+                    [InlineData("UppercaseRoman")]
+                    public void MacroHelper_SetListType_AllVariants_SerializeDeserialize(string listType)
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.SetListType, listType);
+                        macro.StopRecording();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(macro.Serialize());
+
+                        Assert.Equal(MacroCommandType.SetListType, restored.Commands[0].Type);
+                        Assert.Equal(listType, restored.Commands[0].Value);
+                    }
+
+                    [Theory]
+                    [InlineData("1")]
+                    [InlineData("1.15")]
+                    [InlineData("1.5")]
+                    [InlineData("2")]
+                    public void MacroHelper_SetLineSpacing_AllPresets_SerializeDeserialize(string spacing)
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.SetLineSpacing, spacing);
+                        macro.StopRecording();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(macro.Serialize());
+
+                        Assert.Equal(MacroCommandType.SetLineSpacing, restored.Commands[0].Type);
+                        Assert.Equal(spacing, restored.Commands[0].Value);
+                    }
+
+                    [Fact]
+                    public void AllListTypeHandlers_ArePrivateNonStaticMethods()
+                    {
+                        var handlers = new[]
+                        {
+                            "ListTypeNone_Click", "ListTypeBullet_Click", "ListTypeNumber_Click",
+                            "ListTypeLowerLetter_Click", "ListTypeUpperLetter_Click",
+                            "ListTypeLowerRoman_Click", "ListTypeUpperRoman_Click"
+                        };
+                        foreach (var name in handlers)
+                        {
+                            var m = typeof(SmrtPad.MainWindow).GetMethod(
+                                name, BindingFlags.NonPublic | BindingFlags.Instance);
+                            Assert.NotNull(m);
+                            Assert.False(m!.IsPublic);
+                            Assert.False(m.IsStatic);
+                        }
+                    }
+
+                    [Fact]
+                    public void LineSpacing_Click_IsPrivateNonStaticMethod()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "LineSpacing_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                        Assert.False(method!.IsPublic);
+                        Assert.False(method.IsStatic);
+                    }
+                }
             }
 
