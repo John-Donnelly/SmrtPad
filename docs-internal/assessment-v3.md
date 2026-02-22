@@ -13,10 +13,10 @@
 |---|---|
 | Authored .cs source files | 12 (`App`, `MainWindow`, `EditorViewModel`, `FileBackstageView`, `ColorHelper`, `ISettingsService`, `SettingsService`, `IDialogService`, `DialogService`, `IFileService`, `FileService`, `EditorTests`) |
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
-| Total authored lines (C# + XAML) | **3,589** (2,074 C# app · 659 XAML · 856 test) |
+| Total authored lines (C# + XAML) | **3,937** (2,423 C# app · 673 XAML · 841 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **223** (all passing) |
-| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 23 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 7 · `LocalizationTests` 125) |
+| Unit tests | **246** (all passing) |
+| Test classes | 6 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 26 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 7 · `LocalizationTests` 145) |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | UI / integration tests | 0 |
 | NuGet packages (app) | 5 — CommunityToolkit.Mvvm 8.4, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
@@ -118,9 +118,9 @@
 | Font color (12 swatches + ColorPicker) | ✅ | `ColorHelper.ParseHexColor` for swatches; `FontColorIndicator` fill updated |
 | Highlight color (10 swatches + ColorPicker) | ✅ | Sets `BackgroundColor`; `HighlightColorIndicator` fill updated |
 | Clear formatting | ✅ | Resets: bold, italic, underline, strikethrough, sub/super, font, size, fg/bg color, alignment, list, spacing, indents |
-| Font color keyboard shortcut | ❌ | |
+| Font color keyboard shortcut | ✅ | `Ctrl+Shift+C` applies last-used font color via `KeyboardAccelerator.Invoked`; `_lastFontColor` tracked across swatches and `ColorPicker` |
 
-**Section: 95% (9/10)**
+**Section: 100% (10/10)**
 
 ---
 
@@ -134,10 +134,10 @@
 | Custom line spacing | ✅ | `NumberBox` dialog (0.5–10, step 0.25) → `LineSpacingRule.Multiple` |
 | Paragraph spacing (before/after) | ✅ | `NumberBox` flyout → `SpaceBefore` / `SpaceAfter` |
 | Alignment (Left/Center/Right/Justify) | ✅ | Mutually-exclusive `ToggleButton` set managed by `SetAlignmentToggle` |
-| Tab stop configuration | ❌ | |
+| Tab stop configuration | ✅ | `ContentDialog` with `NumberBox` (position in inches), `ComboBox` for alignment (Left/Center/Right/Decimal) and leader (None/Dots/Dashes/Lines); `AddTab`/`ClearAllTabs` on `ITextParagraphFormat`; current stops listed in `ListBox`; localized across 9 locales |
 | Paragraph styles | ❌ | |
 
-**Section: 75% (6/8)**
+**Section: 88% (7/8)**
 
 ---
 
@@ -168,9 +168,9 @@
 | Replace | ✅ | `Replace_Click` uses `GetFindOptions()` — match case / whole word fully honoured |
 | Replace All | ✅ | `ReplaceAll_Click` uses `GetFindOptions()`; reports replacement count in status bar |
 | Select All | ✅ | `Selection.Expand(TextRangeUnit.Story)` |
-| Regex | ❌ | |
+| Regex | ✅ | `FindRegexCheckBox` toggles regex mode; `System.Text.RegularExpressions` for find next/previous, highlight all, replace, replace all; `RegexOptions.IgnoreCase` when match case unchecked; invalid patterns show `StatusInvalidRegex`; `FindUseRegex` ViewModel property; localized across 9 locales |
 
-**Section: 88% (7/8)**
+**Section: 100% (8/8)**
 
 ---
 
@@ -215,13 +215,13 @@
 
 | Feature | Count | Details |
 |---|---|---|
-| `[ObservableProperty]` fields | 28 | `DocumentTitle`, `StatusMessage`, `IsModified`, `FontFamily`, `FontSize`, `IsBold`, `IsItalic`, `IsUnderline`, `IsStrikethrough`, `IsSubscript`, `IsSuperscript`, `Alignment`, `IsBullets`, `IsWordWrap`, `ZoomLevel`, `ListType`, `LineSpacing`, `WordCount`, `CharCount`, `LineNumber`, `ColumnNumber`, `ParagraphSpacingBefore`, `ParagraphSpacingAfter`, `FindMatchCase`, `FindWholeWord`, `RecentFiles`, `SelectionLength`, `Encoding` |
+| `[ObservableProperty]` fields | 29 | `DocumentTitle`, `StatusMessage`, `IsModified`, `FontFamily`, `FontSize`, `IsBold`, `IsItalic`, `IsUnderline`, `IsStrikethrough`, `IsSubscript`, `IsSuperscript`, `Alignment`, `IsBullets`, `IsWordWrap`, `ZoomLevel`, `ListType`, `LineSpacing`, `WordCount`, `CharCount`, `LineNumber`, `ColumnNumber`, `ParagraphSpacingBefore`, `ParagraphSpacingAfter`, `FindMatchCase`, `FindWholeWord`, `FindUseRegex`, `RecentFiles`, `SelectionLength`, `Encoding` |
 | `[RelayCommand]` methods | 15 | `NewDocument`, `UpdateStatus`, `ToggleBold`, `ToggleItalic`, `ToggleUnderline`, `ToggleStrikethrough`, `ToggleSubscript`, `ToggleSuperscript`, `SetAlignment`, `ToggleBullets`, `ToggleWordWrap`, `SetListType`, `SetLineSpacing`, `ZoomIn`, `ZoomOut`, `SetParagraphSpacing`, `UpdateWordCount`, `UpdateCharCount`, `UpdateCursorPosition` |
 
 | Item | Status | Notes |
 |---|---|---|
-| Observable properties (28) | ✅ | All with `INotifyPropertyChanged` via MVVM Toolkit source generators |
-| `NewDocument()` full reset | ✅ | Resets 24 scalar properties to defaults (does not reset `RecentFiles`) |
+| Observable properties (29) | ✅ | All with `INotifyPropertyChanged` via MVVM Toolkit source generators |
+| `NewDocument()` full reset | ✅ | Resets 25 scalar properties to defaults (does not reset `RecentFiles`) |
 | Toggle commands (6) | ✅ | Bold, Italic, Underline, Strikethrough, Subscript (clears Super), Superscript (clears Sub) |
 | Set commands (3) | ✅ | `SetAlignment`, `SetListType` (also sets `IsBullets`), `SetLineSpacing` |
 | Update commands (4) | ✅ | `UpdateStatus`, `UpdateWordCount`, `UpdateCharCount`, `UpdateCursorPosition` |
@@ -295,21 +295,22 @@
 
 ## 16. Testing
 
-### Test Summary: **96 tests · 96 passed · 0 failed · 0 skipped**
+### Test Summary: **246 tests · 246 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
 | `EditorTests` | 45 | All ViewModel commands, property changes, state reset, zoom clamping, list types, line spacing, alignment, formatting toggles |
 | `ParseHexColorTests` | 14 | 6-digit, 8-digit, without `#`, 7 swatch values, null/empty/bad-length/bad-char/hash-only error cases |
-| `EditorViewModelNewPropertiesTests` | 23 | WordCount, CharCount, LineNumber, ColumnNumber, ParagraphSpacing, FindMatchCase, FindWholeWord, RecentFiles, SelectionLength, Encoding — property changes, cursor update, paragraph spacing, NewDocument reset |
-| `SettingsServiceTests` | 7 | Default values, AddRecentFile ordering/dedup/cap/null-guard, ClearRecentFiles, property round-trip (all isolated via temp directory) |
+| `EditorViewModelNewPropertiesTests` | 26 | WordCount, CharCount, LineNumber, ColumnNumber, ParagraphSpacing, FindMatchCase, FindWholeWord, FindUseRegex, RecentFiles, SelectionLength, Encoding — property changes, cursor update, paragraph spacing, NewDocument reset |
+| `SettingsServiceTests` | 9 | Default values, AddRecentFile ordering/dedup/cap/null-guard, ClearRecentFiles, property round-trip (all isolated via temp directory) |
 | `ServiceAbstractionTests` | 7 | `SavePromptResult` enum values, `IDialogService`/`IFileService`/`ISettingsService` interface members, `DialogService`/`FileService`/`SettingsService` implementation verification |
+| `LocalizationTests` | 145 | Key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, satellite locale coverage |
 
 ### Coverage Gaps
 
 | Gap | Priority | Notes |
 |---|---|---|
-| `MainWindow` code-behind (1,438 lines) | Medium | Service abstractions now enable mocking; further refactoring needed to extract testable logic |
+| `MainWindow` code-behind (2,269 lines) | Medium | Service abstractions now enable mocking; further refactoring needed to extract testable logic |
 | `FileBackstageView.xaml.cs` (96 lines) | Low | Event routing logic |
 | `App.xaml.cs` (48 lines) | Low | Simple startup flow with async/await + try/catch |
 
@@ -363,6 +364,9 @@
 | Page View toggle | `9e91077` | Centered 816px `Border` with card background and page padding; constrains editor `MaxWidth`; localized across 9 locales |
 | Zoom overhaul | `34a744f` | `ScaleTransform` replaces font-size hack; rulers scale with zoom; `Ctrl+Scroll`, `Ctrl+Plus`, `Ctrl+Minus` shortcuts; font selector shows default on load |
 | Zoom alignment + font fix | `f7f3e53` | Top-left `RenderTransformOrigin` with viewport-aware container sizing prevents drift when zooming out; `FontFamilyComboBox` `x:Uid` removed to prevent `PlaceholderText` override; `Text` synced in `SelectionChanged` |
+| Font color keyboard shortcut | `6497185` | `Ctrl+Shift+C` applies last-used font color via `KeyboardAccelerator.Invoked`; `_lastFontColor` tracked across swatches and `ColorPicker` |
+| Find regex support | `c2e797e` | `FindRegexCheckBox` in Find flyout; `System.Text.RegularExpressions` for find next/previous, highlight all, replace, replace all; `FindUseRegex` ViewModel property; `StatusInvalidRegex` error feedback; localized across 9 locales |
+| Tab stop configuration | `0ac6347` | `ContentDialog` with `NumberBox` (position in inches), `ComboBox` for alignment and leader; `AddTab`/`ClearAllTabs` on `ITextParagraphFormat`; current stops listed in `ListBox`; 17 localized resource keys across 9 locales |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -372,7 +376,8 @@
 | After localization work | 201 (+105 tests) |
 | After Section 2 work | 211 (+10 tests) |
 | After Section 4 + Options work | 219 (+8 tests) |
-| After ruler/page view overhaul | **223** (+4 tests) |
+| After ruler/page view overhaul | 223 (+4 tests) |
+| After font color shortcut + regex + tab stops | **246** (+23 tests) |
 
 ---
 
@@ -387,9 +392,9 @@
 | ~~Localization / i18n~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — 9 locales, 130+ keys, 115 tests |
 | ~~Additional file formats (DOCX, HTML, ODT)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
 | ~~Ruler / page view mode~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `9e91077` |
-| Find — regex support | Low | Medium | |
-| Font color keyboard shortcut | Low | Low | |
-| Tab stop configuration | Low | Medium | |
+| ~~Find — regex support~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `c2e797e` |
+| ~~Font color keyboard shortcut~~ | ~~Low~~ | ~~Low~~ | ✅ **Completed** — commit `6497185` |
+| ~~Tab stop configuration~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `0ac6347` |
 | Paragraph styles (Heading 1, Normal, etc.) | Low | Medium | |
 | Document properties / backstage rich panels | Low | Medium | |
 
@@ -404,10 +409,10 @@
 | Edit menu | **100%** |
 | View menu | **100%** |
 | Ribbon — Clipboard | **100%** |
-| Ribbon — Font | 95% |
-| Ribbon — Paragraph | 75% |
+| Ribbon — Font | **100%** |
+| Ribbon — Paragraph | 88% |
 | Ribbon — Insert | 93% |
-| Ribbon — Editing | 88% |
+| Ribbon — Editing | **100%** |
 | File backstage view | 72% |
 | Status bar | **100%** |
 | EditorViewModel | 93% |
@@ -416,7 +421,7 @@
 | Architecture / code quality | 82% |
 | **Unit test coverage (ViewModel + helpers + services)** | **~98%** |
 | **Unit test coverage (overall app, including UI code-behind)** | **~35%** |
-| **OVERALL PROJECT** | **~93%** |
+| **OVERALL PROJECT** | **~95%** |
 
 ---
 
@@ -428,9 +433,9 @@
 |---|---|---|
 | `App.xaml` | 13 | Resource dictionaries, `XamlControlsResources` |
 | `App.xaml.cs` | 48 | Entry point, `OnLaunched`, startup file arg handling |
-| `MainWindow.xaml` | 648 | Menu bar, ribbon (5 groups), horizontal+vertical rulers, editor with page view, backstage overlay, status bar (7 indicators) |
-| `MainWindow.xaml.cs` | 1,921 | 75+ event handlers, all UI logic — file ops, formatting, find/replace, insert, drag-drop, real print, DOCX/HTML/ODT import, dual rulers, page view |
-| `ViewModels/EditorViewModel.cs` | 203 | 28 observable properties, 15 relay commands, full `NewDocument()` reset |
+| `MainWindow.xaml` | 673 | Menu bar, ribbon (5 groups), horizontal+vertical rulers, editor with page view, backstage overlay, status bar (7 indicators) |
+| `MainWindow.xaml.cs` | 2,269 | 80+ event handlers, all UI logic — file ops, formatting, find/replace (with regex), insert, drag-drop, real print, DOCX/HTML/ODT import, dual rulers, page view, tab stop config |
+| `ViewModels/EditorViewModel.cs` | 256 | 29 observable properties, 15 relay commands, full `NewDocument()` reset |
 | `Views/FileBackstageView.xaml` | 61 | NavigationView + content pane + recent files panel |
 | `Views/FileBackstageView.xaml.cs` | 96 | 8 events, tag-based dispatch, `SetRecentFiles()` |
 | `Helpers/ColorHelper.cs` | 36 | `ParseHexColor` — 6/8-digit hex with validation |
@@ -446,8 +451,8 @@
 
 | File | Lines | Purpose |
 |---|---|---|
-| `EditorTests.cs` | 1,008 | 5 test classes, 98 tests (83 `[Fact]`/`[Theory]` + 15 `[InlineData]` variants) |
-| `LocalizationTests.cs` | 456 | 1 test class, 122 tests — key existence, value parity, format placeholder matching, Uid entries, satellite locale coverage |
+| `EditorTests.cs` | 1,050 | 6 test classes, 101 tests (86 `[Fact]`/`[Theory]` + 15 `[InlineData]` variants) |
+| `LocalizationTests.cs` | 495 | 1 test class, 145 tests — key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, satellite locale coverage |
 
 ### Infrastructure
 
@@ -461,9 +466,12 @@
 
 ---
 
-## Appendix B — Commit History (19 commits ahead of origin)
+## Appendix B — Commit History (22 commits ahead of origin)
 
 ```
+0ac6347 feat: add tab stop configuration dialog with alignment and leader options, localized across 9 locales
+c2e797e feat: add regex support to Find and Replace with localized labels across 9 locales
+6497185 feat: add font color keyboard shortcut (Ctrl+Shift+C) to apply last-used color
 f7f3e53 fix: zoom alignment uses top-left origin with viewport-aware sizing, font selector always shows current font name
 0e1f33b docs: update assessment for zoom overhaul and keyboard shortcuts
 34a744f fix: zoom uses ScaleTransform instead of font size, add Ctrl+scroll and Ctrl+/- shortcuts, fix font selector display, scale rulers with zoom
