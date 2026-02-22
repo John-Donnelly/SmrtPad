@@ -1559,18 +1559,6 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
-        public void MainWindow_HasFontFamilyComboBoxLoadedHandler()
-        {
-            var type = typeof(SmrtPad.MainWindow);
-            var method = type.GetMethod("FontFamilyComboBox_Loaded",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            Assert.NotNull(method);
-            var parameters = method!.GetParameters();
-            Assert.Equal(2, parameters.Length);
-            Assert.Equal(typeof(object), parameters[0].ParameterType);
-        }
-
-        [Fact]
         public void MainWindow_HasInitializeFonts()
         {
             var type = typeof(SmrtPad.MainWindow);
@@ -1580,16 +1568,20 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
-        public void MainWindow_XAML_FontFamilyHasItemTemplate()
+        public void MainWindow_XAML_FontFamilyUsesItemContainerStyle()
         {
-            // Verify the XAML file contains the ItemTemplate for font family preview
+            // ItemContainerStyle with FontFamily binding renders each font in its own
+            // typeface without interfering with the editable ComboBox text display
             string? xamlPath = FindXamlPath();
             if (xamlPath == null) return;
 
             string xaml = File.ReadAllText(xamlPath);
             Assert.Contains("FontFamilyComboBox", xaml);
-            Assert.Contains("ItemTemplate", xaml);
-            Assert.Contains("FontFamily=\"{x:Bind}\"", xaml);
+            Assert.Contains("ItemContainerStyle", xaml);
+            Assert.Contains("FontFamily", xaml);
+            Assert.Contains("{Binding}", xaml);
+            // Must NOT have ItemTemplate — it breaks editable ComboBox text display
+            Assert.DoesNotContain("ItemTemplate", xaml);
         }
 
         [Fact]

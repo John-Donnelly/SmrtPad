@@ -190,14 +190,12 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="3" Margin="0,0,0,3">
                         <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="28" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
-                                  IsEditable="True" MaxDropDownHeight="350"
-                                  Loaded="FontFamilyComboBox_Loaded">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="x:String">
-                                    <TextBlock Text="{x:Bind}" FontFamily="{x:Bind}" FontSize="13"
-                                               TextTrimming="CharacterEllipsis" MaxWidth="220"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
+                                  IsEditable="True" MaxDropDownHeight="350">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="FontFamily" Value="{Binding}"/>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
                         </ComboBox>
                         <ComboBox x:Name="FontSizeComboBox" Width="62" Height="28" FontSize="12"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"

@@ -391,17 +391,6 @@ namespace SmrtPad
             FontSizeComboBox.LostFocus += FontSizeComboBox_LostFocus;
         }
 
-        private void FontFamilyComboBox_Loaded(object sender, RoutedEventArgs e)
-        {
-            // Editable ComboBox in WinUI 3 doesn't reliably display SelectedItem text
-            // until after the layout pass completes. Defer via DispatcherQueue so the
-            // internal TextBox is fully initialized before we set its Text.
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                FontFamilyComboBox.Text = _settings.DefaultFontFamily;
-            });
-        }
-
         private void ApplyFontSizeFromText()
         {
             string text = FontSizeComboBox.Text;
@@ -436,9 +425,6 @@ namespace SmrtPad
         {
             if (FontFamilyComboBox.SelectedItem is string fontName)
             {
-                // Keep the editable text in sync so the selected font name always shows
-                FontFamilyComboBox.Text = fontName;
-
                 ITextSelection selectedText = Editor.Document.Selection;
                 if (selectedText != null)
                 {
