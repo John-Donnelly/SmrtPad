@@ -8,6 +8,17 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <BitmapImage x:Key="SmrtDoodleSource" UriSource="ms-appx:///Assets/SmrtDoodle-LM.png"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <BitmapImage x:Key="SmrtDoodleSource" UriSource="ms-appx:///Assets/SmrtDoodle.png"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <BitmapImage x:Key="SmrtDoodleSource" UriSource="ms-appx:///Assets/SmrtDoodle.png"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
