@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -14,7 +14,7 @@ using SmrtPad.ViewModels;
 
 namespace SmrtPad.Tests
 {
-    // ═══ Full ViewModel Workflow Integration Tests ═══
+    // â•â•â• Full ViewModel Workflow Integration Tests â•â•â•
 
     public class ViewModelWorkflowTests
     {
@@ -237,7 +237,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ DI Container Integration Tests ═══
+    // â•â•â• DI Container Integration Tests â•â•â•
 
     public class DIContainerIntegrationTests
     {
@@ -337,7 +337,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ Archive Text Extraction Tests ═══
+    // â•â•â• Archive Text Extraction Tests â•â•â•
 
     public class ArchiveExtractionTests : IDisposable
     {
@@ -469,7 +469,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ Settings + ViewModel Integration Tests ═══
+    // â•â•â• Settings + ViewModel Integration Tests â•â•â•
 
     public class SettingsViewModelIntegrationTests : IDisposable
     {
@@ -577,7 +577,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ ResourceHelper Cross-Locale Integration Tests ═══
+    // â•â•â• ResourceHelper Cross-Locale Integration Tests â•â•â•
 
     public class ResourceHelperIntegrationTests
     {
@@ -647,7 +647,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ ViewModel Property Change Tracking Tests ═══
+    // â•â•â• ViewModel Property Change Tracking Tests â•â•â•
 
     public class ViewModelPropertyTrackingTests
     {
@@ -767,7 +767,7 @@ namespace SmrtPad.Tests
 
             fired = false;
             vm.IsBold = true; // same value
-            Assert.False(fired); // should NOT fire — MVVM Toolkit optimizes
+            Assert.False(fired); // should NOT fire â€” MVVM Toolkit optimizes
         }
 
         [Fact]
@@ -813,7 +813,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ ColorHelper Exhaustive Tests ═══
+    // â•â•â• ColorHelper Exhaustive Tests â•â•â•
 
     public class ColorHelperExhaustiveTests
     {
@@ -903,7 +903,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ Backstage Event Contract Tests ═══
+    // â•â•â• Backstage Event Contract Tests â•â•â•
 
     public class BackstageEventContractTests
     {
@@ -963,7 +963,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ EditorViewModel Relay Command Tests ═══
+    // â•â•â• EditorViewModel Relay Command Tests â•â•â•
 
     public class RelayCommandTests
     {
@@ -1052,7 +1052,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ RTF Table Generation Tests (via RtfHelper) ═══
+    // â•â•â• RTF Table Generation Tests (via RtfHelper) â•â•â•
 
     public class RtfTableGenerationTests
     {
@@ -1124,7 +1124,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ ViewModel Default State Contract Tests ═══
+    // â•â•â• ViewModel Default State Contract Tests â•â•â•
 
     public class ViewModelDefaultContractTests
     {
@@ -1256,11 +1256,11 @@ namespace SmrtPad.Tests
                 .ToList();
 
             // At least 29 backing fields from [ObservableProperty]
-            Assert.True(observableFields.Count >= 29, $"Expected ≥29 fields, found {observableFields.Count}");
+            Assert.True(observableFields.Count >= 29, $"Expected â‰¥29 fields, found {observableFields.Count}");
         }
     }
 
-    // ═══ App.ConfigureServices Parity Tests ═══
+    // â•â•â• App.ConfigureServices Parity Tests â•â•â•
 
     public class AppConfigureServiceParityTests
     {
@@ -1315,7 +1315,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ Settings Service Concurrency Tests ═══
+    // â•â•â• Settings Service Concurrency Tests â•â•â•
 
     public class SettingsServiceConcurrencyTests : IDisposable
     {
@@ -1402,7 +1402,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ Localization Drawing Key Satellite Tests ═══
+    // â•â•â• Localization Drawing Key Satellite Tests â•â•â•
 
     public class LocalizationDrawingKeySatelliteTests
     {
@@ -1499,7 +1499,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ MainWindow Reflection Contract Tests ═══
+    // â•â•â• MainWindow Reflection Contract Tests â•â•â•
 
     public class MainWindowContractTests
     {
@@ -1570,7 +1570,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void MainWindow_XAML_FontFamilyUsesDropDownOpened()
         {
-            // DropDownOpened handler styles containers via code-behind — avoids
+            // DropDownOpened handler styles containers via code-behind â€” avoids
             // both ItemTemplate (breaks editable text) and {Binding} in Style
             // (crashes at runtime in WinUI 3)
             string? xamlPath = FindXamlPath();
@@ -1654,7 +1654,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ ParagraphStyleHelper Tests ═══
+    // â•â•â• ParagraphStyleHelper Tests â•â•â•
 
     public class ParagraphStyleHelperTests
     {
@@ -1782,7 +1782,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ RulerHelper Tests ═══
+    // â•â•â• RulerHelper Tests â•â•â•
 
     public class RulerHelperTests
     {
@@ -1840,7 +1840,7 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ DocumentImportHelper Direct Tests ═══
+    // â•â•â• DocumentImportHelper Direct Tests â•â•â•
 
     public class DocumentImportHelperTests : IDisposable
     {
@@ -1917,7 +1917,802 @@ namespace SmrtPad.Tests
 
             using var stream = File.OpenRead(filePath);
             string result = DocumentImportHelper.ExtractText(stream, ".docx");
-            Assert.Equal(string.Empty, result);
-        }
-    }
-}
+                    Assert.Equal(string.Empty, result);
+                    }
+                }
+
+                // â•â•â• PdfHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class PdfHelperTests
+                {
+                    [Fact]
+                    public void GeneratePdf_EmptyText_ReturnsPdfBytes()
+                    {
+                        byte[] pdf = PdfHelper.GeneratePdf(string.Empty);
+                        Assert.NotNull(pdf);
+                        Assert.True(pdf.Length > 0);
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_StartsWithPdfHeader()
+                    {
+                        byte[] pdf = PdfHelper.GeneratePdf("Hello World");
+                        string header = Encoding.Latin1.GetString(pdf, 0, 7);
+                        Assert.Equal("%PDF-1.", header);
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_EndsWithEof()
+                    {
+                        byte[] pdf = PdfHelper.GeneratePdf("Test content");
+                        string text = Encoding.Latin1.GetString(pdf);
+                        Assert.Contains("%%EOF", text);
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_ContainsXrefAndTrailer()
+                    {
+                        byte[] pdf = PdfHelper.GeneratePdf("Sample");
+                        string text = Encoding.Latin1.GetString(pdf);
+                        Assert.Contains("xref", text);
+                        Assert.Contains("trailer", text);
+                        Assert.Contains("startxref", text);
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_ContainsCatalogAndPages()
+                    {
+                        byte[] pdf = PdfHelper.GeneratePdf("Multi page test");
+                        string text = Encoding.Latin1.GetString(pdf);
+                        Assert.Contains("/Catalog", text);
+                        Assert.Contains("/Pages", text);
+                        Assert.Contains("/Font", text);
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_NullText_Throws()
+                    {
+                        Assert.Throws<ArgumentNullException>(() => PdfHelper.GeneratePdf(null!));
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_MultiPage_ContainsMultiplePageObjects()
+                    {
+                        // Generate enough text to require more than one page
+                        string longText = string.Join("\n", Enumerable.Range(1, 200).Select(i => $"Line {i}: The quick brown fox jumps over the lazy dog."));
+                        byte[] pdf = PdfHelper.GeneratePdf(longText);
+                        string text = Encoding.Latin1.GetString(pdf);
+                        // Multiple /Page objects expected
+                        int pageCount = System.Text.RegularExpressions.Regex.Matches(text, "/Type /Page[^s]").Count;
+                        Assert.True(pageCount > 1, $"Expected multiple pages, got {pageCount}");
+                    }
+
+                    [Theory]
+                    [InlineData("Hello", 20, new[] { "Hello" })]
+                    [InlineData("Hello World", 5, new[] { "Hello", "World" })]
+                    [InlineData("One two three four", 10, new[] { "One two", "three four" })]
+                    [InlineData("", 20, new[] { "" })]
+                    public void BuildDisplayLines_WrapsCorrectly(string text, int maxChars, string[] expected)
+                    {
+                        var lines = PdfHelper.BuildDisplayLines(text, maxChars);
+                        Assert.Equal(expected, lines.ToArray());
+                    }
+
+                    [Fact]
+                    public void BuildDisplayLines_NormalisesLineEndings()
+                    {
+                        var lines = PdfHelper.BuildDisplayLines("A\r\nB\rC\nD", 80);
+                        Assert.Equal(4, lines.Count);
+                        Assert.Equal("A", lines[0]);
+                        Assert.Equal("B", lines[1]);
+                        Assert.Equal("C", lines[2]);
+                        Assert.Equal("D", lines[3]);
+                    }
+
+                    [Fact]
+                    public void GeneratePdf_TextPresentInStream()
+                    {
+                        byte[] pdf = PdfHelper.GeneratePdf("UniqueMarkerXYZ");
+                        string text = Encoding.Latin1.GetString(pdf);
+                        Assert.Contains("UniqueMarkerXYZ", text);
+                    }
+                }
+
+                // â•â•â• DocxExportHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class DocxExportHelperTests
+                {
+                    [Fact]
+                    public void GenerateDocx_ReturnsNonEmptyBytes()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx("Hello");
+                        Assert.NotNull(docx);
+                        Assert.True(docx.Length > 0);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_IsValidZip()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx("Test");
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        Assert.NotEmpty(zip.Entries);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_ContainsRequiredParts()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx("Test");
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        var names = zip.Entries.Select(e => e.FullName).ToList();
+                        Assert.Contains("[Content_Types].xml", names);
+                        Assert.Contains("_rels/.rels", names);
+                        Assert.Contains("word/document.xml", names);
+                        Assert.Contains("word/_rels/document.xml.rels", names);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_ContentTypesXml_IsValid()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx("Test");
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        var entry = zip.GetEntry("[Content_Types].xml");
+                        Assert.NotNull(entry);
+                        using var stream = entry!.Open();
+                        var doc = XDocument.Load(stream);
+                        Assert.NotNull(doc.Root);
+                        Assert.Equal("Types", doc.Root!.Name.LocalName);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_DocumentXml_ContainsParagraphs()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx("Line 1\nLine 2\nLine 3");
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        var entry = zip.GetEntry("word/document.xml");
+                        Assert.NotNull(entry);
+                        using var stream = entry!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        var paragraphs = doc.Descendants(w + "p").ToList();
+                        Assert.Equal(3, paragraphs.Count);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_DocumentXml_PreservesText()
+                    {
+                        const string text = "Hello DOCX World";
+                        byte[] docx = DocxExportHelper.GenerateDocx(text);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        var entry = zip.GetEntry("word/document.xml");
+                        using var stream = entry!.Open();
+                        using var reader = new StreamReader(stream);
+                        string xml = reader.ReadToEnd();
+                        Assert.Contains(text, xml);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_EmptyText_StillValid()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx(string.Empty);
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        Assert.NotEmpty(zip.Entries);
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_NullText_Throws()
+                    {
+                        Assert.Throws<ArgumentNullException>(() => DocxExportHelper.GenerateDocx(null!));
+                    }
+
+                    [Fact]
+                    public void GenerateDocx_MultilineCrLf_SplitsToParagraphs()
+                    {
+                        byte[] docx = DocxExportHelper.GenerateDocx("A\r\nB\r\nC");
+                        using var ms = new MemoryStream(docx);
+                        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+                        var entry = zip.GetEntry("word/document.xml");
+                        using var stream = entry!.Open();
+                        var doc = XDocument.Load(stream);
+                        XNamespace w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+                        Assert.Equal(3, doc.Descendants(w + "p").Count());
+                    }
+                }
+
+                // â•â•â• OneDriveHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class OneDriveHelperTests
+                {
+                    [Fact]
+                    public void GetOneDrivePath_ReturnsNullOrString()
+                    {
+                        // Must return null or a non-empty string (can't guarantee OneDrive presence in CI)
+                        string? path = OneDriveHelper.GetOneDrivePath();
+                        if (path != null)
+                        {
+                            Assert.False(string.IsNullOrWhiteSpace(path));
+                            Assert.True(Directory.Exists(path), $"OneDrive path reported but does not exist: {path}");
+                        }
+                    }
+
+                    [Fact]
+                    public void IsAvailable_MatchesGetOneDrivePath()
+                    {
+                        bool available = OneDriveHelper.IsAvailable();
+                        string? path = OneDriveHelper.GetOneDrivePath();
+                        Assert.Equal(path != null, available);
+                    }
+
+                    [Fact]
+                    public void GetOneDrivePath_WithFakeConsumerEnv_ReturnsIt()
+                    {
+                        // Set a fake OneDriveConsumer env var pointing to a temp directory
+                        string tempDir = Path.Combine(Path.GetTempPath(), "FakeOneDrive_" + Guid.NewGuid().ToString("N"));
+                        Directory.CreateDirectory(tempDir);
+                        try
+                        {
+                            Environment.SetEnvironmentVariable("OneDriveConsumer", tempDir);
+                            string? path = OneDriveHelper.GetOneDrivePath();
+                            Assert.Equal(tempDir, path);
+                        }
+                        finally
+                        {
+                            Environment.SetEnvironmentVariable("OneDriveConsumer", null);
+                            Directory.Delete(tempDir);
+                        }
+                    }
+
+                    [Fact]
+                    public void GetOneDrivePath_WithNonExistentPath_SkipsIt()
+                    {
+                        string fakePath = @"C:\NonExistentOneDrivePath_TestOnly_12345";
+                        Environment.SetEnvironmentVariable("OneDriveConsumer", fakePath);
+                        try
+                        {
+                            // Restore original OneDriveConsumer after the test
+                            string? result = OneDriveHelper.GetOneDrivePath();
+                            // Should not return the fake path because it doesn't exist
+                            Assert.NotEqual(fakePath, result);
+                        }
+                        finally
+                        {
+                            Environment.SetEnvironmentVariable("OneDriveConsumer", null);
+                        }
+                    }
+                }
+
+                // â•â•â• MacroHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class MacroHelperTests
+                {
+                    [Fact]
+                    public void InitialState_IsNotRecording_CountIsZero()
+                    {
+                        var macro = new MacroHelper();
+                        Assert.False(macro.IsRecording);
+                        Assert.Equal(0, macro.Count);
+                    }
+
+                    [Fact]
+                    public void StartRecording_SetsIsRecording()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        Assert.True(macro.IsRecording);
+                    }
+
+                    [Fact]
+                    public void StopRecording_ClearsIsRecording()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.StopRecording();
+                        Assert.False(macro.IsRecording);
+                    }
+
+                    [Fact]
+                    public void Record_WhileRecording_AddsCommand()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.Bold);
+                        Assert.Equal(1, macro.Count);
+                        Assert.Equal(MacroCommandType.Bold, macro.Commands[0].Type);
+                    }
+
+                    [Fact]
+                    public void Record_WhenNotRecording_IsIgnored()
+                    {
+                        var macro = new MacroHelper();
+                        macro.Record(MacroCommandType.Italic);
+                        Assert.Equal(0, macro.Count);
+                    }
+
+                    [Fact]
+                    public void Record_WithValue_StoresValue()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.SetFontFamily, "Arial");
+                        Assert.Equal("Arial", macro.Commands[0].Value);
+                    }
+
+                    [Fact]
+                    public void StartRecording_ClearsPreviousCommands()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.Bold);
+                        macro.StopRecording();
+
+                        macro.StartRecording();
+                        Assert.Equal(0, macro.Count);
+                    }
+
+                    [Fact]
+                    public void Clear_RemovesAllCommands()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.Bold);
+                        macro.Record(MacroCommandType.Italic);
+                        macro.StopRecording();
+                        macro.Clear();
+                        Assert.Equal(0, macro.Count);
+                    }
+
+                    [Fact]
+                    public void Serialize_ProducesValidJson()
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(MacroCommandType.Bold);
+                        macro.Record(MacroCommandType.SetFontSize, "14");
+                        macro.StopRecording();
+
+                        string json = macro.Serialize();
+                        Assert.False(string.IsNullOrWhiteSpace(json));
+                        Assert.Contains("Bold", json);
+                        Assert.Contains("14", json);
+                    }
+
+                    [Fact]
+                    public void Deserialize_RestoresCommands()
+                    {
+                        var original = new MacroHelper();
+                        original.StartRecording();
+                        original.Record(MacroCommandType.Italic);
+                        original.Record(MacroCommandType.SetAlignment, "Center");
+                        original.StopRecording();
+                        string json = original.Serialize();
+
+                        var restored = new MacroHelper();
+                        restored.Deserialize(json);
+                        Assert.Equal(2, restored.Count);
+                        Assert.Equal(MacroCommandType.Italic, restored.Commands[0].Type);
+                        Assert.Equal(MacroCommandType.SetAlignment, restored.Commands[1].Type);
+                        Assert.Equal("Center", restored.Commands[1].Value);
+                    }
+
+                    [Fact]
+                    public void SaveAndLoad_RoundTrip()
+                    {
+                        string path = Path.Combine(Path.GetTempPath(), $"macro_test_{Guid.NewGuid():N}.smacro");
+                        try
+                        {
+                            var macro = new MacroHelper();
+                            macro.StartRecording();
+                            macro.Record(MacroCommandType.ZoomIn);
+                            macro.Record(MacroCommandType.InsertText, "Hello macro");
+                            macro.StopRecording();
+                            macro.Save(path);
+
+                            var loaded = new MacroHelper();
+                            loaded.Load(path);
+                            Assert.Equal(2, loaded.Count);
+                            Assert.Equal(MacroCommandType.ZoomIn, loaded.Commands[0].Type);
+                            Assert.Equal(MacroCommandType.InsertText, loaded.Commands[1].Type);
+                            Assert.Equal("Hello macro", loaded.Commands[1].Value);
+                        }
+                        finally
+                        {
+                            if (File.Exists(path)) File.Delete(path);
+                        }
+                    }
+
+                    [Fact]
+                    public void MacroCommand_ToString_WithValue()
+                    {
+                        var cmd = new MacroCommand(MacroCommandType.SetFontFamily, "Times New Roman");
+                        Assert.Equal("SetFontFamily:Times New Roman", cmd.ToString());
+                    }
+
+                    [Fact]
+                    public void MacroCommand_ToString_NoValue()
+                    {
+                        var cmd = new MacroCommand(MacroCommandType.Bold);
+                        Assert.Equal("Bold", cmd.ToString());
+                    }
+
+                    [Fact]
+                    public void Deserialize_EmptyJson_Throws()
+                    {
+                        var macro = new MacroHelper();
+                        Assert.Throws<ArgumentException>(() => macro.Deserialize(string.Empty));
+                    }
+
+                    [Fact]
+                    public void Load_NonExistentFile_Throws()
+                    {
+                        var macro = new MacroHelper();
+                        Assert.Throws<ArgumentException>(() => macro.Load(string.Empty));
+                    }
+
+                    [Theory]
+                    [InlineData(MacroCommandType.Bold)]
+                    [InlineData(MacroCommandType.Italic)]
+                    [InlineData(MacroCommandType.Underline)]
+                    [InlineData(MacroCommandType.Strikethrough)]
+                    [InlineData(MacroCommandType.Subscript)]
+                    [InlineData(MacroCommandType.Superscript)]
+                    [InlineData(MacroCommandType.ClearFormatting)]
+                    [InlineData(MacroCommandType.ZoomIn)]
+                    [InlineData(MacroCommandType.ZoomOut)]
+                    public void AllCommandTypes_CanBeRecordedAndDeserialized(MacroCommandType type)
+                    {
+                        var macro = new MacroHelper();
+                        macro.StartRecording();
+                        macro.Record(type);
+                        macro.StopRecording();
+
+                        string json = macro.Serialize();
+                        var restored = new MacroHelper();
+                        restored.Deserialize(json);
+
+                        Assert.Equal(1, restored.Count);
+                        Assert.Equal(type, restored.Commands[0].Type);
+                    }
+                }
+
+                // â•â•â• SpellCheck Settings Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class SpellCheckSettingsTests : IDisposable
+                {
+                    private readonly string _tempPath;
+                    private readonly SettingsService _settings;
+
+                    public SpellCheckSettingsTests()
+                    {
+                        _tempPath = Path.Combine(Path.GetTempPath(), $"sc_test_{Guid.NewGuid():N}.json");
+                        _settings = new SettingsService(_tempPath);
+                    }
+
+                    public void Dispose()
+                    {
+                        if (File.Exists(_tempPath)) File.Delete(_tempPath);
+                    }
+
+                    [Fact]
+                    public void SpellCheckEnabled_DefaultsToTrue()
+                    {
+                        Assert.True(_settings.SpellCheckEnabled);
+                    }
+
+                    [Fact]
+                    public void SpellCheckEnabled_CanBeDisabled()
+                    {
+                        _settings.SpellCheckEnabled = false;
+                        Assert.False(_settings.SpellCheckEnabled);
+                    }
+
+                    [Fact]
+                    public void SpellCheckEnabled_PersistsThroughSaveLoad()
+                    {
+                        _settings.SpellCheckEnabled = false;
+                        _settings.Save();
+
+                        var reloaded = new SettingsService(_tempPath);
+                        Assert.False(reloaded.SpellCheckEnabled);
+                    }
+
+                    [Fact]
+                    public void SpellCheckEnabled_True_PersistsThroughSaveLoad()
+                    {
+                        _settings.SpellCheckEnabled = true;
+                        _settings.Save();
+
+                        var reloaded = new SettingsService(_tempPath);
+                        Assert.True(reloaded.SpellCheckEnabled);
+                    }
+
+                    [Fact]
+                    public void ISettingsService_HasSpellCheckEnabledProperty()
+                    {
+                        var type = typeof(ISettingsService);
+                        Assert.NotNull(type.GetProperty("SpellCheckEnabled"));
+                    }
+                }
+
+                // â•â•â• Localization â€” new Section 4 keys â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class NewFeatureLocalizationTests
+                {
+                    private static Dictionary<string, string> LoadResw(string locale)
+                    {
+                        string? dir = AppContext.BaseDirectory;
+                        for (int i = 0; i < 10 && dir is not null; i++)
+                        {
+                            string candidate = Path.Combine(dir, "SmrtPad", "Strings", locale, "Resources.resw");
+                            if (!File.Exists(candidate))
+                                candidate = Path.Combine(dir, "Strings", locale, "Resources.resw");
+                            if (File.Exists(candidate))
+                            {
+                                var dict = new Dictionary<string, string>(StringComparer.Ordinal);
+                                foreach (var data in XDocument.Load(candidate).Descendants("data"))
+                                {
+                                    string? name = data.Attribute("name")?.Value;
+                                    string? val  = data.Element("value")?.Value;
+                                    if (name is not null && val is not null) dict[name] = val;
+                                }
+                                return dict;
+                            }
+                            dir = Directory.GetParent(dir)?.FullName;
+                        }
+                        return new Dictionary<string, string>();
+                    }
+
+                    private static readonly string[] NewKeys =
+                    {
+                        "SpellCheckToggle.Text", "OptionsSpellCheck",
+                        "StatusSpellCheckEnabled", "StatusSpellCheckDisabled",
+                        "ExportPdfNavItem.Content", "FileTypePdf",
+                        "StatusExportedPdf", "ErrorExportingPdf", "BackstageExportPdfDesc",
+                        "ExportDocxNavItem.Content", "StatusExportedDocx",
+                        "ErrorExportingDocx", "BackstageExportDocxDesc",
+                        "OneDriveNavItem.Content", "OneDriveNotFound", "OneDriveNotFoundMessage",
+                        "StatusSavedToOneDrive", "BackstageSaveOneDriveDesc",
+                        "MacroMenuBar.Title", "MacroRecord", "MacroStop", "MacroRun",
+                        "MacroSave", "MacroLoad", "StatusMacroRecording", "StatusMacroStopped",
+                        "StatusMacroDone", "StatusMacroSaved", "StatusMacroLoaded",
+                        "MacroFilter", "MacroNoCommands",
+                        "StatusNewTab", "StatusTabClosed",
+                    };
+
+                    [Theory]
+                    [InlineData("SpellCheckToggle.Text")]
+                    [InlineData("OptionsSpellCheck")]
+                    [InlineData("StatusSpellCheckEnabled")]
+                    [InlineData("StatusSpellCheckDisabled")]
+                    [InlineData("ExportPdfNavItem.Content")]
+                    [InlineData("FileTypePdf")]
+                    [InlineData("StatusExportedPdf")]
+                    [InlineData("ErrorExportingPdf")]
+                    [InlineData("BackstageExportPdfDesc")]
+                    [InlineData("ExportDocxNavItem.Content")]
+                    [InlineData("StatusExportedDocx")]
+                    [InlineData("ErrorExportingDocx")]
+                    [InlineData("BackstageExportDocxDesc")]
+                    [InlineData("OneDriveNavItem.Content")]
+                    [InlineData("OneDriveNotFound")]
+                    [InlineData("OneDriveNotFoundMessage")]
+                    [InlineData("StatusSavedToOneDrive")]
+                    [InlineData("BackstageSaveOneDriveDesc")]
+                    [InlineData("MacroMenuBar.Title")]
+                    [InlineData("MacroRecord")]
+                    [InlineData("MacroStop")]
+                    [InlineData("MacroRun")]
+                    [InlineData("MacroSave")]
+                    [InlineData("MacroLoad")]
+                    [InlineData("StatusMacroRecording")]
+                    [InlineData("StatusMacroStopped")]
+                    [InlineData("StatusMacroDone")]
+                    [InlineData("StatusMacroSaved")]
+                    [InlineData("StatusMacroLoaded")]
+                    [InlineData("MacroFilter")]
+                    [InlineData("MacroNoCommands")]
+                    [InlineData("StatusNewTab")]
+                    [InlineData("StatusTabClosed")]
+                    public void EnUs_ContainsNewKey(string key)
+                    {
+                        var dict = LoadResw("en-US");
+                        Assert.True(dict.ContainsKey(key), $"Missing key in en-US: {key}");
+                        Assert.False(string.IsNullOrWhiteSpace(dict[key]), $"Empty value for: {key}");
+                    }
+
+                    [Theory]
+                    [InlineData("de-DE")]
+                    [InlineData("es-ES")]
+                    [InlineData("fr-FR")]
+                    [InlineData("ja-JP")]
+                    [InlineData("zh-Hans")]
+                    [InlineData("ar-SA")]
+                    [InlineData("ru-RU")]
+                    [InlineData("ur-PK")]
+                    public void AllSatellites_ContainAllNewKeys(string locale)
+                    {
+                        var enDict = LoadResw("en-US");
+                        var locDict = LoadResw(locale);
+                        if (enDict.Count == 0 || locDict.Count == 0) return;
+
+                        foreach (var key in NewKeys)
+                        {
+                            Assert.True(locDict.ContainsKey(key), $"Missing key '{key}' in {locale}");
+                            Assert.False(string.IsNullOrWhiteSpace(locDict[key]), $"Empty value for '{key}' in {locale}");
+                        }
+                    }
+
+                    [Theory]
+                    [InlineData("StatusExportedPdf")]
+                    [InlineData("StatusExportedDocx")]
+                    [InlineData("StatusSavedToOneDrive")]
+                    public void NewFormatStrings_ContainPlaceholder(string key)
+                    {
+                        var dict = LoadResw("en-US");
+                        Assert.True(dict.ContainsKey(key), $"Missing key: {key}");
+                        Assert.Contains("{0}", dict[key]);
+                    }
+
+                    [Fact]
+                    public void MacroHelper_IsInSmrtPadHelpers_Namespace()
+                    {
+                        Assert.Equal("SmrtPad.Helpers", typeof(MacroHelper).Namespace);
+                    }
+
+                    [Fact]
+                    public void PdfHelper_IsInSmrtPadHelpers_Namespace()
+                    {
+                        Assert.Equal("SmrtPad.Helpers", typeof(PdfHelper).Namespace);
+                    }
+
+                    [Fact]
+                    public void DocxExportHelper_IsInSmrtPadHelpers_Namespace()
+                    {
+                        Assert.Equal("SmrtPad.Helpers", typeof(DocxExportHelper).Namespace);
+                    }
+
+                    [Fact]
+                    public void OneDriveHelper_IsInSmrtPadHelpers_Namespace()
+                    {
+                        Assert.Equal("SmrtPad.Helpers", typeof(OneDriveHelper).Namespace);
+                    }
+                }
+
+                // â•â•â• Tabbed Interface Contract Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                public class TabbedInterfaceContractTests
+                {
+                    [Fact]
+                    public void MainWindow_HasDocumentTabsAddTabButtonClick()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("DocumentTabs_AddTabButtonClick",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasDocumentTabsTabCloseRequested()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("DocumentTabs_TabCloseRequested",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasDocumentTabsSelectionChanged()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("DocumentTabs_SelectionChanged",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasSyncViewModelFromActiveTab()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("SyncViewModelFromActiveTab",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasCreateTab()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("CreateTab",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_XAML_HasDocumentTabsElement()
+                    {
+                        string? xamlPath = FindXamlPath();
+                        if (xamlPath == null) return;
+                        string xaml = File.ReadAllText(xamlPath);
+                        Assert.Contains("DocumentTabs", xaml);
+                        Assert.Contains("AddTabButtonClick", xaml);
+                        Assert.Contains("TabCloseRequested", xaml);
+                    }
+
+                    [Fact]
+                    public void MainWindow_XAML_HasMacroMenuBar()
+                    {
+                        string? xamlPath = FindXamlPath();
+                        if (xamlPath == null) return;
+                        string xaml = File.ReadAllText(xamlPath);
+                        Assert.Contains("MacroMenuBar", xaml);
+                        Assert.Contains("MacroRecord_Click", xaml);
+                        Assert.Contains("MacroStop_Click", xaml);
+                        Assert.Contains("MacroRun_Click", xaml);
+                    }
+
+                    [Fact]
+                    public void MainWindow_XAML_HasSpellCheckToggle()
+                    {
+                        string? xamlPath = FindXamlPath();
+                        if (xamlPath == null) return;
+                        string xaml = File.ReadAllText(xamlPath);
+                        Assert.Contains("SpellCheckToggle", xaml);
+                        Assert.Contains("SpellCheck_Click", xaml);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasExportPdfClick()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("ExportPdf_Click",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasExportDocxClick()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("ExportDocx_Click",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasSaveToOneDriveClick()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        var method = type.GetMethod("SaveToOneDrive_Click",
+                            BindingFlags.NonPublic | BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasMacroHandlers()
+                    {
+                        var type = typeof(SmrtPad.MainWindow);
+                        Assert.NotNull(type.GetMethod("MacroRecord_Click", BindingFlags.NonPublic | BindingFlags.Instance));
+                        Assert.NotNull(type.GetMethod("MacroStop_Click",   BindingFlags.NonPublic | BindingFlags.Instance));
+                        Assert.NotNull(type.GetMethod("MacroRun_Click",    BindingFlags.NonPublic | BindingFlags.Instance));
+                        Assert.NotNull(type.GetMethod("MacroSave_Click",   BindingFlags.NonPublic | BindingFlags.Instance));
+                        Assert.NotNull(type.GetMethod("MacroLoad_Click",   BindingFlags.NonPublic | BindingFlags.Instance));
+                    }
+
+                    private static string? FindXamlPath()
+                    {
+                        string? dir = Directory.GetCurrentDirectory();
+                        while (dir != null)
+                        {
+                            string candidate = Path.Combine(dir, "SmrtPad", "MainWindow.xaml");
+                            if (File.Exists(candidate)) return candidate;
+                            dir = Directory.GetParent(dir)?.FullName;
+                        }
+                        return null;
+                    }
+                }
+            }
+

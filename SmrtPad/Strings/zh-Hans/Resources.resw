@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -739,4 +739,105 @@
     <value>笔触宽度</value>
   </data>
 
+  <data name="StatusMacroRecording" xml:space="preserve">
+    <value>正在录制宏...</value>
+  </data>
+  <data name="OneDriveNotFound" xml:space="preserve">
+    <value>未找到 OneDrive</value>
+  </data>
+  <data name="StatusMacroStopped" xml:space="preserve">
+    <value>宏录制已停止。</value>
+  </data>
+  <data name="StatusExportedDocx" xml:space="preserve">
+    <value>已导出为 DOCX：{0}</value>
+  </data>
+  <data name="StatusTabClosed" xml:space="preserve">
+    <value>标签页已关闭。</value>
+  </data>
+  <data name="StatusMacroDone" xml:space="preserve">
+    <value>宏已完成。</value>
+  </data>
+  <data name="FileTypePdf" xml:space="preserve">
+    <value>PDF 文档</value>
+  </data>
+  <data name="MacroSave" xml:space="preserve">
+    <value>保存宏</value>
+  </data>
+  <data name="MacroMenuBar.Title" xml:space="preserve">
+    <value>宏</value>
+  </data>
+  <data name="MacroRun" xml:space="preserve">
+    <value>运行宏</value>
+  </data>
+  <data name="StatusExportedPdf" xml:space="preserve">
+    <value>已导出 PDF：{0}</value>
+  </data>
+  <data name="ErrorExportingPdf" xml:space="preserve">
+    <value>导出 PDF 时出错</value>
+  </data>
+  <data name="StatusSpellCheckEnabled" xml:space="preserve">
+    <value>已启用拼写检查。</value>
+  </data>
+  <data name="OneDriveNotFoundMessage" xml:space="preserve">
+    <value>无法找到 OneDrive 文件夹。请确保 OneDrive 已安装并登录。</value>
+  </data>
+  <data name="StatusMacroSaved" xml:space="preserve">
+    <value>宏已保存。</value>
+  </data>
+  <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
+    <value>将当前文档直接保存到您的 OneDrive 文件夹。</value>
+  </data>
+  <data name="MacroRecord" xml:space="preserve">
+    <value>录制宏</value>
+  </data>
+  <data name="ErrorExportingDocx" xml:space="preserve">
+    <value>导出文档时出错</value>
+  </data>
+  <data name="SpellCheckToggle.Text" xml:space="preserve">
+    <value>拼写检查</value>
+  </data>
+  <data name="OneDriveNavItem.Content" xml:space="preserve">
+    <value>保存到 OneDrive</value>
+  </data>
+  <data name="MacroStop" xml:space="preserve">
+    <value>停止录制</value>
+  </data>
+  <data name="BackstageExportDocxDesc" xml:space="preserve">
+    <value>将当前文档导出为 Word DOCX 文件。</value>
+  </data>
+  <data name="StatusNewTab" xml:space="preserve">
+    <value>已创建新标签页。</value>
+  </data>
+  <data name="BackstageExportPdfDesc" xml:space="preserve">
+    <value>将当前文档导出为 PDF 文件。</value>
+  </data>
+  <data name="ExportDocxNavItem.Content" xml:space="preserve">
+    <value>导出为 DOCX</value>
+  </data>
+  <data name="ExportPdfNavItem.Content" xml:space="preserve">
+    <value>导出为 PDF</value>
+  </data>
+  <data name="MacroLoad" xml:space="preserve">
+    <value>加载宏</value>
+  </data>
+  <data name="StatusSavedToOneDrive" xml:space="preserve">
+    <value>已保存到 OneDrive：{0}</value>
+  </data>
+  <data name="StatusMacroLoaded" xml:space="preserve">
+    <value>宏已加载。</value>
+  </data>
+  <data name="MacroNoCommands" xml:space="preserve">
+    <value>未录制任何命令。请先使用录制宏。</value>
+  </data>
+  <data name="OptionsSpellCheck" xml:space="preserve">
+    <value>启用拼写检查</value>
+  </data>
+  <data name="StatusSpellCheckDisabled" xml:space="preserve">
+    <value>已禁用拼写检查。</value>
+  </data>
+  <data name="MacroFilter" xml:space="preserve">
+    <value>宏文件</value>
+  </data>
+
 </root>
+

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -46,7 +46,6 @@ namespace SmrtPad
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        private StorageFile? _currentFile;
         private readonly ISettingsService _settings;
         private readonly IDialogService _dialogService;
         private readonly IFileService _fileService;
@@ -56,9 +55,20 @@ namespace SmrtPad
         private readonly List<UIElement> _printPreviewPages = new();
         private bool _rulersVisible;
         private bool _pageViewActive;
-        private readonly ScaleTransform _editorScaleTransform = new();
         private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
         private bool _fontDropdownStyled;
+
+        // ?? Tab management ??????????????????????????????????????????????????????
+        private readonly List<DocumentTab> _tabs = new();
+        private int _activeTabIndex = -1;
+        private readonly MacroHelper _macro = new();
+
+        private DocumentTab ActiveTab => _tabs[_activeTabIndex];
+        private RichEditBox Editor => ActiveTab.Editor;
+        private ScrollViewer EditorScrollViewer => ActiveTab.ScrollViewer;
+        private Grid EditorContainer => ActiveTab.EditorContainer;
+        private Border PageViewBorder => ActiveTab.PageViewBorder;
+        private ScaleTransform ActiveScaleTransform => ActiveTab.ScaleTransform;
         public EditorViewModel ViewModel { get; }
 
         public MainWindow()
@@ -77,32 +87,21 @@ namespace SmrtPad
                 }
             };
 
+            // Create the first document tab before ApplySettings() so Editor is valid
+            CreateTab(Res.GetString("DocumentUntitled"));
+
             InitializeFonts();
             ApplySettings();
             SetupAutoSave();
-
-            // Apply zoom via ScaleTransform on the editor container
-            EditorContainer.RenderTransform = _editorScaleTransform;
-            EditorContainer.RenderTransformOrigin = new Windows.Foundation.Point(0, 0);
-
-            // Ctrl+Scroll wheel zoom
-            EditorScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
-            // Recalculate container width on viewport resize so zoom stays aligned
-            EditorScrollViewer.SizeChanged += (s, e) => { if (ViewModel.ZoomLevel != 100) ApplyZoom(); };
-
-            // Editor is now a native RichEdit host; WinUI RichEditBox events/APIs no longer apply.
-            Editor.TextChanged += (s, e) =>
-            {
-                ViewModel.IsModified = true;
-                UpdateStatusBarCounts();
-            };
-            Editor.SelectionChanged += Editor_SelectionChanged;
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
             FileBackstage.SaveRequested += (s, e) => { HideBackstage(); Save_Click(this, new RoutedEventArgs()); };
             FileBackstage.SaveAsRequested += (s, e) => { HideBackstage(); SaveAs_Click(this, new RoutedEventArgs()); };
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
+            FileBackstage.ExportPdfRequested += (s, e) => { HideBackstage(); ExportPdf_Click(this, new RoutedEventArgs()); };
+            FileBackstage.ExportDocxRequested += (s, e) => { HideBackstage(); ExportDocx_Click(this, new RoutedEventArgs()); };
+            FileBackstage.OneDriveRequested += (s, e) => { HideBackstage(); SaveToOneDrive_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
@@ -122,13 +121,107 @@ namespace SmrtPad
 
                 if (await PromptSaveChangesAsync())
                 {
-                    // User chose Save or Don't Save � close for real.
+                    // User chose Save or Don't Save — close for real.
                     // Unhook to prevent re-entrance, then close.
                     AppWindow.Closing -= AppWindow_Closing;
                     Close();
                 }
-                // else: user cancelled � window stays open
+                // else: user cancelled — window stays open
             }
+        }
+
+        // ?? Tab management ???????????????????????????????????????????????????????
+
+        private DocumentTab CreateTab(string title)
+        {
+            var tab = new DocumentTab(title, _settings);
+
+            tab.Editor.TextChanged += (s, e) =>
+            {
+                if (_activeTabIndex >= 0 && tab == ActiveTab)
+                {
+                    ViewModel.IsModified = true;
+                    tab.IsModified = true;
+                    UpdateStatusBarCounts();
+                }
+            };
+            tab.Editor.SelectionChanged += (s, e) =>
+            {
+                if (_activeTabIndex >= 0 && tab == ActiveTab)
+                    Editor_SelectionChanged(s, e);
+            };
+            tab.Editor.DragOver += Editor_DragOver;
+            tab.Editor.Drop += Editor_Drop;
+            tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
+            tab.ScrollViewer.SizeChanged += (s, e) =>
+            {
+                if (_activeTabIndex >= 0 && tab == ActiveTab && ViewModel.ZoomLevel != 100)
+                    ApplyZoom();
+            };
+
+            DocumentTabs.TabItems.Add(tab.TabViewItem);
+            _tabs.Add(tab);
+            DocumentTabs.SelectedIndex = _tabs.Count - 1;
+            _activeTabIndex = _tabs.Count - 1;
+            return tab;
+        }
+
+        private void DocumentTabs_AddTabButtonClick(TabView sender, object args)
+        {
+            CreateTab(Res.GetString("DocumentUntitled"));
+            ViewModel.NewDocument();
+            UpdateEncoding("UTF-8");
+            ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
+        }
+
+        private async void DocumentTabs_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+        {
+            int idx = _tabs.FindIndex(t => t.TabViewItem == args.Tab);
+            if (idx < 0) return;
+
+            // If the closing tab has unsaved changes, prompt
+            if (_tabs[idx].IsModified)
+            {
+                _activeTabIndex = idx;
+                if (!await PromptSaveChangesAsync()) return;
+            }
+
+            DocumentTabs.TabItems.Remove(args.Tab);
+            _tabs.RemoveAt(idx);
+
+            if (_tabs.Count == 0)
+            {
+                // Reopen a blank tab so there is always at least one
+                CreateTab(Res.GetString("DocumentUntitled"));
+                ViewModel.NewDocument();
+                UpdateEncoding("UTF-8");
+            }
+            else
+            {
+                _activeTabIndex = Math.Min(idx, _tabs.Count - 1);
+                DocumentTabs.SelectedIndex = _activeTabIndex;
+                SyncViewModelFromActiveTab();
+            }
+            ViewModel.UpdateStatus(Res.GetString("StatusTabClosed"));
+        }
+
+        private void DocumentTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            int newIdx = DocumentTabs.SelectedIndex;
+            if (newIdx < 0 || newIdx >= _tabs.Count) return;
+            _activeTabIndex = newIdx;
+            SyncViewModelFromActiveTab();
+        }
+
+        private void SyncViewModelFromActiveTab()
+        {
+            if (_activeTabIndex < 0 || _activeTabIndex >= _tabs.Count) return;
+            var tab = _tabs[_activeTabIndex];
+            ViewModel.DocumentTitle = tab.CurrentFile?.Name ?? Res.GetString("DocumentUntitled");
+            ViewModel.IsModified = tab.IsModified;
+            ViewModel.ZoomLevel = tab.ZoomLevel;
+            UpdateEncoding(tab.Encoding);
+            UpdateStatusBarCounts();
         }
 
         public async Task OpenFileByPathAsync(string filePath)
@@ -152,7 +245,7 @@ namespace SmrtPad
             {
                 string text = await ExtractTextFromArchiveAsync(file, ext);
                 Editor.Document.SetText(TextSetOptions.None, text);
-                _currentFile = null;
+                ActiveTab.CurrentFile = null;
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
@@ -164,7 +257,7 @@ namespace SmrtPad
             {
                 string html = await FileIO.ReadTextAsync(file);
                 Editor.Document.SetText(TextSetOptions.None, html);
-                _currentFile = null;
+                ActiveTab.CurrentFile = null;
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
@@ -180,13 +273,16 @@ namespace SmrtPad
                     var options = isTxt ? TextSetOptions.None : TextSetOptions.FormatRtf;
                     Editor.Document.LoadFromStream(options, randAccStream);
                 }
-                _currentFile = file;
+                ActiveTab.CurrentFile = file;
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
+                ActiveTab.IsModified = false;
+                ActiveTab.TabViewItem.Header = file.Name;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
                 _settings.AddRecentFile(file.Path);
                 UpdateStatusBarCounts();
                 UpdateEncoding(isTxt ? "UTF-8" : "RTF");
+                ActiveTab.Encoding = isTxt ? "UTF-8" : "RTF";
             }
         }
 
@@ -202,6 +298,8 @@ namespace SmrtPad
             ViewModel.IsWordWrap = _settings.DefaultWordWrap;
             ViewModel.FontFamily = _settings.DefaultFontFamily;
             ViewModel.FontSize = _settings.DefaultFontSize;
+            Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
+            if (SpellCheckToggle != null) SpellCheckToggle.IsChecked = _settings.SpellCheckEnabled;
             ApplyThemeFromSettings();
         }
 
@@ -228,20 +326,20 @@ namespace SmrtPad
                 };
                 _autoSaveTimer.Tick += async (s, e) =>
                 {
-                    if (ViewModel.IsModified && _currentFile != null)
+                    if (ViewModel.IsModified && ActiveTab.CurrentFile != null)
                     {
                         try
                         {
-                            using (var stream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
+                            using (var stream = await ActiveTab.CurrentFile.OpenAsync(FileAccessMode.ReadWrite))
                             {
                                 Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
                             }
                             ViewModel.IsModified = false;
-                            ViewModel.UpdateStatus(Res.GetFormatted("StatusAutoSaved", _currentFile.Name));
+                            ViewModel.UpdateStatus(Res.GetFormatted("StatusAutoSaved", ActiveTab.CurrentFile.Name));
                         }
                         catch { }
                     }
-                    else if (ViewModel.IsModified && _currentFile == null)
+                    else if (ViewModel.IsModified && ActiveTab.CurrentFile == null)
                     {
                         await AutoSaveRecoveryAsync();
                     }
@@ -323,7 +421,18 @@ namespace SmrtPad
         private void HideBackstage()
         {
             FileBackstage.Visibility = Visibility.Collapsed;
-            Editor.Visibility = Visibility.Visible;
+        }
+
+        private void ShowBackstage()
+        {
+            FileBackstage.Visibility = Visibility.Visible;
+            FileBackstage.SetDocumentProperties(
+                ActiveTab.CurrentFile?.Name ?? ViewModel.DocumentTitle,
+                ViewModel.WordCount,
+                ViewModel.CharCount,
+                ActiveTab.Encoding,
+                ActiveTab.IsModified);
+            FileBackstage.SetRecentFiles(_settings.RecentFiles);
         }
 
         private void Editor_SelectionChanged(object sender, RoutedEventArgs e)
@@ -333,7 +442,7 @@ namespace SmrtPad
 
             ITextCharacterFormat charFormat = selection.CharacterFormat;
 
-            // Update ViewModel properties � toggle buttons sync via {x:Bind} TwoWay
+            // Update ViewModel properties — toggle buttons sync via {x:Bind} TwoWay
             ViewModel.IsBold = charFormat.Bold == FormatEffect.On;
             ViewModel.IsItalic = charFormat.Italic == FormatEffect.On;
             ViewModel.IsUnderline = charFormat.Underline != UnderlineType.None;
@@ -390,6 +499,17 @@ namespace SmrtPad
 
             FontSizeComboBox.KeyDown += FontSizeComboBox_KeyDown;
             FontSizeComboBox.LostFocus += FontSizeComboBox_LostFocus;
+        }
+
+        private void FontFamilyComboBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Editable ComboBox in WinUI 3 doesn't reliably display SelectedItem text
+            // until after the layout pass completes. Defer via DispatcherQueue so the
+            // internal TextBox is fully initialized before we set its Text.
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                FontFamilyComboBox.Text = _settings.DefaultFontFamily;
+            });
         }
 
         private void FontFamilyComboBox_DropDownOpened(object sender, object e)
@@ -488,9 +608,20 @@ namespace SmrtPad
             if (!await PromptSaveChangesAsync())
                 return;
 
+            // Reuse the current tab if it is already a blank untitled document,
+            // otherwise open a new tab so the user's document isn't lost.
+            bool currentIsBlank = ActiveTab.CurrentFile == null && !ActiveTab.IsModified;
+            if (!currentIsBlank)
+            {
+                CreateTab(Res.GetString("DocumentUntitled"));
+            }
+
             Editor.Document.SetText(TextSetOptions.None, string.Empty);
-            _currentFile = null;
+            ActiveTab.CurrentFile = null;
+            ActiveTab.IsModified = false;
+            ActiveTab.Encoding = "UTF-8";
             ViewModel.NewDocument();
+            ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
             UpdateEncoding("UTF-8");
         }
 
@@ -536,7 +667,7 @@ namespace SmrtPad
         {
             try
             {
-                if (_currentFile == null)
+                if (ActiveTab.CurrentFile == null)
                 {
                     var picker = new FileSavePicker();
                     InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
@@ -556,7 +687,7 @@ namespace SmrtPad
                         FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
                         if (status == FileUpdateStatus.Complete)
                         {
-                            _currentFile = file;
+                            ActiveTab.CurrentFile = file;
                             ViewModel.DocumentTitle = file.Name;
                             ViewModel.IsModified = false;
                             ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
@@ -566,12 +697,12 @@ namespace SmrtPad
                 }
                 else
                 {
-                    using (var randAccStream = await _currentFile.OpenAsync(FileAccessMode.ReadWrite))
+                    using (var randAccStream = await ActiveTab.CurrentFile.OpenAsync(FileAccessMode.ReadWrite))
                     {
                         Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
                     }
                     ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", _currentFile.Name));
+                    ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", ActiveTab.CurrentFile.Name));
                 }
             }
             catch (Exception ex)
@@ -589,7 +720,7 @@ namespace SmrtPad
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string>() { ".rtf" });
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string>() { ".txt" });
-                picker.SuggestedFileName = _currentFile?.DisplayName ?? Res.GetString("FileDefaultName");
+                picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
@@ -605,7 +736,7 @@ namespace SmrtPad
                     FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
                     if (status == FileUpdateStatus.Complete)
                     {
-                        _currentFile = file;
+                        ActiveTab.CurrentFile = file;
                         ViewModel.DocumentTitle = file.Name;
                         ViewModel.IsModified = false;
                         ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
@@ -786,8 +917,8 @@ namespace SmrtPad
             {
                 ("en-US", "English (United States)"),
                 ("de-DE", "Deutsch (Deutschland)"),
-                ("es-ES", "Espa�ol (Espa�a)"),
-                ("fr-FR", "Fran�ais (France)"),
+                ("es-ES", "Español (España)"),
+                ("fr-FR", "Français (France)"),
                 ("ja-JP", "??? (??)"),
                 ("zh-Hans", "?? (??)"),
                 ("ar-SA", "??????? (????????)"),
@@ -805,6 +936,9 @@ namespace SmrtPad
             rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerCentimeters"));
             rulerUnitsBox.SelectedIndex = _settings.RulerUnits == "cm" ? 1 : 0;
             panel.Children.Add(rulerUnitsBox);
+
+            var spellCheckBox = new CheckBox { Content = Res.GetString("OptionsSpellCheck"), IsChecked = _settings.SpellCheckEnabled };
+            panel.Children.Add(spellCheckBox);
 
             var dialog = new ContentDialog
             {
@@ -830,11 +964,258 @@ namespace SmrtPad
                     ? supportedLocales[langIdx].Tag
                     : "en-US";
                 _settings.RulerUnits = rulerUnitsBox.SelectedIndex == 1 ? "cm" : "in";
+                _settings.SpellCheckEnabled = spellCheckBox.IsChecked == true;
+                Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
+                if (SpellCheckToggle != null) SpellCheckToggle.IsChecked = _settings.SpellCheckEnabled;
                 _settings.Save();
                 ApplyThemeFromSettings();
                 SetupAutoSave();
                 if (_rulersVisible) RedrawRulers();
                 ViewModel.UpdateStatus(Res.GetString("StatusOptionsSaved"));
+            }
+        }
+
+        // ── Spell Check ──────────────────────────────────────────────────────────
+
+        private void SpellCheck_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleMenuFlyoutItem toggle)
+            {
+                bool enabled = toggle.IsChecked;
+                Editor.IsSpellCheckEnabled = enabled;
+                _settings.SpellCheckEnabled = enabled;
+                _settings.Save();
+                ViewModel.UpdateStatus(enabled
+                    ? Res.GetString("StatusSpellCheckEnabled")
+                    : Res.GetString("StatusSpellCheckDisabled"));
+            }
+        }
+
+        // ── Export to PDF ────────────────────────────────────────────────────────
+
+        private async void ExportPdf_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileSavePicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeChoices.Add(Res.GetString("FileTypePdf"), new List<string> { ".pdf" });
+                picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
+
+                StorageFile file = await picker.PickSaveFileAsync();
+                if (file == null) return;
+
+                Editor.Document.GetText(TextGetOptions.None, out string text);
+                byte[] pdf = PdfHelper.GeneratePdf(text.TrimEnd('\r'));
+
+                CachedFileManager.DeferUpdates(file);
+                using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                using (var writer = stream.AsStreamForWrite())
+                {
+                    await writer.WriteAsync(pdf, 0, pdf.Length);
+                    await writer.FlushAsync();
+                    stream.Size = (ulong)pdf.Length;
+                }
+                await CachedFileManager.CompleteUpdatesAsync(file);
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusExportedPdf", file.Name));
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorExportingPdf"), ex.Message);
+            }
+        }
+
+        // ── Export to DOCX ───────────────────────────────────────────────────────
+
+        private async void ExportDocx_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileSavePicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), new List<string> { ".docx" });
+                picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
+
+                StorageFile file = await picker.PickSaveFileAsync();
+                if (file == null) return;
+
+                Editor.Document.GetText(TextGetOptions.None, out string text);
+                byte[] docx = DocxExportHelper.GenerateDocx(text.TrimEnd('\r'));
+
+                CachedFileManager.DeferUpdates(file);
+                using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                using (var writer = stream.AsStreamForWrite())
+                {
+                    await writer.WriteAsync(docx, 0, docx.Length);
+                    await writer.FlushAsync();
+                    stream.Size = (ulong)docx.Length;
+                }
+                await CachedFileManager.CompleteUpdatesAsync(file);
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusExportedDocx", file.Name));
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorExportingDocx"), ex.Message);
+            }
+        }
+
+        // ── Save to OneDrive ─────────────────────────────────────────────────────
+
+        private async void SaveToOneDrive_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!OneDriveHelper.IsAvailable())
+                {
+                    await ShowErrorDialogAsync(
+                        Res.GetString("OneDriveNotFound"),
+                        Res.GetString("OneDriveNotFoundMessage"));
+                    return;
+                }
+
+                var picker = new FileSavePicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), new List<string> { ".rtf" });
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), new List<string> { ".txt" });
+                picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
+
+                StorageFile file = await picker.PickSaveFileAsync();
+                if (file == null) return;
+
+                CachedFileManager.DeferUpdates(file);
+                using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                        ? TextGetOptions.None : TextGetOptions.FormatRtf;
+                    Editor.Document.SaveToStream(options, stream);
+                }
+                await CachedFileManager.CompleteUpdatesAsync(file);
+
+                ActiveTab.CurrentFile = file;
+                ActiveTab.IsModified = false;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ActiveTab.TabViewItem.Header = file.Name;
+                _settings.AddRecentFile(file.Path);
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusSavedToOneDrive", file.Name));
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorSavingFile"), ex.Message);
+            }
+        }
+
+        // ── Macro recording & playback ───────────────────────────────────────────
+
+        private void MacroRecord_Click(object sender, RoutedEventArgs e)
+        {
+            _macro.StartRecording();
+            MacroRecordItem.Text = Res.GetString("MacroRecord");
+            MacroStopItem.IsEnabled = true;
+            MacroRecordItem.IsEnabled = false;
+            ViewModel.UpdateStatus(Res.GetString("StatusMacroRecording"));
+        }
+
+        private void MacroStop_Click(object sender, RoutedEventArgs e)
+        {
+            _macro.StopRecording();
+            MacroStopItem.IsEnabled = false;
+            MacroRecordItem.IsEnabled = true;
+            ViewModel.UpdateStatus(Res.GetString("StatusMacroStopped"));
+        }
+
+        private void MacroRun_Click(object sender, RoutedEventArgs e)
+        {
+            if (_macro.Count == 0)
+            {
+                ViewModel.UpdateStatus(Res.GetString("MacroNoCommands"));
+                return;
+            }
+            foreach (var cmd in _macro.Commands)
+                ExecuteMacroCommand(cmd);
+            ViewModel.UpdateStatus(Res.GetString("StatusMacroDone"));
+        }
+
+        private void ExecuteMacroCommand(MacroCommand cmd)
+        {
+            switch (cmd.Type)
+            {
+                case MacroCommandType.Bold:         Bold_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.Italic:       Italic_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.Underline:    Underline_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.Strikethrough: Strikethrough_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.Subscript:    Subscript_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.Superscript:  Superscript_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.ClearFormatting: ClearFormatting_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.ZoomIn:       ZoomIn_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.ZoomOut:      ZoomOut_Click(this, new RoutedEventArgs()); break;
+                case MacroCommandType.SetAlignment when cmd.Value is not null:
+                    ViewModel.SetAlignment(cmd.Value); break;
+                case MacroCommandType.SetFontFamily when cmd.Value is not null:
+                {
+                    var cf = Editor.Document.Selection.CharacterFormat;
+                    cf.Name = cmd.Value;
+                    Editor.Document.Selection.CharacterFormat = cf;
+                    break;
+                }
+                case MacroCommandType.SetFontSize when cmd.Value is not null
+                     && float.TryParse(cmd.Value, System.Globalization.NumberStyles.Any,
+                         System.Globalization.CultureInfo.InvariantCulture, out float sz):
+                {
+                    var cf = Editor.Document.Selection.CharacterFormat;
+                    cf.Size = sz;
+                    Editor.Document.Selection.CharacterFormat = cf;
+                    break;
+                }
+                case MacroCommandType.InsertText when cmd.Value is not null:
+                    Editor.Document.Selection.Text = cmd.Value; break;
+            }
+        }
+
+        private async void MacroSave_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileSavePicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeChoices.Add(Res.GetString("MacroFilter"), new List<string> { ".smacro" });
+                picker.SuggestedFileName = "macro";
+
+                StorageFile file = await picker.PickSaveFileAsync();
+                if (file == null) return;
+
+                await Windows.Storage.FileIO.WriteTextAsync(file, _macro.Serialize());
+                ViewModel.UpdateStatus(Res.GetString("StatusMacroSaved"));
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorGeneric"), ex.Message);
+            }
+        }
+
+        private async void MacroLoad_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileOpenPicker();
+                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeFilter.Add(".smacro");
+
+                StorageFile file = await picker.PickSingleFileAsync();
+                if (file == null) return;
+
+                string json = await Windows.Storage.FileIO.ReadTextAsync(file);
+                _macro.Deserialize(json);
+                ViewModel.UpdateStatus(Res.GetString("StatusMacroLoaded"));
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorGeneric"), ex.Message);
             }
         }
 
@@ -978,8 +1359,8 @@ namespace SmrtPad
             double scale = ViewModel.ZoomLevel / 100.0;
 
             // Scale the editor container (true visual zoom, not font size change)
-            _editorScaleTransform.ScaleX = scale;
-            _editorScaleTransform.ScaleY = scale;
+            ActiveScaleTransform.ScaleX = scale;
+            ActiveScaleTransform.ScaleY = scale;
 
             // Compute container width so the scaled content fills the viewport.
             double viewportWidth = EditorScrollViewer.ActualWidth;
@@ -1685,7 +2066,7 @@ namespace SmrtPad
             }
         }
 
-        // Page dimensions at 96 DPI: US Letter 8.5�11 = 816�1056px
+        // Page dimensions at 96 DPI: US Letter 8.5×11 = 816×1056px
         // 1-inch margins on each side ? printable area = 624px wide
         private const double PageWidthPx = 816;
         private const double PageHeightPx = 1056;
@@ -2205,7 +2586,7 @@ namespace SmrtPad
             {
                 pf.GetTab(i, out float pos, out TabAlignment align, out TabLeader leader);
                 double inches = pos / 72.0;
-                listBox.Items.Add($"{inches:F2}\" � {align} � {leader}");
+                listBox.Items.Add($"{inches:F2}\" — {align} — {leader}");
             }
 
             if (pf.TabCount == 0)
@@ -2365,12 +2746,12 @@ namespace SmrtPad
         {
             var symbols = new[]
             {
-                "�", "�", "�", "�", "�", "�", "�", "�", "�", "�",
-                "�", "�", "�", "�", "�", "�", "�", "�", "�", "�",
+                "©", "®", "™", "°", "±", "µ", "¶", "·", "÷", "×",
+                "€", "£", "¥", "¢", "§", "†", "‡", "•", "…", "‰",
                 "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
                 "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
                 "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
-                "�", "�", "�", "?", "?", "�", "�", "�", "�", "�",
+                "¼", "½", "¾", "?", "?", "—", "–", "«", "»", "¿",
             };
 
             var grid = new GridView
@@ -2440,18 +2821,70 @@ namespace SmrtPad
                 }
             }
         }
+    }
 
-        private void ShowBackstage()
+    // ── DocumentTab — per-tab document state + UI ──────────────────────────────
+
+    internal sealed class DocumentTab
+    {
+        public TabViewItem TabViewItem { get; }
+        public RichEditBox Editor { get; }
+        public ScrollViewer ScrollViewer { get; }
+        public Grid EditorContainer { get; }
+        public Border PageViewBorder { get; }
+        public ScaleTransform ScaleTransform { get; } = new ScaleTransform();
+
+        public StorageFile? CurrentFile { get; set; }
+        public bool IsModified { get; set; }
+        public string Encoding { get; set; } = "UTF-8";
+        public double ZoomLevel { get; set; } = 100.0;
+
+        public DocumentTab(string title, ISettingsService settings)
         {
-            FileBackstage.SetRecentFiles(_settings.RecentFiles);
-            FileBackstage.SetDocumentProperties(
-                _currentFile?.Name ?? ViewModel.DocumentTitle,
-                ViewModel.WordCount,
-                ViewModel.CharCount,
-                ViewModel.Encoding,
-                ViewModel.IsModified);
-            FileBackstage.Visibility = Visibility.Visible;
-            Editor.Visibility = Visibility.Collapsed;
+            Editor = new RichEditBox
+            {
+                AcceptsReturn = true,
+                TextWrapping = settings.DefaultWordWrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
+                AllowDrop = true,
+                IsSpellCheckEnabled = settings.SpellCheckEnabled,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                MinHeight = 200,
+            };
+
+            PageViewBorder = new Border
+            {
+                Visibility = Visibility.Collapsed,
+                Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                    Windows.UI.Color.FromArgb(255, 255, 255, 255)),
+                BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                    Windows.UI.Color.FromArgb(255, 200, 200, 200)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(2),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                MinHeight = 1056,
+            };
+
+            EditorContainer = new Grid { Margin = new Thickness(4) };
+            EditorContainer.Children.Add(PageViewBorder);
+            EditorContainer.Children.Add(Editor);
+            EditorContainer.RenderTransform = ScaleTransform;
+            EditorContainer.RenderTransformOrigin = new Windows.Foundation.Point(0, 0);
+
+            ScrollViewer = new ScrollViewer
+            {
+                Content = EditorContainer,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            };
+
+            TabViewItem = new TabViewItem
+            {
+                Header = title,
+                IsClosable = true,
+                Content = ScrollViewer,
+            };
         }
     }
 }
+

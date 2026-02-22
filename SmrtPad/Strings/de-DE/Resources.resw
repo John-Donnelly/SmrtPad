@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -739,4 +739,105 @@
     <value>Strichbreite</value>
   </data>
 
+  <data name="StatusMacroRecording" xml:space="preserve">
+    <value>Makro wird aufgezeichnet...</value>
+  </data>
+  <data name="OneDriveNotFound" xml:space="preserve">
+    <value>OneDrive nicht gefunden</value>
+  </data>
+  <data name="StatusMacroStopped" xml:space="preserve">
+    <value>Makroaufzeichnung beendet.</value>
+  </data>
+  <data name="StatusExportedDocx" xml:space="preserve">
+    <value>Als DOCX exportiert: {0}</value>
+  </data>
+  <data name="StatusTabClosed" xml:space="preserve">
+    <value>Registerkarte geschlossen.</value>
+  </data>
+  <data name="StatusMacroDone" xml:space="preserve">
+    <value>Makro abgeschlossen.</value>
+  </data>
+  <data name="FileTypePdf" xml:space="preserve">
+    <value>PDF-Dokument</value>
+  </data>
+  <data name="MacroSave" xml:space="preserve">
+    <value>Makro speichern</value>
+  </data>
+  <data name="MacroMenuBar.Title" xml:space="preserve">
+    <value>Makro</value>
+  </data>
+  <data name="MacroRun" xml:space="preserve">
+    <value>Makro ausführen</value>
+  </data>
+  <data name="StatusExportedPdf" xml:space="preserve">
+    <value>PDF exportiert: {0}</value>
+  </data>
+  <data name="ErrorExportingPdf" xml:space="preserve">
+    <value>Fehler beim PDF-Export</value>
+  </data>
+  <data name="StatusSpellCheckEnabled" xml:space="preserve">
+    <value>Rechtschreibprüfung aktiviert.</value>
+  </data>
+  <data name="OneDriveNotFoundMessage" xml:space="preserve">
+    <value>Der OneDrive-Ordner konnte nicht gefunden werden. Stellen Sie sicher, dass OneDrive installiert und angemeldet ist.</value>
+  </data>
+  <data name="StatusMacroSaved" xml:space="preserve">
+    <value>Makro gespeichert.</value>
+  </data>
+  <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
+    <value>Das aktuelle Dokument direkt in Ihrem OneDrive-Ordner speichern.</value>
+  </data>
+  <data name="MacroRecord" xml:space="preserve">
+    <value>Makro aufzeichnen</value>
+  </data>
+  <data name="ErrorExportingDocx" xml:space="preserve">
+    <value>Fehler beim Dokumentexport</value>
+  </data>
+  <data name="SpellCheckToggle.Text" xml:space="preserve">
+    <value>Rechtschreibprüfung</value>
+  </data>
+  <data name="OneDriveNavItem.Content" xml:space="preserve">
+    <value>In OneDrive speichern</value>
+  </data>
+  <data name="MacroStop" xml:space="preserve">
+    <value>Aufzeichnung beenden</value>
+  </data>
+  <data name="BackstageExportDocxDesc" xml:space="preserve">
+    <value>Das aktuelle Dokument als Word-DOCX-Datei exportieren.</value>
+  </data>
+  <data name="StatusNewTab" xml:space="preserve">
+    <value>Neue Registerkarte erstellt.</value>
+  </data>
+  <data name="BackstageExportPdfDesc" xml:space="preserve">
+    <value>Das aktuelle Dokument als PDF-Datei exportieren.</value>
+  </data>
+  <data name="ExportDocxNavItem.Content" xml:space="preserve">
+    <value>Als DOCX exportieren</value>
+  </data>
+  <data name="ExportPdfNavItem.Content" xml:space="preserve">
+    <value>Als PDF exportieren</value>
+  </data>
+  <data name="MacroLoad" xml:space="preserve">
+    <value>Makro laden</value>
+  </data>
+  <data name="StatusSavedToOneDrive" xml:space="preserve">
+    <value>In OneDrive gespeichert: {0}</value>
+  </data>
+  <data name="StatusMacroLoaded" xml:space="preserve">
+    <value>Makro geladen.</value>
+  </data>
+  <data name="MacroNoCommands" xml:space="preserve">
+    <value>Keine Befehle aufgezeichnet. Verwenden Sie zuerst Makro aufzeichnen.</value>
+  </data>
+  <data name="OptionsSpellCheck" xml:space="preserve">
+    <value>Rechtschreibprüfung aktivieren</value>
+  </data>
+  <data name="StatusSpellCheckDisabled" xml:space="preserve">
+    <value>Rechtschreibprüfung deaktiviert.</value>
+  </data>
+  <data name="MacroFilter" xml:space="preserve">
+    <value>Makrodateien</value>
+  </data>
+
 </root>
+

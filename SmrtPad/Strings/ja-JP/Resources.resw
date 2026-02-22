@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -739,4 +739,105 @@
     <value>線の太さ</value>
   </data>
 
+  <data name="StatusMacroRecording" xml:space="preserve">
+    <value>マクロを記録中...</value>
+  </data>
+  <data name="OneDriveNotFound" xml:space="preserve">
+    <value>OneDriveが見つかりません</value>
+  </data>
+  <data name="StatusMacroStopped" xml:space="preserve">
+    <value>マクロの記録を停止しました。</value>
+  </data>
+  <data name="StatusExportedDocx" xml:space="preserve">
+    <value>DOCXとしてエクスポートしました: {0}</value>
+  </data>
+  <data name="StatusTabClosed" xml:space="preserve">
+    <value>タブを閉じました。</value>
+  </data>
+  <data name="StatusMacroDone" xml:space="preserve">
+    <value>マクロが完了しました。</value>
+  </data>
+  <data name="FileTypePdf" xml:space="preserve">
+    <value>PDFドキュメント</value>
+  </data>
+  <data name="MacroSave" xml:space="preserve">
+    <value>マクロを保存</value>
+  </data>
+  <data name="MacroMenuBar.Title" xml:space="preserve">
+    <value>マクロ</value>
+  </data>
+  <data name="MacroRun" xml:space="preserve">
+    <value>マクロの実行</value>
+  </data>
+  <data name="StatusExportedPdf" xml:space="preserve">
+    <value>PDFをエクスポートしました: {0}</value>
+  </data>
+  <data name="ErrorExportingPdf" xml:space="preserve">
+    <value>PDFエクスポートエラー</value>
+  </data>
+  <data name="StatusSpellCheckEnabled" xml:space="preserve">
+    <value>スペルチェックが有効になりました。</value>
+  </data>
+  <data name="OneDriveNotFoundMessage" xml:space="preserve">
+    <value>OneDriveフォルダが見つかりませんでした。OneDriveがインストールされ、サインインされていることを確認してください。</value>
+  </data>
+  <data name="StatusMacroSaved" xml:space="preserve">
+    <value>マクロを保存しました。</value>
+  </data>
+  <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
+    <value>現在のドキュメントをOneDriveフォルダに直接保存します。</value>
+  </data>
+  <data name="MacroRecord" xml:space="preserve">
+    <value>マクロの記録</value>
+  </data>
+  <data name="ErrorExportingDocx" xml:space="preserve">
+    <value>ドキュメントエクスポートエラー</value>
+  </data>
+  <data name="SpellCheckToggle.Text" xml:space="preserve">
+    <value>スペルチェック</value>
+  </data>
+  <data name="OneDriveNavItem.Content" xml:space="preserve">
+    <value>OneDriveに保存</value>
+  </data>
+  <data name="MacroStop" xml:space="preserve">
+    <value>記録を停止</value>
+  </data>
+  <data name="BackstageExportDocxDesc" xml:space="preserve">
+    <value>現在のドキュメントをWord DOCXファイルとしてエクスポートします。</value>
+  </data>
+  <data name="StatusNewTab" xml:space="preserve">
+    <value>新しいタブを作成しました。</value>
+  </data>
+  <data name="BackstageExportPdfDesc" xml:space="preserve">
+    <value>現在のドキュメントをPDFファイルとしてエクスポートします。</value>
+  </data>
+  <data name="ExportDocxNavItem.Content" xml:space="preserve">
+    <value>DOCXにエクスポート</value>
+  </data>
+  <data name="ExportPdfNavItem.Content" xml:space="preserve">
+    <value>PDFにエクスポート</value>
+  </data>
+  <data name="MacroLoad" xml:space="preserve">
+    <value>マクロを読み込む</value>
+  </data>
+  <data name="StatusSavedToOneDrive" xml:space="preserve">
+    <value>OneDriveに保存しました: {0}</value>
+  </data>
+  <data name="StatusMacroLoaded" xml:space="preserve">
+    <value>マクロを読み込みました。</value>
+  </data>
+  <data name="MacroNoCommands" xml:space="preserve">
+    <value>記録されたコマンドがありません。まずマクロの記録を使用してください。</value>
+  </data>
+  <data name="OptionsSpellCheck" xml:space="preserve">
+    <value>スペルチェックを有効にする</value>
+  </data>
+  <data name="StatusSpellCheckDisabled" xml:space="preserve">
+    <value>スペルチェックが無効になりました。</value>
+  </data>
+  <data name="MacroFilter" xml:space="preserve">
+    <value>マクロファイル</value>
+  </data>
+
 </root>
+

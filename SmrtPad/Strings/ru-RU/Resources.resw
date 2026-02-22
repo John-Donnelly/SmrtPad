@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -739,4 +739,105 @@
     <value>Толщина линии</value>
   </data>
 
+  <data name="StatusMacroRecording" xml:space="preserve">
+    <value>Запись макроса...</value>
+  </data>
+  <data name="OneDriveNotFound" xml:space="preserve">
+    <value>OneDrive не найден</value>
+  </data>
+  <data name="StatusMacroStopped" xml:space="preserve">
+    <value>Запись макроса остановлена.</value>
+  </data>
+  <data name="StatusExportedDocx" xml:space="preserve">
+    <value>Экспортировано как DOCX: {0}</value>
+  </data>
+  <data name="StatusTabClosed" xml:space="preserve">
+    <value>Вкладка закрыта.</value>
+  </data>
+  <data name="StatusMacroDone" xml:space="preserve">
+    <value>Макрос выполнен.</value>
+  </data>
+  <data name="FileTypePdf" xml:space="preserve">
+    <value>Документ PDF</value>
+  </data>
+  <data name="MacroSave" xml:space="preserve">
+    <value>Сохранить макрос</value>
+  </data>
+  <data name="MacroMenuBar.Title" xml:space="preserve">
+    <value>Макрос</value>
+  </data>
+  <data name="MacroRun" xml:space="preserve">
+    <value>Выполнить макрос</value>
+  </data>
+  <data name="StatusExportedPdf" xml:space="preserve">
+    <value>PDF экспортирован: {0}</value>
+  </data>
+  <data name="ErrorExportingPdf" xml:space="preserve">
+    <value>Ошибка экспорта PDF</value>
+  </data>
+  <data name="StatusSpellCheckEnabled" xml:space="preserve">
+    <value>Проверка орфографии включена.</value>
+  </data>
+  <data name="OneDriveNotFoundMessage" xml:space="preserve">
+    <value>Папка OneDrive не найдена. Убедитесь, что OneDrive установлен и выполнен вход.</value>
+  </data>
+  <data name="StatusMacroSaved" xml:space="preserve">
+    <value>Макрос сохранён.</value>
+  </data>
+  <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
+    <value>Сохранить текущий документ непосредственно в папку OneDrive.</value>
+  </data>
+  <data name="MacroRecord" xml:space="preserve">
+    <value>Записать макрос</value>
+  </data>
+  <data name="ErrorExportingDocx" xml:space="preserve">
+    <value>Ошибка экспорта документа</value>
+  </data>
+  <data name="SpellCheckToggle.Text" xml:space="preserve">
+    <value>Проверка орфографии</value>
+  </data>
+  <data name="OneDriveNavItem.Content" xml:space="preserve">
+    <value>Сохранить в OneDrive</value>
+  </data>
+  <data name="MacroStop" xml:space="preserve">
+    <value>Остановить запись</value>
+  </data>
+  <data name="BackstageExportDocxDesc" xml:space="preserve">
+    <value>Экспортировать текущий документ как файл Word DOCX.</value>
+  </data>
+  <data name="StatusNewTab" xml:space="preserve">
+    <value>Новая вкладка создана.</value>
+  </data>
+  <data name="BackstageExportPdfDesc" xml:space="preserve">
+    <value>Экспортировать текущий документ как файл PDF.</value>
+  </data>
+  <data name="ExportDocxNavItem.Content" xml:space="preserve">
+    <value>Экспортировать в DOCX</value>
+  </data>
+  <data name="ExportPdfNavItem.Content" xml:space="preserve">
+    <value>Экспортировать в PDF</value>
+  </data>
+  <data name="MacroLoad" xml:space="preserve">
+    <value>Загрузить макрос</value>
+  </data>
+  <data name="StatusSavedToOneDrive" xml:space="preserve">
+    <value>Сохранено в OneDrive: {0}</value>
+  </data>
+  <data name="StatusMacroLoaded" xml:space="preserve">
+    <value>Макрос загружен.</value>
+  </data>
+  <data name="MacroNoCommands" xml:space="preserve">
+    <value>Команды не записаны. Сначала используйте Записать макрос.</value>
+  </data>
+  <data name="OptionsSpellCheck" xml:space="preserve">
+    <value>Включить проверку орфографии</value>
+  </data>
+  <data name="StatusSpellCheckDisabled" xml:space="preserve">
+    <value>Проверка орфографии отключена.</value>
+  </data>
+  <data name="MacroFilter" xml:space="preserve">
+    <value>Файлы макросов</value>
+  </data>
+
 </root>
+

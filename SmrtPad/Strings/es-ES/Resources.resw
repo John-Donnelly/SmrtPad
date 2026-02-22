@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -739,4 +739,105 @@
     <value>Ancho del trazo</value>
   </data>
 
+  <data name="StatusMacroRecording" xml:space="preserve">
+    <value>Grabando macro...</value>
+  </data>
+  <data name="OneDriveNotFound" xml:space="preserve">
+    <value>OneDrive no encontrado</value>
+  </data>
+  <data name="StatusMacroStopped" xml:space="preserve">
+    <value>Grabación de macro detenida.</value>
+  </data>
+  <data name="StatusExportedDocx" xml:space="preserve">
+    <value>Exportado como DOCX: {0}</value>
+  </data>
+  <data name="StatusTabClosed" xml:space="preserve">
+    <value>Pestaña cerrada.</value>
+  </data>
+  <data name="StatusMacroDone" xml:space="preserve">
+    <value>Macro completada.</value>
+  </data>
+  <data name="FileTypePdf" xml:space="preserve">
+    <value>Documento PDF</value>
+  </data>
+  <data name="MacroSave" xml:space="preserve">
+    <value>Guardar macro</value>
+  </data>
+  <data name="MacroMenuBar.Title" xml:space="preserve">
+    <value>Macro</value>
+  </data>
+  <data name="MacroRun" xml:space="preserve">
+    <value>Ejecutar macro</value>
+  </data>
+  <data name="StatusExportedPdf" xml:space="preserve">
+    <value>PDF exportado: {0}</value>
+  </data>
+  <data name="ErrorExportingPdf" xml:space="preserve">
+    <value>Error al exportar PDF</value>
+  </data>
+  <data name="StatusSpellCheckEnabled" xml:space="preserve">
+    <value>Corrección ortográfica habilitada.</value>
+  </data>
+  <data name="OneDriveNotFoundMessage" xml:space="preserve">
+    <value>No se pudo encontrar la carpeta de OneDrive. Asegúrese de que OneDrive esté instalado e iniciado sesión.</value>
+  </data>
+  <data name="StatusMacroSaved" xml:space="preserve">
+    <value>Macro guardada.</value>
+  </data>
+  <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
+    <value>Guardar el documento directamente en su carpeta de OneDrive.</value>
+  </data>
+  <data name="MacroRecord" xml:space="preserve">
+    <value>Grabar macro</value>
+  </data>
+  <data name="ErrorExportingDocx" xml:space="preserve">
+    <value>Error al exportar documento</value>
+  </data>
+  <data name="SpellCheckToggle.Text" xml:space="preserve">
+    <value>Corrección ortográfica</value>
+  </data>
+  <data name="OneDriveNavItem.Content" xml:space="preserve">
+    <value>Guardar en OneDrive</value>
+  </data>
+  <data name="MacroStop" xml:space="preserve">
+    <value>Detener grabación</value>
+  </data>
+  <data name="BackstageExportDocxDesc" xml:space="preserve">
+    <value>Exportar el documento actual como archivo Word DOCX.</value>
+  </data>
+  <data name="StatusNewTab" xml:space="preserve">
+    <value>Nueva pestaña creada.</value>
+  </data>
+  <data name="BackstageExportPdfDesc" xml:space="preserve">
+    <value>Exportar el documento actual como archivo PDF.</value>
+  </data>
+  <data name="ExportDocxNavItem.Content" xml:space="preserve">
+    <value>Exportar a DOCX</value>
+  </data>
+  <data name="ExportPdfNavItem.Content" xml:space="preserve">
+    <value>Exportar a PDF</value>
+  </data>
+  <data name="MacroLoad" xml:space="preserve">
+    <value>Cargar macro</value>
+  </data>
+  <data name="StatusSavedToOneDrive" xml:space="preserve">
+    <value>Guardado en OneDrive: {0}</value>
+  </data>
+  <data name="StatusMacroLoaded" xml:space="preserve">
+    <value>Macro cargada.</value>
+  </data>
+  <data name="MacroNoCommands" xml:space="preserve">
+    <value>No hay comandos grabados. Use Grabar macro primero.</value>
+  </data>
+  <data name="OptionsSpellCheck" xml:space="preserve">
+    <value>Habilitar corrección ortográfica</value>
+  </data>
+  <data name="StatusSpellCheckDisabled" xml:space="preserve">
+    <value>Corrección ortográfica deshabilitada.</value>
+  </data>
+  <data name="MacroFilter" xml:space="preserve">
+    <value>Archivos de macro</value>
+  </data>
+
 </root>
+
