@@ -839,5 +839,13 @@
     <value>Makrodateien</value>
   </data>
 
+  <!-- Multi-window -->
+  <data name="WindowMenu.Title" xml:space="preserve">
+    <value>Fenster</value>
+  </data>
+  <data name="NewWindowMenuItem.Text" xml:space="preserve">
+    <value>Neues Fenster</value>
+  </data>
+
 </root>
 

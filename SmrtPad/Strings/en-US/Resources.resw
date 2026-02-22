@@ -885,4 +885,12 @@
     <value>Tab closed.</value>
   </data>
 
+  <!-- ═══ Multi-window ═══ -->
+  <data name="WindowMenu.Title" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="NewWindowMenuItem.Text" xml:space="preserve">
+    <value>New Window</value>
+  </data>
+
 </root>

@@ -839,5 +839,13 @@
     <value>宏文件</value>
   </data>
 
+  <!-- Multi-window -->
+  <data name="WindowMenu.Title" xml:space="preserve">
+    <value>窗口</value>
+  </data>
+  <data name="NewWindowMenuItem.Text" xml:space="preserve">
+    <value>新建窗口</value>
+  </data>
+
 </root>
 

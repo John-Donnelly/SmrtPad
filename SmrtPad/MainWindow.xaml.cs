@@ -1367,6 +1367,11 @@ namespace SmrtPad
             _macro.Record(MacroCommandType.Superscript);
         }
 
+        private void NewWindow_Click(object sender, RoutedEventArgs e)
+        {
+            App.NewWindow();
+        }
+
         private async void Exit_Click(object sender, RoutedEventArgs e)
         {
             if (!await PromptSaveChangesAsync())

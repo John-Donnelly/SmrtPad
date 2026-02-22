@@ -1448,6 +1448,10 @@ namespace SmrtPad.Tests
             return entries;
         }
 
+        /// <summary>Returns all resource-key names for <paramref name="locale"/>.</summary>
+        public static IReadOnlyList<string> GetAllResourceKeys(string locale)
+            => LoadResw(locale).Keys.ToList();
+
         [Theory]
         [InlineData("ar-SA")]
         [InlineData("de-DE")]
@@ -2266,6 +2270,85 @@ namespace SmrtPad.Tests
                 }
 
                 // â•â•â• OneDriveHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+                // ═══ Multi-Window Tests ═══════════════════════════════════════════════
+
+                public class MultiWindowTests
+                {
+                    [Fact]
+                    public void App_Windows_ListExists()
+                    {
+                        Assert.NotNull(SmrtPad.App.Windows);
+                    }
+
+                    [Fact]
+                    public void App_Windows_IsMutableList()
+                    {
+                        Assert.IsType<System.Collections.Generic.List<SmrtPad.MainWindow>>(SmrtPad.App.Windows);
+                    }
+
+                    [Fact]
+                    public void App_Windows_StartsEmpty_InTestContext()
+                    {
+                        Assert.Equal(0, SmrtPad.App.Windows.Count);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasNewWindowClick_Method()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "NewWindow_Click",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void App_HasNewWindow_StaticMethod()
+                    {
+                        var method = typeof(SmrtPad.App).GetMethod(
+                            "NewWindow",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void App_NewWindow_ReturnType_IsMainWindow()
+                    {
+                        var method = typeof(SmrtPad.App).GetMethod(
+                            "NewWindow",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)!;
+                        Assert.Equal(typeof(SmrtPad.MainWindow), method.ReturnType);
+                    }
+
+                    [Fact]
+                    public void ResourceKey_WindowMenu_ExistsInEnUs()
+                    {
+                        var keys = LocalizationDrawingKeySatelliteTests.GetAllResourceKeys("en-US");
+                        Assert.Contains("WindowMenu.Title", keys);
+                    }
+
+                    [Fact]
+                    public void ResourceKey_NewWindowMenuItem_ExistsInEnUs()
+                    {
+                        var keys = LocalizationDrawingKeySatelliteTests.GetAllResourceKeys("en-US");
+                        Assert.Contains("NewWindowMenuItem.Text", keys);
+                    }
+
+                    [Theory]
+                    [InlineData("de-DE")]
+                    [InlineData("es-ES")]
+                    [InlineData("fr-FR")]
+                    [InlineData("ja-JP")]
+                    [InlineData("zh-Hans")]
+                    [InlineData("ar-SA")]
+                    [InlineData("ru-RU")]
+                    [InlineData("ur-PK")]
+                    public void ResourceKey_NewWindowMenuItem_ExistsInAllLocales(string locale)
+                    {
+                        var keys = LocalizationDrawingKeySatelliteTests.GetAllResourceKeys(locale);
+                        Assert.Contains("NewWindowMenuItem.Text", keys);
+                    }
+                }
 
                 public class OneDriveHelperTests
                 {

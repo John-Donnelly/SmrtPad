@@ -107,6 +107,14 @@
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                     </MenuBarItem>
+                    <MenuBarItem x:Uid="WindowMenu" Title="Window">
+                        <MenuFlyoutItem x:Uid="NewWindowMenuItem" Text="New Window" Click="NewWindow_Click">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78B;"/></MenuFlyoutItem.Icon>
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="N" Modifiers="Control,Shift"/>
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                    </MenuBarItem>
                 </MenuBar>
                 <!-- Quick-access separator -->
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>

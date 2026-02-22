@@ -15,6 +15,19 @@ namespace SmrtPad
 
         public static Window MainWindow { get; private set; } = null!;
 
+        /// <summary>All currently open <see cref="MainWindow"/> instances.</summary>
+        public static System.Collections.Generic.List<MainWindow> Windows { get; } = new();
+
+        /// <summary>Opens a new editor window and activates it.</summary>
+        public static MainWindow NewWindow()
+        {
+            var w = new MainWindow();
+            Windows.Add(w);
+            w.Closed += (_, _) => Windows.Remove(w);
+            w.Activate();
+            return w;
+        }
+
         /// <summary>
         /// Gets the <see cref="IServiceProvider"/> for the application.
         /// </summary>
@@ -55,6 +68,8 @@ namespace SmrtPad
             var mainWindow = new MainWindow();
             _window = mainWindow;
             MainWindow = _window;
+            Windows.Add(mainWindow);
+            mainWindow.Closed += (_, _) => Windows.Remove(mainWindow);
             _window.Activate();
 
             // Handle startup file argument
