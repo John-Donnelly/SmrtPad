@@ -17,7 +17,7 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **8,259** (3,512 C# app · 806 XAML · 3,941 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR (`.NET 10 preview`) |
-| Unit + integration tests | **457** (all passing) |
+| Unit + integration tests | **459** (all passing) |
 | Test classes | 27 |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | Localization | 9 locales · 218 resource keys each |
@@ -57,7 +57,7 @@
 | Unsaved-changes dialog | ✅ | Delegated to `IDialogService.ShowSavePromptAsync()` → Save / Don't Save / Cancel |
 | Print | ✅ | Real `PrintDocument` + `PrintManagerInterop` with `Paginate`/`GetPreviewPage`/`AddPages` handlers; multi-page text pagination; `PrintTask.Completed` status feedback; `PrintManager.IsSupported()` guard; localized strings across 9 locales |
 | Options | ✅ | Full `ContentDialog` with font, size, word wrap, save format, theme, auto-save, and language selection (9 locales); persists via `SettingsService.Save()` |
-| Exit | ✅ | `PromptSaveChangesAsync` before `Close()` |
+| Exit | ✅ | `PromptSaveChangesAsync` before `Close()`; `AppWindow.Closing` handler intercepts window X button with unsaved-changes prompt |
 | Recent files | ✅ | `SettingsService.AddRecentFile` (MRU max 10); backstage `SetRecentFiles` on open |
 | Drag-and-drop | ✅ | `Editor_DragOver` / `Editor_Drop` — .rtf/.txt/.docx/.htm/.html/.odt opens file; images insert inline |
 | Auto-save / recovery | ✅ | `DispatcherTimer`; named files save in-place; unnamed → `%LOCALAPPDATA%/SmrtPad/Recovery/` via `StorageFolder.CreateFileAsync` |
@@ -111,7 +111,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Font family ComboBox | ✅ | `CanvasTextFormat.GetSystemFontFamilies()`, editable, synced from settings; `Loaded` event ensures text displays on startup; `ItemTemplate` renders each font name in its own typeface |
+| Font family ComboBox | ✅ | `CanvasTextFormat.GetSystemFontFamilies()`, editable, synced from settings; `Loaded` event with `DispatcherQueue.TryEnqueue` defers text setting until internal TextBox is ready; `ItemTemplate` renders each font name in its own typeface |
 | Font size ComboBox + free-text | ✅ | Preset sizes 8–72; compact 62px width; `KeyDown(Enter)` and `LostFocus` apply typed values (1–999); `SelectionChanged` for list picks |
 | Grow / Shrink font | ✅ | ±1pt with NaN/≤0 guards and min clamp at 1pt |
 | Bold / Italic / Underline | ✅ | `FormatEffect.Toggle` / `UnderlineType.Single↔None`; `Ctrl+B/I/U` accelerators |
@@ -298,7 +298,7 @@
 
 ## 16. Testing
 
-### Test Summary: **457 tests · 457 passed · 0 failed · 0 skipped**
+### Test Summary: **459 tests · 459 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
@@ -325,7 +325,7 @@
 | `AppConfigureServiceParityTests` | 2 | DI registration types match `App.ConfigureServices()`, singleton/transient lifetimes verified |
 | `SettingsServiceConcurrencyTests` | 4 | Rapid 20-file add (caps at 10), rapid save/load cycles, multiple instance last-write-wins, JSON validity after save |
 | `LocalizationDrawingKeySatelliteTests` | 16 | All 5 drawing keys exist in each of 8 satellite locales, translation verification (not identical to en-US) |
-| `MainWindowContractTests` | 8 | `ViewModel` property type, 42 expected Click handlers exist, `OpenFileByPathAsync` signature, `FontFamilyComboBox_Loaded` handler, `InitializeFonts` method, XAML `ItemTemplate` for font preview, alignment Grid layout, compact font size ComboBox |
+| `MainWindowContractTests` | 10 | `ViewModel` property type, 42 expected Click handlers, `OpenFileByPathAsync` signature, `FontFamilyComboBox_Loaded` handler, `InitializeFonts`, `AppWindow_Closing` handler, `PromptSaveChangesAsync` return type, XAML `ItemTemplate` for font preview, alignment Grid layout, compact font size ComboBox |
 | `ParagraphStyleHelperTests` | 12 | Normal/Heading1/2/3/Subtitle/Quote preset values, `All` dictionary has 6 entries, all keys present, all use Left alignment, all use Segoe UI, bold/italic classification, font size ordering |
 | `RulerHelperTests` | 8 | Inches at 100% = 96 DPI, centimeters conversion, 200%/50% scaling, unit label mapping (in/cm/default), linear zoom scaling across 4 zoom levels |
 | `DocumentImportHelperTests` | 3 | DOCX extraction via real helper, ODT extraction via real helper, missing entry returns empty |
@@ -398,7 +398,8 @@
 | UI / integration tests | `5be3e40`+`8d6fe85` | 15 new test classes in `IntegrationTests.cs` (113 tests): workflows (7), DI container (8), archive extraction (5), settings integration (6), resource helper (7), property tracking (4), color exhaustive (23), backstage contract (4), relay commands (5), RTF table generation (7), ViewModel default contract (4), App.ConfigureServices parity (2), settings concurrency (4), drawing key satellite (16), MainWindow contract (3) |
 | Extract helpers from code-behind | `600a77e` | `RtfHelper`, `DocumentImportHelper`, `ParagraphStyleHelper`, `RulerHelper` extracted from `MainWindow.xaml.cs`; code-behind now delegates to helpers; 34 new tests directly on extracted classes replace mirror functions |
 | CI pipeline hardening | `677af3e` | `dotnet-quality: 'preview'` for .NET 10 SDK resolution; matrix variables for platform/config consistency; unique artifact names |
-| Font selector + alignment UI fixes | `(pending)` | Font family ComboBox: `Loaded` event sets text reliably, `ItemTemplate` renders names in their own fonts, `MaxDropDownHeight="350"`; Font size ComboBox: reduced from 112px to 62px; Alignment buttons: changed from `StackPanel` to 4-column equal-width `Grid` for uniform spacing; 5 new XAML/reflection tests |
+| Font selector + alignment UI fixes | `8baf967` | Font family ComboBox: `Loaded` event sets text reliably, `ItemTemplate` renders names in their own fonts, `MaxDropDownHeight="350"`; Font size ComboBox: reduced from 112px to 62px; Alignment buttons: changed from `StackPanel` to 4-column equal-width `Grid` for uniform spacing; 5 new XAML/reflection tests |
+| Font load fix + window close prompt | `(pending)` | `FontFamilyComboBox_Loaded` defers via `DispatcherQueue.TryEnqueue` for reliable display; `AppWindow.Closing` handler prompts for unsaved changes before closing via window X button; unhooks handler to avoid re-entrance; 2 new contract tests |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -414,7 +415,8 @@
 | After {x:Bind} + drawing dialog + expanded tests | 305 (+40 tests) |
 | After UI / integration tests | 418 (+113 tests) |
 | After helper extraction + tests | 452 (+34 tests) |
-| After font/alignment UI fixes | **457** (+5 tests) |
+| After font/alignment UI fixes | 457 (+5 tests) |
+| After font load fix + window close prompt | **459** (+2 tests) |
 
 ---
 

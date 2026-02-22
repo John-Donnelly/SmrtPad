@@ -1629,6 +1629,29 @@ namespace SmrtPad.Tests
             }
             return null;
         }
+
+        [Fact]
+        public void MainWindow_HasAppWindowClosingHandler()
+        {
+            var type = typeof(SmrtPad.MainWindow);
+            var method = type.GetMethod("AppWindow_Closing",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(method);
+            var parameters = method!.GetParameters();
+            Assert.Equal(2, parameters.Length);
+            Assert.Equal("AppWindow", parameters[0].ParameterType.Name);
+            Assert.Equal("AppWindowClosingEventArgs", parameters[1].ParameterType.Name);
+        }
+
+        [Fact]
+        public void MainWindow_PromptSaveChangesAsync_Exists()
+        {
+            var type = typeof(SmrtPad.MainWindow);
+            var method = type.GetMethod("PromptSaveChangesAsync",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(Task<bool>), method!.ReturnType);
+        }
     }
 
     // ═══ ParagraphStyleHelper Tests ═══

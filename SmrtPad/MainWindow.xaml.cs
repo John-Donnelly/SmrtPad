@@ -107,6 +107,27 @@ namespace SmrtPad
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
 
             RegisterForPrinting();
+
+            // Intercept the window close button (X) to prompt for unsaved changes
+            AppWindow.Closing += AppWindow_Closing;
+        }
+
+        private async void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+        {
+            if (ViewModel.IsModified)
+            {
+                // Cancel close so we can show the async dialog
+                args.Cancel = true;
+
+                if (await PromptSaveChangesAsync())
+                {
+                    // User chose Save or Don't Save — close for real.
+                    // Unhook to prevent re-entrance, then close.
+                    AppWindow.Closing -= AppWindow_Closing;
+                    Close();
+                }
+                // else: user cancelled — window stays open
+            }
         }
 
         public async Task OpenFileByPathAsync(string filePath)
@@ -373,8 +394,12 @@ namespace SmrtPad
         private void FontFamilyComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             // Editable ComboBox in WinUI 3 doesn't reliably display SelectedItem text
-            // until the control is fully loaded. Set the Text property explicitly here.
-            FontFamilyComboBox.Text = _settings.DefaultFontFamily;
+            // until after the layout pass completes. Defer via DispatcherQueue so the
+            // internal TextBox is fully initialized before we set its Text.
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                FontFamilyComboBox.Text = _settings.DefaultFontFamily;
+            });
         }
 
         private void ApplyFontSizeFromText()
