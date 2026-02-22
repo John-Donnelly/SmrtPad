@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using SmrtPad.Helpers;
+using SmrtPad.Models;
 using Res = SmrtPad.Helpers.ResourceHelper;
 
 namespace SmrtPad.Views;
@@ -19,6 +21,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
     public event EventHandler<string>? RecentFileRequested;
+    public event EventHandler<DocumentTemplate>? TemplateRequested;
 
     private bool _suppressSelectionEvent = true;
 
@@ -27,6 +30,43 @@ public sealed partial class FileBackstageView : UserControl
         InitializeComponent();
         Nav.SelectedItem = Nav.MenuItems[0];
         _suppressSelectionEvent = false;
+        PopulateTemplates();
+    }
+
+    private void PopulateTemplates()
+    {
+        foreach (var template in DocumentTemplates.All)
+        {
+            var card = new Button
+            {
+                Tag = template,
+                HorizontalAlignment        = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding      = new Thickness(12),
+                CornerRadius = new CornerRadius(8),
+            };
+            var panel = new StackPanel { Spacing = 4 };
+            panel.Children.Add(new TextBlock
+            {
+                Text         = template.DisplayName,
+                FontWeight   = Microsoft.UI.Text.FontWeights.SemiBold,
+                TextWrapping = TextWrapping.Wrap,
+            });
+            panel.Children.Add(new TextBlock
+            {
+                Text         = template.Description,
+                Opacity      = 0.7,
+                TextWrapping = TextWrapping.Wrap,
+                FontSize     = 12,
+            });
+            card.Content = panel;
+            card.Click  += (s, _) =>
+            {
+                if (s is Button b && b.Tag is DocumentTemplate t)
+                    TemplateRequested?.Invoke(this, t);
+            };
+            TemplateListPanel.Children.Add(card);
+        }
     }
 
     public void SetDocumentProperties(string fileName, int wordCount, int charCount, string encoding, bool isModified)
@@ -80,9 +120,10 @@ public sealed partial class FileBackstageView : UserControl
 
         var tag = item.Tag as string;
         HeaderText.Text = tag is null ? Res.GetString("BackstageFile") : tag;
-        RecentFilesPanel.Visibility = Visibility.Collapsed;
+        RecentFilesPanel.Visibility   = Visibility.Collapsed;
         DocPropertiesPanel.Visibility = Visibility.Collapsed;
-        BodyText.Visibility = Visibility.Visible;
+        TemplatePicker.Visibility     = Visibility.Collapsed;
+        BodyText.Visibility           = Visibility.Visible;
 
         switch (tag)
         {
@@ -90,6 +131,10 @@ public sealed partial class FileBackstageView : UserControl
                 BodyText.Text = Res.GetString("BackstageNewDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
                 NewRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "Templates":
+                BodyText.Text = Res.GetString("BackstageTemplatesDesc");
+                TemplatePicker.Visibility = Visibility.Visible;
                 break;
             case "Open":
                 BodyText.Text = Res.GetString("BackstageOpenDesc");

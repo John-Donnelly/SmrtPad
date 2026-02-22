@@ -847,5 +847,16 @@
     <value>نئی ونڈو</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>ٹیمپلیٹس</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>ایک ٹیمپلیٹ منتخب کریں تاکہ پہلے سے فارمیٹ شدہ مواد کے ساتھ دستاویز شروع کریں۔</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>ٹیمپلیٹ لاگو کیا: {0}</value>
+  </data>
+
 </root>
 

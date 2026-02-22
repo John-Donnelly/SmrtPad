@@ -847,5 +847,16 @@
     <value>Новое окно</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>Шаблоны</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>Выберите шаблон для запуска документа с предварительным форматированием.</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>Шаблон применён: {0}</value>
+  </data>
+
 </root>
 

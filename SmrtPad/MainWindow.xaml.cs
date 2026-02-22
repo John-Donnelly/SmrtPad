@@ -31,6 +31,7 @@ using Windows.UI;
 using WinRT.Interop;
 using Windows.ApplicationModel.DataTransfer;
 using SmrtPad.Helpers;
+using SmrtPad.Models;
 using SmrtPad.ViewModels;
 using SmrtPad.Views;
 using SmrtPad.Services;
@@ -101,10 +102,11 @@ namespace SmrtPad
             FileBackstage.PrintRequested += (s, e) => { HideBackstage(); Print_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExportPdfRequested += (s, e) => { HideBackstage(); ExportPdf_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExportDocxRequested += (s, e) => { HideBackstage(); ExportDocx_Click(this, new RoutedEventArgs()); };
-            FileBackstage.OneDriveRequested += (s, e) => { HideBackstage(); SaveToOneDrive_Click(this, new RoutedEventArgs()); };
-            FileBackstage.OptionsRequested += (s, e) => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
-            FileBackstage.ExitRequested += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
+            FileBackstage.OneDriveRequested  += (s, e)    => { HideBackstage(); SaveToOneDrive_Click(this, new RoutedEventArgs()); };
+            FileBackstage.OptionsRequested   += (s, e)    => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
+            FileBackstage.ExitRequested      += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
+            FileBackstage.TemplateRequested  += (s, template) => { HideBackstage(); ApplyTemplate(template); };
 
             RegisterForPrinting();
 
@@ -172,6 +174,25 @@ namespace SmrtPad
             ViewModel.NewDocument();
             UpdateEncoding("UTF-8");
             ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
+        }
+
+        private void ApplyTemplate(DocumentTemplate template)
+        {
+            string title = template.Key == "blank"
+                ? Res.GetString("DocumentUntitled")
+                : template.DisplayName;
+
+            CreateTab(title);
+            ViewModel.NewDocument();
+            UpdateEncoding("UTF-8");
+
+            if (!string.IsNullOrEmpty(template.PlainContent))
+            {
+                Editor.Document.SetText(TextSetOptions.None, template.PlainContent);
+                ViewModel.IsModified = true;
+            }
+
+            ViewModel.UpdateStatus(Res.GetFormatted("StatusTemplateApplied", template.DisplayName));
         }
 
         private async void DocumentTabs_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)

@@ -847,5 +847,16 @@
     <value>نافذة جديدة</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>القوالب</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>اختر قالبًا لبدء المستند بمحتوى منسق مسبقًا.</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>تم تطبيق القالب: {0}</value>
+  </data>
+
 </root>
 

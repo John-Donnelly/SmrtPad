@@ -847,5 +847,16 @@
     <value>Neues Fenster</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>Vorlagen</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>Wählen Sie eine Vorlage, um das Dokument mit vorformatiertem Inhalt zu starten.</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>Vorlage angewendet: {0}</value>
+  </data>
+
 </root>
 

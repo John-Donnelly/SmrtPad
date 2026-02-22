@@ -24,8 +24,9 @@
                 IsSettingsVisible="False"
                 SelectionChanged="Nav_SelectionChanged">
                 <NavigationView.MenuItems>
-                    <NavigationViewItem x:Uid="NewNavItem" Content="New"     Tag="New"     Icon="Add" />
-                    <NavigationViewItem x:Uid="OpenNavItem" Content="Open"    Tag="Open"    Icon="OpenFile" />
+                    <NavigationViewItem x:Uid="NewNavItem"       Content="New"              Tag="New"       Icon="Add" />
+                    <NavigationViewItem x:Uid="TemplatesNavItem" Content="Templates"        Tag="Templates" Icon="Page2" />
+                    <NavigationViewItem x:Uid="OpenNavItem"      Content="Open"             Tag="Open"      Icon="OpenFile" />
                     <NavigationViewItem x:Uid="SaveNavItem" Content="Save"    Tag="Save"    Icon="Save" />
                     <NavigationViewItem x:Uid="SaveAsNavItem" Content="Save as" Tag="SaveAs"  Icon="SaveLocal" />
                     <NavigationViewItem x:Uid="PrintNavItem" Content="Print"   Tag="Print"   Icon="Print" />
@@ -98,6 +99,15 @@
                     <TextBlock x:Uid="RecentFilesHeader" Text="Recent Files" FontSize="16" FontWeight="SemiBold"/>
                     <ItemsControl x:Name="RecentFilesList"/>
                 </StackPanel>
+            </Border>
+
+            <!-- Template picker panel -->
+            <Border x:Name="TemplatePicker" Grid.Row="3" Visibility="Collapsed"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="400">
+                    <StackPanel x:Name="TemplateListPanel" Spacing="8"/>
+                </ScrollViewer>
             </Border>
         </Grid>
     </Grid>

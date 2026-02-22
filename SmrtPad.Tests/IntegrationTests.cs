@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using SmrtPad.Helpers;
+using SmrtPad.Models;
 using SmrtPad.Services;
 using SmrtPad.ViewModels;
 
@@ -2347,6 +2348,158 @@ namespace SmrtPad.Tests
                     {
                         var keys = LocalizationDrawingKeySatelliteTests.GetAllResourceKeys(locale);
                         Assert.Contains("NewWindowMenuItem.Text", keys);
+                    }
+                }
+
+                // ═══ Document Templates Tests ═════════════════════════════════════════════
+
+                public class DocumentTemplatesTests
+                {
+                    [Fact]
+                    public void All_ContainsFiveTemplates()
+                    {
+                        Assert.Equal(5, DocumentTemplates.All.Count);
+                    }
+
+                    [Fact]
+                    public void All_ContainsBlankTemplate()
+                    {
+                        Assert.Contains(DocumentTemplates.All, t => t.Key == "blank");
+                    }
+
+                    [Fact]
+                    public void All_ContainsLetterTemplate()
+                    {
+                        Assert.Contains(DocumentTemplates.All, t => t.Key == "letter");
+                    }
+
+                    [Fact]
+                    public void All_ContainsReportTemplate()
+                    {
+                        Assert.Contains(DocumentTemplates.All, t => t.Key == "report");
+                    }
+
+                    [Fact]
+                    public void All_ContainsResumeTemplate()
+                    {
+                        Assert.Contains(DocumentTemplates.All, t => t.Key == "resume");
+                    }
+
+                    [Fact]
+                    public void All_ContainsMeetingTemplate()
+                    {
+                        Assert.Contains(DocumentTemplates.All, t => t.Key == "meeting");
+                    }
+
+                    [Fact]
+                    public void AllTemplates_HaveNonEmptyDisplayName()
+                    {
+                        foreach (var t in DocumentTemplates.All)
+                            Assert.False(string.IsNullOrWhiteSpace(t.DisplayName),
+                                $"Template '{t.Key}' has empty DisplayName");
+                    }
+
+                    [Fact]
+                    public void AllTemplates_HaveNonEmptyDescription()
+                    {
+                        foreach (var t in DocumentTemplates.All)
+                            Assert.False(string.IsNullOrWhiteSpace(t.Description),
+                                $"Template '{t.Key}' has empty Description");
+                    }
+
+                    [Fact]
+                    public void BlankTemplate_HasEmptyContent()
+                    {
+                        var blank = DocumentTemplates.All.First(t => t.Key == "blank");
+                        Assert.Equal(string.Empty, blank.PlainContent);
+                    }
+
+                    [Fact]
+                    public void NonBlankTemplates_HaveNonEmptyContent()
+                    {
+                        foreach (var t in DocumentTemplates.All.Where(t => t.Key != "blank"))
+                            Assert.False(string.IsNullOrWhiteSpace(t.PlainContent),
+                                $"Template '{t.Key}' has empty PlainContent");
+                    }
+
+                    [Theory]
+                    [InlineData("blank")]
+                    [InlineData("letter")]
+                    [InlineData("report")]
+                    [InlineData("resume")]
+                    [InlineData("meeting")]
+                    public void Template_Keys_AreUnique(string key)
+                    {
+                        var matches = DocumentTemplates.All.Where(t => t.Key == key).ToList();
+                        Assert.Single(matches);
+                    }
+
+                    [Fact]
+                    public void DocumentTemplate_IsRecord()
+                    {
+                        var t = new DocumentTemplate("x", "X", "desc", "content");
+                        var t2 = new DocumentTemplate("x", "X", "desc", "content");
+                        Assert.Equal(t, t2);
+                    }
+
+                    [Fact]
+                    public void LetterTemplate_ContainsSalutation()
+                    {
+                        var letter = DocumentTemplates.All.First(t => t.Key == "letter");
+                        Assert.Contains("Dear", letter.PlainContent);
+                    }
+
+                    [Fact]
+                    public void ReportTemplate_ContainsSections()
+                    {
+                        var report = DocumentTemplates.All.First(t => t.Key == "report");
+                        Assert.Contains("INTRODUCTION", report.PlainContent);
+                        Assert.Contains("CONCLUSION", report.PlainContent);
+                    }
+
+                    [Fact]
+                    public void ResumeTemplate_ContainsWorkExperience()
+                    {
+                        var resume = DocumentTemplates.All.First(t => t.Key == "resume");
+                        Assert.Contains("WORK EXPERIENCE", resume.PlainContent);
+                    }
+
+                    [Fact]
+                    public void MeetingTemplate_ContainsActionItems()
+                    {
+                        var meeting = DocumentTemplates.All.First(t => t.Key == "meeting");
+                        Assert.Contains("ACTION ITEMS", meeting.PlainContent);
+                    }
+
+                    [Fact]
+                    public void FileBackstageView_HasTemplateRequestedEvent()
+                    {
+                        var evt = typeof(SmrtPad.Views.FileBackstageView).GetEvent("TemplateRequested");
+                        Assert.NotNull(evt);
+                        Assert.Equal(typeof(EventHandler<DocumentTemplate>), evt!.EventHandlerType);
+                    }
+
+                    [Fact]
+                    public void MainWindow_HasApplyTemplate_PrivateMethod()
+                    {
+                        var method = typeof(SmrtPad.MainWindow).GetMethod(
+                            "ApplyTemplate",
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        Assert.NotNull(method);
+                    }
+
+                    [Fact]
+                    public void ResourceKey_StatusTemplateApplied_ExistsInEnUs()
+                    {
+                        var keys = LocalizationDrawingKeySatelliteTests.GetAllResourceKeys("en-US");
+                        Assert.Contains("StatusTemplateApplied", keys);
+                    }
+
+                    [Fact]
+                    public void ResourceKey_BackstageTemplatesDesc_ExistsInEnUs()
+                    {
+                        var keys = LocalizationDrawingKeySatelliteTests.GetAllResourceKeys("en-US");
+                        Assert.Contains("BackstageTemplatesDesc", keys);
                     }
                 }
 

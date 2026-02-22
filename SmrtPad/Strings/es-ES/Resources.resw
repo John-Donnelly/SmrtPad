@@ -847,5 +847,16 @@
     <value>Nueva ventana</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>Plantillas</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>Elige una plantilla para iniciar el documento con contenido preformateado.</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>Plantilla aplicada: {0}</value>
+  </data>
+
 </root>
 

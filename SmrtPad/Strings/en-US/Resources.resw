@@ -633,6 +633,9 @@
   <data name="BackstageNewDesc" xml:space="preserve">
     <value>Create a new document.</value>
   </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>Choose a template to start your document with pre-formatted content.</value>
+  </data>
   <data name="BackstageOpenDesc" xml:space="preserve">
     <value>Open an existing document, or select a recent file below.</value>
   </data>
@@ -891,6 +894,14 @@
   </data>
   <data name="NewWindowMenuItem.Text" xml:space="preserve">
     <value>New Window</value>
+  </data>
+
+  <!-- ═══ Templates ═══ -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>Templates</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>Template applied: {0}</value>
   </data>
 
 </root>

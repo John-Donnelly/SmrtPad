@@ -847,5 +847,16 @@
     <value>新建窗口</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>模板</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>选择模板，以预设格式的内容开始您的文档。</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>已应用模板：{0}</value>
+  </data>
+
 </root>
 

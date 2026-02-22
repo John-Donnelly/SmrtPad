@@ -847,5 +847,16 @@
     <value>新しいウィンドウ</value>
   </data>
 
+  <!-- Templates -->
+  <data name="TemplatesNavItem.Content" xml:space="preserve">
+    <value>テンプレート</value>
+  </data>
+  <data name="BackstageTemplatesDesc" xml:space="preserve">
+    <value>テンプレートを選んで、書式設定済みのコンテンツで文書を開始します。</value>
+  </data>
+  <data name="StatusTemplateApplied" xml:space="preserve">
+    <value>テンプレートを適用しました：{0}</value>
+  </data>
+
 </root>
 
