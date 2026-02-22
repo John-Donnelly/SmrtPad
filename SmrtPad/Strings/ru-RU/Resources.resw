@@ -478,6 +478,9 @@
   <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
     <value>SmrtDoodle не установлен или не найден в системном PATH. Установите SmrtDoodle для использования функции рисования.</value>
   </data>
+  <data name="SmrtDoodleGetFromStore" xml:space="preserve">
+    <value>Получить в магазине</value>
+  </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>Вставить гиперссылку</value>
   </data>

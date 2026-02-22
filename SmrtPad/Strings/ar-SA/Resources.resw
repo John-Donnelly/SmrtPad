@@ -478,6 +478,9 @@
   <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
     <value>SmrtDoodle غير مثبّت أو لا يمكن العثور عليه في مسار النظام PATH. يرجى تثبيت SmrtDoodle لاستخدام ميزة الرسم.</value>
   </data>
+  <data name="SmrtDoodleGetFromStore" xml:space="preserve">
+    <value>الحصول من المتجر</value>
+  </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>إدراج ارتباط تشعبي</value>
   </data>

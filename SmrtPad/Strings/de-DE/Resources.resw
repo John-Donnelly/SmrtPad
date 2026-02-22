@@ -478,6 +478,9 @@
   <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
     <value>SmrtDoodle ist nicht installiert oder konnte im Systempfad nicht gefunden werden. Bitte installieren Sie SmrtDoodle, um die Zeichenfunktion zu nutzen.</value>
   </data>
+  <data name="SmrtDoodleGetFromStore" xml:space="preserve">
+    <value>Im Store herunterladen</value>
+  </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>Hyperlink einfügen</value>
   </data>

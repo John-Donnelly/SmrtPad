@@ -478,6 +478,9 @@
   <data name="SmrtDoodleNotFoundMessage" xml:space="preserve">
     <value>SmrtDoodle 未安装或在系统路径中找不到。请安装 SmrtDoodle 以使用绘图功能。</value>
   </data>
+  <data name="SmrtDoodleGetFromStore" xml:space="preserve">
+    <value>从商店获取</value>
+  </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>插入超链接</value>
   </data>
