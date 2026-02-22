@@ -336,7 +336,7 @@
 
 ### CI Pipeline
 
-`.github/workflows/ci.yml`: Checkout → Setup .NET 10 → Restore → Build (x64/Debug) → Test with XPlat Code Coverage → Upload artifacts.
+`.github/workflows/ci.yml`: Checkout → Setup .NET 10 (preview quality) → Restore → Build (matrix: x64/Debug) → Test with XPlat Code Coverage → Upload artifacts. Uses `dotnet-quality: 'preview'` for .NET 10 SDK resolution and matrix variables for platform/configuration consistency.
 
 ---
 
