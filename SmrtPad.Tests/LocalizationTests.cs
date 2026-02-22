@@ -206,9 +206,11 @@ namespace SmrtPad.Tests
         [Fact]
         public void EditorViewModel_NewDocument_UsesLocalizedStrings()
         {
-            var vm = new ViewModels.EditorViewModel();
-            vm.DocumentTitle = "SomeFile.rtf";
-            vm.StatusMessage = "Something";
+            var vm = new ViewModels.EditorViewModel
+            {
+                DocumentTitle = "SomeFile.rtf",
+                StatusMessage = "Something"
+            };
 
             vm.NewDocument();
 

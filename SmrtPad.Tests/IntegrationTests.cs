@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -201,7 +202,7 @@ namespace SmrtPad.Tests
         {
             var vm = new EditorViewModel();
 
-            vm.SetParagraphSpacing(new double[] { 12.0, 6.0 });
+            vm.SetParagraphSpacing([12.0, 6.0]);
             Assert.Equal(12.0, vm.ParagraphSpacingBefore);
             Assert.Equal(6.0, vm.ParagraphSpacingAfter);
 
@@ -242,7 +243,7 @@ namespace SmrtPad.Tests
 
     public class DIContainerIntegrationTests
     {
-        private static IServiceProvider BuildTestContainer()
+        private static ServiceProvider BuildTestContainer()
         {
             var services = new ServiceCollection();
             services.AddSingleton<ISettingsService, SettingsService>();
@@ -340,7 +341,7 @@ namespace SmrtPad.Tests
 
     // â•â•â• Archive Text Extraction Tests â•â•â•
 
-    public class ArchiveExtractionTests : IDisposable
+    public partial class ArchiveExtractionTests : IDisposable
     {
         private readonly string _testDir;
 
@@ -353,6 +354,7 @@ namespace SmrtPad.Tests
         public void Dispose()
         {
             try { Directory.Delete(_testDir, true); } catch { }
+            GC.SuppressFinalize(this);
         }
 
         private string CreateDocxFile(string textContent)
@@ -472,7 +474,7 @@ namespace SmrtPad.Tests
 
     // â•â•â• Settings + ViewModel Integration Tests â•â•â•
 
-    public class SettingsViewModelIntegrationTests : IDisposable
+    public partial class SettingsViewModelIntegrationTests : IDisposable
     {
         private readonly string _testDir;
         private readonly string _settingsPath;
@@ -487,6 +489,7 @@ namespace SmrtPad.Tests
         public void Dispose()
         {
             try { Directory.Delete(_testDir, true); } catch { }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -507,7 +510,7 @@ namespace SmrtPad.Tests
 
             settings.AddRecentFile("C:\\test1.rtf");
             settings.AddRecentFile("C:\\test2.rtf");
-            vm.RecentFiles = new List<string>(settings.RecentFiles);
+            vm.RecentFiles = [..settings.RecentFiles];
 
             Assert.Equal(2, vm.RecentFiles.Count);
             Assert.Equal("C:\\test2.rtf", vm.RecentFiles[0]);
@@ -517,13 +520,15 @@ namespace SmrtPad.Tests
         [Fact]
         public void Settings_Persist_AcrossInstances()
         {
-            var settings1 = new SettingsService(_settingsPath);
-            settings1.DefaultFontFamily = "Consolas";
-            settings1.DefaultFontSize = 14;
-            settings1.DefaultWordWrap = false;
-            settings1.AutoSaveEnabled = true;
-            settings1.AutoSaveIntervalSeconds = 60;
-            settings1.RulerUnits = "cm";
+            var settings1 = new SettingsService(_settingsPath)
+            {
+                DefaultFontFamily = "Consolas",
+                DefaultFontSize = 14,
+                DefaultWordWrap = false,
+                AutoSaveEnabled = true,
+                AutoSaveIntervalSeconds = 60,
+                RulerUnits = "cm"
+            };
             settings1.AddRecentFile("C:\\doc.rtf");
             settings1.Save();
 
@@ -582,14 +587,14 @@ namespace SmrtPad.Tests
 
     public class ResourceHelperIntegrationTests
     {
-        private static readonly string[] CoreKeys = new[]
-        {
+        private static readonly string[] CoreKeys =
+        [
             "DocumentUntitled", "StatusReady", "StatusNewDocument",
             "ErrorOpeningFile", "ErrorSavingFile", "DlgUnsavedChanges",
             "ButtonSave", "ButtonCancel", "BackstageFile",
             "StatusBarWords", "StatusBarCharacters", "StatusBarLineCol",
             "StatusBarSelection", "AppTitle"
-        };
+        ];
 
         [Theory]
         [InlineData("DocumentUntitled")]
@@ -1318,7 +1323,7 @@ namespace SmrtPad.Tests
 
     // â•â•â• Settings Service Concurrency Tests â•â•â•
 
-    public class SettingsServiceConcurrencyTests : IDisposable
+    public partial class SettingsServiceConcurrencyTests : IDisposable
     {
         private readonly string _testDir;
         private readonly string _settingsPath;
@@ -1333,6 +1338,7 @@ namespace SmrtPad.Tests
         public void Dispose()
         {
             try { Directory.Delete(_testDir, true); } catch { }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -1353,10 +1359,12 @@ namespace SmrtPad.Tests
         [Fact]
         public void RapidSaveLoad_DataRemains()
         {
-            var svc = new SettingsService(_settingsPath);
-            svc.DefaultFontFamily = "Consolas";
-            svc.DefaultFontSize = 16;
-            svc.AutoSaveEnabled = true;
+            var svc = new SettingsService(_settingsPath)
+            {
+                DefaultFontFamily = "Consolas",
+                DefaultFontSize = 16,
+                AutoSaveEnabled = true
+            };
 
             // Save and reload many times
             for (int i = 0; i < 10; i++)
@@ -1373,12 +1381,10 @@ namespace SmrtPad.Tests
         [Fact]
         public void MultipleInstances_LastWriteWins()
         {
-            var svc1 = new SettingsService(_settingsPath);
-            svc1.DefaultFontFamily = "Arial";
+            var svc1 = new SettingsService(_settingsPath) { DefaultFontFamily = "Arial" };
             svc1.Save();
 
-            var svc2 = new SettingsService(_settingsPath);
-            svc2.DefaultFontFamily = "Consolas";
+            var svc2 = new SettingsService(_settingsPath) { DefaultFontFamily = "Consolas" };
             svc2.Save();
 
             var svc3 = new SettingsService(_settingsPath);
@@ -1388,8 +1394,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void SettingsFile_IsValidJsonAfterSave()
         {
-            var svc = new SettingsService(_settingsPath);
-            svc.DefaultFontFamily = "Calibri";
+            var svc = new SettingsService(_settingsPath) { DefaultFontFamily = "Calibri" };
             svc.AddRecentFile("C:\\test.rtf");
             svc.Save();
 
@@ -1406,17 +1411,17 @@ namespace SmrtPad.Tests
 
     public class LocalizationDrawingKeySatelliteTests
     {
-        private static readonly string[] DrawingKeys = new[]
-        {
+        private static readonly string[] DrawingKeys =
+        [
             "DrawingTitle", "DrawingInsert", "DrawingClear",
             "DrawingColor", "DrawingStrokeWidth"
-        };
+        ];
 
-        private static readonly string[] AllLocales = new[]
-        {
+        private static readonly string[] AllLocales =
+        [
             "en-US", "ar-SA", "de-DE", "es-ES", "fr-FR",
             "ja-JP", "ru-RU", "ur-PK", "zh-Hans"
-        };
+        ];
 
         private static string? FindStringsRoot()
         {
@@ -1433,9 +1438,9 @@ namespace SmrtPad.Tests
         private static Dictionary<string, string> LoadResw(string locale)
         {
             var root = FindStringsRoot();
-            if (root == null) return new();
+            if (root == null) return [];
             string path = Path.Combine(root, locale, "Resources.resw");
-            if (!File.Exists(path)) return new();
+            if (!File.Exists(path)) return [];
 
             var entries = new Dictionary<string, string>();
             var doc = System.Xml.Linq.XDocument.Load(path);
@@ -1846,7 +1851,7 @@ namespace SmrtPad.Tests
 
     // â•â•â• DocumentImportHelper Direct Tests â•â•â•
 
-    public class DocumentImportHelperTests : IDisposable
+    public partial class DocumentImportHelperTests : IDisposable
     {
         private readonly string _testDir;
 
@@ -1859,6 +1864,7 @@ namespace SmrtPad.Tests
         public void Dispose()
         {
             try { Directory.Delete(_testDir, true); } catch { }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -1927,8 +1933,10 @@ namespace SmrtPad.Tests
 
                 // â•â•â• PdfHelper Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-                public class PdfHelperTests
+                public partial class PdfHelperTests
                 {
+                    [GeneratedRegex(@"/Type /Page[^s]")]
+                    private static partial System.Text.RegularExpressions.Regex PdfPageRegex();
                     [Fact]
                     public void GeneratePdf_EmptyText_ReturnsPdfBytes()
                     {
@@ -1987,7 +1995,7 @@ namespace SmrtPad.Tests
                         byte[] pdf = PdfHelper.GeneratePdf(longText);
                         string text = Encoding.Latin1.GetString(pdf);
                         // Multiple /Page objects expected
-                        int pageCount = System.Text.RegularExpressions.Regex.Matches(text, "/Type /Page[^s]").Count;
+                        int pageCount = PdfPageRegex().Count(text);
                         Assert.True(pageCount > 1, $"Expected multiple pages, got {pageCount}");
                     }
 
@@ -2266,7 +2274,7 @@ namespace SmrtPad.Tests
                         // "AB" should be a single <w:t> element, not two separate runs
                         var runs = doc.Descendants(w + "r").ToList();
                         Assert.Contains(runs, r => r.Descendants(w + "t").Any(t => t.Value.Contains("AB")
-                            || (t.Value.Contains("A") && t.Value.Contains("B"))));
+                            || (t.Value.Contains('A') && t.Value.Contains('B'))));
                     }
                 }
 
@@ -2837,7 +2845,7 @@ namespace SmrtPad.Tests
 
                 // â•â•â• SpellCheck Settings Tests â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-                public class SpellCheckSettingsTests : IDisposable
+                public partial class SpellCheckSettingsTests : IDisposable
                 {
                     private readonly string _tempPath;
                     private readonly SettingsService _settings;
@@ -2851,6 +2859,7 @@ namespace SmrtPad.Tests
                     public void Dispose()
                     {
                         if (File.Exists(_tempPath)) File.Delete(_tempPath);
+                        GC.SuppressFinalize(this);
                     }
 
                     [Fact]
@@ -2923,7 +2932,7 @@ namespace SmrtPad.Tests
                     }
 
                     private static readonly string[] NewKeys =
-                    {
+                    [
                         "SpellCheckToggle.Text", "OptionsSpellCheck",
                         "StatusSpellCheckEnabled", "StatusSpellCheckDisabled",
                         "ExportPdfNavItem.Content", "FileTypePdf",
@@ -2937,7 +2946,7 @@ namespace SmrtPad.Tests
                         "StatusMacroDone", "StatusMacroSaved", "StatusMacroLoaded",
                         "MacroFilter", "MacroNoCommands",
                         "StatusNewTab", "StatusTabClosed",
-                    };
+                    ];
 
                     [Theory]
                     [InlineData("SpellCheckToggle.Text")]
