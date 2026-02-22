@@ -1,7 +1,8 @@
 # SmrtPad — Comprehensive Project Assessment v3
 
 **Generated:** 2025-07-17 (full ground-truth audit of every authored file)  
-**Branch:** `master` — 19 commits ahead of `origin/master`
+**Last updated:** 2025-07-20  
+**Branch:** `master` — 14 commits ahead of `origin/master`  
 **Stack:** WinUI 3 · .NET 10 · Windows App SDK 1.8.260209005 · CommunityToolkit.Mvvm 8.4  
 **Projects:** `SmrtPad` (main app) · `SmrtPad.Tests` (unit tests, xUnit 2.6.6)
 
@@ -11,14 +12,15 @@
 
 | Metric | Value |
 |---|---|
-| Authored .cs source files | 12 (`App`, `MainWindow`, `EditorViewModel`, `FileBackstageView`, `ColorHelper`, `ISettingsService`, `SettingsService`, `IDialogService`, `DialogService`, `IFileService`, `FileService`, `EditorTests`) |
+| Authored .cs source files (app) | 16 (`App`, `MainWindow`, `EditorViewModel`, `FileBackstageView`, `ColorHelper`, `ResourceHelper`, `ParagraphStyleHelper`, `RtfHelper`, `DocumentImportHelper`, `RulerHelper`, `ISettingsService`, `SettingsService`, `IDialogService`, `DialogService`, `IFileService`, `FileService`) |
+| Authored .cs source files (test) | 3 (`EditorTests`, `LocalizationTests`, `IntegrationTests`) |
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
-| Total authored lines (C# + XAML) | **3,937** (2,423 C# app · 673 XAML · 841 test) |
-| CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR |
-| Unit tests | **418** (all passing) |
-| Test classes | 24 (`EditorTests` 45 · `ParseHexColorTests` 14 · `EditorViewModelNewPropertiesTests` 33 · `SettingsServiceTests` 9 · `ServiceAbstractionTests` 11 · `LocalizationTests` 170 · `ViewModelDisplayPropertyTests` 8 · `SettingsServiceEdgeCaseTests` 6 · `ViewModelCommandScenarioTests` 9 · `ViewModelWorkflowTests` 7 · `DIContainerIntegrationTests` 8 · `ArchiveExtractionTests` 5 · `SettingsViewModelIntegrationTests` 6 · `ResourceHelperIntegrationTests` 7 · `ViewModelPropertyTrackingTests` 4 · `ColorHelperExhaustiveTests` 23 · `BackstageEventContractTests` 4 · `RelayCommandTests` 5 · `RtfTableGenerationTests` 7 · `ViewModelDefaultContractTests` 4 · `AppConfigureServiceParityTests` 2 · `SettingsServiceConcurrencyTests` 4 · `LocalizationDrawingKeySatelliteTests` 16 · `MainWindowContractTests` 3) |
+| Total authored lines (C# + XAML) | **8,259** (3,512 C# app · 806 XAML · 3,941 test) |
+| CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR (`.NET 10 preview`) |
+| Unit + integration tests | **452** (all passing) |
+| Test classes | 27 |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
-| UI / integration tests | 0 |
+| Localization | 9 locales · 218 resource keys each |
 | NuGet packages (app) | 6 — CommunityToolkit.Mvvm 8.4, Microsoft.Extensions.DependencyInjection 10.0.3, Win2D 1.3.2, Windows.Compatibility 10.0.3, SDK.BuildTools 10.0.26100.7705, WindowsAppSDK 1.8 |
 | NuGet packages (test) | 5 — xunit 2.6.6, runner 2.5.6, coverlet 6.0.0, Test.Sdk 17.8.0, WindowsAppSDK 1.8 |
 
@@ -37,7 +39,7 @@
 | Settings persistence | ✅ | `SettingsService` → JSON at `%LOCALAPPDATA%/SmrtPad/settings.json` behind `ISettingsService` |
 | Startup file argument | ✅ | `App.OnLaunched` reads `cmdArgs[1]`; proper `async/await` with `try/catch` error handling |
 | Service abstractions | ✅ | `MainWindow` constructor creates `ISettingsService`, `IDialogService`, `IFileService` instances |
-| Localization / i18n | ✅ | `Strings/en-US/Resources.resw` with 130+ entries · `x:Uid` directives on 65+ XAML elements · `Helpers/ResourceHelper` wraps `ResourceLoader` with XML fallback for tests · All code-behind strings use `Res.GetString`/`Res.GetFormatted` · 115 localization tests · 9 locales: en-US, de-DE, es-ES, fr-FR, ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK |
+| Localization / i18n | ✅ | `Strings/en-US/Resources.resw` with 218 entries · `x:Uid` directives on 65+ XAML elements · `Helpers/ResourceHelper` wraps `ResourceLoader` with XML fallback for tests · All code-behind strings use `Res.GetString`/`Res.GetFormatted` · 9 locales: en-US, de-DE, es-ES, fr-FR, ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK |
 
 **Section: 100% (10/10)**
 
@@ -176,7 +178,7 @@
 
 ## 10. File Backstage View
 
-`FileBackstageView.xaml.cs` — 96 lines. `FileBackstageView.xaml` — 62 lines. Pane toggle (burger) button hidden via `IsPaneToggleButtonVisible="False"`.
+`FileBackstageView.xaml.cs` — 120 lines. `FileBackstageView.xaml` — 101 lines. Pane toggle (burger) button hidden via `IsPaneToggleButtonVisible="False"`.
 
 | Item | Status | Notes |
 |---|---|---|
@@ -211,7 +213,7 @@
 
 ## 12. EditorViewModel
 
-`ViewModels/EditorViewModel.cs` — 203 lines.
+`ViewModels/EditorViewModel.cs` — 273 lines.
 
 | Feature | Count | Details |
 |---|---|---|
@@ -234,7 +236,7 @@
 
 ## 13. ColorHelper
 
-`Helpers/ColorHelper.cs` — 36 lines. Single static method `ParseHexColor`.
+`Helpers/ColorHelper.cs` — 41 lines. Single static method `ParseHexColor`.
 
 | Capability | Status |
 |---|---|
@@ -251,19 +253,19 @@
 
 ## 14. Services
 
-### `ISettingsService` (21 lines) / `SettingsService` (135 lines)
+### `ISettingsService` (22 lines) / `SettingsService` (151 lines)
 - Interface with 9 properties (`Language`, `RulerUnits` added), `RecentFiles` list, and 4 methods
 - Serializes `SettingsData` to JSON at `%LOCALAPPDATA%/SmrtPad/settings.json`
 - `AddRecentFile`: dedup, insert-at-front, cap at 10, auto-save
 - `Save`/`Load` log errors via `Debug.WriteLine`
 - Overloaded constructor `SettingsService(string settingsFilePath)` for test isolation
 
-### `IDialogService` (15 lines) / `DialogService` (45 lines)
+### `IDialogService` (17 lines) / `DialogService` (56 lines)
 - `ShowErrorAsync(title, message)` — `ContentDialog` with OK button
 - `ShowSavePromptAsync(documentTitle)` — Save / Don't Save / Cancel via `SavePromptResult` enum
 - `Func<XamlRoot>` provider injected at construction
 
-### `IFileService` (11 lines) / `FileService` (42 lines)
+### `IFileService` (12 lines) / `FileService` (54 lines)
 - `PickOpenFileAsync(fileTypes)` — `FileOpenPicker` wrapper
 - `PickSaveFileAsync(suggestedName, defaultExtension)` — `FileSavePicker` wrapper (RTF/TXT)
 - `GetFileFromPathAsync(path)` — `StorageFile` wrapper
@@ -394,7 +396,8 @@
 | Built-in drawing dialog | `cf42b09` | Canvas-based freehand drawing with `Polyline` shapes, `ColorPicker`, stroke width `Slider`, Clear button; `RenderTargetBitmap` → PNG export → inserts image; falls back from SmrtDoodle.exe; 5 localization keys across 9 locales |
 | Expanded test coverage | `b801f88` | 3 new test classes: `ViewModelDisplayPropertyTests` (8), `SettingsServiceEdgeCaseTests` (6), `ViewModelCommandScenarioTests` (9); covers corrupt/empty/partial JSON, display property defaults/resets, toggle idempotency, zoom boundaries, mutual exclusion |
 | UI / integration tests | `5be3e40`+`8d6fe85` | 15 new test classes in `IntegrationTests.cs` (113 tests): workflows (7), DI container (8), archive extraction (5), settings integration (6), resource helper (7), property tracking (4), color exhaustive (23), backstage contract (4), relay commands (5), RTF table generation (7), ViewModel default contract (4), App.ConfigureServices parity (2), settings concurrency (4), drawing key satellite (16), MainWindow contract (3) |
-| Extract helpers from code-behind | `(pending)` | `RtfHelper`, `DocumentImportHelper`, `ParagraphStyleHelper`, `RulerHelper` extracted from `MainWindow.xaml.cs`; code-behind now delegates to helpers; 34 new tests directly on extracted classes replace mirror functions; `MainWindow.xaml.cs` reduced by ~45 lines |
+| Extract helpers from code-behind | `600a77e` | `RtfHelper`, `DocumentImportHelper`, `ParagraphStyleHelper`, `RulerHelper` extracted from `MainWindow.xaml.cs`; code-behind now delegates to helpers; 34 new tests directly on extracted classes replace mirror functions |
+| CI pipeline hardening | `677af3e` | `dotnet-quality: 'preview'` for .NET 10 SDK resolution; matrix variables for platform/config consistency; unique artifact names |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -420,7 +423,7 @@
 | ~~Real print via `PrintDocument`~~ | ~~Medium~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
 | ~~Full DI container (`Microsoft.Extensions.DependencyInjection`)~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** |
 | ~~XAML `{x:Bind}` command bindings~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — status bar + toggle buttons + status message bound via `{x:Bind}` |
-| ~~UI / integration tests (WinAppDriver)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — 76 integration tests across 9 classes covering workflows, DI container, archive extraction, settings persistence, resource validation, property tracking, relay commands, backstage contracts |
+| ~~UI / integration tests (WinAppDriver)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — 147 integration tests across 17 classes + 34 extracted helper tests; workflows, DI container, archive extraction, settings persistence, resource validation, property tracking, relay commands, backstage contracts, paragraph styles, ruler calculations, RTF generation |
 | ~~Localization / i18n~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — 9 locales, 130+ keys, 115 tests |
 | ~~Additional file formats (DOCX, HTML, ODT)~~ | ~~Low~~ | ~~High~~ | ✅ **Completed** — commit `0335ca4` |
 | ~~Ruler / page view mode~~ | ~~Low~~ | ~~Medium~~ | ✅ **Completed** — commit `9e91077` |
@@ -452,39 +455,46 @@
 | Services | **100%** |
 | Architecture / code quality | **100%** |
 | **Unit test coverage (ViewModel + helpers + services)** | **~99%** |
-| **Unit test coverage (overall app, including UI code-behind)** | **~55%** |
+| **Unit test coverage (overall app, including UI code-behind)** | **~60%** |
 | **OVERALL PROJECT** | **~100%** |
 
 ---
 
 ## Appendix A — File Inventory
 
-### SmrtPad (main app)
+### SmrtPad (main app — 16 C# files, 3 XAML files)
 
 | File | Lines | Purpose |
 |---|---|---|
 | `App.xaml` | 13 | Resource dictionaries, `XamlControlsResources` |
-| `App.xaml.cs` | 78 | Entry point, `OnLaunched`, startup file arg handling, DI container setup via `ConfigureServices()` |
-| `MainWindow.xaml` | 673 | Menu bar, ribbon (5 groups), horizontal+vertical rulers, editor with page view, backstage overlay, status bar (7 indicators) |
-| `MainWindow.xaml.cs` | 2,269 | 80+ event handlers, all UI logic — file ops, formatting, find/replace (with regex), insert, drag-drop, real print, DOCX/HTML/ODT import, dual rulers, page view, tab stop config |
-| `ViewModels/EditorViewModel.cs` | 256 | 29 observable properties, 15 relay commands, full `NewDocument()` reset |
-| `Views/FileBackstageView.xaml` | 61 | NavigationView + content pane + recent files panel |
-| `Views/FileBackstageView.xaml.cs` | 96 | 8 events, tag-based dispatch, `SetRecentFiles()` |
-| `Helpers/ColorHelper.cs` | 36 | `ParseHexColor` — 6/8-digit hex with validation |
-| `Services/ISettingsService.cs` | 21 | Interface — 9 properties (incl. Language, RulerUnits), list, 4 methods |
-| `Services/SettingsService.cs` | 135 | JSON persistence, MRU recent files, Language/RulerUnits preferences, Debug.WriteLine error logging |
-| `Services/IDialogService.cs` | 15 | Interface — `ShowErrorAsync`, `ShowSavePromptAsync`, `SavePromptResult` enum |
-| `Services/DialogService.cs` | 45 | `ContentDialog`-based implementation |
-| `Services/IFileService.cs` | 11 | Interface — `PickOpenFileAsync`, `PickSaveFileAsync`, `GetFileFromPathAsync` |
-| `Services/FileService.cs` | 42 | `FileOpenPicker`/`FileSavePicker` wrapper |
-| **Total app** | **2,733** | **(2,074 C# + 659 XAML)** |
+| `App.xaml.cs` | 79 | Entry point, `OnLaunched`, startup file arg handling, DI container setup via `ConfigureServices()` |
+| `MainWindow.xaml` | 692 | Menu bar, ribbon (5 groups), horizontal+vertical rulers, editor with page view, backstage overlay, status bar (7 indicators) |
+| `MainWindow.xaml.cs` | 2,421 | 80+ event handlers, UI logic — file ops, formatting, find/replace (with regex), insert, drag-drop, real print, dual rulers, page view, tab stop config; delegates to extracted helpers |
+| `ViewModels/EditorViewModel.cs` | 273 | 29 observable properties, 15 relay commands, display property formatters, full `NewDocument()` reset |
+| `Views/FileBackstageView.xaml` | 101 | NavigationView + content pane + recent files panel + document properties |
+| `Views/FileBackstageView.xaml.cs` | 120 | 8 events, tag-based dispatch, `SetRecentFiles()`, `SetDocumentProperties()` |
+| `Helpers/ColorHelper.cs` | 41 | `ParseHexColor` — 6/8-digit hex with validation |
+| `Helpers/ResourceHelper.cs` | 102 | `GetString`/`GetFormatted` — wraps `ResourceLoader` with XML fallback for test environments |
+| `Helpers/ParagraphStyleHelper.cs` | 55 | 6 paragraph style presets (Normal, Heading 1/2/3, Subtitle, Quote) as immutable records |
+| `Helpers/RtfHelper.cs` | 41 | `GenerateTable` — produces RTF table markup with borders |
+| `Helpers/DocumentImportHelper.cs` | 41 | `ExtractText` — reads DOCX/ODT text from zip archive streams |
+| `Helpers/RulerHelper.cs` | 27 | `GetPixelsPerUnit` — ruler DPI calculation with zoom scaling |
+| `Services/ISettingsService.cs` | 22 | Interface — 9 properties (incl. Language, RulerUnits), list, 4 methods |
+| `Services/SettingsService.cs` | 151 | JSON persistence, MRU recent files, Language/RulerUnits preferences, Debug.WriteLine error logging |
+| `Services/IDialogService.cs` | 17 | Interface — `ShowErrorAsync`, `ShowSavePromptAsync`, `SavePromptResult` enum |
+| `Services/DialogService.cs` | 56 | `ContentDialog`-based implementation |
+| `Services/IFileService.cs` | 12 | Interface — `PickOpenFileAsync`, `PickSaveFileAsync`, `GetFileFromPathAsync` |
+| `Services/FileService.cs` | 54 | `FileOpenPicker`/`FileSavePicker` wrapper |
+| **Total app** | **4,318** | **(3,512 C# + 806 XAML)** |
 
-### SmrtPad.Tests
+### SmrtPad.Tests (3 C# files, 27 test classes)
 
 | File | Lines | Purpose |
 |---|---|---|
-| `EditorTests.cs` | 1,050 | 6 test classes, 101 tests (86 `[Fact]`/`[Theory]` + 15 `[InlineData]` variants) |
-| `LocalizationTests.cs` | 495 | 1 test class, 145 tests — key existence, value parity, format placeholder matching, Uid entries, regex keys, tab stop keys, satellite locale coverage |
+| `EditorTests.cs` | 1,574 | 9 test classes — ViewModel commands, property changes, state reset, formatting, service abstractions, settings edge cases, display properties, command scenarios |
+| `LocalizationTests.cs` | 539 | 1 test class — 218 key existence, value parity, format placeholder matching, Uid entries, satellite locale coverage across 9 locales |
+| `IntegrationTests.cs` | 1,828 | 17 test classes — workflows, DI container, archive extraction, settings integration, resource helpers, property tracking, color exhaustive, backstage contracts, relay commands, RTF table generation, ViewModel defaults, App.ConfigureServices parity, settings concurrency, drawing key satellite, MainWindow contract, paragraph style helper, ruler helper, document import helper |
+| **Total test** | **3,941** | |
 
 ### Infrastructure
 
@@ -498,19 +508,30 @@
 
 ---
 
-## Appendix B — Commit History (32 commits ahead of origin)
+## Appendix B — Commit History (14 commits ahead of origin)
 
 ```
-(pending) test: add comprehensive UI/integration tests — 113 new tests across 15 classes (418 total)
+(pending) docs: comprehensive assessment refresh — accurate line counts, file inventory, commit history, test stats
+677af3e ci: harden CI pipeline — add dotnet-quality preview for .NET 10, matrix variables, unique artifact names
+600a77e refactor: extract RtfHelper, DocumentImportHelper, ParagraphStyleHelper, RulerHelper from MainWindow code-behind; 34 new tests (452 total)
+8d6fe85 test: add RTF table generation, ViewModel default contract, DI parity, settings concurrency, drawing key satellite, and MainWindow contract tests (418 total)
+5be3e40 test: add comprehensive UI/integration tests — workflows, DI container, archive extraction, settings persistence, relay commands, backstage contracts (381 total)
 b801f88 test: expand test coverage with 3 new test classes (display properties, edge cases, command scenarios)
 cf42b09 feat: add built-in Canvas drawing dialog as fallback when SmrtDoodle not found
 c4850ed feat: add {x:Bind} data bindings for status bar, formatting toggles, and display properties
 1641787 feat: add DI container with Microsoft.Extensions.DependencyInjection
 c1489fa feat: add backstage document properties panel
 c8c1adb feat: add paragraph styles (Normal, Heading 1/2/3, Subtitle, Quote)
+1c34ffc docs: update assessment-v3 for font color shortcut, regex find, and tab stop configuration
 0ac6347 feat: add tab stop configuration dialog with alignment and leader options, localized across 9 locales
 c2e797e feat: add regex support to Find and Replace with localized labels across 9 locales
 6497185 feat: add font color keyboard shortcut (Ctrl+Shift+C) to apply last-used color
+```
+
+### Prior commits (on origin/master)
+
+```
+a62821b docs: update assessment for zoom alignment and font selector fixes
 f7f3e53 fix: zoom alignment uses top-left origin with viewport-aware sizing, font selector always shows current font name
 0e1f33b docs: update assessment for zoom overhaul and keyboard shortcuts
 34a744f fix: zoom uses ScaleTransform instead of font size, add Ctrl+scroll and Ctrl+/- shortcuts, fix font selector display, scale rulers with zoom
@@ -543,4 +564,5 @@ edd98c9 feat(i18n): add localization infrastructure
 ---
 
 *This document is internal and excluded from source control via `.gitignore`.  
-Generated from complete ground-truth audit of every authored file on 2025-07-17.*
+Generated from complete ground-truth audit of every authored file on 2025-07-17.  
+Last refreshed: 2025-07-20.*
