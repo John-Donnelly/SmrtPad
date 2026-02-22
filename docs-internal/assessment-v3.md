@@ -288,14 +288,15 @@
 | Code hygiene | ✅ | No unused `using` directives; no dead code; no empty catch blocks |
 | MVVM data binding | ✅ | Status bar, formatting toggles, status message bound via `{x:Bind}`; ViewModel display properties with computed formatters; code-behind Click handlers retained for `RichEditBox` API access |
 | DI container | ✅ | `Microsoft.Extensions.DependencyInjection` 10.0.3; `App.ConfigureServices()` registers `ISettingsService` (singleton), `EditorViewModel` (singleton), `IDialogService` (transient), `IFileService` (transient); `MainWindow` resolves all via `App.Current.Services.GetRequiredService<T>()` |
+| Extracted helpers | ✅ | `RtfHelper` (table generation), `DocumentImportHelper` (DOCX/ODT extraction), `ParagraphStyleHelper` (6 style presets as data), `RulerHelper` (pixel-per-unit calculation); all extracted from `MainWindow.xaml.cs` code-behind into testable static classes |
 
-**Section: 100% (11/11)**
+**Section: 100% (12/12)**
 
 ---
 
 ## 16. Testing
 
-### Test Summary: **418 tests · 418 passed · 0 failed · 0 skipped**
+### Test Summary: **452 tests · 452 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
@@ -323,12 +324,15 @@
 | `SettingsServiceConcurrencyTests` | 4 | Rapid 20-file add (caps at 10), rapid save/load cycles, multiple instance last-write-wins, JSON validity after save |
 | `LocalizationDrawingKeySatelliteTests` | 16 | All 5 drawing keys exist in each of 8 satellite locales, translation verification (not identical to en-US) |
 | `MainWindowContractTests` | 3 | `ViewModel` property type, 42 expected Click handlers exist, `OpenFileByPathAsync` signature |
+| `ParagraphStyleHelperTests` | 12 | Normal/Heading1/2/3/Subtitle/Quote preset values, `All` dictionary has 6 entries, all keys present, all use Left alignment, all use Segoe UI, bold/italic classification, font size ordering |
+| `RulerHelperTests` | 8 | Inches at 100% = 96 DPI, centimeters conversion, 200%/50% scaling, unit label mapping (in/cm/default), linear zoom scaling across 4 zoom levels |
+| `DocumentImportHelperTests` | 3 | DOCX extraction via real helper, ODT extraction via real helper, missing entry returns empty |
 
 ### Coverage Gaps
 
 | Gap | Priority | Notes |
 |---|---|---|
-| `MainWindow` UI-thread code (e.g. dialog presentation, drag-drop, printing) | Low | Requires WinAppDriver or UI Automation; all extractable logic covered via ViewModel/service/helper tests |
+| `MainWindow` UI-thread code (dialog presentation, drag-drop, printing) | Low | Requires WinAppDriver; all extractable logic now covered via helpers + ViewModel + service tests |
 
 ### CI Pipeline
 
@@ -389,7 +393,8 @@
 | XAML `{x:Bind}` data bindings | `c4850ed` | Status bar (7 indicators), formatting toggle buttons (6) bound via `{x:Bind}`; ViewModel display properties with computed formatters (`WordCountDisplay`, `CharCountDisplay`, `LineColDisplay`, `ZoomDisplay`, `EncodingDisplay`, `SelectionLengthDisplay`); `partial void On...Changed` methods; simplified code-behind; 7 new tests |
 | Built-in drawing dialog | `cf42b09` | Canvas-based freehand drawing with `Polyline` shapes, `ColorPicker`, stroke width `Slider`, Clear button; `RenderTargetBitmap` → PNG export → inserts image; falls back from SmrtDoodle.exe; 5 localization keys across 9 locales |
 | Expanded test coverage | `b801f88` | 3 new test classes: `ViewModelDisplayPropertyTests` (8), `SettingsServiceEdgeCaseTests` (6), `ViewModelCommandScenarioTests` (9); covers corrupt/empty/partial JSON, display property defaults/resets, toggle idempotency, zoom boundaries, mutual exclusion |
-| UI / integration tests | `(pending)` | 15 new test classes in `IntegrationTests.cs` (113 tests): workflows (7), DI container (8), archive extraction (5), settings integration (6), resource helper (7), property tracking (4), color exhaustive (23), backstage contract (4), relay commands (5), RTF table generation (7), ViewModel default contract (4), App.ConfigureServices parity (2), settings concurrency (4), drawing key satellite (16), MainWindow contract (3) |
+| UI / integration tests | `5be3e40`+`8d6fe85` | 15 new test classes in `IntegrationTests.cs` (113 tests): workflows (7), DI container (8), archive extraction (5), settings integration (6), resource helper (7), property tracking (4), color exhaustive (23), backstage contract (4), relay commands (5), RTF table generation (7), ViewModel default contract (4), App.ConfigureServices parity (2), settings concurrency (4), drawing key satellite (16), MainWindow contract (3) |
+| Extract helpers from code-behind | `(pending)` | `RtfHelper`, `DocumentImportHelper`, `ParagraphStyleHelper`, `RulerHelper` extracted from `MainWindow.xaml.cs`; code-behind now delegates to helpers; 34 new tests directly on extracted classes replace mirror functions; `MainWindow.xaml.cs` reduced by ~45 lines |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -403,7 +408,8 @@
 | After font color shortcut + regex + tab stops | 246 (+23 tests) |
 | After paragraph styles + backstage + DI container | 265 (+19 tests) |
 | After {x:Bind} + drawing dialog + expanded tests | 305 (+40 tests) |
-| After UI / integration tests | **418** (+113 tests) |
+| After UI / integration tests | 418 (+113 tests) |
+| After helper extraction + tests | **452** (+34 tests) |
 
 ---
 

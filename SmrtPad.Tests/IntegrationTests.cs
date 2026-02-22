@@ -460,29 +460,12 @@ namespace SmrtPad.Tests
         }
 
         /// <summary>
-        /// Mirrors the static ExtractTextFromArchiveAsync logic from MainWindow
-        /// for testability without StorageFile dependency.
+        /// Uses the real DocumentImportHelper.ExtractText from the app project.
         /// </summary>
         private static string ExtractTextFromArchive(string filePath, string ext)
         {
             using var stream = File.OpenRead(filePath);
-            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-
-            string entryPath = ext == ".docx" ? "word/document.xml" : "content.xml";
-            var entry = archive.GetEntry(entryPath);
-            if (entry == null)
-                return string.Empty;
-
-            using var entryStream = entry.Open();
-            var doc = XDocument.Load(entryStream);
-
-            var texts = doc.Descendants()
-                .Where(el => el.Name.LocalName == (ext == ".docx" ? "t" : "p"))
-                .Select(el => el.Value);
-
-            return ext == ".docx"
-                ? string.Join("", texts).Replace("\n", Environment.NewLine)
-                : string.Join(Environment.NewLine, texts);
+            return DocumentImportHelper.ExtractText(stream, ext);
         }
     }
 
@@ -1069,41 +1052,14 @@ namespace SmrtPad.Tests
         }
     }
 
-    // ═══ RTF Table Generation Tests ═══
+    // ═══ RTF Table Generation Tests (via RtfHelper) ═══
 
     public class RtfTableGenerationTests
     {
-        /// <summary>
-        /// Mirrors the RTF table generation logic from MainWindow.InsertTable_Click
-        /// for independent testability.
-        /// </summary>
-        private static string GenerateRtfTable(int rows, int cols)
-        {
-            var rtf = new StringBuilder();
-            rtf.Append(@"{\rtf1\ansi ");
-
-            for (int r = 0; r < rows; r++)
-            {
-                rtf.Append(@"\trowd ");
-                for (int c = 0; c < cols; c++)
-                {
-                    int cellRight = (c + 1) * 2000;
-                    rtf.Append($@"\clbrdrt\brdrs\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs\cellx{cellRight} ");
-                }
-                for (int c = 0; c < cols; c++)
-                {
-                    rtf.Append($@" \cell ");
-                }
-                rtf.Append(@"\row ");
-            }
-            rtf.Append('}');
-            return rtf.ToString();
-        }
-
         [Fact]
         public void GenerateTable_1x1_HasCorrectStructure()
         {
-            string rtf = GenerateRtfTable(1, 1);
+            string rtf = RtfHelper.GenerateTable(1, 1);
             Assert.StartsWith(@"{\rtf1\ansi", rtf);
             Assert.EndsWith("}", rtf);
             Assert.Contains(@"\trowd", rtf);
@@ -1115,7 +1071,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void GenerateTable_3x3_HasCorrectRowCount()
         {
-            string rtf = GenerateRtfTable(3, 3);
+            string rtf = RtfHelper.GenerateTable(3, 3);
             int rowCount = rtf.Split(@"\row").Length - 1;
             Assert.Equal(3, rowCount);
         }
@@ -1123,7 +1079,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void GenerateTable_2x4_HasCorrectCellPositions()
         {
-            string rtf = GenerateRtfTable(2, 4);
+            string rtf = RtfHelper.GenerateTable(2, 4);
             Assert.Contains(@"\cellx2000", rtf);
             Assert.Contains(@"\cellx4000", rtf);
             Assert.Contains(@"\cellx6000", rtf);
@@ -1133,11 +1089,11 @@ namespace SmrtPad.Tests
         [Fact]
         public void GenerateTable_HasBorderControls()
         {
-            string rtf = GenerateRtfTable(1, 1);
-            Assert.Contains(@"\clbrdrt\brdrs", rtf);  // top border
-            Assert.Contains(@"\clbrdrl\brdrs", rtf);  // left border
-            Assert.Contains(@"\clbrdrb\brdrs", rtf);  // bottom border
-            Assert.Contains(@"\clbrdrr\brdrs", rtf);  // right border
+            string rtf = RtfHelper.GenerateTable(1, 1);
+            Assert.Contains(@"\clbrdrt\brdrs", rtf);
+            Assert.Contains(@"\clbrdrl\brdrs", rtf);
+            Assert.Contains(@"\clbrdrb\brdrs", rtf);
+            Assert.Contains(@"\clbrdrr\brdrs", rtf);
         }
 
         [Theory]
@@ -1147,12 +1103,24 @@ namespace SmrtPad.Tests
         [InlineData(50, 20)]
         public void GenerateTable_VariousSizes_ProducesValidRtf(int rows, int cols)
         {
-            string rtf = GenerateRtfTable(rows, cols);
+            string rtf = RtfHelper.GenerateTable(rows, cols);
             Assert.StartsWith(@"{\rtf1\ansi", rtf);
             Assert.EndsWith("}", rtf);
 
             int cellCount = rtf.Split(@" \cell ").Length - 1;
             Assert.Equal(rows * cols, cellCount);
+        }
+
+        [Fact]
+        public void GenerateTable_ZeroRows_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => RtfHelper.GenerateTable(0, 3));
+        }
+
+        [Fact]
+        public void GenerateTable_NegativeCols_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => RtfHelper.GenerateTable(3, -1));
         }
     }
 
@@ -1588,6 +1556,273 @@ namespace SmrtPad.Tests
             var method = type.GetMethod("OpenFileByPathAsync");
             Assert.NotNull(method);
             Assert.Equal(typeof(Task), method!.ReturnType);
+        }
+    }
+
+    // ═══ ParagraphStyleHelper Tests ═══
+
+    public class ParagraphStyleHelperTests
+    {
+        [Fact]
+        public void Normal_HasExpectedValues()
+        {
+            var s = ParagraphStyleHelper.Normal;
+            Assert.Equal("Segoe UI", s.FontName);
+            Assert.Equal(11f, s.FontSize);
+            Assert.False(s.Bold);
+            Assert.False(s.Italic);
+            Assert.Equal("Left", s.Alignment);
+            Assert.Equal(0f, s.SpaceBefore);
+            Assert.Equal(0f, s.SpaceAfter);
+        }
+
+        [Fact]
+        public void Heading1_HasExpectedValues()
+        {
+            var s = ParagraphStyleHelper.Heading1;
+            Assert.Equal("Segoe UI", s.FontName);
+            Assert.Equal(20f, s.FontSize);
+            Assert.True(s.Bold);
+            Assert.False(s.Italic);
+            Assert.Equal(12f, s.SpaceBefore);
+            Assert.Equal(4f, s.SpaceAfter);
+        }
+
+        [Fact]
+        public void Heading2_HasExpectedValues()
+        {
+            var s = ParagraphStyleHelper.Heading2;
+            Assert.Equal(16f, s.FontSize);
+            Assert.True(s.Bold);
+            Assert.Equal(10f, s.SpaceBefore);
+            Assert.Equal(3f, s.SpaceAfter);
+        }
+
+        [Fact]
+        public void Heading3_HasExpectedValues()
+        {
+            var s = ParagraphStyleHelper.Heading3;
+            Assert.Equal(13f, s.FontSize);
+            Assert.True(s.Bold);
+            Assert.Equal(8f, s.SpaceBefore);
+            Assert.Equal(2f, s.SpaceAfter);
+        }
+
+        [Fact]
+        public void Subtitle_IsItalicNotBold()
+        {
+            var s = ParagraphStyleHelper.Subtitle;
+            Assert.Equal(14f, s.FontSize);
+            Assert.False(s.Bold);
+            Assert.True(s.Italic);
+            Assert.Equal(6f, s.SpaceBefore);
+            Assert.Equal(4f, s.SpaceAfter);
+        }
+
+        [Fact]
+        public void Quote_IsItalicNotBold()
+        {
+            var s = ParagraphStyleHelper.Quote;
+            Assert.Equal(11f, s.FontSize);
+            Assert.False(s.Bold);
+            Assert.True(s.Italic);
+            Assert.Equal(8f, s.SpaceBefore);
+            Assert.Equal(8f, s.SpaceAfter);
+        }
+
+        [Fact]
+        public void All_Contains6Styles()
+        {
+            Assert.Equal(6, ParagraphStyleHelper.All.Count);
+        }
+
+        [Theory]
+        [InlineData("Normal")]
+        [InlineData("Heading1")]
+        [InlineData("Heading2")]
+        [InlineData("Heading3")]
+        [InlineData("Subtitle")]
+        [InlineData("Quote")]
+        public void All_ContainsKey(string key)
+        {
+            Assert.True(ParagraphStyleHelper.All.ContainsKey(key));
+            Assert.NotNull(ParagraphStyleHelper.All[key]);
+        }
+
+        [Fact]
+        public void AllStyles_HaveLeftAlignment()
+        {
+            foreach (var kvp in ParagraphStyleHelper.All)
+            {
+                Assert.Equal("Left", kvp.Value.Alignment);
+            }
+        }
+
+        [Fact]
+        public void AllStyles_UseSegoeUI()
+        {
+            foreach (var kvp in ParagraphStyleHelper.All)
+            {
+                Assert.Equal("Segoe UI", kvp.Value.FontName);
+            }
+        }
+
+        [Fact]
+        public void Headings_AreBold_OthersAreNot()
+        {
+            Assert.True(ParagraphStyleHelper.Heading1.Bold);
+            Assert.True(ParagraphStyleHelper.Heading2.Bold);
+            Assert.True(ParagraphStyleHelper.Heading3.Bold);
+            Assert.False(ParagraphStyleHelper.Normal.Bold);
+            Assert.False(ParagraphStyleHelper.Subtitle.Bold);
+            Assert.False(ParagraphStyleHelper.Quote.Bold);
+        }
+
+        [Fact]
+        public void FontSizes_Descend_FromHeading1ToNormal()
+        {
+            Assert.True(ParagraphStyleHelper.Heading1.FontSize > ParagraphStyleHelper.Heading2.FontSize);
+            Assert.True(ParagraphStyleHelper.Heading2.FontSize > ParagraphStyleHelper.Heading3.FontSize);
+            Assert.True(ParagraphStyleHelper.Heading3.FontSize > ParagraphStyleHelper.Normal.FontSize);
+        }
+    }
+
+    // ═══ RulerHelper Tests ═══
+
+    public class RulerHelperTests
+    {
+        [Fact]
+        public void Inches_At100Percent_Returns96Dpi()
+        {
+            double ppu = RulerHelper.GetPixelsPerUnit("in", 100.0, out string label);
+            Assert.Equal(96.0, ppu);
+            Assert.Equal("in", label);
+        }
+
+        [Fact]
+        public void Centimeters_At100Percent_ReturnsCorrectDpi()
+        {
+            double ppu = RulerHelper.GetPixelsPerUnit("cm", 100.0, out string label);
+            Assert.Equal(96.0 / 2.54, ppu, 6);
+            Assert.Equal("cm", label);
+        }
+
+        [Fact]
+        public void Inches_At200Percent_ReturnsDoubled()
+        {
+            double ppu = RulerHelper.GetPixelsPerUnit("in", 200.0, out _);
+            Assert.Equal(192.0, ppu);
+        }
+
+        [Fact]
+        public void Centimeters_At50Percent_ReturnsHalved()
+        {
+            double ppu = RulerHelper.GetPixelsPerUnit("cm", 50.0, out _);
+            Assert.Equal((96.0 / 2.54) * 0.5, ppu, 6);
+        }
+
+        [Theory]
+        [InlineData("in", "in")]
+        [InlineData("cm", "cm")]
+        [InlineData("", "in")]
+        [InlineData("xx", "in")]
+        public void UnitLabel_ReflectsInput(string input, string expectedLabel)
+        {
+            RulerHelper.GetPixelsPerUnit(input, 100.0, out string label);
+            Assert.Equal(expectedLabel, label);
+        }
+
+        [Theory]
+        [InlineData(10.0)]
+        [InlineData(100.0)]
+        [InlineData(250.0)]
+        [InlineData(500.0)]
+        public void PixelsPerUnit_ScalesLinearly(double zoom)
+        {
+            double at100 = RulerHelper.GetPixelsPerUnit("in", 100.0, out _);
+            double atZoom = RulerHelper.GetPixelsPerUnit("in", zoom, out _);
+            Assert.Equal(at100 * zoom / 100.0, atZoom, 10);
+        }
+    }
+
+    // ═══ DocumentImportHelper Direct Tests ═══
+
+    public class DocumentImportHelperTests : IDisposable
+    {
+        private readonly string _testDir;
+
+        public DocumentImportHelperTests()
+        {
+            _testDir = Path.Combine(Path.GetTempPath(), "SmrtPad_DocImportTests_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_testDir);
+        }
+
+        public void Dispose()
+        {
+            try { Directory.Delete(_testDir, true); } catch { }
+        }
+
+        [Fact]
+        public void ExtractText_Docx_ReturnsContent()
+        {
+            string ns = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            var doc = new XDocument(
+                new XElement(XName.Get("document", ns),
+                    new XElement(XName.Get("body", ns),
+                        new XElement(XName.Get("p", ns),
+                            new XElement(XName.Get("r", ns),
+                                new XElement(XName.Get("t", ns), "Hello Helper"))))));
+
+            string filePath = Path.Combine(_testDir, "test.docx");
+            using (var zip = ZipFile.Open(filePath, ZipArchiveMode.Create))
+            {
+                var entry = zip.CreateEntry("word/document.xml");
+                using var writer = new StreamWriter(entry.Open());
+                doc.Save(writer);
+            }
+
+            using var stream = File.OpenRead(filePath);
+            string result = DocumentImportHelper.ExtractText(stream, ".docx");
+            Assert.Contains("Hello Helper", result);
+        }
+
+        [Fact]
+        public void ExtractText_Odt_ReturnsContent()
+        {
+            string ns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
+            var doc = new XDocument(
+                new XElement(XName.Get("document-content", "urn:oasis:names:tc:opendocument:xmlns:office:1.0"),
+                    new XElement(XName.Get("body", "urn:oasis:names:tc:opendocument:xmlns:office:1.0"),
+                        new XElement(XName.Get("text", "urn:oasis:names:tc:opendocument:xmlns:office:1.0"),
+                            new XElement(XName.Get("p", ns), "ODT via helper")))));
+
+            string filePath = Path.Combine(_testDir, "test.odt");
+            using (var zip = ZipFile.Open(filePath, ZipArchiveMode.Create))
+            {
+                var entry = zip.CreateEntry("content.xml");
+                using var writer = new StreamWriter(entry.Open());
+                doc.Save(writer);
+            }
+
+            using var stream = File.OpenRead(filePath);
+            string result = DocumentImportHelper.ExtractText(stream, ".odt");
+            Assert.Contains("ODT via helper", result);
+        }
+
+        [Fact]
+        public void ExtractText_MissingEntry_ReturnsEmpty()
+        {
+            string filePath = Path.Combine(_testDir, "empty.docx");
+            using (var zip = ZipFile.Open(filePath, ZipArchiveMode.Create))
+            {
+                var entry = zip.CreateEntry("other.txt");
+                using var writer = new StreamWriter(entry.Open());
+                writer.Write("not a doc");
+            }
+
+            using var stream = File.OpenRead(filePath);
+            string result = DocumentImportHelper.ExtractText(stream, ".docx");
+            Assert.Equal(string.Empty, result);
         }
     }
 }

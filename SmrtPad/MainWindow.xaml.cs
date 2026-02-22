@@ -171,24 +171,7 @@ namespace SmrtPad
         private static async Task<string> ExtractTextFromArchiveAsync(StorageFile file, string ext)
         {
             using var stream = await file.OpenStreamForReadAsync();
-            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-
-            string entryPath = ext == ".docx" ? "word/document.xml" : "content.xml";
-            var entry = archive.GetEntry(entryPath);
-            if (entry == null)
-                return string.Empty;
-
-            using var entryStream = entry.Open();
-            var doc = XDocument.Load(entryStream);
-
-            var texts = doc.Descendants()
-                .Where(el => el.Name.LocalName == (ext == ".docx" ? "t" : "p"))
-                .Select(el => ext == ".docx" ? el.Value : el.Value);
-
-            return ext == ".docx"
-                ? string.Join("", texts)
-                    .Replace("\n", Environment.NewLine)
-                : string.Join(Environment.NewLine, texts);
+            return DocumentImportHelper.ExtractText(stream, ext);
         }
 
         private void ApplySettings()
@@ -1550,12 +1533,7 @@ namespace SmrtPad
 
         private double GetPixelsPerUnit(out string unitLabel)
         {
-            bool useCm = _settings.RulerUnits == "cm";
-            unitLabel = useCm ? "cm" : "in";
-            double basePixels = useCm ? 96.0 / 2.54 : 96.0;
-            // Scale ruler to match editor zoom
-            double scale = ViewModel.ZoomLevel / 100.0;
-            return basePixels * scale;
+            return RulerHelper.GetPixelsPerUnit(_settings.RulerUnits, ViewModel.ZoomLevel, out unitLabel);
         }
 
         private void DrawHorizontalRuler()
@@ -2221,37 +2199,43 @@ namespace SmrtPad
 
         private void StyleNormal_Click(object sender, RoutedEventArgs e)
         {
-            ApplyParagraphStyle("Segoe UI", 11f, false, false, ParagraphAlignment.Left, 0f, 0f);
+            var s = ParagraphStyleHelper.Normal;
+            ApplyParagraphStyle(s.FontName, s.FontSize, s.Bold, s.Italic, ParagraphAlignment.Left, s.SpaceBefore, s.SpaceAfter);
             ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
         }
 
         private void StyleHeading1_Click(object sender, RoutedEventArgs e)
         {
-            ApplyParagraphStyle("Segoe UI", 20f, true, false, ParagraphAlignment.Left, 12f, 4f);
+            var s = ParagraphStyleHelper.Heading1;
+            ApplyParagraphStyle(s.FontName, s.FontSize, s.Bold, s.Italic, ParagraphAlignment.Left, s.SpaceBefore, s.SpaceAfter);
             ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
         }
 
         private void StyleHeading2_Click(object sender, RoutedEventArgs e)
         {
-            ApplyParagraphStyle("Segoe UI", 16f, true, false, ParagraphAlignment.Left, 10f, 3f);
+            var s = ParagraphStyleHelper.Heading2;
+            ApplyParagraphStyle(s.FontName, s.FontSize, s.Bold, s.Italic, ParagraphAlignment.Left, s.SpaceBefore, s.SpaceAfter);
             ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
         }
 
         private void StyleHeading3_Click(object sender, RoutedEventArgs e)
         {
-            ApplyParagraphStyle("Segoe UI", 13f, true, false, ParagraphAlignment.Left, 8f, 2f);
+            var s = ParagraphStyleHelper.Heading3;
+            ApplyParagraphStyle(s.FontName, s.FontSize, s.Bold, s.Italic, ParagraphAlignment.Left, s.SpaceBefore, s.SpaceAfter);
             ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
         }
 
         private void StyleSubtitle_Click(object sender, RoutedEventArgs e)
         {
-            ApplyParagraphStyle("Segoe UI", 14f, false, true, ParagraphAlignment.Left, 6f, 4f);
+            var s = ParagraphStyleHelper.Subtitle;
+            ApplyParagraphStyle(s.FontName, s.FontSize, s.Bold, s.Italic, ParagraphAlignment.Left, s.SpaceBefore, s.SpaceAfter);
             ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
         }
 
         private void StyleQuote_Click(object sender, RoutedEventArgs e)
         {
-            ApplyParagraphStyle("Segoe UI", 11f, false, true, ParagraphAlignment.Left, 8f, 8f);
+            var s = ParagraphStyleHelper.Quote;
+            ApplyParagraphStyle(s.FontName, s.FontSize, s.Bold, s.Italic, ParagraphAlignment.Left, s.SpaceBefore, s.SpaceAfter);
             ViewModel.UpdateStatus(Res.GetString("StatusStyleApplied"));
         }
 
@@ -2334,27 +2318,9 @@ namespace SmrtPad
                 int rows = (int)rowsBox.Value;
                 int cols = (int)colsBox.Value;
 
-                // Build RTF table
-                var rtf = new System.Text.StringBuilder();
-                rtf.Append(@"{\rtf1\ansi ");
+                string rtf = RtfHelper.GenerateTable(rows, cols);
 
-                for (int r = 0; r < rows; r++)
-                {
-                    rtf.Append(@"\trowd ");
-                    for (int c = 0; c < cols; c++)
-                    {
-                        int cellRight = (c + 1) * 2000;
-                        rtf.Append($@"\clbrdrt\brdrs\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs\cellx{cellRight} ");
-                    }
-                    for (int c = 0; c < cols; c++)
-                    {
-                        rtf.Append($@" \cell ");
-                    }
-                    rtf.Append(@"\row ");
-                }
-                rtf.Append('}');
-
-                Editor.Document.Selection.SetText(TextSetOptions.FormatRtf, rtf.ToString());
+                Editor.Document.Selection.SetText(TextSetOptions.FormatRtf, rtf);
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusInsertedTable", rows, cols));
             }
         }
