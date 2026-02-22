@@ -53,6 +53,7 @@ namespace SmrtPad
         private bool _rulersVisible;
         private bool _pageViewActive;
         private readonly ScaleTransform _editorScaleTransform = new();
+        private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
         public EditorViewModel ViewModel { get; } = new EditorViewModel();
 
         public MainWindow()
@@ -1175,6 +1176,7 @@ namespace SmrtPad
 
         private void ApplyTextColor(Color color)
         {
+            _lastFontColor = color;
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
@@ -1182,6 +1184,12 @@ namespace SmrtPad
                 charFormatting.ForegroundColor = color;
                 selectedText.CharacterFormat = charFormatting;
             }
+        }
+
+        private void ApplyLastFontColor_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            ApplyTextColor(_lastFontColor);
+            args.Handled = true;
         }
 
         private void HighlightColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)

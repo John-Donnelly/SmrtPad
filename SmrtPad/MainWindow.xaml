@@ -232,7 +232,10 @@
                         </ToggleButton>
                         <!-- Font Color with swatch grid -->
                         <Button Padding="4,3" MinWidth="32" Height="32" CornerRadius="4" Background="Transparent" BorderThickness="0"
-                                ToolTipService.ToolTip="Font Color">
+                                ToolTipService.ToolTip="Font Color (Ctrl+Shift+C)">
+                            <Button.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="C" Modifiers="Control,Shift" Invoked="ApplyLastFontColor_Invoked"/>
+                            </Button.KeyboardAccelerators>
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="8">
