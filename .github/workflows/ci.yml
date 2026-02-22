@@ -24,10 +24,14 @@ jobs:
           dotnet-quality: 'preview'
 
       - name: Restore
-        run: dotnet restore SmrtPad.slnx
+        run: |
+          dotnet restore SmrtPad/SmrtPad.csproj
+          dotnet restore SmrtPad.Tests/SmrtPad.Tests.csproj
 
       - name: Build
-        run: dotnet build SmrtPad.slnx --configuration ${{ matrix.configuration }} --no-restore -p:Platform=${{ matrix.platform }}
+        run: |
+          dotnet build SmrtPad/SmrtPad.csproj --configuration ${{ matrix.configuration }} --no-restore -p:Platform=${{ matrix.platform }}
+          dotnet build SmrtPad.Tests/SmrtPad.Tests.csproj --configuration ${{ matrix.configuration }} --no-restore -p:Platform=${{ matrix.platform }}
 
       - name: Test with coverage
         run: dotnet test SmrtPad.Tests/SmrtPad.Tests.csproj --configuration ${{ matrix.configuration }} --no-build -p:Platform=${{ matrix.platform }} --collect:"XPlat Code Coverage" --results-directory ./TestResults

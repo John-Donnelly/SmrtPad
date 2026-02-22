@@ -1397,7 +1397,6 @@ namespace SmrtPad.Tests
 
             // Should be parseable JSON
             var doc = System.Text.Json.JsonDocument.Parse(json);
-            Assert.NotNull(doc.RootElement);
             Assert.Equal(System.Text.Json.JsonValueKind.Object, doc.RootElement.ValueKind);
         }
     }
