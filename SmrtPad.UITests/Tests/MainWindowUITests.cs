@@ -133,5 +133,86 @@ namespace SmrtPad.UITests.Tests
                 MobileBy.AccessibilityId("SpellCheckToggle"));
             Assert.NotNull(toggle);
         }
+
+        [SkippableFact]
+        public void AlignLeftToggle_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var toggle = _driver!.FindElement(
+                MobileBy.AccessibilityId("AlignLeftToggle"));
+            Assert.NotNull(toggle);
+        }
+
+        [SkippableFact]
+        public void AlignCenterToggle_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var toggle = _driver!.FindElement(
+                MobileBy.AccessibilityId("AlignCenterToggle"));
+            Assert.NotNull(toggle);
+        }
+
+        [SkippableFact]
+        public void AlignRightToggle_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var toggle = _driver!.FindElement(
+                MobileBy.AccessibilityId("AlignRightToggle"));
+            Assert.NotNull(toggle);
+        }
+
+        [SkippableFact]
+        public void AlignJustifyToggle_IsPresent_InRibbon()
+        {
+            RequireDriver();
+            var toggle = _driver!.FindElement(
+                MobileBy.AccessibilityId("AlignJustifyToggle"));
+            Assert.NotNull(toggle);
+        }
+
+        [SkippableFact]
+        public void WordCountText_IsPresent_InStatusBar()
+        {
+            RequireDriver();
+            var text = _driver!.FindElement(
+                MobileBy.AccessibilityId("WordCountText"));
+            Assert.NotNull(text);
+        }
+
+        [SkippableFact]
+        public void CharCountText_IsPresent_InStatusBar()
+        {
+            RequireDriver();
+            var text = _driver!.FindElement(
+                MobileBy.AccessibilityId("CharCountText"));
+            Assert.NotNull(text);
+        }
+
+        [SkippableFact]
+        public void LineColText_IsPresent_InStatusBar()
+        {
+            RequireDriver();
+            var text = _driver!.FindElement(
+                MobileBy.AccessibilityId("LineColText"));
+            Assert.NotNull(text);
+        }
+
+        [SkippableFact]
+        public void EncodingText_IsPresent_InStatusBar()
+        {
+            RequireDriver();
+            var text = _driver!.FindElement(
+                MobileBy.AccessibilityId("EncodingText"));
+            Assert.NotNull(text);
+        }
+
+        [SkippableFact]
+        public void ThemeToggleButton_IsPresent_InTitleBar()
+        {
+            RequireDriver();
+            var btn = _driver!.FindElement(
+                MobileBy.AccessibilityId("ThemeToggleButton"));
+            Assert.NotNull(btn);
+        }
     }
 }
