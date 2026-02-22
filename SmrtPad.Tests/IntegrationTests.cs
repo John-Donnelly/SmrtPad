@@ -1568,20 +1568,28 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
-        public void MainWindow_XAML_FontFamilyUsesItemContainerStyle()
+        public void MainWindow_XAML_FontFamilyUsesDropDownOpened()
         {
-            // ItemContainerStyle with FontFamily binding renders each font in its own
-            // typeface without interfering with the editable ComboBox text display
+            // DropDownOpened handler styles containers via code-behind — avoids
+            // both ItemTemplate (breaks editable text) and {Binding} in Style
+            // (crashes at runtime in WinUI 3)
             string? xamlPath = FindXamlPath();
             if (xamlPath == null) return;
 
             string xaml = File.ReadAllText(xamlPath);
             Assert.Contains("FontFamilyComboBox", xaml);
-            Assert.Contains("ItemContainerStyle", xaml);
-            Assert.Contains("FontFamily", xaml);
-            Assert.Contains("{Binding}", xaml);
-            // Must NOT have ItemTemplate — it breaks editable ComboBox text display
+            Assert.Contains("DropDownOpened", xaml);
             Assert.DoesNotContain("ItemTemplate", xaml);
+            Assert.DoesNotContain("ItemContainerStyle", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_HasFontFamilyDropDownOpenedHandler()
+        {
+            var type = typeof(SmrtPad.MainWindow);
+            var method = type.GetMethod("FontFamilyComboBox_DropDownOpened",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(method);
         }
 
         [Fact]

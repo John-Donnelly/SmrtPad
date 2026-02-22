@@ -17,7 +17,7 @@
 | Authored .xaml files | 3 (`App.xaml`, `MainWindow.xaml`, `FileBackstageView.xaml`) |
 | Total authored lines (C# + XAML) | **8,259** (3,512 C# app · 806 XAML · 3,941 test) |
 | CI pipeline | `.github/workflows/ci.yml` — build + test + coverage on push/PR (`.NET 10 preview`) |
-| Unit + integration tests | **458** (all passing) |
+| Unit + integration tests | **459** (all passing) |
 | Test classes | 27 |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 |
 | Localization | 9 locales · 218 resource keys each |
@@ -111,7 +111,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Font family ComboBox | ✅ | `CanvasTextFormat.GetSystemFontFamilies()`, editable; `ItemContainerStyle` with `FontFamily="{Binding}"` renders each dropdown item in its own typeface without interfering with the editable TextBox; `SelectedItem` reliably displays on load |
+| Font family ComboBox | ✅ | `CanvasTextFormat.GetSystemFontFamilies()`, editable; `DropDownOpened` handler sets `FontFamily` on each `ComboBoxItem` container so dropdown items preview in their own typeface; no `ItemTemplate`/`ItemContainerStyle` — `SelectedItem` reliably displays on load |
 | Font size ComboBox + free-text | ✅ | Preset sizes 8–72; compact 62px width; `KeyDown(Enter)` and `LostFocus` apply typed values (1–999); `SelectionChanged` for list picks |
 | Grow / Shrink font | ✅ | ±1pt with NaN/≤0 guards and min clamp at 1pt |
 | Bold / Italic / Underline | ✅ | `FormatEffect.Toggle` / `UnderlineType.Single↔None`; `Ctrl+B/I/U` accelerators |
@@ -298,7 +298,7 @@
 
 ## 16. Testing
 
-### Test Summary: **458 tests · 458 passed · 0 failed · 0 skipped**
+### Test Summary: **459 tests · 459 passed · 0 failed · 0 skipped**
 
 | Class | Tests | Covers |
 |---|---|---|
@@ -325,7 +325,7 @@
 | `AppConfigureServiceParityTests` | 2 | DI registration types match `App.ConfigureServices()`, singleton/transient lifetimes verified |
 | `SettingsServiceConcurrencyTests` | 4 | Rapid 20-file add (caps at 10), rapid save/load cycles, multiple instance last-write-wins, JSON validity after save |
 | `LocalizationDrawingKeySatelliteTests` | 16 | All 5 drawing keys exist in each of 8 satellite locales, translation verification (not identical to en-US) |
-| `MainWindowContractTests` | 9 | `ViewModel` property type, 42 expected Click handlers, `OpenFileByPathAsync` signature, `InitializeFonts`, `AppWindow_Closing` handler, `PromptSaveChangesAsync` return type, `ItemContainerStyle` with `{Binding}` (no `ItemTemplate`), alignment Grid layout, compact font size ComboBox |
+| `MainWindowContractTests` | 10 | `ViewModel` property type, 42 expected Click handlers, `OpenFileByPathAsync` signature, `InitializeFonts`, `AppWindow_Closing` handler, `PromptSaveChangesAsync` return type, `DropDownOpened` handler for font preview, XAML no `ItemTemplate`/`ItemContainerStyle`, alignment Grid layout, compact font size ComboBox |
 | `ParagraphStyleHelperTests` | 12 | Normal/Heading1/2/3/Subtitle/Quote preset values, `All` dictionary has 6 entries, all keys present, all use Left alignment, all use Segoe UI, bold/italic classification, font size ordering |
 | `RulerHelperTests` | 8 | Inches at 100% = 96 DPI, centimeters conversion, 200%/50% scaling, unit label mapping (in/cm/default), linear zoom scaling across 4 zoom levels |
 | `DocumentImportHelperTests` | 3 | DOCX extraction via real helper, ODT extraction via real helper, missing entry returns empty |
@@ -400,7 +400,8 @@
 | CI pipeline hardening | `677af3e` | `dotnet-quality: 'preview'` for .NET 10 SDK resolution; matrix variables for platform/config consistency; unique artifact names |
 | Font selector + alignment UI fixes | `8baf967` | Font family ComboBox: `Loaded` event sets text reliably, `ItemTemplate` renders names in their own fonts, `MaxDropDownHeight="350"`; Font size ComboBox: reduced from 112px to 62px; Alignment buttons: changed from `StackPanel` to 4-column equal-width `Grid` for uniform spacing; 5 new XAML/reflection tests |
 | Font load fix + window close prompt | `72b9d5d` | `AppWindow.Closing` handler prompts for unsaved changes before closing via window X button; unhooks handler to avoid re-entrance; 2 new contract tests |
-| Font ComboBox ItemContainerStyle fix | `(pending)` | Replaced `ItemTemplate` (which broke editable ComboBox text display in WinUI 3) with `ItemContainerStyle` using `FontFamily="{Binding}"`; removed `Loaded` handler and manual `Text` sync — `SelectedItem` now works natively; dropdown still renders each font in its own typeface |
+| Font ComboBox ItemContainerStyle fix | `046afaf` | Replaced `ItemTemplate` with `ItemContainerStyle` — still crashed (`{Binding}` not supported in WinUI 3 `Style.Setter`) |
+| Font ComboBox DropDownOpened fix | `(pending)` | Replaced crashing `ItemContainerStyle` with `DropDownOpened` handler that sets `FontFamily` on each `ComboBoxItem` via code-behind; cached with `_fontDropdownStyled` flag; `SelectedItem` displays natively on load; dropdown renders each font in its own typeface |
 
 ### Test growth
 | Checkpoint | Tests |
@@ -418,7 +419,8 @@
 | After helper extraction + tests | 452 (+34 tests) |
 | After font/alignment UI fixes | 457 (+5 tests) |
 | After font load fix + window close prompt | 459 (+2 tests) |
-| After font ItemContainerStyle fix | **458** (-1 net: replaced 2 stale tests with 1 correct test) |
+| After font ItemContainerStyle fix | 458 (-1 net) |
+| After font DropDownOpened fix | **459** (+1: replaced XAML test, added handler test) |
 
 ---
 

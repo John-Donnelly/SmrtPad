@@ -58,6 +58,7 @@ namespace SmrtPad
         private bool _pageViewActive;
         private readonly ScaleTransform _editorScaleTransform = new();
         private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
+        private bool _fontDropdownStyled;
         public EditorViewModel ViewModel { get; }
 
         public MainWindow()
@@ -389,6 +390,25 @@ namespace SmrtPad
 
             FontSizeComboBox.KeyDown += FontSizeComboBox_KeyDown;
             FontSizeComboBox.LostFocus += FontSizeComboBox_LostFocus;
+        }
+
+        private void FontFamilyComboBox_DropDownOpened(object sender, object e)
+        {
+            if (_fontDropdownStyled) return;
+
+            // ComboBox uses a non-virtualizing CarouselPanel, so all containers
+            // are created when the dropdown opens. Set each item's FontFamily
+            // so font names preview in their own typeface.
+            for (int i = 0; i < FontFamilyComboBox.Items.Count; i++)
+            {
+                if (FontFamilyComboBox.ContainerFromIndex(i) is ComboBoxItem container
+                    && container.Content is string fontName)
+                {
+                    container.FontFamily = new FontFamily(fontName);
+                }
+            }
+
+            _fontDropdownStyled = true;
         }
 
         private void ApplyFontSizeFromText()
