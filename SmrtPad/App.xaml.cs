@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using SmrtPad.Services;
 using SmrtPad.ViewModels;
 using System;
+using Windows.Globalization;
 
 namespace SmrtPad
 {
@@ -44,6 +45,12 @@ namespace SmrtPad
         public App()
         {
             Services = ConfigureServices();
+
+            // Apply the persisted language override before any resources are loaded.
+            var lang = Services.GetRequiredService<ISettingsService>().Language;
+            ApplicationLanguages.PrimaryLanguageOverride =
+                string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
+
             InitializeComponent();
         }
 

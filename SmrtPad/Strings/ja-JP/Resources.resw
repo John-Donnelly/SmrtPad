@@ -394,6 +394,15 @@
   <data name="StatusOptionsSaved" xml:space="preserve">
     <value>オプションを保存しました。</value>
   </data>
+  <data name="LanguageRestartTitle" xml:space="preserve">
+    <value>言語が変更されました</value>
+  </data>
+  <data name="LanguageRestartMessage" xml:space="preserve">
+    <value>新しい言語を適用するには SmrtPad を再起動してください。</value>
+  </data>
+  <data name="LanguageRestartNow" xml:space="preserve">
+    <value>今すぐ再起動</value>
+  </data>
   <data name="OptionsLanguage" xml:space="preserve">
     <value>言語</value>
   </data>

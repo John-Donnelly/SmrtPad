@@ -404,6 +404,15 @@
   <data name="OptionsLanguage" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="LanguageRestartTitle" xml:space="preserve">
+    <value>Language Changed</value>
+  </data>
+  <data name="LanguageRestartMessage" xml:space="preserve">
+    <value>Restart SmrtPad to apply the new language.</value>
+  </data>
+  <data name="LanguageRestartNow" xml:space="preserve">
+    <value>Restart Now</value>
+  </data>
   <data name="OptionsRulerUnits" xml:space="preserve">
     <value>Ruler Units</value>
   </data>

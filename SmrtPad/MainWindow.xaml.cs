@@ -995,17 +995,18 @@ namespace SmrtPad
                 ("de-DE", "Deutsch (Deutschland)"),
                 ("es-ES", "Español (España)"),
                 ("fr-FR", "Français (France)"),
-                ("ja-JP", "??? (??)"),
-                ("zh-Hans", "?? (??)"),
-                ("ar-SA", "??????? (????????)"),
-                ("ru-RU", "??????? (??????)"),
-                ("ur-PK", "???? (???????)")
+                ("ja-JP", "日本語 (日本)"),
+                ("zh-Hans", "中文 (简体)"),
+                ("ar-SA", "العربية (السعودية)"),
+                ("ru-RU", "Русский (Россия)"),
+                ("ur-PK", "اردو (پاکستان)")
             };
             foreach (var (tag, display) in supportedLocales)
                 languageBox.Items.Add(display);
             int selectedLocaleIndex = Array.FindIndex(supportedLocales, l => l.Tag == _settings.Language);
             languageBox.SelectedIndex = selectedLocaleIndex >= 0 ? selectedLocaleIndex : 0;
             panel.Children.Add(languageBox);
+            string originalLanguage = _settings.Language;
 
             var rulerUnitsBox = new ComboBox { Header = Res.GetString("OptionsRulerUnits"), Width = 200 };
             rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerInches"));
@@ -1048,6 +1049,23 @@ namespace SmrtPad
                 SetupAutoSave();
                 if (_rulersVisible) RedrawRulers();
                 ViewModel.UpdateStatus(Res.GetString("StatusOptionsSaved"));
+
+                if (_settings.Language != originalLanguage)
+                {
+                    Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride =
+                        _settings.Language == "en-US" ? string.Empty : _settings.Language;
+
+                    var restartDialog = new ContentDialog
+                    {
+                        Title = Res.GetString("LanguageRestartTitle"),
+                        Content = Res.GetString("LanguageRestartMessage"),
+                        PrimaryButtonText = Res.GetString("LanguageRestartNow"),
+                        CloseButtonText = Res.GetString("DlgOK"),
+                        XamlRoot = Content.XamlRoot
+                    };
+                    if (await restartDialog.ShowAsync() == ContentDialogResult.Primary)
+                        Microsoft.Windows.AppLifecycle.AppInstance.Restart(string.Empty);
+                }
             }
         }
 
