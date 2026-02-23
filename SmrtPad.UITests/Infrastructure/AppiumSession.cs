@@ -30,10 +30,10 @@ namespace SmrtPad.UITests.Infrastructure
         public AppiumSession(string appPath)
         {
             var options = new AppiumOptions();
-            options.App          = appPath;
-            options.PlatformName = "Windows";
-            // appium-windows-driver capability
-            options.AddAdditionalAppiumOption("ms:waitForAppLaunch", 5);
+            options.App            = appPath;
+            options.PlatformName   = "Windows";
+            options.AutomationName = "Windows"; // required by Appium 2.x / appium-windows-driver
+            options.AddAdditionalAppiumOption("ms:waitForAppLaunch", 5); // seconds (max 50)
 
             Driver = new WindowsDriver(new Uri(ServerUrl), options,
                 TimeSpan.FromSeconds(30));
