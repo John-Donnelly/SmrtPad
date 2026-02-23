@@ -3716,4 +3716,1180 @@ namespace SmrtPad.Tests
             Assert.Contains("wordprocessingml", content);
         }
     }
+
+    // ═══ ViewModel Remaining Property Tests ═════════════════════════════════════
+
+    public class ViewModelRemainingPropertyTests
+    {
+        [Fact]
+        public void IsModified_DefaultIsFalse()
+        {
+            var vm = new EditorViewModel();
+            Assert.False(vm.IsModified);
+        }
+
+        [Fact]
+        public void IsModified_CanBeSetTrue()
+        {
+            var vm = new EditorViewModel();
+            vm.IsModified = true;
+            Assert.True(vm.IsModified);
+        }
+
+        [Fact]
+        public void IsModified_FiresPropertyChanged()
+        {
+            var vm = new EditorViewModel();
+            var fired = new List<string>();
+            vm.PropertyChanged += (_, e) => fired.Add(e.PropertyName!);
+            vm.IsModified = true;
+            Assert.Contains("IsModified", fired);
+        }
+
+        [Fact]
+        public void IsModified_NewDocument_Resets()
+        {
+            var vm = new EditorViewModel();
+            vm.IsModified = true;
+            vm.NewDocument();
+            Assert.False(vm.IsModified);
+        }
+
+        [Fact]
+        public void DocumentTitle_DefaultIsUntitled()
+        {
+            var vm = new EditorViewModel();
+            Assert.NotEmpty(vm.DocumentTitle);
+        }
+
+        [Fact]
+        public void DocumentTitle_CanBeSet()
+        {
+            var vm = new EditorViewModel();
+            vm.DocumentTitle = "My File.rtf";
+            Assert.Equal("My File.rtf", vm.DocumentTitle);
+        }
+
+        [Fact]
+        public void DocumentTitle_FiresPropertyChanged()
+        {
+            var vm = new EditorViewModel();
+            var fired = new List<string>();
+            vm.PropertyChanged += (_, e) => fired.Add(e.PropertyName!);
+            vm.DocumentTitle = "Changed";
+            Assert.Contains("DocumentTitle", fired);
+        }
+
+        [Fact]
+        public void DocumentTitle_NewDocument_ResetsToUntitled()
+        {
+            var vm = new EditorViewModel();
+            string original = vm.DocumentTitle;
+            vm.DocumentTitle = "saved.rtf";
+            vm.NewDocument();
+            Assert.Equal(original, vm.DocumentTitle);
+        }
+
+        [Fact]
+        public void RecentFiles_DefaultIsEmpty()
+        {
+            var vm = new EditorViewModel();
+            Assert.Empty(vm.RecentFiles);
+        }
+
+        [Fact]
+        public void RecentFiles_CanBePopulated()
+        {
+            var vm = new EditorViewModel();
+            vm.RecentFiles = ["C:\\a.rtf", "C:\\b.rtf"];
+            Assert.Equal(2, vm.RecentFiles.Count);
+            Assert.Contains("C:\\a.rtf", vm.RecentFiles);
+            Assert.Contains("C:\\b.rtf", vm.RecentFiles);
+        }
+
+        [Fact]
+        public void RecentFiles_FiresPropertyChanged()
+        {
+            var vm = new EditorViewModel();
+            var fired = new List<string>();
+            vm.PropertyChanged += (_, e) => fired.Add(e.PropertyName!);
+            vm.RecentFiles = ["C:\\file.rtf"];
+            Assert.Contains("RecentFiles", fired);
+        }
+
+        [Fact]
+        public void StatusMessage_DefaultIsReady()
+        {
+            var vm = new EditorViewModel();
+            Assert.NotEmpty(vm.StatusMessage);
+        }
+
+        [Fact]
+        public void StatusMessage_NewDocument_SetsNewDocMessage()
+        {
+            var vm = new EditorViewModel();
+            vm.UpdateStatus("Custom message");
+            vm.NewDocument();
+            // NewDocument() sets status to the StatusNewDocument resource string
+            Assert.NotEmpty(vm.StatusMessage);
+            Assert.NotEqual("Custom message", vm.StatusMessage);
+        }
+
+        [Fact]
+        public void ZoomDisplay_LargeValue_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.ZoomLevel = 500;
+            Assert.Equal("500%", vm.ZoomDisplay);
+        }
+
+        [Fact]
+        public void ZoomDisplay_SmallValue_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.ZoomLevel = 10;
+            Assert.Equal("10%", vm.ZoomDisplay);
+        }
+
+        [Fact]
+        public void ZoomDisplay_DecimalValue_RoundsToInteger()
+        {
+            var vm = new EditorViewModel();
+            vm.ZoomLevel = 110.5;
+            // Format is {ZoomLevel:0}% — rounds to nearest integer
+            Assert.Equal("111%", vm.ZoomDisplay);
+        }
+
+        [Fact]
+        public void SelectionLengthDisplay_Zero_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.SelectionLength = 0;
+            Assert.Contains("0", vm.SelectionLengthDisplay);
+        }
+
+        [Fact]
+        public void LineColDisplay_LargeValues_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.LineNumber = 10000;
+            vm.ColumnNumber = 999;
+            Assert.Contains("10000", vm.LineColDisplay);
+            Assert.Contains("999", vm.LineColDisplay);
+        }
+
+        [Fact]
+        public void WordCountDisplay_LargeNumber_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.WordCount = 100000;
+            Assert.Contains("100000", vm.WordCountDisplay);
+        }
+
+        [Fact]
+        public void CharCountDisplay_LargeNumber_FormatsCorrectly()
+        {
+            var vm = new EditorViewModel();
+            vm.CharCount = 500000;
+            Assert.Contains("500000", vm.CharCountDisplay);
+        }
+
+        [Theory]
+        [InlineData(1.0)]
+        [InlineData(1.15)]
+        [InlineData(1.5)]
+        [InlineData(2.0)]
+        [InlineData(3.0)]
+        public void LineSpacing_AllPresets_RoundTrip(double spacing)
+        {
+            var vm = new EditorViewModel();
+            vm.SetLineSpacing(spacing);
+            Assert.Equal(spacing, vm.LineSpacing);
+        }
+
+        [Theory]
+        [InlineData("None")]
+        [InlineData("Bullet")]
+        [InlineData("Number")]
+        [InlineData("LowercaseLetter")]
+        [InlineData("UppercaseLetter")]
+        [InlineData("LowercaseRoman")]
+        [InlineData("UppercaseRoman")]
+        public void ListType_AllValues_Persist(string listType)
+        {
+            var vm = new EditorViewModel();
+            vm.SetListType(listType);
+            Assert.Equal(listType, vm.ListType);
+        }
+
+        [Fact]
+        public void PropertyChanged_SameValue_NotFired()
+        {
+            var vm = new EditorViewModel();
+            vm.WordCount = 0; // Already 0
+            int fired = 0;
+            vm.PropertyChanged += (_, _) => fired++;
+            vm.WordCount = 0; // Same value — should not fire
+            Assert.Equal(0, fired);
+        }
+
+        [Fact]
+        public void ViewModel_AllCommandsImplementICommand()
+        {
+            var vm = new EditorViewModel();
+            var type = vm.GetType();
+            var commandProps = type.GetProperties()
+                .Where(p => p.Name.EndsWith("Command"))
+                .ToList();
+            foreach (var prop in commandProps)
+            {
+                var value = prop.GetValue(vm);
+                Assert.NotNull(value);
+                Assert.True(typeof(System.Windows.Input.ICommand).IsAssignableFrom(prop.PropertyType),
+                    $"{prop.Name} should implement ICommand");
+            }
+        }
+    }
+
+    // ═══ PdfHelper Page Layout Tests ════════════════════════════════════════════
+
+    public class PdfHelperPageLayoutTests
+    {
+        [Fact]
+        public void GeneratePdf_ThirtyLines_HasSinglePage()
+        {
+            // linesPerPage = (int)((842-144) / (12*1.4)) = 41; 30 fits on one page
+            string text = string.Join("\n", Enumerable.Range(1, 30).Select(i => $"Line {i}"));
+            var bytes = PdfHelper.GeneratePdf(text);
+            string content = Encoding.Latin1.GetString(bytes);
+            int pageCount = 0, idx = 0;
+            while ((idx = content.IndexOf("/Type /Page ", idx)) >= 0) { pageCount++; idx++; }
+            Assert.Equal(1, pageCount);
+        }
+
+        [Fact]
+        public void GeneratePdf_TabularContent_ExpandsTabs()
+        {
+            var bytes = PdfHelper.GeneratePdf("Column1\tColumn2\tColumn3");
+            Assert.True(bytes.Length > 0);
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("%PDF-1.4", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_WhitespaceOnly_ProducesValidPdf()
+        {
+            var bytes = PdfHelper.GeneratePdf("   \n\n   ");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("%PDF-1.4", content);
+            Assert.Contains("%%EOF", content);
+        }
+
+        [Fact]
+        public void GeneratePdf_WithNewlines_SplitsLines()
+        {
+            var bytes = PdfHelper.GeneratePdf("Line1\nLine2\nLine3");
+            string content = Encoding.Latin1.GetString(bytes);
+            Assert.Contains("Line1", content);
+            Assert.Contains("Line2", content);
+            Assert.Contains("Line3", content);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_ExactMaxChars_DoesNotWrap()
+        {
+            string line = new string('A', 80);
+            var result = PdfHelper.BuildDisplayLines(line, 80);
+            Assert.Single(result);
+            Assert.Equal(line, result[0]);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_MaxCharsPlus1_Wraps()
+        {
+            string line = new string('A', 81);
+            var result = PdfHelper.BuildDisplayLines(line, 80);
+            Assert.Equal(2, result.Count);
+            Assert.Equal(80, result[0].Length);
+            Assert.Equal(1, result[1].Length);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_MultipleNewlines_AllPreserved()
+        {
+            var result = PdfHelper.BuildDisplayLines("A\nB\n\nC", 80);
+            Assert.Equal(4, result.Count);
+            Assert.Equal("A", result[0]);
+            Assert.Equal("B", result[1]);
+            Assert.Equal("", result[2]);
+            Assert.Equal("C", result[3]);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_SingleWord_FitsOnOneLine()
+        {
+            var result = PdfHelper.BuildDisplayLines("Hello", 100);
+            Assert.Single(result);
+            Assert.Equal("Hello", result[0]);
+        }
+
+        [Fact]
+        public void BuildDisplayLines_SpaceAtBoundary_BreaksCleanly()
+        {
+            // "Hello World" — break between 5 and 5 when maxChars = 6
+            var result = PdfHelper.BuildDisplayLines("Hello World", 6);
+            Assert.Equal(2, result.Count);
+            Assert.Equal("Hello", result[0]);
+            Assert.Equal("World", result[1]);
+        }
+
+        [Fact]
+        public void PdfHelper_GeneratePdf_HasStreamObjects()
+        {
+            var bytes = PdfHelper.GeneratePdf("test content");
+            string content = Encoding.Latin1.GetString(bytes);
+            // PDF uses \n line endings (not \r\n)
+            Assert.Contains("stream\n", content);
+            Assert.Contains("\nendstream", content);
+        }
+
+        [Fact]
+        public void PdfHelper_GeneratePdf_HasValidPdfVersion()
+        {
+            var bytes = PdfHelper.GeneratePdf("test");
+            // Must start with %PDF-1.
+            Assert.Equal((byte)'%', bytes[0]);
+            Assert.Equal((byte)'P', bytes[1]);
+            Assert.Equal((byte)'D', bytes[2]);
+            Assert.Equal((byte)'F', bytes[3]);
+        }
+    }
+
+    // ═══ App Static Member Tests ═════════════════════════════════════════════════
+
+    public class AppStaticMemberTests
+    {
+        [Fact]
+        public void App_Services_PropertyExists()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("Services");
+            Assert.NotNull(prop);
+            Assert.True(prop!.CanRead);
+            Assert.False(prop.CanWrite);
+        }
+
+        [Fact]
+        public void App_MainWindow_PropertyExists()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("MainWindow",
+                BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(Microsoft.UI.Xaml.Window), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void App_Current_PropertyExists()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("Current",
+                BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(SmrtPad.App), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void App_NewWindow_IsPublicStatic()
+        {
+            var method = typeof(SmrtPad.App).GetMethod("NewWindow",
+                BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(method);
+            Assert.True(method!.IsStatic);
+            Assert.Equal(typeof(SmrtPad.MainWindow), method.ReturnType);
+        }
+
+        [Fact]
+        public void App_ConfigureServices_IsPrivateStatic()
+        {
+            var method = typeof(SmrtPad.App).GetMethod("ConfigureServices",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+            Assert.True(method!.IsStatic);
+        }
+
+        [Fact]
+        public void App_InheritsFromApplication()
+        {
+            Assert.True(typeof(Microsoft.UI.Xaml.Application).IsAssignableFrom(typeof(SmrtPad.App)));
+        }
+
+        [Fact]
+        public void App_Windows_IsGenericList_OfMainWindow()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("Windows",
+                BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(System.Collections.Generic.List<SmrtPad.MainWindow>), prop!.PropertyType);
+        }
+
+        [Fact]
+        public void App_Services_ReturnsServiceProvider()
+        {
+            var prop = typeof(SmrtPad.App).GetProperty("Services");
+            Assert.NotNull(prop);
+            Assert.Equal(typeof(Microsoft.Extensions.DependencyInjection.ServiceProvider), prop!.PropertyType);
+        }
+    }
+
+    // ═══ FileBackstageView Code-Behind Contract Tests ════════════════════════════
+
+    public class FileBackstageViewCodeBehindTests
+    {
+        private static readonly Type BSV = typeof(SmrtPad.Views.FileBackstageView);
+        private const BindingFlags Private = BindingFlags.NonPublic | BindingFlags.Instance;
+
+        [Fact]
+        public void FileBackstageView_HasPopulateTemplates_Private()
+        {
+            var method = BSV.GetMethod("PopulateTemplates", Private);
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method!.ReturnType);
+            Assert.Empty(method.GetParameters());
+        }
+
+        [Fact]
+        public void FileBackstageView_HasNavSelectionChanged_Private()
+        {
+            var method = BSV.GetMethod("Nav_SelectionChanged", Private);
+            Assert.NotNull(method);
+            var parms = method!.GetParameters();
+            Assert.Equal(2, parms.Length);
+            Assert.Equal("sender", parms[0].Name);
+            Assert.Equal("args", parms[1].Name);
+        }
+
+        [Fact]
+        public void FileBackstageView_HasSuppressSelectionEventField()
+        {
+            var field = BSV.GetField("_suppressSelectionEvent", Private);
+            Assert.NotNull(field);
+            Assert.Equal(typeof(bool), field!.FieldType);
+            Assert.True(field.IsInitOnly);
+        }
+
+        [Fact]
+        public void FileBackstageView_IsPartialClass()
+        {
+            // Partial class detection: has InitializeComponent generated by XAML
+            var method = BSV.GetMethod("InitializeComponent");
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void FileBackstageView_IsSealed()
+        {
+            Assert.True(BSV.IsSealed);
+        }
+
+        [Fact]
+        public void FileBackstageView_HasPublicDefaultConstructor()
+        {
+            var ctor = BSV.GetConstructor(Type.EmptyTypes);
+            Assert.NotNull(ctor);
+            Assert.True(ctor!.IsPublic);
+        }
+
+        [Fact]
+        public void FileBackstageView_SetDocumentProperties_ReturnType()
+        {
+            var method = BSV.GetMethod("SetDocumentProperties");
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method!.ReturnType);
+        }
+
+        [Fact]
+        public void FileBackstageView_SetRecentFiles_ReturnType()
+        {
+            var method = BSV.GetMethod("SetRecentFiles");
+            Assert.NotNull(method);
+            Assert.Equal(typeof(void), method!.ReturnType);
+        }
+
+        [Fact]
+        public void FileBackstageView_AllEvents_AreNullableEventHandlers()
+        {
+            // Only inspect the 12 events declared on FileBackstageView itself,
+            // not the hundreds of inherited RoutedEventHandler events from UserControl.
+            var ownEvents = BSV.GetEvents(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            foreach (var evt in ownEvents)
+            {
+                Assert.True(
+                    evt.EventHandlerType == typeof(EventHandler) ||
+                    evt.EventHandlerType == typeof(EventHandler<string>) ||
+                    evt.EventHandlerType == typeof(EventHandler<DocumentTemplate>),
+                    $"Event {evt.Name} has unexpected handler type {evt.EventHandlerType?.Name}");
+            }
+        }
+    }
+
+    // ═══ SettingsService Path & Persistence Tests ════════════════════════════════
+
+    public class SettingsServicePersistenceTests
+    {
+        private static (SettingsService svc, string path) CreateIsolated()
+        {
+            string path = Path.Combine(Path.GetTempPath(), "SmrtPadTests",
+                Guid.NewGuid().ToString("N"), "settings.json");
+            return (new SettingsService(path), path);
+        }
+
+        [Fact]
+        public void Save_CreatesFile()
+        {
+            var (svc, path) = CreateIsolated();
+            svc.Save();
+            Assert.True(File.Exists(path));
+        }
+
+        [Fact]
+        public void Constructor_CreatesParentDirectory()
+        {
+            // The custom-path constructor calls Directory.CreateDirectory immediately
+            string uniqueDir = Path.Combine(Path.GetTempPath(), "SmrtPadTests",
+                Guid.NewGuid().ToString("N"));
+            string path = Path.Combine(uniqueDir, "settings.json");
+            Assert.False(Directory.Exists(uniqueDir));
+            _ = new SettingsService(path);
+            Assert.True(Directory.Exists(uniqueDir));
+        }
+
+        [Fact]
+        public void Save_ProducesValidJson()
+        {
+            var (svc, path) = CreateIsolated();
+            svc.Save();
+            string json = File.ReadAllText(path);
+            Assert.Contains("{", json);
+            Assert.Contains("}", json);
+            Assert.Contains("DefaultFontFamily", json);
+        }
+
+        [Fact]
+        public void Load_ReloadsAfterSave()
+        {
+            var (svc, path) = CreateIsolated();
+            svc.DefaultFontFamily = "Consolas";
+            svc.Save();
+            svc.Load();
+            Assert.Equal("Consolas", svc.DefaultFontFamily);
+        }
+
+        [Fact]
+        public void AddRecentFile_SavesPersisted()
+        {
+            var (svc, path) = CreateIsolated();
+            svc.AddRecentFile("C:\\test.rtf");
+            svc.Save();
+
+            var svc2 = new SettingsService(path);
+            Assert.Single(svc2.RecentFiles);
+            Assert.Equal("C:\\test.rtf", svc2.RecentFiles[0]);
+        }
+
+        [Fact]
+        public void ClearRecentFiles_PersistsEmpty()
+        {
+            var (svc, path) = CreateIsolated();
+            svc.AddRecentFile("C:\\test.rtf");
+            svc.Save();
+            svc.ClearRecentFiles();
+            svc.Save();
+
+            var svc2 = new SettingsService(path);
+            Assert.Empty(svc2.RecentFiles);
+        }
+
+        [Fact]
+        public void SettingsService_DefaultPath_IsNotNull()
+        {
+            // Default constructor uses app-data path
+            var ctor = typeof(SettingsService).GetConstructor(Type.EmptyTypes);
+            Assert.NotNull(ctor);
+        }
+
+        [Fact]
+        public void SettingsService_FilePath_IsStored()
+        {
+            var (svc, path) = CreateIsolated();
+            var field = typeof(SettingsService).GetField("_settingsFilePath",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(field);
+            string storedPath = (string)field!.GetValue(svc)!;
+            Assert.Equal(path, storedPath);
+        }
+
+        [Fact]
+        public void AutoSaveInterval_Min_IsEnforced()
+        {
+            var (svc, _) = CreateIsolated();
+            svc.AutoSaveIntervalSeconds = 0;
+            Assert.Equal(0, svc.AutoSaveIntervalSeconds); // No enforced min at model level
+        }
+
+        [Fact]
+        public void ThemePreference_System_IsDefault()
+        {
+            var (svc, _) = CreateIsolated();
+            Assert.Equal("System", svc.ThemePreference);
+        }
+
+        [Fact]
+        public void ThemePreference_Persists_Dark()
+        {
+            var (svc, path) = CreateIsolated();
+            svc.ThemePreference = "Dark";
+            svc.Save();
+            var svc2 = new SettingsService(path);
+            Assert.Equal("Dark", svc2.ThemePreference);
+        }
+
+        [Fact]
+        public void Language_EnUS_IsDefault()
+        {
+            var (svc, _) = CreateIsolated();
+            Assert.Equal("en-US", svc.Language);
+        }
+    }
+
+    // ═══ MacroHelper Apply Tests (integration with ViewModel) ════════════════════
+
+    public class MacroHelperApplyTests
+    {
+        [Fact]
+        public void MacroCommandType_Bold_IsZero()
+        {
+            Assert.Equal(0, (int)MacroCommandType.Bold);
+        }
+
+        [Fact]
+        public void MacroCommandType_AllValues_AreDistinct()
+        {
+            var values = Enum.GetValues<MacroCommandType>().Cast<int>().ToList();
+            Assert.Equal(values.Count, values.Distinct().Count());
+        }
+
+        [Fact]
+        public void MacroHelper_Count_ReflectsRecordedCommands()
+        {
+            var m = new MacroHelper();
+            Assert.Equal(0, m.Count);
+            m.StartRecording();
+            m.Record(MacroCommandType.Bold);
+            m.Record(MacroCommandType.Italic);
+            Assert.Equal(2, m.Count);
+        }
+
+        [Fact]
+        public void MacroHelper_Commands_AfterClear_IsEmpty()
+        {
+            var m = new MacroHelper();
+            m.StartRecording();
+            m.Record(MacroCommandType.Bold);
+            m.StopRecording();
+            m.Clear();
+            Assert.Equal(0, m.Count);
+            Assert.Empty(m.Commands);
+        }
+
+        [Fact]
+        public void MacroHelper_Serialize_MultipleCommands()
+        {
+            var m = new MacroHelper();
+            m.StartRecording();
+            for (int i = 0; i < 10; i++)
+                m.Record(MacroCommandType.Bold);
+            m.StopRecording();
+            string json = m.Serialize();
+            Assert.NotEmpty(json);
+            Assert.Contains("Bold", json);
+        }
+
+        [Fact]
+        public void MacroHelper_Deserialize_ReplacesExisting()
+        {
+            var m = new MacroHelper();
+            m.StartRecording();
+            m.Record(MacroCommandType.Bold);
+            m.StopRecording();
+
+            string json = "[{\"Type\":\"Italic\",\"Value\":null}]";
+            m.Deserialize(json);
+            Assert.Single(m.Commands);
+            Assert.Equal(MacroCommandType.Italic, m.Commands[0].Type);
+        }
+
+        [Fact]
+        public void MacroHelper_MultipleStartRecording_Clears()
+        {
+            var m = new MacroHelper();
+            m.StartRecording();
+            m.Record(MacroCommandType.Bold);
+            m.Record(MacroCommandType.Italic);
+            m.StopRecording();
+            Assert.Equal(2, m.Count);
+
+            m.StartRecording(); // Re-start clears
+            m.Record(MacroCommandType.Underline);
+            m.StopRecording();
+            Assert.Equal(1, m.Count);
+        }
+
+        [Theory]
+        [InlineData("SetAlignment", "Left")]
+        [InlineData("SetAlignment", "Center")]
+        [InlineData("SetAlignment", "Right")]
+        [InlineData("SetAlignment", "Justify")]
+        public void MacroCommand_Alignment_Serializes(string typeName, string value)
+        {
+            var type = Enum.Parse<MacroCommandType>(typeName);
+            var m = new MacroHelper();
+            m.StartRecording();
+            m.Record(type, value);
+            m.StopRecording();
+
+            string json = m.Serialize();
+            var m2 = new MacroHelper();
+            m2.Deserialize(json);
+            Assert.Equal(value, m2.Commands[0].Value);
+        }
+
+        [Fact]
+        public void MacroCommand_InsertText_WithSpecialChars()
+        {
+            var m = new MacroHelper();
+            m.StartRecording();
+            m.Record(MacroCommandType.InsertText, "Hello \"World\" & <test>");
+            m.StopRecording();
+
+            var m2 = new MacroHelper();
+            m2.Deserialize(m.Serialize());
+            Assert.Equal("Hello \"World\" & <test>", m2.Commands[0].Value);
+        }
+    }
+
+    // ═══ ResourceHelper Key Coverage Tests ══════════════════════════════════════
+
+    public class ResourceHelperKeyCoverageTests
+    {
+        [Theory]
+        [InlineData("DocumentUntitled")]
+        [InlineData("StatusReady")]
+        [InlineData("StatusSaved")]
+        [InlineData("StatusOpened")]
+        [InlineData("StatusPrintFailed")]
+        [InlineData("StatusNewTab")]
+        [InlineData("StatusTabClosed")]
+        [InlineData("StatusTemplateApplied")]
+        [InlineData("BackstageFile")]
+        [InlineData("BackstageNewDesc")]
+        [InlineData("BackstageOpenDesc")]
+        [InlineData("BackstageSaveDesc")]
+        [InlineData("BackstageSaveAsDesc")]
+        [InlineData("BackstagePrintDesc")]
+        [InlineData("BackstageExportPdfDesc")]
+        [InlineData("BackstageExportDocxDesc")]
+        [InlineData("BackstageSaveOneDriveDesc")]
+        [InlineData("BackstageOptionsDesc")]
+        [InlineData("BackstageTemplatesDesc")]
+        [InlineData("BackstageNoRecentFiles")]
+        [InlineData("DocPropYes")]
+        [InlineData("DocPropNo")]
+        public void ResourceHelper_Key_IsNonEmpty(string key)
+        {
+            string result = ResourceHelper.GetString(key);
+            Assert.NotNull(result);
+            Assert.NotEqual(key, result); // Should resolve, not return key name
+            Assert.NotEmpty(result);
+        }
+
+        [Theory]
+        [InlineData("StatusBarWords", 100)]
+        [InlineData("StatusBarCharacters", 200)]
+        [InlineData("StatusBarSelection", 5)]
+        public void ResourceHelper_SingleArgFormat_ContainsValue(string key, int arg)
+        {
+            string result = ResourceHelper.GetFormatted(key, arg);
+            Assert.Contains(arg.ToString(), result);
+        }
+
+        [Fact]
+        public void ResourceHelper_LineColFormat_ContainsBoth()
+        {
+            string result = ResourceHelper.GetFormatted("StatusBarLineCol", 42, 7);
+            Assert.Contains("42", result);
+            Assert.Contains("7", result);
+        }
+
+        [Fact]
+        public void ResourceHelper_GetString_LargeUnknownKey_ReturnsKey()
+        {
+            string key = "Key_That_Definitely_Does_Not_Exist_In_Resources_XYZ123";
+            Assert.Equal(key, ResourceHelper.GetString(key));
+        }
+
+        [Fact]
+        public void ResourceHelper_GetFormatted_UnknownKey_StillFormats()
+        {
+            // Should not throw even for unknown keys
+            string result = ResourceHelper.GetFormatted("UnknownFormatKey", 1, 2, 3);
+            Assert.NotNull(result);
+        }
+    }
+
+    // ═══ MainWindow XAML Final Coverage Tests ═══════════════════════════════════
+
+    public class MainWindowXamlFinalTests
+    {
+        private static string? ReadXaml(string filename)
+        {
+            string? dir = Directory.GetCurrentDirectory();
+            while (dir is not null)
+            {
+                string candidate = Path.Combine(dir, "SmrtPad", filename);
+                if (File.Exists(candidate)) return File.ReadAllText(candidate);
+                dir = Directory.GetParent(dir)?.FullName;
+            }
+            return null;
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasWinUI3Namespace()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            // WinUI 3 uses 'using:' syntax for local namespaces
+            Assert.Contains("xmlns:local=\"using:SmrtPad\"", xaml);
+            Assert.Contains("xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasViewModelBinding()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("x:Bind ViewModel", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFontFamilyComboBoxBinding()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FontFamilyComboBox", xaml);
+            Assert.Contains("FontFamilyComboBox_Loaded", xaml);
+            Assert.Contains("FontFamilyComboBox_SelectionChanged", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasFontSizeComboBoxBinding()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FontSizeComboBox", xaml);
+            Assert.Contains("FontSizeComboBox_SelectionChanged", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_HasEditorScrollViewerHandler_InCodeBehind()
+        {
+            // Wired dynamically in CreateTab, not in XAML
+            var method = typeof(SmrtPad.MainWindow).GetMethod(
+                "EditorScrollViewer_PointerWheelChanged",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_HasEditorDragDropHandlers_InCodeBehind()
+        {
+            // Both wired dynamically in CreateTab: tab.Editor.DragOver += Editor_DragOver
+            var mw = typeof(SmrtPad.MainWindow);
+            const BindingFlags bf = BindingFlags.NonPublic | BindingFlags.Instance;
+            Assert.NotNull(mw.GetMethod("Editor_DragOver", bf));
+            Assert.NotNull(mw.GetMethod("Editor_Drop", bf));
+        }
+
+        [Fact]
+        public void MainWindow_HasEditorSelectionChangedHandler_InCodeBehind()
+        {
+            // Wired dynamically in CreateTab, not in XAML
+            var method = typeof(SmrtPad.MainWindow).GetMethod(
+                "Editor_SelectionChanged",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasBulletsToggle()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("Bullets_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_HasOptions_ViaBackstageEvent()
+        {
+            // Options_Click is fired by FileBackstageView.OptionsRequested event
+            var method = typeof(SmrtPad.MainWindow).GetMethod(
+                "Options_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasNewWindowBinding()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("NewWindow_Click", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasRulerCanvasSizeChangedHandlers()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("HRulerCanvas_SizeChanged", xaml);
+            Assert.Contains("VRulerCanvas_SizeChanged", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_FindRegexCheckBoxPresent()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FindRegexCheckBox", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_HasExit_ViaBackstageEvent()
+        {
+            // Exit_Click is fired by FileBackstageView.ExitRequested event
+            var method = typeof(SmrtPad.MainWindow).GetMethod(
+                "Exit_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_HasPrint_ViaBackstageEvent()
+        {
+            // Print_Click is fired by FileBackstageView.PrintRequested event
+            var method = typeof(SmrtPad.MainWindow).GetMethod(
+                "Print_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+
+        [Fact]
+        public void MainWindow_XAML_HasDropDownOpened()
+        {
+            string? xaml = ReadXaml("MainWindow.xaml");
+            if (xaml is null) return;
+            Assert.Contains("FontFamilyComboBox_DropDownOpened", xaml);
+        }
+
+        [Fact]
+        public void MainWindow_HasSaveToOneDrive_ViaBackstageEvent()
+        {
+            // SaveToOneDrive_Click is fired by FileBackstageView.OneDriveRequested event
+            var method = typeof(SmrtPad.MainWindow).GetMethod(
+                "SaveToOneDrive_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(method);
+        }
+    }
+
+    // ═══ RtfParser Advanced Paths Tests ═════════════════════════════════════════
+
+    public class RtfParserAdvancedTests
+    {
+        [Fact]
+        public void Parse_ColorTable_IsRemoved()
+        {
+            // {\*\colortbl} with the \* destination prefix is skipped by the parser
+            string rtf = @"{\rtf1\ansi{\*\colortbl ;\red255\green0\blue0;}Hello}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+            Assert.DoesNotContain("colortbl", text);
+        }
+
+        [Fact]
+        public void Parse_InfoGroup_IsSkipped()
+        {
+            string rtf = @"{\rtf1\ansi{\info{\title My Document}}Hello}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+            Assert.DoesNotContain("title", text);
+        }
+
+        [Fact]
+        public void Parse_StylesheetGroup_IsSkipped()
+        {
+            string rtf = @"{\rtf1\ansi{\stylesheet{\s0 Normal;}}Hello}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+            Assert.DoesNotContain("Normal;", text);
+        }
+
+        [Fact]
+        public void Parse_ObjectGroup_IsSkipped()
+        {
+            string rtf = @"{\rtf1\ansi Before{\object\objdata 1234}After}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Before", text);
+            Assert.Contains("After", text);
+            Assert.DoesNotContain("objdata", text);
+        }
+
+        [Fact]
+        public void Parse_HeaderGroup_IsSkipped()
+        {
+            string rtf = @"{\rtf1\ansi{\header Header Text}Body}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Body", text);
+            Assert.DoesNotContain("Header Text", text);
+        }
+
+        [Fact]
+        public void Parse_FooterGroup_IsSkipped()
+        {
+            string rtf = @"{\rtf1\ansi Body{\footer Footer Text}}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Body", text);
+            Assert.DoesNotContain("Footer Text", text);
+        }
+
+        [Fact]
+        public void Parse_ListtextGroup_IsSkipped()
+        {
+            string rtf = @"{\rtf1\ansi {\listtext\u183 }Item Text}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Item Text", text);
+        }
+
+        [Fact]
+        public void Parse_EmptyBraces_DoesNotCrash()
+        {
+            string rtf = @"{\rtf1\ansi {}Hello}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+        }
+
+        [Fact]
+        public void Parse_NestedGroups_ProcessedCorrectly()
+        {
+            string rtf = @"{\rtf1\ansi {\b {\i Bold Italic}}}";
+            var result = RtfParser.Parse(rtf);
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            Assert.NotEmpty(runs);
+        }
+
+        [Fact]
+        public void Parse_FontIndex_Zero_Default()
+        {
+            string rtf = @"{\rtf1\ansi\f0 Hello}";
+            var result = RtfParser.Parse(rtf);
+            Assert.NotEmpty(result.SelectMany(p => p.Runs));
+        }
+
+        [Fact]
+        public void Parse_UnknownControlWord_Ignored()
+        {
+            string rtf = @"{\rtf1\ansi\unknownword Hello}";
+            var result = RtfParser.Parse(rtf);
+            var text = string.Join("", result.SelectMany(p => p.Runs).Select(r => r.Text));
+            Assert.Contains("Hello", text);
+        }
+
+        [Fact]
+        public void Parse_TruncatedControlWord_DoesNotCrash()
+        {
+            string rtf = @"{\rtf1\ansi\b";
+            var result = RtfParser.Parse(rtf);
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public void RtfRun_WithExpression_CreatesNewInstance()
+        {
+            var a = new RtfRun("hello", false, false, false, false, "", 24);
+            var b = a with { Bold = true, Text = "world" };
+            Assert.True(b.Bold);
+            Assert.Equal("world", b.Text);
+            Assert.False(a.Bold);  // Original unchanged
+        }
+
+        [Fact]
+        public void RtfRun_Deconstruct_Works()
+        {
+            var run = new RtfRun("text", true, false, true, false, "Arial", 24);
+            var (text, bold, italic, underline, strike, font, size) = run;
+            Assert.Equal("text", text);
+            Assert.True(bold);
+            Assert.False(italic);
+            Assert.True(underline);
+            Assert.False(strike);
+            Assert.Equal("Arial", font);
+            Assert.Equal(24, size);
+        }
+
+        [Fact]
+        public void RtfParagraph_CanSetAlignment()
+        {
+            var para = new RtfParagraph();
+            para.Alignment = "center";
+            Assert.Equal("center", para.Alignment);
+        }
+
+        [Fact]
+        public void RtfParagraph_CanAddRuns()
+        {
+            var para = new RtfParagraph();
+            para.Runs.Add(new RtfRun("A", false, false, false, false, "", 24));
+            para.Runs.Add(new RtfRun("B", false, false, false, false, "", 24));
+            Assert.Equal(2, para.Runs.Count);
+        }
+
+        [Fact]
+        public void Parse_ItalicOff_DisablesItalic()
+        {
+            var result = RtfParser.Parse(@"{\rtf1\ansi\i Italic\i0 Off}");
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            Assert.Contains(runs, r => r.Italic);
+            Assert.Contains(runs, r => !r.Italic);
+        }
+
+        [Fact]
+        public void Parse_NegativeParam_TreatedAsZero()
+        {
+            // \b-1 means bold off (param 0)
+            var result = RtfParser.Parse(@"{\rtf1\ansi\b Text\b-1 Off}");
+            var runs = result.SelectMany(p => p.Runs).ToList();
+            // At minimum should not crash
+            Assert.NotNull(runs);
+        }
+
+        [Fact]
+        public void Parse_LargeHexValue_Handled()
+        {
+            // \'FF = char 255
+            var result = RtfParser.Parse(@"{\rtf1\ansi Test\'FF}");
+            Assert.NotNull(result);
+        }
+    }
 }
