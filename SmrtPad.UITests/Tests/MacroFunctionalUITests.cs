@@ -424,5 +424,150 @@ namespace SmrtPad.UITests.Tests
 
             ResetZoomTo100();
         }
+
+        // ── Macro records italic command ──────────────────────────────────────
+
+        /// <summary>
+        /// Records an Italic command, plays it back, and verifies ItalicToggle
+        /// is checked after playback. Confirms that multiple command types
+        /// can be recorded.
+        /// </summary>
+        [SkippableFact]
+        public void MacroRun_ItalicCommand_AppliesItalic_ToSelectedPlainText()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            // Type plain text, select it; confirm not italic
+            _fx.TypeInEditor("macro italic test");
+            _fx.SelectAllInEditor();
+            Assert.False(_fx.IsToggleChecked("ItalicToggle"), "text should start plain");
+
+            // Start recording
+            OpenMacroMenu();
+            ClickMacroItem("MacroRecordItem");
+
+            // Click Italic — records the command AND applies italic
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(300);
+
+            // Stop recording
+            OpenMacroMenu();
+            ClickMacroItem("MacroStopItem");
+
+            // Undo italic
+            _fx.UndoInEditor();
+            Thread.Sleep(200);
+
+            // Re-select and confirm plain
+            _fx.SelectAllInEditor();
+            Assert.False(_fx.IsToggleChecked("ItalicToggle"));
+
+            // Run macro → italic applied via playback
+            OpenMacroMenu();
+            ClickMacroItem("MacroRunItem");
+            Thread.Sleep(400);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
+            Assert.True(_fx.IsToggleChecked("ItalicToggle"),
+                "macro playback should have applied italic to the selection");
+
+            // Clean up
+            _fx.UndoInEditor();
+        }
+
+        // ── Stop without recording ───────────────────────────────────────────
+
+        /// <summary>
+        /// Clicking Stop when no recording is active should not crash.
+        /// The MacroStopItem is disabled when not recording, so we verify
+        /// the menu can be opened and closed safely.
+        /// </summary>
+        [SkippableFact]
+        public void MacroMenu_StopWhenNotRecording_MenuOpensAndClosesSafely()
+        {
+            RequireDriver();
+
+            OpenMacroMenu();
+
+            // Verify the Stop item exists
+            var stopItem = _driver!.FindElement(MobileBy.AccessibilityId("MacroStopItem"));
+            Assert.NotNull(stopItem);
+
+            // Close menu via Escape
+            stopItem.SendKeys(Keys.Escape);
+            Thread.Sleep(250);
+
+            // Editor should still be functional
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+        }
+
+        // ── Multiple commands in one macro ───────────────────────────────────
+
+        /// <summary>
+        /// Recording multiple zoom-in commands in a single macro and running it
+        /// should increase the zoom by the total of all recorded steps.
+        /// Recording 2 zoom-ins → playback should add 20%.
+        /// </summary>
+        [SkippableFact]
+        public void MacroRun_MultipleZoomInCommands_IncreasesZoomByTotal()
+        {
+            RequireDriver();
+            ResetZoomTo100();
+
+            // Record two ZoomIn commands
+            OpenMacroMenu();
+            ClickMacroItem("MacroRecordItem");
+            _fx.ClickMenuItem("View", "Zoom In");   // zoom → 110%
+            _fx.ClickMenuItem("View", "Zoom In");   // zoom → 120%
+            OpenMacroMenu();
+            ClickMacroItem("MacroStopItem");
+
+            // Run macro → zoom should increase by 20% (120 + 20 = 140%)
+            OpenMacroMenu();
+            ClickMacroItem("MacroRunItem");
+            Thread.Sleep(300);
+
+            Assert.Equal("140%", _fx.GetStatusBarText("ZoomText"));
+
+            ResetZoomTo100();
+        }
+
+        // ── Macro does not affect editor content ─────────────────────────────
+
+        /// <summary>
+        /// Recording and playing back a zoom macro should not change the
+        /// editor's word or character count.
+        /// </summary>
+        [SkippableFact]
+        public void MacroRun_ZoomCommand_DoesNotChangeEditorContent()
+        {
+            RequireDriver();
+            ResetZoomTo100();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("macro content test");
+
+            string wordsBefore = _fx.GetStatusBarText("WordCountText");
+            string charsBefore = _fx.GetStatusBarText("CharCountText");
+
+            // Record and run a zoom macro
+            OpenMacroMenu();
+            ClickMacroItem("MacroRecordItem");
+            _fx.ClickMenuItem("View", "Zoom In");
+            OpenMacroMenu();
+            ClickMacroItem("MacroStopItem");
+
+            OpenMacroMenu();
+            ClickMacroItem("MacroRunItem");
+            Thread.Sleep(300);
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal(charsBefore, _fx.GetStatusBarText("CharCountText"));
+
+            ResetZoomTo100();
+        }
     }
 }
