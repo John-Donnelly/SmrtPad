@@ -594,5 +594,223 @@ namespace SmrtPad.UITests.Tests
             _driver.FindElement(MobileBy.AccessibilityId("SpellCheckToggle")).Click();
             Thread.Sleep(400);
         }
+
+        // ── Bold via keyboard shortcut ────────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Ctrl+B with text selected should toggle Bold on,
+        /// confirming the keyboard accelerator works end-to-end.
+        /// </summary>
+        [SkippableFact]
+        public void Bold_ViaCtrlB_TogglesBoldOn()
+        {
+            RequireDriver();
+            TypeAndSelectAll("shortcut bold");
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "b");
+            Thread.Sleep(300);
+
+            Assert.True(_fx.IsToggleChecked("BoldToggle"));
+
+            // Clean up: toggle off
+            _fx.SelectAllInEditor();
+            editor.SendKeys(Keys.Control + "b");
+            Thread.Sleep(200);
+        }
+
+        // ── Italic via keyboard shortcut ──────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Ctrl+I with text selected should toggle Italic on.
+        /// </summary>
+        [SkippableFact]
+        public void Italic_ViaCtrlI_TogglesItalicOn()
+        {
+            RequireDriver();
+            TypeAndSelectAll("shortcut italic");
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "i");
+            Thread.Sleep(300);
+
+            Assert.True(_fx.IsToggleChecked("ItalicToggle"));
+
+            // Clean up
+            _fx.SelectAllInEditor();
+            editor.SendKeys(Keys.Control + "i");
+            Thread.Sleep(200);
+        }
+
+        // ── Underline via keyboard shortcut ───────────────────────────────────
+
+        /// <summary>
+        /// Pressing Ctrl+U with text selected should toggle Underline on.
+        /// </summary>
+        [SkippableFact]
+        public void Underline_ViaCtrlU_TogglesUnderlineOn()
+        {
+            RequireDriver();
+            TypeAndSelectAll("shortcut underline");
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "u");
+            Thread.Sleep(300);
+
+            Assert.True(_fx.IsToggleChecked("UnderlineToggle"));
+
+            // Clean up
+            _fx.SelectAllInEditor();
+            editor.SendKeys(Keys.Control + "u");
+            Thread.Sleep(200);
+        }
+
+        // ── Multiple formatting combinations ──────────────────────────────────
+
+        /// <summary>
+        /// Applying Bold + Italic simultaneously should check both toggles.
+        /// </summary>
+        [SkippableFact]
+        public void BoldAndItalic_AppliedTogether_BothTogglesChecked()
+        {
+            RequireDriver();
+            TypeAndSelectAll("bold italic combo");
+
+            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            Thread.Sleep(200);
+
+            // Re-select (clicking toggle may move cursor)
+            _fx.SelectAllInEditor();
+
+            _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(200);
+
+            // Re-select and verify both
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
+
+            Assert.True(_fx.IsToggleChecked("BoldToggle"));
+            Assert.True(_fx.IsToggleChecked("ItalicToggle"));
+
+            // Clean up
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            Thread.Sleep(150);
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(150);
+        }
+
+        // ── Clear formatting resets italic ────────────────────────────────────
+
+        /// <summary>
+        /// Applying Italic formatting and then clicking Clear Formatting should
+        /// reset the ItalicToggle to unchecked.
+        /// </summary>
+        [SkippableFact]
+        public void ClearFormatting_AfterItalic_ResetsItalicToggle()
+        {
+            RequireDriver();
+            TypeAndSelectAll("clear italic test");
+
+            _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(200);
+            Assert.True(_fx.IsToggleChecked("ItalicToggle"));
+
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Clear Formatting")).Click();
+            Thread.Sleep(300);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
+            Assert.False(_fx.IsToggleChecked("ItalicToggle"),
+                "Clear Formatting should reset italic to off");
+        }
+
+        // ── Clear formatting resets underline ─────────────────────────────────
+
+        /// <summary>
+        /// Applying Underline formatting and then clicking Clear Formatting
+        /// should reset the UnderlineToggle to unchecked.
+        /// </summary>
+        [SkippableFact]
+        public void ClearFormatting_AfterUnderline_ResetsUnderlineToggle()
+        {
+            RequireDriver();
+            TypeAndSelectAll("clear underline test");
+
+            _driver!.FindElement(MobileBy.AccessibilityId("UnderlineToggle")).Click();
+            Thread.Sleep(200);
+            Assert.True(_fx.IsToggleChecked("UnderlineToggle"));
+
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Clear Formatting")).Click();
+            Thread.Sleep(300);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
+            Assert.False(_fx.IsToggleChecked("UnderlineToggle"),
+                "Clear Formatting should reset underline to off");
+        }
+
+        // ── Clear formatting resets all formats ───────────────────────────────
+
+        /// <summary>
+        /// Applying Bold, Italic, and Strikethrough then Clear Formatting should
+        /// reset all three toggles to unchecked.
+        /// </summary>
+        [SkippableFact]
+        public void ClearFormatting_AfterMultipleFormats_ResetsAll()
+        {
+            RequireDriver();
+            TypeAndSelectAll("clear all test");
+
+            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            Thread.Sleep(150);
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(150);
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("StrikethroughToggle")).Click();
+            Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Clear Formatting")).Click();
+            Thread.Sleep(300);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
+            Assert.False(_fx.IsToggleChecked("BoldToggle"));
+            Assert.False(_fx.IsToggleChecked("ItalicToggle"));
+            Assert.False(_fx.IsToggleChecked("StrikethroughToggle"));
+        }
+
+        // ── Formatting preserves word count ───────────────────────────────────
+
+        /// <summary>
+        /// Applying Bold formatting should not change the word or character count.
+        /// </summary>
+        [SkippableFact]
+        public void Bold_DoesNotChangeWordOrCharCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("count test");
+
+            string wordsBefore = _fx.GetStatusBarText("WordCountText");
+            string charsBefore = _fx.GetStatusBarText("CharCountText");
+
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            Thread.Sleep(200);
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal(charsBefore, _fx.GetStatusBarText("CharCountText"));
+
+            // Clean up
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            Thread.Sleep(200);
+        }
     }
 }
