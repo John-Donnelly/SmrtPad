@@ -234,5 +234,206 @@ namespace SmrtPad.UITests.Tests
             Assert.False(_fx.IsToggleChecked("BoldToggle"),
                 "Paste Special should paste plain text without bold formatting");
         }
+
+        // ── Delete key ───────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Selecting all text and pressing Delete should clear the editor
+        /// and reset word/char counts to zero.
+        /// </summary>
+        [SkippableFact]
+        public void Delete_AfterSelectAll_RemovesAllText()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("delete me");
+            Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
+
+            _fx.SelectAllInEditor();
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Delete);
+            Thread.Sleep(300);
+
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal("Characters: 0", _fx.GetStatusBarText("CharCountText"));
+        }
+
+        // ── Backspace key ────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Backspace after typing a single character should reduce
+        /// the character count by one.
+        /// </summary>
+        [SkippableFact]
+        public void Backspace_AfterTyping_ReducesCharCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("abc");
+            Assert.Equal("Characters: 3", _fx.GetStatusBarText("CharCountText"));
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Backspace);
+            Thread.Sleep(300);
+
+            Assert.Equal("Characters: 2", _fx.GetStatusBarText("CharCountText"));
+        }
+
+        // ── Edit menu Cut item via menu ──────────────────────────────────────
+
+        /// <summary>
+        /// Using the Edit → Cut menu item (not keyboard shortcut) should
+        /// cut selected text and clear the editor.
+        /// </summary>
+        [SkippableFact]
+        public void Cut_ViaEditMenu_RemovesSelectedText()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("menu cut");
+            Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
+
+            _fx.SelectAllInEditor();
+            _fx.ClickMenuItem("Edit", "Cut");
+
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+        }
+
+        // ── Edit menu Copy then Paste via menu ───────────────────────────────
+
+        /// <summary>
+        /// Using the Edit → Copy then Edit → Paste menu items should
+        /// duplicate the text content.
+        /// </summary>
+        [SkippableFact]
+        public void CopyPaste_ViaEditMenu_DuplicatesContent()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("menu");
+            Assert.Equal("Characters: 4", _fx.GetStatusBarText("CharCountText"));
+
+            _fx.SelectAllInEditor();
+            _fx.ClickMenuItem("Edit", "Copy");
+
+            // Move to end and paste
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.End);
+            Thread.Sleep(100);
+            _fx.ClickMenuItem("Edit", "Paste");
+
+            Assert.Equal("Characters: 8", _fx.GetStatusBarText("CharCountText"));
+        }
+
+        // ── Edit menu Select All via menu ────────────────────────────────────
+
+        /// <summary>
+        /// Using the Edit → Select All menu item should select all content,
+        /// confirmed by a positive selection length in the status bar.
+        /// </summary>
+        [SkippableFact]
+        public void SelectAll_ViaEditMenu_SelectsEntireContent()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("select via menu");
+
+            _fx.ClickMenuItem("Edit", "Select All");
+            Thread.Sleep(200);
+
+            string selText = _fx.GetStatusBarText("SelectionLengthText");
+            // "select via menu" = 15 chars + trailing \r = Sel: 16
+            Assert.Equal("Sel: 16", selText);
+        }
+
+        // ── Multiple redo ────────────────────────────────────────────────────
+
+        /// <summary>
+        /// After multiple undos, the same number of redos should restore
+        /// the content back to the original state.
+        /// </summary>
+        [SkippableFact]
+        public void MultipleRedo_RestoresAllContent()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            _fx.TypeInEditor("redo multi test");
+            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+
+            // Undo until empty
+            for (int i = 0; i < 5; i++)
+            {
+                _fx.UndoInEditor();
+                Thread.Sleep(200);
+                if (_fx.GetStatusBarText("WordCountText") == "Words: 0") break;
+            }
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+            // Redo until content restored
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            for (int i = 0; i < 5; i++)
+            {
+                editor.SendKeys(Keys.Control + "y");
+                Thread.Sleep(200);
+                if (_fx.GetStatusBarText("WordCountText") == "Words: 3") break;
+            }
+            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+        }
+
+        // ── Copy without selection ───────────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Ctrl+C without any selection should not crash or alter
+        /// the editor content.
+        /// </summary>
+        [SkippableFact]
+        public void Copy_WithoutSelection_DoesNotCrash()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("stable text");
+
+            // Click editor to deselect all, then copy
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.Click();
+            Thread.Sleep(100);
+            editor.SendKeys(Keys.Control + "c");
+            Thread.Sleep(200);
+
+            // Content should be unchanged
+            Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal("Characters: 11", _fx.GetStatusBarText("CharCountText"));
+        }
+
+        // ── Paste into non-empty editor ──────────────────────────────────────
+
+        /// <summary>
+        /// Pasting text into an editor that already has content should append
+        /// at the cursor position without replacing existing text.
+        /// </summary>
+        [SkippableFact]
+        public void Paste_IntoExistingContent_AppendsAtCursor()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("first");
+            Assert.Equal("Characters: 5", _fx.GetStatusBarText("CharCountText"));
+
+            // Copy "first" to clipboard
+            _fx.SelectAllInEditor();
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "c");
+            Thread.Sleep(200);
+
+            // Move to end and paste
+            editor.SendKeys(Keys.End);
+            Thread.Sleep(100);
+            editor.SendKeys(Keys.Control + "v");
+            Thread.Sleep(300);
+
+            // "first" + "first" = 10 chars
+            Assert.Equal("Characters: 10", _fx.GetStatusBarText("CharCountText"));
+        }
     }
 }
