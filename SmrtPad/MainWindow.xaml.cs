@@ -162,7 +162,7 @@ namespace SmrtPad
             tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
             tab.ScrollViewer.SizeChanged += (s, e) =>
             {
-                if (_activeTabIndex >= 0 && tab == ActiveTab && ViewModel.ZoomLevel != 100)
+                if (_activeTabIndex >= 0 && tab == ActiveTab)
                     ApplyZoom();
             };
 
@@ -179,6 +179,12 @@ namespace SmrtPad
             ViewModel.NewDocument();
             UpdateEncoding("UTF-8");
             ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
+        }
+
+        private void NewTab_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            DocumentTabs_AddTabButtonClick(DocumentTabs, null!);
+            args.Handled = true;
         }
 
         private void ApplyTemplate(DocumentTemplate template)
@@ -1423,15 +1429,13 @@ namespace SmrtPad
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
+                bool isChecked = SubscriptToggle.IsChecked == true;
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
-                if (charFormatting.Subscript == FormatEffect.On)
+                charFormatting.Subscript = isChecked ? FormatEffect.On : FormatEffect.Off;
+                if (isChecked)
                 {
-                    charFormatting.Subscript = FormatEffect.Off;
-                }
-                else
-                {
-                    charFormatting.Subscript = FormatEffect.On;
                     charFormatting.Superscript = FormatEffect.Off;
+                    SuperscriptToggle.IsChecked = false;
                 }
                 selectedText.CharacterFormat = charFormatting;
             }
@@ -1443,15 +1447,13 @@ namespace SmrtPad
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
+                bool isChecked = SuperscriptToggle.IsChecked == true;
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
-                if (charFormatting.Superscript == FormatEffect.On)
+                charFormatting.Superscript = isChecked ? FormatEffect.On : FormatEffect.Off;
+                if (isChecked)
                 {
-                    charFormatting.Superscript = FormatEffect.Off;
-                }
-                else
-                {
-                    charFormatting.Superscript = FormatEffect.On;
                     charFormatting.Subscript = FormatEffect.Off;
+                    SubscriptToggle.IsChecked = false;
                 }
                 selectedText.CharacterFormat = charFormatting;
             }
@@ -1497,11 +1499,18 @@ namespace SmrtPad
             ActiveScaleTransform.ScaleX = scale;
             ActiveScaleTransform.ScaleY = scale;
 
-            // Compute container width so the scaled content fills the viewport.
+            // Compute container dimensions so the scaled content fills the viewport.
+            // The ScaleTransform shrinks the visual area — compensate by expanding
+            // the logical size so that (logical size * scale) == viewport size.
             double viewportWidth = EditorScrollViewer.ActualWidth;
+            double viewportHeight = EditorScrollViewer.ActualHeight;
             if (viewportWidth > 0)
             {
                 EditorContainer.Width = viewportWidth / scale;
+            }
+            if (viewportHeight > 0)
+            {
+                EditorContainer.MinHeight = viewportHeight / scale;
             }
 
             // Redraw rulers at the new scale
@@ -2888,7 +2897,12 @@ namespace SmrtPad
                 MinHeight = 1056,
             };
 
-            EditorContainer = new Grid { Margin = new Thickness(4) };
+            EditorContainer = new Grid 
+            { 
+                Margin = new Thickness(4),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
             EditorContainer.Children.Add(PageViewBorder);
             EditorContainer.Children.Add(Editor);
             EditorContainer.RenderTransform = ScaleTransform;

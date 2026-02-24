@@ -15,6 +15,9 @@
     </Window.SystemBackdrop>
 
     <Grid>
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="T" Modifiers="Control" Invoked="NewTab_Invoked"/>
+        </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -128,7 +131,7 @@
                 <Button Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8A5;" FontSize="14"/>
                 </Button>
-                <Button Click="Undo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Undo (Ctrl+Z)">
+                <Button x:Name="UndoButton" AutomationProperties.AutomationId="UndoButton" Click="Undo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Undo (Ctrl+Z)">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A7;" FontSize="14"/>
                 </Button>
                 <Button Click="Redo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Redo (Ctrl+Y)">
@@ -255,11 +258,11 @@
                         </ToggleButton>
                         <ToggleButton x:Name="SubscriptToggle" IsChecked="{x:Bind ViewModel.IsSubscript, Mode=TwoWay}" Click="Subscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Subscript">
-                            <TextBlock FontSize="13" Text="x&#x2082;"/>
+                            <TextBlock FontSize="13" Text="x&#x2082;" IsHitTestVisible="False"/>
                         </ToggleButton>
                         <ToggleButton x:Name="SuperscriptToggle" IsChecked="{x:Bind ViewModel.IsSuperscript, Mode=TwoWay}" Click="Superscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
-                            <TextBlock FontSize="13" Text="x&#xB2;"/>
+                            <TextBlock FontSize="13" Text="x&#xB2;" IsHitTestVisible="False"/>
                         </ToggleButton>
                         <!-- Font Color with swatch grid -->
                         <Button Padding="4,3" MinWidth="32" Height="32" CornerRadius="4" Background="Transparent" BorderThickness="0"
@@ -693,7 +696,8 @@
                      SelectionChanged="DocumentTabs_SelectionChanged"
                      TabWidthMode="SizeToContent"
                      VerticalAlignment="Stretch"
-                     Background="Transparent" />
+                     Background="Transparent">
+            </TabView>
 
             <!-- Backstage overlay -->
             <views:FileBackstageView x:Name="FileBackstage" Grid.Row="0" Grid.RowSpan="2"
