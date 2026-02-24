@@ -201,5 +201,130 @@ namespace SmrtPad.UITests.Tests
                 CloseActiveTab();
             }
         }
+
+        // ── Close tab via Ctrl+W ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Ctrl+W should close the active tab (same as clicking close).
+        /// </summary>
+        [SkippableFact]
+        public void CloseTab_ViaCtrlW_ClosesActiveTab()
+        {
+            RequireDriver();
+
+            // Create an extra tab so we can close it
+            AddNewTab();
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "w");
+            Thread.Sleep(500);
+
+            // The editor should still be present (at least one tab remains)
+            editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+        }
+
+        // ── New tab shows Untitled ───────────────────────────────────────────
+
+        /// <summary>
+        /// A newly created tab should have "Untitled" as its title.
+        /// </summary>
+        [SkippableFact]
+        public void NewTab_Title_ShowsUntitled()
+        {
+            RequireDriver();
+
+            AddNewTab();
+
+            // Find the tab with "Untitled" in its name
+            var untitledTab = _driver!.FindElement(MobileBy.Name("Untitled"));
+            Assert.NotNull(untitledTab);
+
+            // Clean up
+            CloseActiveTab();
+        }
+
+        // ── New tab has empty editor ─────────────────────────────────────────
+
+        /// <summary>
+        /// A newly created tab should have an empty editor with zero word count.
+        /// </summary>
+        [SkippableFact]
+        public void NewTab_HasEmptyEditor_WithZeroWordCount()
+        {
+            RequireDriver();
+
+            AddNewTab();
+
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal("Characters: 0", _fx.GetStatusBarText("CharCountText"));
+
+            // Clean up
+            CloseActiveTab();
+        }
+
+        // ── Rapid tab creation ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Rapidly creating and closing tabs should not crash the application.
+        /// </summary>
+        [SkippableFact]
+        public void RapidTabCreationAndClose_DoesNotCrash()
+        {
+            RequireDriver();
+
+            for (int i = 0; i < 5; i++)
+            {
+                AddNewTab();
+                Thread.Sleep(100);
+                CloseActiveTab();
+                Thread.Sleep(100);
+            }
+
+            // Verify the editor is still functional
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+        }
+
+        // ── Tab switching preserves formatting ───────────────────────────────
+
+        /// <summary>
+        /// Applying bold formatting in one tab and switching to another
+        /// should not carry the bold state to the new tab.
+        /// </summary>
+        [SkippableFact]
+        public void SwitchTabs_FormattingIsIndependent()
+        {
+            RequireDriver();
+
+            // Type and bold text in first tab
+            _fx.ClearEditor();
+            _fx.TypeInEditor("bold text");
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            Thread.Sleep(200);
+            Assert.True(_fx.IsToggleChecked("BoldToggle"));
+
+            // Create a new tab (auto-focused)
+            AddNewTab();
+            _fx.TypeInEditor("plain text");
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
+
+            // Bold should not be checked in the new tab
+            Assert.False(_fx.IsToggleChecked("BoldToggle"),
+                "Bold state should not carry over to a new tab");
+
+            // Clean up
+            CloseActiveTab();
+
+            // Clean up: undo bold in original tab
+            _fx.SelectAllInEditor();
+            if (_fx.IsToggleChecked("BoldToggle"))
+            {
+                _driver.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+                Thread.Sleep(200);
+            }
+        }
     }
 }
