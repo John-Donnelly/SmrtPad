@@ -295,5 +295,192 @@ namespace SmrtPad.UITests.Tests
             string text = _fx.GetStatusBarText("CharCountText");
             Assert.Equal("Characters: 0", text);
         }
+
+        // ── Multiple Enter keys ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Enter three times should advance to line 4.
+        /// </summary>
+        [SkippableFact]
+        public void ThreeEnterKeys_LineNumber_AdvancesToFour()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Enter);
+            Thread.Sleep(100);
+            editor.SendKeys(Keys.Enter);
+            Thread.Sleep(100);
+            editor.SendKeys(Keys.Enter);
+            Thread.Sleep(200);
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.StartsWith("Ln 4,", lineCol);
+        }
+
+        // ── Arrow keys update column ──────────────────────────────────────────
+
+        /// <summary>
+        /// After typing "hello", pressing Left arrow should decrease the column
+        /// from 6 to 5.
+        /// </summary>
+        [SkippableFact]
+        public void LeftArrow_AfterTyping_DecreasesColumn()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello");
+
+            // Cursor is at Col 6; press Left once → Col 5
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.ArrowLeft);
+            Thread.Sleep(200);
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.Contains("Col 5", lineCol);
+        }
+
+        // ── Home key returns to column 1 ──────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Home after typing should move the cursor to column 1.
+        /// </summary>
+        [SkippableFact]
+        public void HomeKey_AfterTyping_MovesToColumnOne()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("some text");
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Home);
+            Thread.Sleep(200);
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.Contains("Col 1", lineCol);
+        }
+
+        // ── Typing after undo ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// After undoing and typing new content, the word count should reflect
+        /// the new content accurately.
+        /// </summary>
+        [SkippableFact]
+        public void TypingAfterUndo_UpdatesWordCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            _fx.TypeInEditor("old text");
+            Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
+
+            _fx.UndoInEditor();
+            Thread.Sleep(300);
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+            _fx.TypeInEditor("new");
+            Assert.Equal("Words: 1", _fx.GetStatusBarText("WordCountText"));
+        }
+
+        // ── Backspace removes character and updates count ─────────────────────
+
+        /// <summary>
+        /// Pressing Backspace after typing "abc" should reduce the character
+        /// count from 3 to 2.
+        /// </summary>
+        [SkippableFact]
+        public void Backspace_ReducesCharCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("abc");
+            Assert.Equal("Characters: 3", _fx.GetStatusBarText("CharCountText"));
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Backspace);
+            Thread.Sleep(300);
+
+            Assert.Equal("Characters: 2", _fx.GetStatusBarText("CharCountText"));
+        }
+
+        // ── End key moves to end of line ──────────────────────────────────────
+
+        /// <summary>
+        /// After moving to the start of a line and pressing End, the cursor
+        /// should return to the end of the line.
+        /// </summary>
+        [SkippableFact]
+        public void EndKey_AfterHome_MovesToEndOfLine()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello");
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Home);
+            Thread.Sleep(100);
+            editor.SendKeys(Keys.End);
+            Thread.Sleep(200);
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.Contains("Col 6", lineCol);
+        }
+
+        // ── Empty editor line/col is Ln 1, Col 1 ─────────────────────────────
+
+        /// <summary>
+        /// A freshly cleared editor should show Ln 1, Col 1 in the status bar.
+        /// </summary>
+        [SkippableFact]
+        public void EmptyEditor_LineCol_ShowsLn1Col1()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.Equal("Ln 1, Col 1", lineCol);
+        }
+
+        // ── Word count with multiple spaces ───────────────────────────────────
+
+        /// <summary>
+        /// Multiple spaces between words should still count as separate words.
+        /// "hello   world" = 2 words.
+        /// </summary>
+        [SkippableFact]
+        public void MultipleSpaces_BetweenWords_CountsCorrectly()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello   world");
+
+            string wordCount = _fx.GetStatusBarText("WordCountText");
+            Assert.Equal("Words: 2", wordCount);
+        }
+
+        // ── Typing on second line preserves first line content ────────────────
+
+        /// <summary>
+        /// Typing on a second line should not affect the word count
+        /// of the first line — total should be the sum of both lines.
+        /// </summary>
+        [SkippableFact]
+        public void TypingOnSecondLine_AccumulatesWordCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            _fx.TypeInEditor("first line");
+            Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Enter);
+            Thread.Sleep(100);
+            _fx.TypeInEditor("second line");
+
+            Assert.Equal("Words: 4", _fx.GetStatusBarText("WordCountText"));
+        }
     }
 }
