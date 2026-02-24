@@ -56,8 +56,13 @@ namespace SmrtPad
                 var lang = Services.GetRequiredService<ISettingsService>().Language;
                 System.IO.File.AppendAllText(logPath, $"Got language: {lang}\n");
 
-                ApplicationLanguages.PrimaryLanguageOverride =
-                    string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
+                try
+                {
+                    // PrimaryLanguageOverride requires package identity; skip silently for unpackaged launches.
+                    ApplicationLanguages.PrimaryLanguageOverride =
+                        string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
+                }
+                catch (InvalidOperationException) { }
                 System.IO.File.AppendAllText(logPath, "PrimaryLanguageOverride set\n");
 
                 InitializeComponent();
@@ -88,7 +93,19 @@ namespace SmrtPad
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            var mainWindow = new MainWindow();
+            var logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SmrtPad_App_Startup.log");
+            System.IO.File.AppendAllText(logPath, "OnLaunched: creating MainWindow\n");
+            MainWindow mainWindow;
+            try
+            {
+                mainWindow = new MainWindow();
+                System.IO.File.AppendAllText(logPath, "OnLaunched: MainWindow created\n");
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(logPath, $"OnLaunched: MainWindow ctor threw: {ex}\n");
+                throw;
+            }
             _window = mainWindow;
             MainWindow = _window;
             Windows.Add(mainWindow);

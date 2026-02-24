@@ -173,12 +173,47 @@ namespace SmrtPad
             return tab;
         }
 
+        private void DocumentTabs_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is not TabView tabView)
+            {
+                return;
+            }
+
+            var addButton = FindDescendantByName<Button>(tabView, "AddButton");
+            if (addButton != null)
+            {
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(addButton, "AddButton");
+            }
+        }
+
         private void DocumentTabs_AddTabButtonClick(TabView sender, object args)
         {
             CreateTab(Res.GetString("DocumentUntitled"));
             ViewModel.NewDocument();
             UpdateEncoding("UTF-8");
             ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
+        }
+
+        private static T? FindDescendantByName<T>(DependencyObject parent, string name) where T : FrameworkElement
+        {
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild && typedChild.Name == name)
+                {
+                    return typedChild;
+                }
+
+                var result = FindDescendantByName<T>(child, name);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
 
         private void NewTab_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)

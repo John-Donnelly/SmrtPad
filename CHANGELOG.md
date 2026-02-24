@@ -21,6 +21,11 @@ All notable changes to SmrtPad are documented in this file.
 - `SmrtDoodleGetFromStore` resource string added to all 9 locale files
 
 ### Changed
+- **UI automation launch robustness** — `AppiumSession` now falls back from MSIX/AUMID activation to direct `SmrtPad.exe` launch when the packaged app fails to start, enabling tests to run in both packaged and unpackaged configurations; diagnostic `Dx` test now skips gracefully (instead of throwing) when the WinAppDriver session cannot start
+- **`SharedAppFixture` helpers improved** — `ClearEditor` and `SelectAllInEditor` prefer Edit-menu clicks over raw keyboard shortcuts; `UndoInEditor` uses multi-strategy element lookup with a clear error when the Undo button is not found
+- **Additional `AutomationProperties.AutomationId` attributes** — status bar elements (`StatusText`, `WordCountText`, `CharCountText`, `SelectionLengthText`, `LineColText`, `EncodingText`, `ZoomText`), `DocumentTabs`, `ReplaceWithTextBox`, and `FileBackstageView.HeaderText`; `DocumentTabs_Loaded` handler sets `AutomationId` on the dynamically-created Add-tab button via `FindDescendantByName<T>`
+- **App startup diagnostics** — `App.xaml.cs` logs key startup events to a temp file during `OnLaunched` to aid debugging of packaged/unpackaged launch issues; `PrimaryLanguageOverride` wrapped in `try/catch(InvalidOperationException)` for unpackaged launches
+- **Custom entry point** — `SmrtPad.csproj` now uses `DefineConstants DISABLE_XAML_GENERATED_MAIN` instead of `Compile Remove="Program.cs"` for better compatibility with the .NET 10 SDK
 - **SmrtDoodle ribbon button** — redesigned to match all other ribbon buttons: `StackPanel` with a 22 px `Image` icon above a `TextBlock "SmrtDoodle"` label; button width reduced 72 → 52, padding corrected to 0; tooltip updated to `"SmrtDoodle - Create A Drawing"`
 - `SmrtDoodleNotFoundMessage` resource updated to reference the Microsoft Store
 - **SmrtDoodle assets** — `Assets/SmrtDoodle.png` and `Assets/SmrtDoodle-LM.png` replaced with new clean icons (no baked-in text)

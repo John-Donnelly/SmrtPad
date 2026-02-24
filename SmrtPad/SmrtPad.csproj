@@ -48,9 +48,9 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Program.cs" />
-  </ItemGroup>
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />

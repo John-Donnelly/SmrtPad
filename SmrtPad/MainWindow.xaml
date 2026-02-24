@@ -84,29 +84,38 @@
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem x:Uid="WordWrapMenuItem" Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
                         <MenuFlyoutSeparator />
-                        <ToggleMenuFlyoutItem x:Name="SpellCheckToggle" x:Uid="SpellCheckToggle" Text="Spell Check" IsChecked="True" Click="SpellCheck_Click" />
+                        <ToggleMenuFlyoutItem x:Name="SpellCheckToggle" x:Uid="SpellCheckToggle" Text="Spell Check" IsChecked="True" Click="SpellCheck_Click"
+                                             AutomationProperties.AutomationId="SpellCheckToggle" />
                         <MenuFlyoutSeparator />
-                        <ToggleMenuFlyoutItem x:Name="RulerToggle" x:Uid="RulerToggle" Text="Ruler" Click="Ruler_Click" />
-                        <ToggleMenuFlyoutItem x:Name="PageViewToggle" x:Uid="PageViewToggle" Text="Page View" Click="PageView_Click" />
+                        <ToggleMenuFlyoutItem x:Name="RulerToggle" x:Uid="RulerToggle" Text="Ruler" Click="Ruler_Click"
+                                             AutomationProperties.AutomationId="RulerToggle" />
+                        <ToggleMenuFlyoutItem x:Name="PageViewToggle" x:Uid="PageViewToggle" Text="Page View" Click="PageView_Click"
+                                             AutomationProperties.AutomationId="PageViewToggle" />
                         <MenuFlyoutSeparator />
-                        <ToggleMenuFlyoutItem x:Name="FocusModeToggle" x:Uid="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click" />
+                        <ToggleMenuFlyoutItem x:Name="FocusModeToggle" x:Uid="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click"
+                                             AutomationProperties.AutomationId="FocusModeToggle" />
                     </MenuBarItem>
                     <MenuBarItem x:Uid="MacroMenuBar" Title="Macro">
-                        <MenuFlyoutItem x:Name="MacroRecordItem" Text="Record Macro" Click="MacroRecord_Click">
+                        <MenuFlyoutItem x:Name="MacroRecordItem" Text="Record Macro" Click="MacroRecord_Click"
+                                        AutomationProperties.AutomationId="MacroRecordItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7C8;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Name="MacroStopItem" Text="Stop Recording" Click="MacroStop_Click" IsEnabled="False">
+                        <MenuFlyoutItem x:Name="MacroStopItem" Text="Stop Recording" Click="MacroStop_Click" IsEnabled="False"
+                                        AutomationProperties.AutomationId="MacroStopItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE71A;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="MacroRunItem" Text="Run Macro" Click="MacroRun_Click">
+                        <MenuFlyoutItem x:Name="MacroRunItem" Text="Run Macro" Click="MacroRun_Click"
+                                        AutomationProperties.AutomationId="MacroRunItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="MacroSaveItem" Text="Save Macro" Click="MacroSave_Click">
+                        <MenuFlyoutItem x:Name="MacroSaveItem" Text="Save Macro" Click="MacroSave_Click"
+                                        AutomationProperties.AutomationId="MacroSaveItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74E;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Name="MacroLoadItem" Text="Load Macro" Click="MacroLoad_Click">
+                        <MenuFlyoutItem x:Name="MacroLoadItem" Text="Load Macro" Click="MacroLoad_Click"
+                                        AutomationProperties.AutomationId="MacroLoadItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                     </MenuBarItem>
@@ -138,14 +147,15 @@
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A6;" FontSize="14"/>
                 </Button>
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
-                <Button x:Name="ThemeToggleButton" Click="ThemeToggle_Click" Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Toggle Theme">
+                <Button x:Name="ThemeToggleButton" Click="ThemeToggle_Click" Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Toggle Theme"
+                        AutomationProperties.AutomationId="ThemeToggleButton">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE793;" FontSize="14"/>
                 </Button>
             </StackPanel>
         </Grid>
 
         <!-- ═══ RIBBON ═══ -->
-        <Border x:Name="RibbonBar" Grid.Row="1"
+        <Border x:Name="RibbonBar" Grid.Row="1" AutomationProperties.AutomationId="RibbonBar"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                 BorderThickness="0,0,0,1"
@@ -221,11 +231,13 @@
                     <!-- Row 1: font family · font size · grow · shrink -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="3" Margin="0,0,0,3">
                         <ComboBox x:Name="FontFamilyComboBox" Width="158" Height="32"
+                                  AutomationProperties.AutomationId="FontFamilyComboBox"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged"
                                   IsEditable="True" MaxDropDownHeight="350"
                                   DropDownOpened="FontFamilyComboBox_DropDownOpened"
                                   Loaded="FontFamilyComboBox_Loaded"/>
                         <ComboBox x:Name="FontSizeComboBox" Width="62" Height="32"
+                                  AutomationProperties.AutomationId="FontSizeComboBox"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
                                   IsEditable="True"/>
                         <Button Click="GrowFont_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
@@ -241,26 +253,32 @@
                     <!-- Row 2: B  I  U  S  x₂  x²  FontColor  Highlight -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0">
                         <ToggleButton x:Name="BoldToggle" IsChecked="{x:Bind ViewModel.IsBold, Mode=TwoWay}" Click="Bold_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       AutomationProperties.AutomationId="BoldToggle"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Bold (Ctrl+B)">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DD;" FontSize="16"/>
                         </ToggleButton>
                         <ToggleButton x:Name="ItalicToggle" IsChecked="{x:Bind ViewModel.IsItalic, Mode=TwoWay}" Click="Italic_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       AutomationProperties.AutomationId="ItalicToggle"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Italic (Ctrl+I)">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DB;" FontSize="16"/>
                         </ToggleButton>
                         <ToggleButton x:Name="UnderlineToggle" IsChecked="{x:Bind ViewModel.IsUnderline, Mode=TwoWay}" Click="Underline_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       AutomationProperties.AutomationId="UnderlineToggle"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Underline (Ctrl+U)">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8DC;" FontSize="16"/>
                         </ToggleButton>
                         <ToggleButton x:Name="StrikethroughToggle" IsChecked="{x:Bind ViewModel.IsStrikethrough, Mode=TwoWay}" Click="Strikethrough_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       AutomationProperties.AutomationId="StrikethroughToggle"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Strikethrough">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xEDE0;" FontSize="16"/>
                         </ToggleButton>
                         <ToggleButton x:Name="SubscriptToggle" IsChecked="{x:Bind ViewModel.IsSubscript, Mode=TwoWay}" Click="Subscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       AutomationProperties.AutomationId="SubscriptToggle"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Subscript">
                             <TextBlock FontSize="13" Text="x&#x2082;" IsHitTestVisible="False"/>
                         </ToggleButton>
                         <ToggleButton x:Name="SuperscriptToggle" IsChecked="{x:Bind ViewModel.IsSuperscript, Mode=TwoWay}" Click="Superscript_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                       AutomationProperties.AutomationId="SuperscriptToggle"
                                        Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Superscript">
                             <TextBlock FontSize="13" Text="x&#xB2;" IsHitTestVisible="False"/>
                         </ToggleButton>
@@ -365,16 +383,24 @@
                         </Button>
                         <!-- List type button with dropdown -->
                         <Button x:Name="ListTypeButton" Click="Bullets_Click" Padding="4,3" CornerRadius="4" Height="28"
+                                AutomationProperties.AutomationId="ListTypeButton"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Start a list">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
-                                    <MenuFlyoutItem x:Name="ListTypeNoneItem" x:Uid="ListTypeNoneItem" Text="None" Click="ListTypeNone_Click"/>
-                                    <MenuFlyoutItem x:Name="ListTypeBulletItem" x:Uid="ListTypeBulletItem" Text="Bullet" Click="ListTypeBullet_Click"/>
-                                    <MenuFlyoutItem x:Name="ListTypeNumberItem" x:Uid="ListTypeNumberItem" Text="Numbers" Click="ListTypeNumber_Click"/>
-                                    <MenuFlyoutItem x:Name="ListTypeLowerLetterItem" x:Uid="ListTypeLowerLetterItem" Text="Lowercase letters" Click="ListTypeLowerLetter_Click"/>
-                                    <MenuFlyoutItem x:Name="ListTypeUpperLetterItem" x:Uid="ListTypeUpperLetterItem" Text="Uppercase letters" Click="ListTypeUpperLetter_Click"/>
-                                    <MenuFlyoutItem x:Name="ListTypeLowerRomanItem" x:Uid="ListTypeLowerRomanItem" Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"/>
-                                    <MenuFlyoutItem x:Name="ListTypeUpperRomanItem" x:Uid="ListTypeUpperRomanItem" Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeNoneItem" x:Uid="ListTypeNoneItem" Text="None" Click="ListTypeNone_Click"
+                                                    AutomationProperties.AutomationId="ListTypeNoneItem"/>
+                                    <MenuFlyoutItem x:Name="ListTypeBulletItem" x:Uid="ListTypeBulletItem" Text="Bullet" Click="ListTypeBullet_Click"
+                                                    AutomationProperties.AutomationId="ListTypeBulletItem"/>
+                                    <MenuFlyoutItem x:Name="ListTypeNumberItem" x:Uid="ListTypeNumberItem" Text="Numbers" Click="ListTypeNumber_Click"
+                                                    AutomationProperties.AutomationId="ListTypeNumberItem"/>
+                                    <MenuFlyoutItem x:Name="ListTypeLowerLetterItem" x:Uid="ListTypeLowerLetterItem" Text="Lowercase letters" Click="ListTypeLowerLetter_Click"
+                                                    AutomationProperties.AutomationId="ListTypeLowerLetterItem"/>
+                                    <MenuFlyoutItem x:Name="ListTypeUpperLetterItem" x:Uid="ListTypeUpperLetterItem" Text="Uppercase letters" Click="ListTypeUpperLetter_Click"
+                                                    AutomationProperties.AutomationId="ListTypeUpperLetterItem"/>
+                                    <MenuFlyoutItem x:Name="ListTypeLowerRomanItem" x:Uid="ListTypeLowerRomanItem" Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"
+                                                    AutomationProperties.AutomationId="ListTypeLowerRomanItem"/>
+                                    <MenuFlyoutItem x:Name="ListTypeUpperRomanItem" x:Uid="ListTypeUpperRomanItem" Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"
+                                                    AutomationProperties.AutomationId="ListTypeUpperRomanItem"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
@@ -384,6 +410,7 @@
                         </Button>
                         <!-- Line spacing dropdown -->
                         <Button x:Name="LineSpacingButton" Padding="4,3" CornerRadius="4" Height="28"
+                                AutomationProperties.AutomationId="LineSpacingButton"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Line Spacing">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
@@ -392,7 +419,8 @@
                                     <MenuFlyoutItem Text="1.5" Click="LineSpacing_Click" Tag="1.5"/>
                                     <MenuFlyoutItem Text="2.0" Click="LineSpacing_Click" Tag="2.0"/>
                                     <MenuFlyoutSeparator/>
-                                    <MenuFlyoutItem x:Name="LineSpacingCustomItem" x:Uid="CustomSpacingItem" Text="Custom..." Click="CustomLineSpacing_Click"/>
+                                    <MenuFlyoutItem x:Name="LineSpacingCustomItem" x:Uid="CustomSpacingItem" Text="Custom..." Click="CustomLineSpacing_Click"
+                                                    AutomationProperties.AutomationId="LineSpacingCustomItem"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
@@ -460,6 +488,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <ToggleButton x:Name="AlignLeftToggle" Grid.Column="0" Click="AlignLeft_Click"
+                                      AutomationProperties.AutomationId="AlignLeftToggle"
                                       Height="32" Padding="0" CornerRadius="4"
                                       IsChecked="True" ToolTipService.ToolTip="Align Left"
                                       HorizontalAlignment="Stretch"
@@ -467,6 +496,7 @@
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E4;" FontSize="14"/>
                         </ToggleButton>
                         <ToggleButton x:Name="AlignCenterToggle" Grid.Column="1" Click="AlignCenter_Click"
+                                      AutomationProperties.AutomationId="AlignCenterToggle"
                                       Height="32" Padding="0" CornerRadius="4"
                                       ToolTipService.ToolTip="Align Center"
                                       HorizontalAlignment="Stretch"
@@ -474,6 +504,7 @@
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E3;" FontSize="14"/>
                         </ToggleButton>
                         <ToggleButton x:Name="AlignRightToggle" Grid.Column="2" Click="AlignRight_Click"
+                                      AutomationProperties.AutomationId="AlignRightToggle"
                                       Height="32" Padding="0" CornerRadius="4"
                                       ToolTipService.ToolTip="Align Right"
                                       HorizontalAlignment="Stretch"
@@ -481,6 +512,7 @@
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E2;" FontSize="14"/>
                         </ToggleButton>
                         <ToggleButton x:Name="AlignJustifyToggle" Grid.Column="3" Click="AlignJustify_Click"
+                                      AutomationProperties.AutomationId="AlignJustifyToggle"
                                       Height="32" Padding="0" CornerRadius="4"
                                       ToolTipService.ToolTip="Justify"
                                       HorizontalAlignment="Stretch"
@@ -596,9 +628,12 @@
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
                                         <TextBlock x:Uid="FindFlyoutHeader" Text="Find" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBox x:Name="FindTextBox" x:Uid="FindTextBox" PlaceholderText="Text to look for"/>
-                                        <CheckBox x:Name="FindMatchCaseCheckBox" x:Uid="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"/>
-                                        <CheckBox x:Name="FindWholeWordCheckBox" x:Uid="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"/>
+                                        <TextBox x:Name="FindTextBox" x:Uid="FindTextBox" PlaceholderText="Text to look for"
+                                                 AutomationProperties.AutomationId="FindTextBox"/>
+                                        <CheckBox x:Name="FindMatchCaseCheckBox" x:Uid="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"
+                                                  AutomationProperties.AutomationId="FindMatchCaseCheckBox"/>
+                                        <CheckBox x:Name="FindWholeWordCheckBox" x:Uid="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"
+                                                  AutomationProperties.AutomationId="FindWholeWordCheckBox"/>
                                         <CheckBox x:Name="FindRegexCheckBox" x:Uid="FindRegexCheckBox" Content="Use regular expressions" IsChecked="False"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
                                             <Button x:Uid="HighlightAllButton" Content="Highlight All" Click="HighlightAllMatches_Click"/>
@@ -623,9 +658,11 @@
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
                                         <TextBlock x:Uid="ReplaceFlyoutHeader" Text="Find &amp; Replace" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBox x:Name="ReplaceFindTextBox" x:Uid="ReplaceFindTextBox" PlaceholderText="Text to look for"/>
+                                        <TextBox x:Name="ReplaceFindTextBox" x:Uid="ReplaceFindTextBox" PlaceholderText="Text to look for"
+                                                 AutomationProperties.AutomationId="ReplaceFindTextBox"/>
                                         <TextBlock x:Uid="ReplaceFlyoutLabel" Text="Replace" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
-                                        <TextBox x:Name="ReplaceWithTextBox" x:Uid="ReplaceWithTextBox" PlaceholderText="New text"/>
+                                        <TextBox x:Name="ReplaceWithTextBox" x:Uid="ReplaceWithTextBox" PlaceholderText="New text"
+                                                 AutomationProperties.AutomationId="ReplaceWithTextBox"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
                                             <Button x:Uid="ReplaceButton" Content="Replace" Click="Replace_Click"/>
                                             <Button x:Uid="ReplaceAllButton" Content="Replace All" Click="ReplaceAll_Click"/>
@@ -688,7 +725,7 @@
             </Border>
 
             <!-- Editor + Page View wrapper (tabs) -->
-            <TabView x:Name="DocumentTabs"
+            <TabView x:Name="DocumentTabs" AutomationProperties.AutomationId="DocumentTabs" Loaded="DocumentTabs_Loaded"
                      Grid.Row="1" Grid.Column="1"
                      IsAddTabButtonVisible="True"
                      AddTabButtonClick="DocumentTabs_AddTabButtonClick"
@@ -712,20 +749,27 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
-                    <TextBlock x:Name="StatusText" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"/>
+                    <TextBlock x:Name="StatusText" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="StatusText"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
                     <TextBlock x:Name="WordCountText" Text="{x:Bind ViewModel.WordCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="WordCountText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="CharCountText" Text="{x:Bind ViewModel.CharCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="CharCountText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="SelectionLengthText" Text="{x:Bind ViewModel.SelectionLengthDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="SelectionLengthText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="LineColText" Text="{x:Bind ViewModel.LineColDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="LineColText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="EncodingText" Text="{x:Bind ViewModel.EncodingDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="EncodingText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="ZoomText" Text="{x:Bind ViewModel.ZoomDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
+                               AutomationProperties.AutomationId="ZoomText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
             </Grid>

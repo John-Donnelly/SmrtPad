@@ -1,9 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
-using OpenQA.Selenium.Interactions;
 
 namespace SmrtPad.UITests.Infrastructure
 {
@@ -61,13 +61,19 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void ClearEditor()
         {
-            var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-            editor.Click();
-            Thread.Sleep(150);
-            editor.SendKeys(Keys.Control + "a");
-            Thread.Sleep(150);
-            editor.SendKeys(Keys.Delete);
-            Thread.Sleep(300);
+            bool usedMenu = TryClickMenuItem("Edit", "Select All")
+                && TryClickMenuItem("Edit", "Cut");
+
+            if (!usedMenu)
+            {
+                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                editor.Click();
+                Thread.Sleep(100);
+                editor.SendKeys(Keys.Control + "a");
+                Thread.Sleep(150);
+                editor.SendKeys(Keys.Control + "x");
+                Thread.Sleep(300);
+            }
         }
 
         /// <summary>
@@ -85,18 +91,50 @@ namespace SmrtPad.UITests.Infrastructure
         /// <summary>Sends Ctrl+A to the editor, selecting all content.</summary>
         public void SelectAllInEditor()
         {
-            var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-            editor.Click();
-            Thread.Sleep(100);
-            editor.SendKeys(Keys.Control + "a");
-            Thread.Sleep(200);
+            if (!TryClickMenuItem("Edit", "Select All"))
+            {
+                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                editor.Click();
+                Thread.Sleep(100);
+                editor.SendKeys(Keys.Control + "a");
+                Thread.Sleep(200);
+            }
+        }
+
+        private bool TryClickMenuItem(string menuName, string itemName)
+        {
+            try
+            {
+                ClickMenuItem(menuName, itemName);
+                return true;
+            }
+            catch (NoSuchElementException ex)
+            {
+                Debug.WriteLine($"Menu item '{menuName} -> {itemName}' not found: {ex.Message}");
+                return false;
+            }
+            catch (WebDriverException ex)
+            {
+                Debug.WriteLine($"Menu item '{menuName} -> {itemName}' click failed: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>Sends Ctrl+Z to the editor to undo the last action.</summary>
         public void UndoInEditor()
         {
-            var undoBtn = Driver!.FindElement(MobileBy.AccessibilityId("UndoButton"));
-            undoBtn.Click();
+            var undoButtons = Driver!.FindElements(MobileBy.AccessibilityId("UndoButton"));
+            if (undoButtons.Count == 0)
+            {
+                undoButtons = Driver.FindElements(MobileBy.Name("Undo (Ctrl+Z)"));
+            }
+
+            if (undoButtons.Count == 0)
+            {
+                throw new InvalidOperationException("Undo button not found.");
+            }
+
+            undoButtons[0].Click();
             Thread.Sleep(250);
         }
 

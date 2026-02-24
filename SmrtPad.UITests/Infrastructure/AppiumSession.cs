@@ -43,24 +43,43 @@ namespace SmrtPad.UITests.Infrastructure
 
         public AppiumSession(string appPath)
         {
-            // Resolve the AUMID from the WAP package so the app starts with package identity.
-            // WinUI 3 (3.1.8+) requires a Windows package identity; direct Process.Start does not
-            // provide one and causes APPMODEL_ERROR_NO_PACKAGE inside Microsoft.UI.Xaml.dll.
+            Process process;
+            bool usedAumid = false;
             string? aumid = FindWapAumid(appPath);
-            if (aumid is null)
-                throw new InvalidOperationException(
-                    "Could not find an installed package AUMID for SmrtPad. " +
-                    "Build and register the WAP project (SmrtPad (Package)) in Debug|x64, " +
-                    "then copy the updated SmrtPad.dll into the AppX folder.");
-
-            // Launch via IApplicationActivationManager — the process receives MSIX identity.
-            _launchedPid = ActivateApplication(aumid);
-
-            // Obtain the process handle for monitoring.
-            var process = Process.GetProcessById(_launchedPid);
+            if (!string.IsNullOrWhiteSpace(aumid))
+            {
+                try
+                {
+                    _launchedPid = ActivateApplication(aumid);
+                    process = Process.GetProcessById(_launchedPid);
+                    usedAumid = true;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    process = StartUnpackaged(appPath, ex);
+                    _launchedPid = process.Id;
+                }
+            }
+            else
+            {
+                process = StartUnpackaged(appPath, null);
+                _launchedPid = process.Id;
+            }
 
             // Wait for the main WinUI 3 window (up to 30 s).
-            nint hwnd = WaitForMainWindow(process, TimeSpan.FromSeconds(30));
+            // If the AUMID-activated process exits before a window appears (e.g. stale package),
+            // fall back to launching the exe directly.
+            nint hwnd;
+            try
+            {
+                hwnd = WaitForMainWindow(process, TimeSpan.FromSeconds(30));
+            }
+            catch (InvalidOperationException) when (usedAumid)
+            {
+                process = StartUnpackaged(appPath, null);
+                _launchedPid = process.Id;
+                hwnd = WaitForMainWindow(process, TimeSpan.FromSeconds(30));
+            }
 
             var options = new AppiumOptions();
             options.PlatformName   = "Windows";
@@ -69,6 +88,25 @@ namespace SmrtPad.UITests.Infrastructure
 
             Driver = new WindowsDriver(new Uri(ServerUrl), options,
                 TimeSpan.FromSeconds(30));
+        }
+
+        private static Process StartUnpackaged(string appPath, Exception? activationException)
+        {
+            var startInfo = new ProcessStartInfo(appPath)
+            {
+                UseShellExecute = true
+            };
+
+            var process = Process.Start(startInfo);
+            if (process is null)
+            {
+                string message = activationException is null
+                    ? "Failed to start SmrtPad.exe for UI automation."
+                    : $"Failed to start SmrtPad.exe after package activation failed: {activationException.Message}";
+                throw new InvalidOperationException(message, activationException);
+            }
+
+            return process;
         }
 
         /// <summary>
@@ -268,8 +306,22 @@ namespace SmrtPad.UITests.Infrastructure
             {
                 process.Refresh();
                 if (process.HasExited)
+                {
+                    string exitInfo;
+                    try
+                    {
+                        exitInfo = $" (exit code {process.ExitCode})";
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        exitInfo = " (exit code unavailable)";
+                        throw new InvalidOperationException(
+                            $"App exited before a window appeared{exitInfo}.", ex);
+                    }
+
                     throw new InvalidOperationException(
-                        $"App exited with code {process.ExitCode} before a window appeared.");
+                        $"App exited before a window appeared{exitInfo}.");
+                }
 
                 nint hwnd = FindTopLevelWindowForProcess(process.Id);
                 if (hwnd != 0)

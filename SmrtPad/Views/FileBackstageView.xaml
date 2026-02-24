@@ -51,7 +51,8 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock x:Name="HeaderText" FontSize="24" FontWeight="SemiBold" Text="File" />
+            <TextBlock x:Name="HeaderText" FontSize="24" FontWeight="SemiBold" Text="File"
+                       AutomationProperties.AutomationId="HeaderText" />
 
             <Border Grid.Row="1"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
