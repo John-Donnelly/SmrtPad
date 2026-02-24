@@ -389,5 +389,368 @@ namespace SmrtPad.UITests.Tests
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             Assert.NotNull(editor);
         }
+
+        // ── List type: lowercase letters ─────────────────────────────────────
+
+        /// <summary>
+        /// Selecting the Lowercase Letters list type should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ListType_SelectLowercaseLetters_AppliesWithoutError()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("letter item");
+
+            var listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeLowerLetterItem")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to None
+            listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeNoneItem")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── List type: uppercase letters ─────────────────────────────────────
+
+        /// <summary>
+        /// Selecting the Uppercase Letters list type should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ListType_SelectUppercaseLetters_AppliesWithoutError()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("upper letter item");
+
+            var listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeUpperLetterItem")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to None
+            listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeNoneItem")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── List type: lowercase roman ───────────────────────────────────────
+
+        /// <summary>
+        /// Selecting the Lowercase Roman list type should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ListType_SelectLowercaseRoman_AppliesWithoutError()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("roman item");
+
+            var listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeLowerRomanItem")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to None
+            listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeNoneItem")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── List type: uppercase roman ───────────────────────────────────────
+
+        /// <summary>
+        /// Selecting the Uppercase Roman list type should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ListType_SelectUppercaseRoman_AppliesWithoutError()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("uppercase roman item");
+
+            var listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeUpperRomanItem")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to None
+            listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeNoneItem")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── List type switch preserves content ───────────────────────────────
+
+        /// <summary>
+        /// Switching between list types should not alter the word count.
+        /// </summary>
+        [SkippableFact]
+        public void ListType_SwitchTypes_PreservesWordCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("list content test");
+            string wordsBefore = _fx.GetStatusBarText("WordCountText");
+
+            var listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeBulletItem")).Click();
+            Thread.Sleep(300);
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+
+            listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeNumberItem")).Click();
+            Thread.Sleep(300);
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+
+            // Reset
+            listBtn = _driver!.FindElement(MobileBy.AccessibilityId("ListTypeButton"));
+            listBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.AccessibilityId("ListTypeNoneItem")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Line spacing 1.15 ────────────────────────────────────────────────
+
+        /// <summary>
+        /// Selecting 1.15 line spacing should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void LineSpacing_Select1Point15_AppliesWithoutError()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("spacing test");
+
+            var lineSpacingBtn = _driver!.FindElement(MobileBy.AccessibilityId("LineSpacingButton"));
+            lineSpacingBtn.Click();
+            Thread.Sleep(500);
+
+            _driver!.FindElement(MobileBy.Name("1.15")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to 1.0
+            lineSpacingBtn = _driver!.FindElement(MobileBy.AccessibilityId("LineSpacingButton"));
+            lineSpacingBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("1.0")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Line spacing 1.5 ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// Selecting 1.5 line spacing should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void LineSpacing_Select1Point5_AppliesWithoutError()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("spacing test");
+
+            var lineSpacingBtn = _driver!.FindElement(MobileBy.AccessibilityId("LineSpacingButton"));
+            lineSpacingBtn.Click();
+            Thread.Sleep(500);
+
+            _driver!.FindElement(MobileBy.Name("1.5")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to 1.0
+            lineSpacingBtn = _driver!.FindElement(MobileBy.AccessibilityId("LineSpacingButton"));
+            lineSpacingBtn.Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("1.0")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Heading 2 style ──────────────────────────────────────────────────
+
+        /// <summary>
+        /// Applying Heading 2 style should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ParagraphStyle_ApplyHeading2_WorksCorrectly()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("Sub Heading");
+            _fx.SelectAllInEditor();
+
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Heading 2")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to Normal
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Normal")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Heading 3 style ──────────────────────────────────────────────────
+
+        /// <summary>
+        /// Applying Heading 3 style should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ParagraphStyle_ApplyHeading3_WorksCorrectly()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("Minor Heading");
+            _fx.SelectAllInEditor();
+
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Heading 3")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to Normal
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Normal")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Subtitle style ───────────────────────────────────────────────────
+
+        /// <summary>
+        /// Applying Subtitle style should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ParagraphStyle_ApplySubtitle_WorksCorrectly()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("My Subtitle");
+            _fx.SelectAllInEditor();
+
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Subtitle")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to Normal
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Normal")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Quote style ──────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Applying Quote style should apply without error.
+        /// </summary>
+        [SkippableFact]
+        public void ParagraphStyle_ApplyQuote_WorksCorrectly()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("A famous quote");
+            _fx.SelectAllInEditor();
+
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Quote")).Click();
+            Thread.Sleep(300);
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+
+            // Reset to Normal
+            _fx.SelectAllInEditor();
+            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            Thread.Sleep(500);
+            _driver!.FindElement(MobileBy.Name("Normal")).Click();
+            Thread.Sleep(200);
+        }
+
+        // ── Indent preserves word count ──────────────────────────────────────
+
+        /// <summary>
+        /// Multiple indent levels should not change the word count.
+        /// </summary>
+        [SkippableFact]
+        public void MultipleIndentLevels_PreservesWordCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("indent preserves count");
+
+            string wordsBefore = _fx.GetStatusBarText("WordCountText");
+
+            for (int i = 0; i < 3; i++)
+            {
+                _driver!.FindElement(MobileBy.Name("Increase Indent")).Click();
+                Thread.Sleep(150);
+            }
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+
+            // Reset
+            for (int i = 0; i < 3; i++)
+            {
+                _driver!.FindElement(MobileBy.Name("Decrease Indent")).Click();
+                Thread.Sleep(150);
+            }
+        }
     }
 }
