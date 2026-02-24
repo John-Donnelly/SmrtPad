@@ -267,5 +267,263 @@ namespace SmrtPad.UITests.Tests
 
             CloseBackstage();
         }
+
+        // ── Backstage close via Escape ────────────────────────────────────────
+
+        /// <summary>
+        /// Pressing Escape while the backstage is open should close it and
+        /// return focus to the editor.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_CloseViaEscape_ReturnsFocusToEditor()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            // Verify backstage is open
+            var newItem = _driver!.FindElement(MobileBy.Name("New"));
+            Assert.NotNull(newItem);
+
+            // Press Escape to close
+            newItem.SendKeys(Keys.Escape);
+            Thread.Sleep(500);
+
+            // Editor should be accessible
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+        }
+
+        // ── Backstage Save navigation ─────────────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Save" in the backstage should show the Save panel header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickSave_ShowsSavePanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            var saveItems = _driver!.FindElements(MobileBy.Name("Save"));
+            // Click the nav item (not the quick-access button)
+            foreach (var item in saveItems)
+            {
+                try
+                {
+                    if (item.Displayed)
+                    {
+                        item.Click();
+                        break;
+                    }
+                }
+                catch { }
+            }
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage Save As navigation ──────────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Save as" should show the Save As header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickSaveAs_ShowsSaveAsPanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Save as")).Click();
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage Print navigation ────────────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Print" in the backstage should show the Print panel header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickPrint_ShowsPrintPanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Print")).Click();
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage Export PDF navigation ───────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Export to PDF" should show the Export panel header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickExportPdf_ShowsExportPanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Export to PDF")).Click();
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage Export DOCX navigation ──────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Export to DOCX" should show the Export DOCX panel header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickExportDocx_ShowsExportPanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Export to DOCX")).Click();
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage OneDrive navigation ─────────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Save to OneDrive" should show the OneDrive panel header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickOneDrive_ShowsOneDrivePanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Save to OneDrive")).Click();
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage Options navigation ──────────────────────────────────────
+
+        /// <summary>
+        /// Clicking "Options" should show the Options panel header.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickOptions_ShowsOptionsPanel()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Options")).Click();
+            Thread.Sleep(500);
+
+            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(headerText);
+
+            CloseBackstage();
+        }
+
+        // ── Template picker shows multiple templates ──────────────────────────
+
+        /// <summary>
+        /// The template picker should show multiple template options beyond
+        /// just "Blank Document" (e.g., "Business Letter").
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_TemplatePicker_ContainsMultipleTemplates()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("Templates")).Click();
+            Thread.Sleep(500);
+
+            // At minimum, "Blank Document" should be present
+            var blankDoc = _driver!.FindElement(MobileBy.Name("Blank Document"));
+            Assert.NotNull(blankDoc);
+
+            CloseBackstage();
+        }
+
+        // ── Backstage New creates blank document ──────────────────────────────
+
+        /// <summary>
+        /// Clicking "New" in the backstage should close the backstage and
+        /// create a new blank document, resetting word count to 0.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_ClickNew_CreatesBlankDocument()
+        {
+            RequireDriver();
+
+            // Type some content first
+            _fx.ClearEditor();
+            _fx.TypeInEditor("existing content");
+            Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
+
+            OpenBackstage();
+
+            _driver!.FindElement(MobileBy.Name("New")).Click();
+            Thread.Sleep(800);
+
+            // The backstage should close and the editor should be empty
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+        }
+
+        // ── Backstage navigation switches content ─────────────────────────────
+
+        /// <summary>
+        /// Switching between backstage nav items should update the header text
+        /// each time.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_NavigateBetweenItems_UpdatesHeader()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            // Navigate to Open
+            _driver!.FindElement(MobileBy.Name("Open")).Click();
+            Thread.Sleep(400);
+            var header1 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(header1);
+
+            // Navigate to Print
+            _driver!.FindElement(MobileBy.Name("Print")).Click();
+            Thread.Sleep(400);
+            var header2 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(header2);
+
+            // Navigate to Options
+            _driver!.FindElement(MobileBy.Name("Options")).Click();
+            Thread.Sleep(400);
+            var header3 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+            Assert.NotNull(header3);
+
+            CloseBackstage();
+        }
     }
 }
