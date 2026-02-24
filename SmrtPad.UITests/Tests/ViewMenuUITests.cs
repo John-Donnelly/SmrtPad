@@ -301,5 +301,199 @@ namespace SmrtPad.UITests.Tests
 
             ResetZoomTo100();
         }
+
+        // ── Spell Check toggle ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Toggling Spell Check off should show "Spell check disabled." in the
+        /// status bar. Toggling it back on should show "Spell check enabled.".
+        /// </summary>
+        [SkippableFact]
+        public void SpellCheck_ToggleOff_ThenOn_UpdatesStatus()
+        {
+            RequireDriver();
+
+            // Toggle spell check off
+            OpenViewMenu();
+            var toggle = _driver!.FindElement(MobileBy.AccessibilityId("SpellCheckToggle"));
+            bool wasChecked = toggle.GetAttribute("Toggle.ToggleState") == "1";
+            toggle.Click();
+            Thread.Sleep(400);
+
+            string statusAfterFirstClick = _fx.GetStatusBarText("StatusText");
+            if (wasChecked)
+                Assert.Equal("Spell check disabled.", statusAfterFirstClick);
+            else
+                Assert.Equal("Spell check enabled.", statusAfterFirstClick);
+
+            // Toggle back to restore state
+            OpenViewMenu();
+            _driver!.FindElement(MobileBy.AccessibilityId("SpellCheckToggle")).Click();
+            Thread.Sleep(400);
+
+            string statusAfterSecondClick = _fx.GetStatusBarText("StatusText");
+            if (wasChecked)
+                Assert.Equal("Spell check enabled.", statusAfterSecondClick);
+            else
+                Assert.Equal("Spell check disabled.", statusAfterSecondClick);
+        }
+
+        // ── Ruler toggle state ───────────────────────────────────────────────
+
+        /// <summary>
+        /// After toggling Ruler on, the status bar should show "Ruler enabled."
+        /// and the toggle should be checked; toggling off should uncheck it
+        /// and show "Ruler disabled.".
+        /// </summary>
+        [SkippableFact]
+        public void Ruler_ToggleOn_ShowsEnabled_ToggleOff_ShowsDisabled()
+        {
+            RequireDriver();
+
+            // Toggle ruler on
+            OpenViewMenu();
+            var toggle = _driver!.FindElement(MobileBy.AccessibilityId("RulerToggle"));
+            bool wasChecked = toggle.GetAttribute("Toggle.ToggleState") == "1";
+
+            if (!wasChecked)
+            {
+                toggle.Click();
+                Thread.Sleep(400);
+                Assert.Equal("Ruler enabled.", _fx.GetStatusBarText("StatusText"));
+
+                // Toggle off
+                OpenViewMenu();
+                _driver!.FindElement(MobileBy.AccessibilityId("RulerToggle")).Click();
+                Thread.Sleep(400);
+                Assert.Equal("Ruler disabled.", _fx.GetStatusBarText("StatusText"));
+            }
+            else
+            {
+                // Already on — toggle off then on
+                toggle.Click();
+                Thread.Sleep(400);
+                Assert.Equal("Ruler disabled.", _fx.GetStatusBarText("StatusText"));
+
+                OpenViewMenu();
+                _driver!.FindElement(MobileBy.AccessibilityId("RulerToggle")).Click();
+                Thread.Sleep(400);
+                Assert.Equal("Ruler enabled.", _fx.GetStatusBarText("StatusText"));
+
+                // Restore to off
+                OpenViewMenu();
+                _driver!.FindElement(MobileBy.AccessibilityId("RulerToggle")).Click();
+                Thread.Sleep(400);
+            }
+        }
+
+        // ── Focus mode hides status bar ──────────────────────────────────────
+
+        /// <summary>
+        /// Focus mode should hide the status bar. Toggling off should restore it.
+        /// </summary>
+        [SkippableFact]
+        public void FocusMode_ToggleOn_HidesStatusBar_ToggleOff_RestoresIt()
+        {
+            RequireDriver();
+
+            // Toggle focus mode on
+            OpenViewMenu();
+            _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
+            Thread.Sleep(500);
+
+            // Status bar should be hidden
+            bool statusBarHidden = false;
+            try
+            {
+                var statusBar = _driver!.FindElement(MobileBy.AccessibilityId("StatusBar"));
+                statusBarHidden = !statusBar.Displayed;
+            }
+            catch (NoSuchElementException)
+            {
+                statusBarHidden = true;
+            }
+            Assert.True(statusBarHidden, "StatusBar should be hidden in focus mode");
+
+            // Toggle focus mode off
+            _driver!.FindElement(MobileBy.Name("View")).Click();
+            Thread.Sleep(450);
+            _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
+            Thread.Sleep(500);
+
+            // Status bar should be restored
+            var restoredBar = _driver!.FindElement(MobileBy.AccessibilityId("StatusBar"));
+            Assert.True(restoredBar.Displayed, "StatusBar should be visible after exiting focus mode");
+        }
+
+        // ── Page View toggle state ───────────────────────────────────────────
+
+        /// <summary>
+        /// Page View toggle on should show "Page view enabled." and toggle off
+        /// should show "Page view disabled." — verifying the complete cycle.
+        /// </summary>
+        [SkippableFact]
+        public void PageView_Toggle_CyclesCorrectly()
+        {
+            RequireDriver();
+
+            // Toggle page view on
+            OpenViewMenu();
+            var toggle = _driver!.FindElement(MobileBy.AccessibilityId("PageViewToggle"));
+            bool wasChecked = toggle.GetAttribute("Toggle.ToggleState") == "1";
+            toggle.Click();
+            Thread.Sleep(400);
+
+            if (!wasChecked)
+            {
+                Assert.Equal("Page view enabled.", _fx.GetStatusBarText("StatusText"));
+                // Toggle off to restore
+                OpenViewMenu();
+                _driver!.FindElement(MobileBy.AccessibilityId("PageViewToggle")).Click();
+                Thread.Sleep(400);
+                Assert.Equal("Page view disabled.", _fx.GetStatusBarText("StatusText"));
+            }
+            else
+            {
+                Assert.Equal("Page view disabled.", _fx.GetStatusBarText("StatusText"));
+                // Toggle on to restore
+                OpenViewMenu();
+                _driver!.FindElement(MobileBy.AccessibilityId("PageViewToggle")).Click();
+                Thread.Sleep(400);
+                Assert.Equal("Page view enabled.", _fx.GetStatusBarText("StatusText"));
+                // Toggle off to leave in default state
+                OpenViewMenu();
+                _driver!.FindElement(MobileBy.AccessibilityId("PageViewToggle")).Click();
+                Thread.Sleep(400);
+            }
+        }
+
+        // ── Word Wrap preserves content ──────────────────────────────────────
+
+        /// <summary>
+        /// Toggling Word Wrap off and on should not alter the editor content
+        /// or word/char counts.
+        /// </summary>
+        [SkippableFact]
+        public void WordWrap_Toggle_PreservesContent()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("preserved content here");
+
+            string wordsBefore = _fx.GetStatusBarText("WordCountText");
+            string charsBefore = _fx.GetStatusBarText("CharCountText");
+
+            _fx.ClickMenuItem("View", "Word Wrap");
+            Thread.Sleep(200);
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal(charsBefore, _fx.GetStatusBarText("CharCountText"));
+
+            _fx.ClickMenuItem("View", "Word Wrap");
+            Thread.Sleep(200);
+
+            Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
+            Assert.Equal(charsBefore, _fx.GetStatusBarText("CharCountText"));
+        }
     }
 }
