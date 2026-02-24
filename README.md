@@ -78,7 +78,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite has **574 tests** across 34 test classes covering:
+The test suite has **2,301 tests** (2,060 unit/integration across 8 files + 241 UI automation across 13 classes) covering:
 - ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
 - Alignment, list type, and line spacing for all defined values
@@ -86,12 +86,13 @@ The test suite has **574 tests** across 34 test classes covering:
 - `NewDocument` full state reset
 - `ColorHelper` hex parsing (6-digit, 8-digit, error cases)
 - PDF generation (page count, header content, byte-array structure)
-- DOCX generation (ZIP structure, `word/document.xml` content, paragraph mapping)
+- DOCX generation (ZIP structure, `word/document.xml` content, paragraph mapping, rich formatting via RTF parser)
 - OneDrive availability detection
 - Document import (DOCX, ODT text extraction)
 - Macro recording and playback
 - Settings persistence, concurrency, and recent-files MRU
-- Localization — all 9 locales, all 251 resource keys present and non-empty
+- Localization — all 9 locales, all 255 resource keys present and non-empty
+- UI automation (WinAppDriver/Appium 2.x) — editor interaction, formatting, tabs, find/replace, file backstage, macros, view menu, paragraph formatting, status bar
 
 ## Project Structure
 
@@ -116,9 +117,17 @@ SmrtPad/
 │   └── App.xaml.cs          # Entry point, DI container, multi-window factory
 ├── SmrtPad (Package)/       # MSIX packaging project
 ├── SmrtPad.Tests/
-│   ├── EditorTests.cs       # ViewModel unit tests
-│   ├── IntegrationTests.cs  # Helper + service integration tests
-│   └── LocalizationTests.cs # Locale completeness tests
+│   ├── EditorTests.cs           # ViewModel unit tests
+│   ├── IntegrationTests.cs      # Helper + service integration tests
+│   ├── LocalizationTests.cs     # Locale completeness tests
+│   ├── CoverageCompletionTests.cs
+│   ├── MaxCoverageTests.cs
+│   ├── MaxCoverageTests2.cs
+│   ├── MaxCoverageTests3.cs
+│   └── MaxCoverageTests4.cs
+├── SmrtPad.UITests/
+│   ├── Infrastructure/          # AppiumSession, SharedAppFixture
+│   └── Tests/                   # 13 WinAppDriver/Appium 2.x test classes (241 tests)
 ├── README.md
 └── CHANGELOG.md
 ```
