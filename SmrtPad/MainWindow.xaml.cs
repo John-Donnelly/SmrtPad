@@ -53,6 +53,7 @@ namespace SmrtPad
         private readonly IDialogService _dialogService;
         private readonly IFileService _fileService;
         private DispatcherTimer? _autoSaveTimer;
+        private System.ComponentModel.PropertyChangedEventHandler? _docTitleHandler;
         private PrintDocument? _printDocument;
         private IPrintDocumentSource? _printDocumentSource;
         private readonly List<UIElement> _printPreviewPages = [];
@@ -84,13 +85,12 @@ namespace SmrtPad
             ViewModel = App.Current.Services.GetRequiredService<EditorViewModel>();
             InitializeComponent();
             Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
-            ViewModel.PropertyChanged += (s, e) =>
+            _docTitleHandler = (s, e) =>
             {
                 if (e.PropertyName == nameof(ViewModel.DocumentTitle))
-                {
                     Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
-                }
             };
+            ViewModel.PropertyChanged += _docTitleHandler;
 
             // Create the first document tab before ApplySettings() so Editor is valid
             CreateTab(Res.GetString("DocumentUntitled"));
@@ -98,6 +98,13 @@ namespace SmrtPad
             InitializeFonts();
             ApplySettings();
             SetupAutoSave();
+
+            // Clean up on window close: stop auto-save timer and unsubscribe from ViewModel events
+            Closed += (_, _) =>
+            {
+                _autoSaveTimer?.Stop();
+                ViewModel.PropertyChanged -= _docTitleHandler;
+            };
 
             FileBackstage.NewRequested += (s, e) => { HideBackstage(); New_Click(this, new RoutedEventArgs()); };
             FileBackstage.OpenRequested += (s, e) => { HideBackstage(); Open_Click(this, new RoutedEventArgs()); };
@@ -116,7 +123,9 @@ namespace SmrtPad
 
             // Intercept the window close button (X) to prompt for unsaved changes
             AppWindow.Closing += AppWindow_Closing;
-            AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "SmrtPad.ico"));
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "SmrtPad.ico");
+            if (File.Exists(iconPath))
+                AppWindow.SetIcon(iconPath);
         }
 
         private async void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
@@ -444,7 +453,7 @@ namespace SmrtPad
                             ViewModel.IsModified = false;
                             ViewModel.UpdateStatus(Res.GetFormatted("StatusAutoSaved", ActiveTab.CurrentFile.Name));
                         }
-                        catch { }
+                        catch (Exception ex) { Debug.WriteLine($"Auto-save failed: {ex.Message}"); }
                     }
                     else if (ViewModel.IsModified && ActiveTab.CurrentFile == null)
                     {

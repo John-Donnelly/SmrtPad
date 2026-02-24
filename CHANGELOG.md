@@ -5,16 +5,21 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
-- **37 new production-fix tests** (`ProductionFixTests.cs`) covering:
+- **41 new production-fix tests** (`ProductionFixTests.cs`) covering:
   - `Bullets_Click` ViewModel sync and macro recording (`BulletsClickContractTests` — 7 tests)
   - Macro `SetAlignment` playback RTF application and round-trip (`MacroSetAlignmentPlaybackTests` — 7 tests)
   - Debug logging removal verification (`AppDebugLoggingRemovedTests` — 3 tests)
   - Full macro command coverage across all 15 command types (`MacroHelperFullCommandCoverageTests` — 20 tests)
+  - Resource management contracts (`MainWindowResourceManagementTests` — 4 tests)
 
 ### Fixed
 - **`Bullets_Click`** — now calls `ViewModel.SetListType()` (keeping `ViewModel.ListType` in sync with `IsBullets`) and `_macro.Record(MacroCommandType.SetListType, ...)` (bullets now recorded in macros) when toggling via the toolbar button
 - **Macro `SetAlignment` playback** — `ExecuteMacroCommand` now applies the alignment directly to the RTF document's paragraph format in addition to updating the ViewModel; previously only `ViewModel.SetAlignment()` was called, so replaying a recorded alignment macro had no visible effect
 - **`App.xaml.cs` debug logging** — removed leftover `System.IO.File.WriteAllText/AppendAllText` calls that wrote `SmrtPad_App_Startup.log` to `%TEMP%` on every application launch; startup diagnostics are not appropriate for production builds
+- **Auto-save timer not stopped on close** — `MainWindow.Closed` event now stops `_autoSaveTimer` to prevent the timer from firing after the window is closed
+- **`ViewModel.PropertyChanged` handler leak** — handler is now stored in `_docTitleHandler` field and unsubscribed in `Closed` event; prevents secondary windows from keeping a live reference on the shared ViewModel singleton after close
+- **Silent auto-save error** — replaced empty `catch {}` in the auto-save timer tick with `catch (Exception ex) { Debug.WriteLine(...) }` so failures are visible in diagnostics without interrupting the user
+- **`AppWindow.SetIcon` crash guard** — icon path is now checked with `File.Exists` before calling `SetIcon`, preventing an unhandled exception on launch when the ico asset is absent
 
 ### Added
 - **Comprehensive UI test expansion** — expanded UI automation test suite from ~84 to 240 tests across 13 test classes, covering all application features methodically
