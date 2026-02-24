@@ -2,13 +2,20 @@
 
 All notable changes to SmrtPad are documented in this file.
 
-# Changelog
-
-All notable changes to SmrtPad are documented in this file.
-
 ## [Unreleased]
 
 ### Added
+- **Comprehensive UI test expansion** — expanded UI automation test suite from ~84 to 240 tests across 13 test classes, covering all application features methodically
+  - **EditMenuUITests** (15 tests) — added Delete key, Backspace, Cut/Copy/Paste/Select All via Edit menu items, multiple Redo operations, Copy without selection safety, Paste into existing content
+  - **FindReplaceUITests** (13 tests) — added Match Case filtering, Whole Word filtering, single Replace, Replace All with empty string (deletion), Find wraps around document, empty search box safety, Replace All changes character count
+  - **FileBackstageUITests** (24 tests) — added close via Escape key, navigation to Save/Save As/Print/Export PDF/Export DOCX/OneDrive/Options panels with header verification, multiple template validation, New creates blank document, switching between backstage nav items updates header
+  - **TabManagementUITests** (11 tests) — added Ctrl+W close shortcut, new tab shows "Untitled" title, new tab has empty editor, rapid tab creation/close stress test, formatting state independence between tabs
+  - **ViewMenuUITests** (14 tests) — added Spell Check toggle status messages, Ruler toggle state verification, Focus mode hides status bar and restores it, Page View toggle cycle, Word Wrap toggle preserves content
+  - **FormattingFunctionalUITests** (30 tests) — added Ctrl+B/I/U keyboard shortcut tests, Bold+Italic combination, Clear Formatting resets italic/underline/all formats simultaneously, formatting does not change word/char count
+  - **ParagraphFormattingUITests** (24 tests) — added all remaining list types (lowercase/uppercase letters, lowercase/uppercase Roman), list type switch preserves word count, line spacing 1.15 and 1.5, Heading 2/3/Subtitle/Quote styles, multiple indent levels preserve word count
+  - **StatusBarAndThemeUITests** (16 tests) — added column number update after typing, theme toggle full cycle with distinct theme verification, punctuation word count, newline character count, zoom percent sign validation, partial selection length, empty editor Ln 1/Col 1
+  - **MacroFunctionalUITests** (17 tests) — added italic macro record/playback, Stop menu item safety when not recording, multiple commands in single macro, macro does not change editor content
+  - **EditorInteractionUITests** (23 tests) — added three Enter keys advance line count, Left arrow decreases column, Home key returns to column 1, End key moves to end of line, typing after undo updates word count, Backspace reduces char count, empty editor Ln 1/Col 1, multiple spaces between words, second line accumulates word count
 - **App icon** — `SmrtPad.ico` (16/32/48/256 px, PNG-in-ICO) generated from `SmrtPad.png` and added to `Assets/`; `AppWindow.SetIcon()` called in `MainWindow` constructor so the window, taskbar, and Alt-Tab thumbnail all show the correct icon; all 7 package visual asset slots updated with the new icon image
 - **SmrtDoodle install check** — `PaintDrawing_Click` calls `IsSmrtDoodleInstalled()` before launching; checks `%LOCALAPPDATA%\Microsoft\WindowsApps\SmrtDoodle.exe` (Store/MSIX install) and every directory on `PATH`; if not found shows a `ContentDialog` with a **Get from Store** primary button that opens `ms-windows-store://search/?query=SmrtDoodle`; removed the crash-prone built-in fallback drawing dialog (`ShowBuiltInDrawingDialogAsync`)
 - `SmrtDoodleGetFromStore` resource string added to all 9 locale files
