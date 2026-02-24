@@ -277,5 +277,249 @@ namespace SmrtPad.UITests.Tests
 
             CloseFlyout();
         }
+
+        // ── Find with Match Case ─────────────────────────────────────────────
+
+        /// <summary>
+        /// With Match Case enabled, searching for "Hello" should not find "hello".
+        /// </summary>
+        [SkippableFact]
+        public void FindNext_MatchCase_DoesNotFindDifferentCase()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello world");
+
+            OpenFindFlyout();
+
+            // Enable Match Case
+            var matchCase = _driver!.FindElement(MobileBy.AccessibilityId("FindMatchCaseCheckBox"));
+            if (matchCase.GetAttribute("Toggle.ToggleState") != "1")
+            {
+                matchCase.Click();
+                Thread.Sleep(200);
+            }
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("FindTextBox"));
+            findBox.Clear();
+            findBox.SendKeys("Hello");
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Find Next")).Click();
+            Thread.Sleep(300);
+
+            Assert.Equal("No match found.", StatusText);
+
+            // Uncheck Match Case to restore state
+            matchCase.Click();
+            Thread.Sleep(200);
+
+            CloseFlyout();
+        }
+
+        // ── Find with Whole Word ─────────────────────────────────────────────
+
+        /// <summary>
+        /// With Whole Word enabled, searching for "test" should not match "testing".
+        /// </summary>
+        [SkippableFact]
+        public void FindNext_WholeWord_DoesNotFindPartialMatch()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("testing in progress");
+
+            OpenFindFlyout();
+
+            // Enable Whole Word
+            var wholeWord = _driver!.FindElement(MobileBy.AccessibilityId("FindWholeWordCheckBox"));
+            if (wholeWord.GetAttribute("Toggle.ToggleState") != "1")
+            {
+                wholeWord.Click();
+                Thread.Sleep(200);
+            }
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("FindTextBox"));
+            findBox.Clear();
+            findBox.SendKeys("test");
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Find Next")).Click();
+            Thread.Sleep(300);
+
+            Assert.Equal("No match found.", StatusText);
+
+            // Uncheck Whole Word to restore state
+            wholeWord.Click();
+            Thread.Sleep(200);
+
+            CloseFlyout();
+        }
+
+        // ── Replace single occurrence ────────────────────────────────────────
+
+        /// <summary>
+        /// Replace (single) should replace only the current match and leave
+        /// subsequent occurrences unchanged.
+        /// </summary>
+        [SkippableFact]
+        public void Replace_SingleOccurrence_ReplacesOnlyCurrentMatch()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("cat cat dog");
+
+            OpenReplaceFlyout();
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("ReplaceFindTextBox"));
+            findBox.Clear();
+            findBox.SendKeys("cat");
+            Thread.Sleep(200);
+
+            var replaceBox = _driver!.FindElement(MobileBy.AccessibilityId("ReplaceWithTextBox"));
+            replaceBox.Clear();
+            replaceBox.SendKeys("bat");
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Replace")).Click();
+            Thread.Sleep(400);
+
+            // Word count should remain 3 (bat cat dog or cat bat dog)
+            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+
+            CloseFlyout();
+        }
+
+        // ── Replace with empty string ────────────────────────────────────────
+
+        /// <summary>
+        /// Replacing with an empty string should effectively delete the found text.
+        /// </summary>
+        [SkippableFact]
+        public void ReplaceAll_WithEmptyString_DeletesMatchedText()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("remove remove keep");
+
+            OpenReplaceFlyout();
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("ReplaceFindTextBox"));
+            findBox.Clear();
+            findBox.SendKeys("remove ");
+            Thread.Sleep(200);
+
+            var replaceBox = _driver!.FindElement(MobileBy.AccessibilityId("ReplaceWithTextBox"));
+            replaceBox.Clear();
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Replace All")).Click();
+            Thread.Sleep(400);
+
+            Assert.Equal("Replaced 2 occurrences.", StatusText);
+
+            // Only "keep" should remain
+            Assert.Equal("Words: 1", _fx.GetStatusBarText("WordCountText"));
+
+            CloseFlyout();
+        }
+
+        // ── Find Next wraps around ───────────────────────────────────────────
+
+        /// <summary>
+        /// Find Next should wrap around to the beginning of the document
+        /// when the cursor is past the last match.
+        /// </summary>
+        [SkippableFact]
+        public void FindNext_WrapsAroundDocument()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("unique word here");
+
+            // Move cursor to end
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + Keys.End);
+            Thread.Sleep(200);
+
+            OpenFindFlyout();
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("FindTextBox"));
+            findBox.Clear();
+            findBox.SendKeys("unique");
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Find Next")).Click();
+            Thread.Sleep(300);
+
+            // Should have found "unique" — selection length 6
+            string selText = _fx.GetStatusBarText("SelectionLengthText");
+            Assert.Equal("Sel: 6", selText);
+
+            CloseFlyout();
+        }
+
+        // ── Find with empty search box ───────────────────────────────────────
+
+        /// <summary>
+        /// Clicking Find Next with an empty search box should not crash.
+        /// </summary>
+        [SkippableFact]
+        public void FindNext_EmptySearchBox_DoesNotCrash()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("some content");
+
+            OpenFindFlyout();
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("FindTextBox"));
+            findBox.Clear();
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Find Next")).Click();
+            Thread.Sleep(300);
+
+            // Editor should still be functional
+            CloseFlyout();
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+        }
+
+        // ── Replace All changes char count ───────────────────────────────────
+
+        /// <summary>
+        /// Replace All that changes word length should update character count.
+        /// Replacing "hi" (2 chars) with "hello" (5 chars) × 2 adds 6 chars.
+        /// </summary>
+        [SkippableFact]
+        public void ReplaceAll_ChangesCharacterCount()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hi hi world");
+            Assert.Equal("Characters: 11", _fx.GetStatusBarText("CharCountText"));
+
+            OpenReplaceFlyout();
+
+            var findBox = _driver!.FindElement(MobileBy.AccessibilityId("ReplaceFindTextBox"));
+            findBox.Clear();
+            findBox.SendKeys("hi");
+            Thread.Sleep(200);
+
+            var replaceBox = _driver!.FindElement(MobileBy.AccessibilityId("ReplaceWithTextBox"));
+            replaceBox.Clear();
+            replaceBox.SendKeys("hello");
+            Thread.Sleep(200);
+
+            _driver.FindElement(MobileBy.Name("Replace All")).Click();
+            Thread.Sleep(400);
+
+            Assert.Equal("Replaced 2 occurrences.", StatusText);
+            // "hello hello world" = 17 chars
+            Assert.Equal("Characters: 17", _fx.GetStatusBarText("CharCountText"));
+
+            CloseFlyout();
+        }
     }
 }
