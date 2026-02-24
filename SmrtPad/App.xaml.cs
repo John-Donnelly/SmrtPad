@@ -44,35 +44,19 @@ namespace SmrtPad
         /// </summary>
         public App()
         {
-            var logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SmrtPad_App_Startup.log");
-            System.IO.File.WriteAllText(logPath, "Starting App constructor\n");
+            Services = ConfigureServices();
 
+            // Apply the persisted language override before any resources are loaded.
+            var lang = Services.GetRequiredService<ISettingsService>().Language;
             try
             {
-                Services = ConfigureServices();
-                System.IO.File.AppendAllText(logPath, "ConfigureServices done\n");
-
-                // Apply the persisted language override before any resources are loaded.
-                var lang = Services.GetRequiredService<ISettingsService>().Language;
-                System.IO.File.AppendAllText(logPath, $"Got language: {lang}\n");
-
-                try
-                {
-                    // PrimaryLanguageOverride requires package identity; skip silently for unpackaged launches.
-                    ApplicationLanguages.PrimaryLanguageOverride =
-                        string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
-                }
-                catch (InvalidOperationException) { }
-                System.IO.File.AppendAllText(logPath, "PrimaryLanguageOverride set\n");
-
-                InitializeComponent();
-                System.IO.File.AppendAllText(logPath, "InitializeComponent done\n");
+                // PrimaryLanguageOverride requires package identity; skip silently for unpackaged launches.
+                ApplicationLanguages.PrimaryLanguageOverride =
+                    string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
             }
-            catch (Exception ex)
-            {
-                System.IO.File.AppendAllText(logPath, $"Exception: {ex}\n");
-                throw;
-            }
+            catch (InvalidOperationException) { }
+
+            InitializeComponent();
         }
 
         private static ServiceProvider ConfigureServices()
@@ -93,19 +77,7 @@ namespace SmrtPad
         /// <param name="args">Details about the launch request and process.</param>
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            var logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SmrtPad_App_Startup.log");
-            System.IO.File.AppendAllText(logPath, "OnLaunched: creating MainWindow\n");
-            MainWindow mainWindow;
-            try
-            {
-                mainWindow = new MainWindow();
-                System.IO.File.AppendAllText(logPath, "OnLaunched: MainWindow created\n");
-            }
-            catch (Exception ex)
-            {
-                System.IO.File.AppendAllText(logPath, $"OnLaunched: MainWindow ctor threw: {ex}\n");
-                throw;
-            }
+            var mainWindow = new MainWindow();
             _window = mainWindow;
             MainWindow = _window;
             Windows.Add(mainWindow);

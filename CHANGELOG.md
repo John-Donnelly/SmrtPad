@@ -5,6 +5,18 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **37 new production-fix tests** (`ProductionFixTests.cs`) covering:
+  - `Bullets_Click` ViewModel sync and macro recording (`BulletsClickContractTests` — 7 tests)
+  - Macro `SetAlignment` playback RTF application and round-trip (`MacroSetAlignmentPlaybackTests` — 7 tests)
+  - Debug logging removal verification (`AppDebugLoggingRemovedTests` — 3 tests)
+  - Full macro command coverage across all 15 command types (`MacroHelperFullCommandCoverageTests` — 20 tests)
+
+### Fixed
+- **`Bullets_Click`** — now calls `ViewModel.SetListType()` (keeping `ViewModel.ListType` in sync with `IsBullets`) and `_macro.Record(MacroCommandType.SetListType, ...)` (bullets now recorded in macros) when toggling via the toolbar button
+- **Macro `SetAlignment` playback** — `ExecuteMacroCommand` now applies the alignment directly to the RTF document's paragraph format in addition to updating the ViewModel; previously only `ViewModel.SetAlignment()` was called, so replaying a recorded alignment macro had no visible effect
+- **`App.xaml.cs` debug logging** — removed leftover `System.IO.File.WriteAllText/AppendAllText` calls that wrote `SmrtPad_App_Startup.log` to `%TEMP%` on every application launch; startup diagnostics are not appropriate for production builds
+
+### Added
 - **Comprehensive UI test expansion** — expanded UI automation test suite from ~84 to 240 tests across 13 test classes, covering all application features methodically
   - **EditMenuUITests** (15 tests) — added Delete key, Backspace, Cut/Copy/Paste/Select All via Edit menu items, multiple Redo operations, Copy without selection safety, Paste into existing content
   - **FindReplaceUITests** (13 tests) — added Match Case filtering, Whole Word filtering, single Replace, Replace All with empty string (deletion), Find wraps around document, empty search box safety, Replace All changes character count

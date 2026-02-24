@@ -1288,7 +1288,19 @@ namespace SmrtPad
                 case MacroCommandType.ZoomIn:       ZoomIn_Click(this, new RoutedEventArgs()); break;
                 case MacroCommandType.ZoomOut:      ZoomOut_Click(this, new RoutedEventArgs()); break;
                 case MacroCommandType.SetAlignment when cmd.Value is not null:
-                    ViewModel.SetAlignment(cmd.Value); break;
+                {
+                    var pf = Editor.Document.Selection.ParagraphFormat;
+                    pf.Alignment = cmd.Value switch
+                    {
+                        "Center"  => ParagraphAlignment.Center,
+                        "Right"   => ParagraphAlignment.Right,
+                        "Justify" => ParagraphAlignment.Justify,
+                        _         => ParagraphAlignment.Left,
+                    };
+                    Editor.Document.Selection.ParagraphFormat = pf;
+                    ViewModel.SetAlignment(cmd.Value);
+                    break;
+                }
                 case MacroCommandType.SetFontFamily when cmd.Value is not null:
                 {
                     var cf = Editor.Document.Selection.CharacterFormat;
@@ -1664,15 +1676,12 @@ namespace SmrtPad
             if (selectedText != null)
             {
                 ITextParagraphFormat paragraphFormatting = selectedText.ParagraphFormat;
-                if (paragraphFormatting.ListType == MarkerType.Bullet)
-                {
-                    paragraphFormatting.ListType = MarkerType.None;
-                }
-                else
-                {
-                    paragraphFormatting.ListType = MarkerType.Bullet;
-                }
+                bool wasEnabled = paragraphFormatting.ListType == MarkerType.Bullet;
+                string newListType = wasEnabled ? "None" : "Bullet";
+                paragraphFormatting.ListType = wasEnabled ? MarkerType.None : MarkerType.Bullet;
                 selectedText.ParagraphFormat = paragraphFormatting;
+                ViewModel.SetListType(newListType);
+                _macro.Record(MacroCommandType.SetListType, newListType);
             }
         }
 
