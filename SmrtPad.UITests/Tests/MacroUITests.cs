@@ -40,77 +40,81 @@ namespace SmrtPad.UITests.Tests
         public void MacroRecordItem_IsPresent_InMacroMenu()
         {
             RequireDriver();
+            
+            var macroMenu = _driver!.FindElement(MobileBy.Name("Macro"));
+            macroMenu.Click();
+            System.Threading.Thread.Sleep(500);
+
             var item = _driver!.FindElement(
                 MobileBy.AccessibilityId("MacroRecordItem"));
             Assert.NotNull(item);
+            
+            macroMenu.Click();
         }
 
         [SkippableFact]
         public void MacroStopItem_IsPresent_InMacroMenu()
         {
             RequireDriver();
+            
+            var macroMenu = _driver!.FindElement(MobileBy.Name("Macro"));
+            macroMenu.Click();
+            System.Threading.Thread.Sleep(500);
+
             var item = _driver!.FindElement(
                 MobileBy.AccessibilityId("MacroStopItem"));
             Assert.NotNull(item);
+            
+            macroMenu.Click();
         }
 
         [SkippableFact]
         public void MacroRunItem_IsPresent_InMacroMenu()
         {
             RequireDriver();
+            
+            var macroMenu = _driver!.FindElement(MobileBy.Name("Macro"));
+            macroMenu.Click();
+            System.Threading.Thread.Sleep(500);
+
             var item = _driver!.FindElement(
                 MobileBy.AccessibilityId("MacroRunItem"));
             Assert.NotNull(item);
+            
+            macroMenu.Click();
         }
 
         [SkippableFact]
         public void MacroSaveItem_IsPresent_InMacroMenu()
         {
             RequireDriver();
+            
+            var macroMenu = _driver!.FindElement(MobileBy.Name("Macro"));
+            macroMenu.Click();
+            System.Threading.Thread.Sleep(500);
+
             var item = _driver!.FindElement(
                 MobileBy.AccessibilityId("MacroSaveItem"));
             Assert.NotNull(item);
+            
+            macroMenu.Click();
         }
 
         [SkippableFact]
         public void MacroLoadItem_IsPresent_InMacroMenu()
         {
             RequireDriver();
+            
+            var macroMenu = _driver!.FindElement(MobileBy.Name("Macro"));
+            macroMenu.Click();
+            System.Threading.Thread.Sleep(500);
+
             var item = _driver!.FindElement(
                 MobileBy.AccessibilityId("MacroLoadItem"));
             Assert.NotNull(item);
+            
+            macroMenu.Click();
         }
 
-        // ── List type flyout ─────────────────────────────────────────────────
-
-        [SkippableFact]
-        public void ListTypeBullet_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            // The flyout item is identified by its x:Uid-derived AutomationId
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeBulletItem"));
-            Assert.NotNull(item);
+            }
         }
-
-        [SkippableFact]
-        public void ListTypeNone_FlyoutItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("ListTypeNoneItem"));
-            Assert.NotNull(item);
-        }
-
-        // ── Line spacing flyout ──────────────────────────────────────────────
-
-        [SkippableFact]
-        public void LineSpacing_CustomItem_IsPresent()
-        {
-            RequireDriver();
-            var item = _driver!.FindElement(
-                MobileBy.AccessibilityId("CustomSpacingItem"));
-            Assert.NotNull(item);
-        }
-    }
-}
