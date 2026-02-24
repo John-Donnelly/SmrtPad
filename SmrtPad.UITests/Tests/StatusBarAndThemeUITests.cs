@@ -224,5 +224,154 @@ namespace SmrtPad.UITests.Tests
                 Assert.NotNull(element);
             }
         }
+
+        // ── Column number updates after typing ───────────────────────────────
+
+        /// <summary>
+        /// After typing "hello" (5 chars), the column should be 6 (cursor past
+        /// the last character).
+        /// </summary>
+        [SkippableFact]
+        public void TypingFiveChars_ColumnNumber_ShowsSix()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello");
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.Contains("Col 6", lineCol);
+        }
+
+        // ── Theme toggle cycles back ─────────────────────────────────────────
+
+        /// <summary>
+        /// Clicking the theme toggle 3 times should cycle through all themes
+        /// and return to a known state, confirming the full cycle. All status
+        /// messages should start with "Theme:".
+        /// </summary>
+        [SkippableFact]
+        public void ThemeToggle_ThreeClicks_AllShowThemePrefix()
+        {
+            RequireDriver();
+
+            string[] themes = new string[3];
+            for (int i = 0; i < 3; i++)
+            {
+                _driver!.FindElement(MobileBy.AccessibilityId("ThemeToggleButton")).Click();
+                Thread.Sleep(400);
+                themes[i] = StatusText;
+                Assert.StartsWith("Theme:", themes[i]);
+            }
+
+            // All three should be distinct
+            Assert.NotEqual(themes[0], themes[1]);
+            Assert.NotEqual(themes[1], themes[2]);
+        }
+
+        // ── Word count with punctuation ──────────────────────────────────────
+
+        /// <summary>
+        /// Words separated by punctuation (e.g., "word,word") should be counted
+        /// according to the app's word counting logic.
+        /// </summary>
+        [SkippableFact]
+        public void WordCount_WithPunctuation_CountsCorrectly()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello, world");
+
+            string wordCount = _fx.GetStatusBarText("WordCountText");
+            // "hello," and "world" = 2 words (comma attached to first word)
+            Assert.Equal("Words: 2", wordCount);
+        }
+
+        // ── Char count after newline ─────────────────────────────────────────
+
+        /// <summary>
+        /// A newline should be counted in the character count.
+        /// Typing "ab" + Enter + "cd" = "ab\r\ncd" but RichEditBox uses \r
+        /// so total chars vary; we verify it's more than the text alone.
+        /// </summary>
+        [SkippableFact]
+        public void CharCount_WithNewline_IncludesNewline()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            _fx.TypeInEditor("ab");
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Enter);
+            Thread.Sleep(100);
+            _fx.TypeInEditor("cd");
+            Thread.Sleep(200);
+
+            string charText = _fx.GetStatusBarText("CharCountText");
+            // "ab\rcd" = at least 5 chars (ab + newline + cd)
+            // Extract number and verify > 4
+            string numberPart = charText.Replace("Characters: ", "");
+            int charCount = int.Parse(numberPart);
+            Assert.True(charCount >= 5,
+                $"Expected at least 5 characters with newline, got {charCount}");
+        }
+
+        // ── Zoom display always has percent sign ─────────────────────────────
+
+        /// <summary>
+        /// The ZoomText should always end with "%" regardless of zoom level.
+        /// </summary>
+        [SkippableFact]
+        public void ZoomDisplay_AlwaysEndsWithPercentSign()
+        {
+            RequireDriver();
+
+            string zoom = _fx.GetStatusBarText("ZoomText");
+            Assert.EndsWith("%", zoom);
+        }
+
+        // ── Selection length updates on partial selection ─────────────────────
+
+        /// <summary>
+        /// Selecting only part of the text (via Shift+Arrow keys) should update
+        /// the selection length to match the number of characters selected.
+        /// </summary>
+        [SkippableFact]
+        public void PartialSelection_UpdatesSelectionLength()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+            _fx.TypeInEditor("hello world");
+
+            // Move to start
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Home);
+            Thread.Sleep(100);
+
+            // Select 5 characters with Shift+Right
+            for (int i = 0; i < 5; i++)
+            {
+                editor.SendKeys(Keys.Shift + Keys.ArrowRight + Keys.Null);
+                Thread.Sleep(50);
+            }
+            Thread.Sleep(200);
+
+            string selText = _fx.GetStatusBarText("SelectionLengthText");
+            Assert.Equal("Sel: 5", selText);
+        }
+
+        // ── Line/col at beginning of document ────────────────────────────────
+
+        /// <summary>
+        /// In an empty document, the cursor should be at Ln 1, Col 1.
+        /// </summary>
+        [SkippableFact]
+        public void EmptyEditor_LineCol_ShowsLn1Col1()
+        {
+            RequireDriver();
+            _fx.ClearEditor();
+
+            string lineCol = _fx.GetStatusBarText("LineColText");
+            Assert.Equal("Ln 1, Col 1", lineCol);
+        }
     }
 }
