@@ -361,17 +361,17 @@
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="14"/>
                         </Button>
                         <!-- List type button with dropdown -->
-                        <Button Click="Bullets_Click" Padding="4,3" CornerRadius="4" Height="28"
+                        <Button x:Name="ListTypeButton" Click="Bullets_Click" Padding="4,3" CornerRadius="4" Height="28"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Start a list">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
-                                    <MenuFlyoutItem x:Uid="ListTypeNoneItem" Text="None" Click="ListTypeNone_Click"/>
-                                    <MenuFlyoutItem x:Uid="ListTypeBulletItem" Text="Bullet" Click="ListTypeBullet_Click"/>
-                                    <MenuFlyoutItem x:Uid="ListTypeNumberItem" Text="Numbers" Click="ListTypeNumber_Click"/>
-                                    <MenuFlyoutItem x:Uid="ListTypeLowerLetterItem" Text="Lowercase letters" Click="ListTypeLowerLetter_Click"/>
-                                    <MenuFlyoutItem x:Uid="ListTypeUpperLetterItem" Text="Uppercase letters" Click="ListTypeUpperLetter_Click"/>
-                                    <MenuFlyoutItem x:Uid="ListTypeLowerRomanItem" Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"/>
-                                    <MenuFlyoutItem x:Uid="ListTypeUpperRomanItem" Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeNoneItem" x:Uid="ListTypeNoneItem" Text="None" Click="ListTypeNone_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeBulletItem" x:Uid="ListTypeBulletItem" Text="Bullet" Click="ListTypeBullet_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeNumberItem" x:Uid="ListTypeNumberItem" Text="Numbers" Click="ListTypeNumber_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeLowerLetterItem" x:Uid="ListTypeLowerLetterItem" Text="Lowercase letters" Click="ListTypeLowerLetter_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeUpperLetterItem" x:Uid="ListTypeUpperLetterItem" Text="Uppercase letters" Click="ListTypeUpperLetter_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeLowerRomanItem" x:Uid="ListTypeLowerRomanItem" Text="Lowercase Roman" Click="ListTypeLowerRoman_Click"/>
+                                    <MenuFlyoutItem x:Name="ListTypeUpperRomanItem" x:Uid="ListTypeUpperRomanItem" Text="Uppercase Roman" Click="ListTypeUpperRoman_Click"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
@@ -380,7 +380,7 @@
                             </StackPanel>
                         </Button>
                         <!-- Line spacing dropdown -->
-                        <Button Padding="4,3" CornerRadius="4" Height="28"
+                        <Button x:Name="LineSpacingButton" Padding="4,3" CornerRadius="4" Height="28"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Line Spacing">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
@@ -389,7 +389,7 @@
                                     <MenuFlyoutItem Text="1.5" Click="LineSpacing_Click" Tag="1.5"/>
                                     <MenuFlyoutItem Text="2.0" Click="LineSpacing_Click" Tag="2.0"/>
                                     <MenuFlyoutSeparator/>
-                                    <MenuFlyoutItem x:Uid="CustomSpacingItem" Text="Custom..." Click="CustomLineSpacing_Click"/>
+                                    <MenuFlyoutItem x:Name="LineSpacingCustomItem" x:Uid="CustomSpacingItem" Text="Custom..." Click="CustomLineSpacing_Click"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                             <StackPanel Orientation="Horizontal" Spacing="2">
@@ -701,7 +701,7 @@
         </Grid>
 
         <!-- ═══ STATUS BAR ═══ -->
-        <Grid x:Name="StatusBar" Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4">
+        <ContentControl x:Name="StatusBar" AutomationProperties.AutomationId="StatusBar" IsTabStop="True" Grid.Row="3" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}" Padding="10,4" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -725,6 +725,6 @@
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
             </Grid>
-        </Grid>
+        </ContentControl>
     </Grid>
 </Window>

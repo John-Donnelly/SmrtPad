@@ -44,14 +44,30 @@ namespace SmrtPad
         /// </summary>
         public App()
         {
-            Services = ConfigureServices();
+            var logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SmrtPad_App_Startup.log");
+            System.IO.File.WriteAllText(logPath, "Starting App constructor\n");
 
-            // Apply the persisted language override before any resources are loaded.
-            var lang = Services.GetRequiredService<ISettingsService>().Language;
-            ApplicationLanguages.PrimaryLanguageOverride =
-                string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
+            try
+            {
+                Services = ConfigureServices();
+                System.IO.File.AppendAllText(logPath, "ConfigureServices done\n");
 
-            InitializeComponent();
+                // Apply the persisted language override before any resources are loaded.
+                var lang = Services.GetRequiredService<ISettingsService>().Language;
+                System.IO.File.AppendAllText(logPath, $"Got language: {lang}\n");
+
+                ApplicationLanguages.PrimaryLanguageOverride =
+                    string.IsNullOrEmpty(lang) || lang == "en-US" ? string.Empty : lang;
+                System.IO.File.AppendAllText(logPath, "PrimaryLanguageOverride set\n");
+
+                InitializeComponent();
+                System.IO.File.AppendAllText(logPath, "InitializeComponent done\n");
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(logPath, $"Exception: {ex}\n");
+                throw;
+            }
         }
 
         private static ServiceProvider ConfigureServices()
