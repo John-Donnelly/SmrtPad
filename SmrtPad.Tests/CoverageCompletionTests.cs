@@ -368,7 +368,7 @@ namespace SmrtPad.Tests
         [InlineData("ScrollViewer")]
         [InlineData("EditorContainer")]
         [InlineData("PageViewBorder")]
-        [InlineData("ScaleTransform")]
+        [InlineData("EditorScaleTransform")]
         [InlineData("CurrentFile")]
         [InlineData("IsModified")]
         [InlineData("Encoding")]

@@ -27,6 +27,7 @@
     <PackageReference Include="xunit.skippablefact"          Version="1.5.61" />
     <PackageReference Include="Appium.WebDriver"             Version="8.1.0"  />
     <PackageReference Include="coverlet.collector"           Version="6.0.0"  />
+    <PackageReference Include="System.Drawing.Common"        Version="9.0.5"  />
   </ItemGroup>
 
   <ItemGroup>

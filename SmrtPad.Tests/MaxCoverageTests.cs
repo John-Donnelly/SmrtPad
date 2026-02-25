@@ -1885,7 +1885,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void DocumentTab_HasScaleTransformProperty()
         {
-            var prop = TabType.GetProperty("ScaleTransform");
+            var prop = TabType.GetProperty("EditorScaleTransform");
             Assert.NotNull(prop);
             Assert.False(prop!.CanWrite);  // readonly
         }

@@ -74,7 +74,7 @@ namespace SmrtPad
         private ScrollViewer EditorScrollViewer => ActiveTab.ScrollViewer;
         private Grid EditorContainer => ActiveTab.EditorContainer;
         private Border PageViewBorder => ActiveTab.PageViewBorder;
-        private ScaleTransform ActiveScaleTransform => ActiveTab.ScaleTransform;
+        private ScaleTransform EditorScaleTransform => ActiveTab.EditorScaleTransform;
         public EditorViewModel ViewModel { get; }
 
         public MainWindow()
@@ -169,11 +169,6 @@ namespace SmrtPad
             tab.Editor.DragOver += Editor_DragOver;
             tab.Editor.Drop += Editor_Drop;
             tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
-            tab.ScrollViewer.SizeChanged += (s, e) =>
-            {
-                if (_activeTabIndex >= 0 && tab == ActiveTab)
-                    ApplyZoom();
-            };
 
             DocumentTabs.TabItems.Add(tab.TabViewItem);
             _tabs.Add(tab);
@@ -397,37 +392,61 @@ namespace SmrtPad
         {
             if (!AppWindowTitleBar.IsCustomizationSupported()) return;
 
-            bool isDark = _settings.ThemePreference switch
-            {
-                "Dark"  => true,
-                "Light" => false,
-                _       => Application.Current.RequestedTheme == ApplicationTheme.Dark
-            };
-
             var titleBar = AppWindow.TitleBar;
-            titleBar.ButtonBackgroundColor         = Color.FromArgb(0, 0, 0, 0);
-            titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(0, 0, 0, 0);
+
+            // When following the system theme, reset all custom colors so the OS
+            // draws the title bar automatically.
+            if (_settings.ThemePreference is not "Dark" and not "Light")
+            {
+                titleBar.BackgroundColor               = null;
+                titleBar.ForegroundColor               = null;
+                titleBar.InactiveBackgroundColor        = null;
+                titleBar.InactiveForegroundColor        = null;
+                titleBar.ButtonBackgroundColor          = null;
+                titleBar.ButtonForegroundColor          = null;
+                titleBar.ButtonHoverBackgroundColor     = null;
+                titleBar.ButtonHoverForegroundColor     = null;
+                titleBar.ButtonPressedBackgroundColor   = null;
+                titleBar.ButtonPressedForegroundColor   = null;
+                titleBar.ButtonInactiveBackgroundColor  = null;
+                titleBar.ButtonInactiveForegroundColor  = null;
+                return;
+            }
+
+            bool isDark = _settings.ThemePreference == "Dark";
 
             if (isDark)
             {
+                // Opaque dark background so the title bar is readable even when
+                // the system is in light mode.
+                titleBar.BackgroundColor               = Color.FromArgb(255, 32, 32, 32);
+                titleBar.InactiveBackgroundColor       = Color.FromArgb(255, 43, 43, 43);
+                titleBar.ButtonBackgroundColor         = Color.FromArgb(255, 32, 32, 32);
+                titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 43, 43, 43);
                 titleBar.ForegroundColor               = Color.FromArgb(255, 255, 255, 255);
                 titleBar.InactiveForegroundColor       = Color.FromArgb(160, 255, 255, 255);
                 titleBar.ButtonForegroundColor         = Color.FromArgb(255, 255, 255, 255);
                 titleBar.ButtonHoverForegroundColor    = Color.FromArgb(255, 255, 255, 255);
-                titleBar.ButtonHoverBackgroundColor    = Color.FromArgb(25,  255, 255, 255);
+                titleBar.ButtonHoverBackgroundColor    = Color.FromArgb(255, 50, 50, 50);
                 titleBar.ButtonPressedForegroundColor  = Color.FromArgb(255, 255, 255, 255);
-                titleBar.ButtonPressedBackgroundColor  = Color.FromArgb(50,  255, 255, 255);
+                titleBar.ButtonPressedBackgroundColor  = Color.FromArgb(255, 70, 70, 70);
                 titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 255, 255, 255);
             }
             else
             {
+                // Opaque light background so the title bar is readable even when
+                // the system is in dark mode.
+                titleBar.BackgroundColor               = Color.FromArgb(255, 243, 243, 243);
+                titleBar.InactiveBackgroundColor       = Color.FromArgb(255, 243, 243, 243);
+                titleBar.ButtonBackgroundColor         = Color.FromArgb(255, 243, 243, 243);
+                titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(255, 243, 243, 243);
                 titleBar.ForegroundColor               = Color.FromArgb(255, 0, 0, 0);
                 titleBar.InactiveForegroundColor       = Color.FromArgb(160, 0, 0, 0);
                 titleBar.ButtonForegroundColor         = Color.FromArgb(255, 0, 0, 0);
                 titleBar.ButtonHoverForegroundColor    = Color.FromArgb(255, 0, 0, 0);
-                titleBar.ButtonHoverBackgroundColor    = Color.FromArgb(25,  0, 0, 0);
+                titleBar.ButtonHoverBackgroundColor    = Color.FromArgb(255, 229, 229, 229);
                 titleBar.ButtonPressedForegroundColor  = Color.FromArgb(255, 0, 0, 0);
-                titleBar.ButtonPressedBackgroundColor  = Color.FromArgb(50,  0, 0, 0);
+                titleBar.ButtonPressedBackgroundColor  = Color.FromArgb(255, 204, 204, 204);
                 titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 0, 0, 0);
             }
         }
@@ -1550,26 +1569,9 @@ namespace SmrtPad
         private void ApplyZoom()
         {
             double scale = ViewModel.ZoomLevel / 100.0;
+            EditorScaleTransform.ScaleX = scale;
+            EditorScaleTransform.ScaleY = scale;
 
-            // Scale the editor container (true visual zoom, not font size change)
-            ActiveScaleTransform.ScaleX = scale;
-            ActiveScaleTransform.ScaleY = scale;
-
-            // Compute container dimensions so the scaled content fills the viewport.
-            // The ScaleTransform shrinks the visual area — compensate by expanding
-            // the logical size so that (logical size * scale) == viewport size.
-            double viewportWidth = EditorScrollViewer.ActualWidth;
-            double viewportHeight = EditorScrollViewer.ActualHeight;
-            if (viewportWidth > 0)
-            {
-                EditorContainer.Width = viewportWidth / scale;
-            }
-            if (viewportHeight > 0)
-            {
-                EditorContainer.MinHeight = viewportHeight / scale;
-            }
-
-            // Redraw rulers at the new scale
             if (_rulersVisible)
                 RedrawRulers();
         }
@@ -2916,7 +2918,7 @@ namespace SmrtPad
         public ScrollViewer ScrollViewer { get; }
         public Grid EditorContainer { get; }
         public Border PageViewBorder { get; }
-        public ScaleTransform ScaleTransform { get; } = new ScaleTransform();
+        public ScaleTransform EditorScaleTransform { get; } = new ScaleTransform();
 
         public StorageFile? CurrentFile { get; set; }
         public bool IsModified { get; set; }
@@ -2934,8 +2936,28 @@ namespace SmrtPad
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
                 MinHeight = 200,
+                // Transparent background + no border so ScaleTransform only affects text.
+                // The EditorContainer provides the full-size visible background.
+                Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                BorderThickness = new Thickness(0),
             };
+
+            // Override all RichEditBox visual-state backgrounds so the control is
+            // fully transparent in every state (rest, focused, pointer-over, disabled).
+            // Without this, the focused/hover background scales with the RenderTransform,
+            // creating a visible "shrunken box" inside the layout area below 100 % zoom.
+            var transparent = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            Editor.Resources["TextControlBackground"] = transparent;
+            Editor.Resources["TextControlBackgroundPointerOver"] = transparent;
+            Editor.Resources["TextControlBackgroundFocused"] = transparent;
+            Editor.Resources["TextControlBackgroundDisabled"] = transparent;
+            Editor.Resources["TextControlBorderBrush"] = transparent;
+            Editor.Resources["TextControlBorderBrushPointerOver"] = transparent;
+            Editor.Resources["TextControlBorderBrushFocused"] = transparent;
+            Editor.Resources["TextControlBorderBrushDisabled"] = transparent;
+
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(Editor, "Editor");
+            Editor.RenderTransform = EditorScaleTransform;
 
             PageViewBorder = new Border
             {
@@ -2956,16 +2978,34 @@ namespace SmrtPad
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
+            // Fill the container with the editor's theme background so the panel
+            // appears full-size even when the Editor's ScaleTransform makes its
+            // own visual smaller than its layout bounds.
+            static void ApplyEditorBackground(Grid g)
+            {
+                if (Application.Current.Resources.TryGetValue("TextControlBackground", out var obj)
+                    && obj is Microsoft.UI.Xaml.Media.Brush bg)
+                    g.Background = bg;
+            }
+            EditorContainer.Loaded           += (_, _) => ApplyEditorBackground(EditorContainer);
+            EditorContainer.ActualThemeChanged += (_, _) => ApplyEditorBackground(EditorContainer);
             EditorContainer.Children.Add(PageViewBorder);
             EditorContainer.Children.Add(Editor);
-            EditorContainer.RenderTransform = ScaleTransform;
-            EditorContainer.RenderTransformOrigin = new Windows.Foundation.Point(0, 0);
 
             ScrollViewer = new ScrollViewer
             {
                 Content = EditorContainer,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
+                HorizontalScrollMode = ScrollMode.Disabled,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            };
+
+            // Keep EditorContainer at least as tall as the ScrollViewer viewport
+            // so the background fills the visible area at any zoom level.
+            ScrollViewer.SizeChanged += (_, _) =>
+            {
+                double margin = EditorContainer.Margin.Top + EditorContainer.Margin.Bottom;
+                EditorContainer.MinHeight = Math.Max(0, ScrollViewer.ActualHeight - margin);
             };
 
             TabViewItem = new TabViewItem
