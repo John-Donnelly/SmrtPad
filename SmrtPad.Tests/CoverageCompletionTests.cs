@@ -2567,8 +2567,8 @@ namespace SmrtPad.Tests
         public void GenerateTable_3x2_HasCorrectCells()
         {
             string rtf = RtfHelper.GenerateTable(3, 2);
-            // Count occurrences of " \cell " to avoid matching \cellx
-            int cellCount = rtf.Split(" \\cell ").Length - 1;
+            // Count occurrences of "\cell " (cell terminator) to avoid matching \cellx
+            int cellCount = rtf.Split(@"\cell ").Length - 1;
             Assert.Equal(6, cellCount); // 3 rows × 2 cols
         }
 

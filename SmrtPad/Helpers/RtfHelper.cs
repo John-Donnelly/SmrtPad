@@ -30,7 +30,11 @@ namespace SmrtPad.Helpers
                 }
                 for (int c = 0; c < cols; c++)
                 {
-                    rtf.Append($@" \cell ");
+                    // Per RTF spec 1.9.1 §Table Definitions: every paragraph inside a table
+                    // row must carry \intbl, and <cell> syntax is <textpar>+ \cell.
+                    // \pard resets paragraph defaults; \intbl marks the paragraph as being
+                    // part of a table row.
+                    rtf.Append(@"\pard\intbl\cell ");
                 }
                 rtf.Append(@"\row ");
             }

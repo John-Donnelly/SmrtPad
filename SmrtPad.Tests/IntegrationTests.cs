@@ -1114,7 +1114,7 @@ namespace SmrtPad.Tests
             Assert.StartsWith(@"{\rtf1\ansi", rtf);
             Assert.EndsWith("}", rtf);
 
-            int cellCount = rtf.Split(@" \cell ").Length - 1;
+            int cellCount = rtf.Split(@"\cell ").Length - 1;
             Assert.Equal(rows * cols, cellCount);
         }
 
