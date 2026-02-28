@@ -4,6 +4,24 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Tab bar: New always opens a new tab** — `New_Click` now always creates a new tab instead of prompting to save changes on the current tab; save prompts are reserved for tab close and app close only
+- **Tab bar: Open opens file in a new tab** — `Open_Click` and `OpenFileByPathAsync` now open files in a new tab (or reuse the current blank unmodified tab), rather than replacing the current document and prompting to save
+- **Tab header set for all file types** — `OpenStorageFileAsync` now consistently sets `ActiveTab.TabViewItem.Header`, `ActiveTab.IsModified`, and `ActiveTab.Encoding` for all file types (DOCX, ODT, HTML, RTF, TXT); previously only RTF/TXT branches updated the tab header
+- **Save dialog on close iterates all tabs** — `AppWindow_Closing` now checks all tabs for unsaved changes (not just the active tab); when multiple tabs have modifications, each is shown sequentially with its own save prompt, and the user can cancel at any point to abort closing
+- **Backstage Exit uses multi-tab save** — the backstage Exit handler and `Exit_Click` now use `PromptSaveAllTabsAsync` to iterate all modified tabs before closing
+
+### Added
+- **8 new tab management UI tests** (`TabManagementUITests.cs`) covering:
+  - New button creates a new tab without save prompt
+  - New button with modified tab does not prompt save
+  - Close modified tab shows save dialog
+  - Close unmodified tab does not show save dialog
+  - New document tab header is "Untitled"
+  - Multiple tabs with mixed modification state
+  - Plus button and New button both create new tabs
+- **`PromptSaveAllTabsAsync` helper** — new method that iterates all tabs with unsaved changes, switches to each, and prompts save individually; used by `AppWindow_Closing`, `Exit_Click`, and backstage Exit
+
 ### Added
 - **41 new production-fix tests** (`ProductionFixTests.cs`) covering:
   - `Bullets_Click` ViewModel sync and macro recording (`BulletsClickContractTests` — 7 tests)
