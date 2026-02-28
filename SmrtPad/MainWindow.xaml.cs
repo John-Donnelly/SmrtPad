@@ -169,6 +169,12 @@ namespace SmrtPad
             tab.Editor.DragOver += Editor_DragOver;
             tab.Editor.Drop += Editor_Drop;
             tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
+            // When the OS system theme changes (e.g. Windows auto dark/light mode),
+            // re-normalise text colors so the active document stays readable.
+            tab.EditorContainer.ActualThemeChanged += (_, _) =>
+            {
+                if (tab == ActiveTab) NormalizeDocumentColorsForTheme();
+            };
 
             DocumentTabs.TabItems.Add(tab.TabViewItem);
             _tabs.Add(tab);
@@ -312,7 +318,23 @@ namespace SmrtPad
         private async Task OpenStorageFileAsync(StorageFile file)
         {
             string ext = file.FileType.ToLowerInvariant();
-            if (ext is ".docx" or ".odt")
+            if (ext is ".docx")
+            {
+                using var stream = await file.OpenStreamForReadAsync();
+                string rtf = DocxImportHelper.ConvertToRtf(stream);
+                using var rtfStream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(rtf));
+                var randAcc = rtfStream.AsRandomAccessStream();
+                Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, randAcc);
+
+                ActiveTab.CurrentFile = null;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
+                _settings.AddRecentFile(file.Path);
+                UpdateStatusBarCounts();
+                UpdateEncoding("DOCX");
+            }
+            else if (ext is ".odt")
             {
                 string text = await ExtractTextFromArchiveAsync(file, ext);
                 Editor.Document.SetText(TextSetOptions.None, text);
@@ -355,6 +377,15 @@ namespace SmrtPad
                 UpdateEncoding(isTxt ? "UTF-8" : "RTF");
                 ActiveTab.Encoding = isTxt ? "UTF-8" : "RTF";
             }
+
+            // LoadFromStream is synchronous but the Win32 RichEdit control processes
+            // character-format messages (including baking explicit color values) in
+            // subsequent dispatcher cycles. Reading ForegroundColor immediately after
+            // loading returns the pre-format state, so the normalization finds nothing
+            // to fix. Two nested TryEnqueue calls guarantee we run after all current
+            // and immediately-queued RTF formatting work has settled.
+            DispatcherQueue.TryEnqueue(() =>
+                DispatcherQueue.TryEnqueue(NormalizeDocumentColorsForTheme));
         }
 
         private static async Task<string> ExtractTextFromArchiveAsync(StorageFile file, string ext)
@@ -386,6 +417,66 @@ namespace SmrtPad
                 };
             }
             UpdateTitleBarTheme();
+            NormalizeDocumentColorsForTheme();
+        }
+
+        /// <summary>Returns true when the currently resolved theme is dark.</summary>
+        private bool IsCurrentThemeDark()
+        {
+            if (Content is FrameworkElement root)
+            {
+                if (root.RequestedTheme == ElementTheme.Dark) return true;
+                if (root.RequestedTheme == ElementTheme.Light) return false;
+                // RequestedTheme.Default — follow the actual resolved theme
+                return root.ActualTheme == ElementTheme.Dark;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Resets the active document's text color to auto (transparent) when the
+        /// entire document uses a single explicit color that is unreadable in the
+        /// current theme — e.g., explicit black on a dark background or explicit white
+        /// on a light background. Auto color always follows the <see cref="RichEditBox"/>
+        /// <c>Foreground</c> brush, which is theme-aware.
+        ///
+        /// Documents with mixed explicit colors (intentional color formatting) are
+        /// left untouched: a selection spanning multiple colors reports a transparent
+        /// color value for <c>ForegroundColor</c>, so the condition never triggers.
+        /// </summary>
+        private void NormalizeDocumentColorsForTheme()
+        {
+            if (_activeTabIndex < 0) return;
+
+            Editor.Document.GetText(TextGetOptions.None, out string docText);
+            if (string.IsNullOrEmpty(docText.TrimEnd('\r'))) return;
+
+            bool isDark = IsCurrentThemeDark();
+
+            // The Win32 RichEdit control implicitly adds a trailing '\r' which inherits
+            // the document's default text colour (\cf0 / auto). If DocxImportHelper
+            // applied explicit black (\cf1) to paragraphs, the overall document range will
+            // have mixed colours (explicit black + auto) and report a transparent
+            // (0,0,0,0) foreground. By restricting the range to docText.Length - 1,
+            // we evaluate only the actual document content.
+            int length = docText.Length;
+            if (docText.EndsWith('\r') && length > 1)
+                length--;
+
+            var textRange = Editor.Document.GetRange(0, length);
+            var docColor = textRange.CharacterFormat.ForegroundColor;
+
+            // Only act when the entire document has one uniform explicit color that
+            // matches the "wrong default" for the current theme.
+            bool reset = isDark
+                ? docColor == Windows.UI.Color.FromArgb(255, 0, 0, 0)      // explicit black in dark mode
+                : docColor == Windows.UI.Color.FromArgb(255, 255, 255, 255); // explicit white in light mode
+
+            if (reset)
+            {
+                var fullRange = Editor.Document.GetRange(0, TextConstants.MaxUnitCount);
+                fullRange.CharacterFormat.ForegroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
+            }
         }
 
         private void UpdateTitleBarTheme()
@@ -786,7 +877,7 @@ namespace SmrtPad
                     return;
 
                 var picker = new FileOpenPicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.ViewMode = PickerViewMode.List;
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeFilter.Add(".rtf");
@@ -815,7 +906,7 @@ namespace SmrtPad
                 if (ActiveTab.CurrentFile == null)
                 {
                     var picker = new FileSavePicker();
-                    InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                    InitializePicker(picker);
                     picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                     picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
                     picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
@@ -824,20 +915,7 @@ namespace SmrtPad
                     StorageFile file = await picker.PickSaveFileAsync();
                     if (file != null)
                     {
-                        CachedFileManager.DeferUpdates(file);
-                        using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                        {
-                            Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
-                        }
-                        FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                        if (status == FileUpdateStatus.Complete)
-                        {
-                            ActiveTab.CurrentFile = file;
-                            ViewModel.DocumentTitle = file.Name;
-                            ViewModel.IsModified = false;
-                            ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
-                            _settings.AddRecentFile(file.Path);
-                        }
+                        await SaveToFileAsync(file);
                     }
                 }
                 else
@@ -861,37 +939,57 @@ namespace SmrtPad
             try
             {
                 var picker = new FileSavePicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), [".docx"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
                 if (file != null)
                 {
-                    CachedFileManager.DeferUpdates(file);
-                    using (var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                    {
-                        var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-                            ? TextGetOptions.None
-                            : TextGetOptions.FormatRtf;
-                        Editor.Document.SaveToStream(options, randAccStream);
-                    }
-                    FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
-                    if (status == FileUpdateStatus.Complete)
-                    {
-                        ActiveTab.CurrentFile = file;
-                        ViewModel.DocumentTitle = file.Name;
-                        ViewModel.IsModified = false;
-                        ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
-                        _settings.AddRecentFile(file.Path);
-                    }
+                    await SaveToFileAsync(file);
                 }
             }
             catch (Exception ex)
             {
                 await ShowErrorDialogAsync(Res.GetString("ErrorSavingFile"), ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Writes the current editor content to the specified file, updates tab state,
+        /// and records the file in the MRU list.
+        /// </summary>
+        private async Task SaveToFileAsync(StorageFile file)
+        {
+            CachedFileManager.DeferUpdates(file);
+
+            if (file.FileType.Equals(".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                Editor.Document.GetText(TextGetOptions.FormatRtf, out string rtf);
+                using var stream = await file.OpenStreamForWriteAsync();
+                DocxAltChunkExporter.ExportToDocx(rtf, stream);
+                await stream.FlushAsync();
+            }
+            else
+            {
+                using var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite);
+                var options = file.FileType.Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                    ? TextGetOptions.None
+                    : TextGetOptions.FormatRtf;
+                Editor.Document.SaveToStream(options, randAccStream);
+            }
+
+            FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+            if (status == FileUpdateStatus.Complete)
+            {
+                ActiveTab.CurrentFile = file;
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
+                ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
+                _settings.AddRecentFile(file.Path);
             }
         }
 
@@ -1161,7 +1259,7 @@ namespace SmrtPad
             try
             {
                 var picker = new FileSavePicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add(Res.GetString("FileTypePdf"), [".pdf"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
@@ -1196,7 +1294,7 @@ namespace SmrtPad
             try
             {
                 var picker = new FileSavePicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), [".docx"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
@@ -1205,15 +1303,12 @@ namespace SmrtPad
                 if (file == null) return;
 
                 Editor.Document.GetText(TextGetOptions.FormatRtf, out string rtf);
-                byte[] docx = DocxExportHelper.GenerateRichDocx(rtf);
 
                 CachedFileManager.DeferUpdates(file);
-                using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                using (var writer = stream.AsStreamForWrite())
+                using (var stream = await file.OpenStreamForWriteAsync())
                 {
-                    await writer.WriteAsync(docx.AsMemory());
-                    await writer.FlushAsync();
-                    stream.Size = (ulong)docx.Length;
+                    DocxAltChunkExporter.ExportToDocx(rtf, stream);
+                    await stream.FlushAsync();
                 }
                 await CachedFileManager.CompleteUpdatesAsync(file);
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusExportedDocx", file.Name));
@@ -1239,7 +1334,7 @@ namespace SmrtPad
                 }
 
                 var picker = new FileSavePicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
@@ -1383,7 +1478,7 @@ namespace SmrtPad
             try
             {
                 var picker = new FileSavePicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeChoices.Add(Res.GetString("MacroFilter"), [".smacro"]);
                 picker.SuggestedFileName = "macro";
@@ -1405,7 +1500,7 @@ namespace SmrtPad
             try
             {
                 var picker = new FileOpenPicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeFilter.Add(".smacro");
 
@@ -1809,7 +1904,7 @@ namespace SmrtPad
         private async void InsertPicture_Click(object sender, RoutedEventArgs e)
         {
             var picker = new FileOpenPicker();
-            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+            InitializePicker(picker);
             picker.ViewMode = PickerViewMode.Thumbnail;
             picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
             picker.FileTypeFilter.Add(".jpg");
@@ -2416,7 +2511,7 @@ namespace SmrtPad
             try
             {
                 var picker = new FileOpenPicker();
-                InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+                InitializePicker(picker);
                 picker.ViewMode = PickerViewMode.Thumbnail;
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 picker.FileTypeFilter.Add(".png");
@@ -2452,6 +2547,14 @@ namespace SmrtPad
             {
                 await ShowErrorDialogAsync(Res.GetString("ErrorInsertingObject"), ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Sets the owner window handle on a file picker so it can display correctly in WinUI 3.
+        /// </summary>
+        private void InitializePicker(object picker)
+        {
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
         }
 
         private async Task ShowErrorDialogAsync(string title, string message)
