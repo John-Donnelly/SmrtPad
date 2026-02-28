@@ -115,7 +115,7 @@ namespace SmrtPad
             FileBackstage.ExportDocxRequested += (s, e) => { HideBackstage(); ExportDocx_Click(this, new RoutedEventArgs()); };
             FileBackstage.OneDriveRequested  += (s, e)    => { HideBackstage(); SaveToOneDrive_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested   += (s, e)    => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
-            FileBackstage.ExitRequested      += async (s, e) => { if (await PromptSaveChangesAsync()) Close(); };
+            FileBackstage.ExitRequested      += async (s, e) => { if (await PromptSaveAllTabsAsync()) Close(); };
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
             FileBackstage.TemplateRequested  += (s, template) => { HideBackstage(); ApplyTemplate(template); };
 
@@ -130,20 +130,51 @@ namespace SmrtPad
 
         private async void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
         {
-            if (ViewModel.IsModified)
+            // Cancel close so we can show async dialogs if any tab has unsaved changes
+            if (_tabs.Any(t => t.IsModified))
             {
-                // Cancel close so we can show the async dialog
                 args.Cancel = true;
 
-                if (await PromptSaveChangesAsync())
+                if (await PromptSaveAllTabsAsync())
                 {
-                    // User chose Save or Don't Save — close for real.
-                    // Unhook to prevent re-entrance, then close.
+                    // All tabs resolved — close for real.
                     AppWindow.Closing -= AppWindow_Closing;
                     Close();
                 }
-                // else: user cancelled — window stays open
+                // else: user cancelled on one of the tabs — window stays open
             }
+        }
+
+        /// <summary>
+        /// Iterates through all tabs that have unsaved changes, switches to each one,
+        /// and prompts the user to save individually. Returns <c>true</c> if all tabs
+        /// were resolved (saved or discarded); <c>false</c> if the user cancelled on any tab.
+        /// </summary>
+        private async Task<bool> PromptSaveAllTabsAsync()
+        {
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                if (!_tabs[i].IsModified) continue;
+
+                // Switch to the tab so the user sees which document is being asked about
+                _activeTabIndex = i;
+                DocumentTabs.SelectedIndex = i;
+                SyncViewModelFromActiveTab();
+
+                var result = await _dialogService.ShowSavePromptAsync(
+                    _tabs[i].CurrentFile?.Name ?? _tabs[i].TabViewItem.Header as string ?? Res.GetString("DocumentUntitled"));
+
+                if (result == SavePromptResult.Save)
+                {
+                    Save_Click(this, new RoutedEventArgs());
+                }
+                else if (result == SavePromptResult.Cancel)
+                {
+                    return false;
+                }
+                // SavePromptResult.DontSave — continue to the next tab
+            }
+            return true;
         }
 
         // ?? Tab management ???????????????????????????????????????????????????????
@@ -305,8 +336,13 @@ namespace SmrtPad
         {
             try
             {
-                if (!await PromptSaveChangesAsync()) return;
                 var file = await StorageFile.GetFileFromPathAsync(filePath);
+                // Open the file in a new tab (or reuse current blank tab)
+                bool currentIsBlank = ActiveTab.CurrentFile == null && !ActiveTab.IsModified;
+                if (!currentIsBlank)
+                {
+                    CreateTab(file.Name);
+                }
                 await OpenStorageFileAsync(file);
             }
             catch (Exception ex)
@@ -338,6 +374,9 @@ namespace SmrtPad
                 Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, randAcc);
 
                 ActiveTab.CurrentFile = null;
+                ActiveTab.IsModified = false;
+                ActiveTab.TabViewItem.Header = file.Name;
+                ActiveTab.Encoding = "DOCX";
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
@@ -350,6 +389,9 @@ namespace SmrtPad
                 string text = await ExtractTextFromArchiveAsync(file, ext);
                 Editor.Document.SetText(TextSetOptions.None, text);
                 ActiveTab.CurrentFile = null;
+                ActiveTab.IsModified = false;
+                ActiveTab.TabViewItem.Header = file.Name;
+                ActiveTab.Encoding = "UTF-8";
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
@@ -362,6 +404,9 @@ namespace SmrtPad
                 string html = await FileIO.ReadTextAsync(file);
                 Editor.Document.SetText(TextSetOptions.None, html);
                 ActiveTab.CurrentFile = null;
+                ActiveTab.IsModified = false;
+                ActiveTab.TabViewItem.Header = file.Name;
+                ActiveTab.Encoding = "UTF-8";
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
@@ -378,15 +423,15 @@ namespace SmrtPad
                     Editor.Document.LoadFromStream(options, randAccStream);
                 }
                 ActiveTab.CurrentFile = file;
-                ViewModel.DocumentTitle = file.Name;
-                ViewModel.IsModified = false;
                 ActiveTab.IsModified = false;
                 ActiveTab.TabViewItem.Header = file.Name;
+                ActiveTab.Encoding = isTxt ? "UTF-8" : "RTF";
+                ViewModel.DocumentTitle = file.Name;
+                ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
                 _settings.AddRecentFile(file.Path);
                 UpdateStatusBarCounts();
                 UpdateEncoding(isTxt ? "UTF-8" : "RTF");
-                ActiveTab.Encoding = isTxt ? "UTF-8" : "RTF";
             }
 
             // LoadFromStream is synchronous but the Win32 RichEdit control processes
@@ -920,24 +965,11 @@ namespace SmrtPad
             return result == SavePromptResult.DontSave;
         }
 
-        private async void New_Click(object sender, RoutedEventArgs e)
+        private void New_Click(object sender, RoutedEventArgs e)
         {
-            if (!await PromptSaveChangesAsync())
-                return;
-
-            // Reuse the current tab if it is already a blank untitled document,
-            // otherwise open a new tab so the user's document isn't lost.
-            bool currentIsBlank = ActiveTab.CurrentFile == null && !ActiveTab.IsModified;
-            if (!currentIsBlank)
-            {
-                CreateTab(Res.GetString("DocumentUntitled"));
-            }
-
-            Editor.Document.SetText(TextSetOptions.None, string.Empty);
-            ActiveTab.CurrentFile = null;
-            ActiveTab.IsModified = false;
-            ActiveTab.Encoding = "UTF-8";
+            CreateTab(Res.GetString("DocumentUntitled"));
             ViewModel.NewDocument();
+            ActiveTab.Encoding = "UTF-8";
             ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
             UpdateEncoding("UTF-8");
         }
@@ -954,9 +986,6 @@ namespace SmrtPad
         {
             try
             {
-                if (!await PromptSaveChangesAsync())
-                    return;
-
                 var picker = new FileOpenPicker();
                 InitializePicker(picker);
                 picker.ViewMode = PickerViewMode.List;
@@ -971,6 +1000,12 @@ namespace SmrtPad
                 StorageFile file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {
+                    // Open the file in a new tab (or reuse current blank tab)
+                    bool currentIsBlank = ActiveTab.CurrentFile == null && !ActiveTab.IsModified;
+                    if (!currentIsBlank)
+                    {
+                        CreateTab(file.Name);
+                    }
                     await OpenStorageFileAsync(file);
                 }
             }
@@ -1718,7 +1753,7 @@ namespace SmrtPad
 
         private async void Exit_Click(object _, RoutedEventArgs _1)
         {
-            if (!await PromptSaveChangesAsync())
+            if (!await PromptSaveAllTabsAsync())
                 return;
             Close();
         }
