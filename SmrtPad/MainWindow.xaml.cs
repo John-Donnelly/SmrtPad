@@ -65,6 +65,7 @@ namespace SmrtPad
         // ?? Tab management ??????????????????????????????????????????????????????
         private readonly List<DocumentTab> _tabs = [];
         private int _activeTabIndex = -1;
+        private bool _suppressTabModified;
         private readonly MacroHelper _macro = new();
 
         private static readonly char[] s_wordSeparators = [' ', '\r', '\n', '\t'];
@@ -93,7 +94,10 @@ namespace SmrtPad
             ViewModel.PropertyChanged += _docTitleHandler;
 
             // Create the first document tab before ApplySettings() so Editor is valid
+            _suppressTabModified = true;
             CreateTab(Res.GetString("DocumentUntitled"));
+            ActiveTab.IsModified = false;
+            _suppressTabModified = false;
 
             InitializeFonts();
             ApplySettings();
@@ -185,6 +189,7 @@ namespace SmrtPad
 
             tab.Editor.TextChanged += (s, e) =>
             {
+                if (_suppressTabModified) return;
                 if (_activeTabIndex >= 0 && tab == ActiveTab)
                 {
                     ViewModel.IsModified = true;
@@ -230,9 +235,12 @@ namespace SmrtPad
 
         private void DocumentTabs_AddTabButtonClick(TabView sender, object args)
         {
+            _suppressTabModified = true;
             CreateTab(Res.GetString("DocumentUntitled"));
             ViewModel.NewDocument();
+            ActiveTab.IsModified = false;
             UpdateEncoding("UTF-8");
+            _suppressTabModified = false;
             ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
         }
 
@@ -269,9 +277,12 @@ namespace SmrtPad
                 ? Res.GetString("DocumentUntitled")
                 : template.DisplayName;
 
+            _suppressTabModified = true;
             CreateTab(title);
             ViewModel.NewDocument();
+            ActiveTab.IsModified = false;
             UpdateEncoding("UTF-8");
+            _suppressTabModified = false;
 
             if (!string.IsNullOrEmpty(template.PlainContent))
             {
@@ -291,6 +302,8 @@ namespace SmrtPad
             if (_tabs[idx].IsModified)
             {
                 _activeTabIndex = idx;
+                DocumentTabs.SelectedIndex = idx;
+                SyncViewModelFromActiveTab();
                 if (!await PromptSaveChangesAsync()) return;
             }
 
@@ -299,10 +312,9 @@ namespace SmrtPad
 
             if (_tabs.Count == 0)
             {
-                // Reopen a blank tab so there is always at least one
-                CreateTab(Res.GetString("DocumentUntitled"));
-                ViewModel.NewDocument();
-                UpdateEncoding("UTF-8");
+                // Last tab closed — close the application
+                AppWindow.Closing -= AppWindow_Closing;
+                Close();
             }
             else
             {
@@ -967,11 +979,14 @@ namespace SmrtPad
 
         private void New_Click(object sender, RoutedEventArgs e)
         {
+            _suppressTabModified = true;
             CreateTab(Res.GetString("DocumentUntitled"));
             ViewModel.NewDocument();
+            ActiveTab.IsModified = false;
             ActiveTab.Encoding = "UTF-8";
             ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
             UpdateEncoding("UTF-8");
+            _suppressTabModified = false;
         }
 
         private void FileMenu_Tapped(object sender, RoutedEventArgs e)
