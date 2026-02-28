@@ -322,6 +322,17 @@ namespace SmrtPad
             {
                 using var stream = await file.OpenStreamForReadAsync();
                 string rtf = DocxImportHelper.ConvertToRtf(stream);
+
+                // In dark mode, swap the default black entry (cf1) in the RTF color
+                // table with white so that default-coloured text is immediately
+                // readable without any post-load fixup.  Only the first occurrence
+                // (the default black entry) is replaced; genuinely coloured text is
+                // preserved because it uses different colour table indices.
+                if (IsCurrentThemeDark())
+                {
+                    rtf = ReplaceFirstBlackInColorTable(rtf);
+                }
+
                 using var rtfStream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(rtf));
                 var randAcc = rtfStream.AsRandomAccessStream();
                 Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, randAcc);
@@ -420,6 +431,34 @@ namespace SmrtPad
             NormalizeDocumentColorsForTheme();
         }
 
+        /// <summary>
+        /// Replaces the first <c>\red0\green0\blue0;</c> entry in the RTF color table
+        /// with <c>\red255\green255\blue255;</c> so that default-coloured text (cf1)
+        /// renders as white instead of black.  This is the pre-load equivalent of
+        /// <see cref="NormalizeDocumentColorsForTheme"/> — modifying the RTF before
+        /// <c>LoadFromStream</c> avoids the timing and auto-colour detection issues
+        /// of the post-load <c>ITextRange</c> approach.
+        /// </summary>
+        private static string ReplaceFirstBlackInColorTable(string rtf)
+        {
+            // Locate the colour table group: {\colortbl;...}
+            const string colortblTag = @"{\colortbl";
+            int ctStart = rtf.IndexOf(colortblTag, StringComparison.Ordinal);
+            if (ctStart < 0) return rtf;
+
+            int ctEnd = rtf.IndexOf('}', ctStart + colortblTag.Length);
+            if (ctEnd < 0) return rtf;
+
+            // Within the colour table, replace the first black entry with white.
+            const string black = @"\red0\green0\blue0;";
+            const string white = @"\red255\green255\blue255;";
+
+            int blackIdx = rtf.IndexOf(black, ctStart, ctEnd - ctStart, StringComparison.Ordinal);
+            if (blackIdx < 0) return rtf;
+
+            return string.Concat(rtf.AsSpan(0, blackIdx), white, rtf.AsSpan(blackIdx + black.Length));
+        }
+
         /// <summary>Returns true when the currently resolved theme is dark.</summary>
         private bool IsCurrentThemeDark()
         {
@@ -434,15 +473,17 @@ namespace SmrtPad
         }
 
         /// <summary>
-        /// Resets the active document's text color to auto (transparent) when the
-        /// entire document uses a single explicit color that is unreadable in the
-        /// current theme — e.g., explicit black on a dark background or explicit white
-        /// on a light background. Auto color always follows the <see cref="RichEditBox"/>
-        /// <c>Foreground</c> brush, which is theme-aware.
+        /// Resets the active document's text color when runs use an explicit color that
+        /// is unreadable in the current theme — e.g., explicit black on a dark background
+        /// or explicit white on a light background.
         ///
-        /// Documents with mixed explicit colors (intentional color formatting) are
-        /// left untouched: a selection spanning multiple colors reports a transparent
-        /// color value for <c>ForegroundColor</c>, so the condition never triggers.
+        /// The replacement color is the theme-appropriate foreground (white in dark mode,
+        /// black in light mode) rather than the RTF "auto" transparent value, because
+        /// setting <c>ForegroundColor</c> to <c>Color.FromArgb(0,0,0,0)</c> via the
+        /// managed API does not reliably map to the Win32 <c>CFE_AUTOCOLOR</c> flag.
+        ///
+        /// In dark mode, both explicit black <c>Color(255,0,0,0)</c> and RTF auto colour
+        /// <c>Color(0,0,0,0)</c> are treated as unreadable and replaced with white.
         /// </summary>
         private void NormalizeDocumentColorsForTheme()
         {
@@ -453,13 +494,10 @@ namespace SmrtPad
 
             bool isDark = IsCurrentThemeDark();
 
-            // The unreadable explicit colour we want to reset:
-            // Explicit black in dark mode, explicit white in light mode.
-            var targetColor = isDark 
-                ? Windows.UI.Color.FromArgb(255, 0, 0, 0)
-                : Windows.UI.Color.FromArgb(255, 255, 255, 255);
-
-            var autoColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
+            // Use an explicit theme-appropriate foreground colour.
+            var replacementColor = isDark
+                ? Windows.UI.Color.FromArgb(255, 255, 255, 255)
+                : Windows.UI.Color.FromArgb(255, 0, 0, 0);
 
             // The Win32 RichEdit control implicitly adds a trailing '\r' which inherits
             // the document's default text colour (\cf0 / auto). We exclude it from evaluation.
@@ -467,9 +505,8 @@ namespace SmrtPad
             if (docText.EndsWith('\r') && length > 1)
                 length--;
 
-            // Rather than requiring the *entire* document to be uniformly black,
-            // we iterate through formatting runs and reset any text that explicitly
-            // matches the unreadable wrong-default colour.
+            // Iterate through formatting runs and reset any text that has an
+            // unreadable colour in the current theme.
             var range = Editor.Document.GetRange(0, 0);
 
             while (range.StartPosition < length)
@@ -485,9 +522,10 @@ namespace SmrtPad
                     range.SetRange(range.StartPosition, endPos);
                 }
 
-                if (range.CharacterFormat.ForegroundColor == targetColor)
+                var fg = range.CharacterFormat.ForegroundColor;
+                if (IsUnreadableColor(fg, isDark))
                 {
-                    range.CharacterFormat.ForegroundColor = autoColor;
+                    range.CharacterFormat.ForegroundColor = replacementColor;
                 }
 
                 // Move past this run
@@ -499,6 +537,26 @@ namespace SmrtPad
                 }
 
                 range.SetRange(nextStart, nextStart);
+            }
+        }
+
+        /// <summary>
+        /// Returns <c>true</c> when <paramref name="color"/> is unreadable in the
+        /// current theme.  In dark mode, both opaque black <c>(255,0,0,0)</c> and
+        /// RTF auto colour <c>(0,0,0,0)</c> are unreadable.  In light mode, opaque
+        /// white <c>(255,255,255,255)</c> and auto-white <c>(0,255,255,255)</c> are.
+        /// </summary>
+        private static bool IsUnreadableColor(Windows.UI.Color color, bool isDark)
+        {
+            if (isDark)
+            {
+                // Explicit black (any alpha) or auto/transparent colour
+                return (color.R == 0 && color.G == 0 && color.B == 0);
+            }
+            else
+            {
+                // Explicit white (opaque)
+                return (color.A == 255 && color.R == 255 && color.G == 255 && color.B == 255);
             }
         }
 

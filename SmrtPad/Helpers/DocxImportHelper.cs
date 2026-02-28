@@ -81,11 +81,10 @@ namespace SmrtPad.Helpers
                 }
 
                 // Runs
-                // Set explicit black at paragraph level so the \par mark and any
-                // inter-run whitespace revert to cf1 when run groups close, rather
-                // than cf0/auto.  Without this the full-range colour read by
-                // NormalizeDocumentColorsForTheme returns transparent (mixed cf1
-                // run text + cf0 paragraph marks) and the dark-mode reset is skipped.
+                // Set explicit colour at paragraph level so the \par mark and any
+                // inter-run whitespace reference cf1 (the default colour entry in the
+                // colour table).  In dark mode, OpenStorageFileAsync swaps cf1 from
+                // black to white before loading the RTF.
                 rtf.Append(@"\cf1");
                 foreach (var run in para.Elements<Run>())
                 {
@@ -117,7 +116,7 @@ namespace SmrtPad.Helpers
                     // Color
                     int colorIdx = 0;
                     string? colorVal = rPr?.Color?.Val?.Value;
-                    if (!string.IsNullOrEmpty(colorVal))
+                    if (!string.IsNullOrEmpty(colorVal) && colorVal != "auto")
                     {
                         int ci = colorList.IndexOf(colorVal);
                         if (ci >= 0) colorIdx = ci;
@@ -125,13 +124,10 @@ namespace SmrtPad.Helpers
 
                     // Emit run formatting.
                     // RTF color table layout: cf0 = auto (empty entry), cf1 = colorList[0] (black),
-                    // cf2 = colorList[1], etc.  Always emit \cf so that default-color runs carry
-                    // explicit black (\cf1) rather than the implicit cf0/auto entry.  This ensures
-                    // NormalizeDocumentColorsForTheme can detect and reset uniform black text when
-                    // the app is running in dark mode, instead of seeing transparent (auto) and
-                    // leaving the Win32 RichEdit to render text in the system black colour.
-                    // It also corrects the previous off-by-one where colorIdx=1 wrongly emitted
-                    // \cf1 (black) instead of \cf2 (the actual first collected colour).
+                    // cf2 = colorList[1], etc.  All default-coloured text emits \cf1 so it
+                    // references the first colour table entry.  In dark mode,
+                    // OpenStorageFileAsync swaps that entry from black to white before
+                    // loading the RTF, giving us theme-aware text without post-load fixup.
                     rtf.Append('{');
                     if (bold) rtf.Append(@"\b");
                     if (italic) rtf.Append(@"\i");
