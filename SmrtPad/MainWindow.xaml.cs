@@ -68,6 +68,30 @@ namespace SmrtPad
         private bool _suppressTabModified;
         private readonly MacroHelper _macro = new();
 
+        /// <summary>
+        /// Defers un-suppression of <c>_suppressTabModified</c> using a short timer
+        /// so the flag stays raised through any asynchronous <c>TextChanged</c> events
+        /// the <see cref="RichEditBox"/> fires during its initial layout pass.
+        /// Dispatcher-queue deferral alone is insufficient because the Win32 RichEdit
+        /// control queues character-format messages across multiple dispatcher cycles.
+        /// </summary>
+        private void DeferResetTabModified()
+        {
+            var tabIdx = _activeTabIndex;
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                if (tabIdx >= 0 && tabIdx < _tabs.Count)
+                {
+                    _tabs[tabIdx].IsModified = false;
+                    ViewModel.IsModified = false;
+                }
+                _suppressTabModified = false;
+            };
+            timer.Start();
+        }
+
         private static readonly char[] s_wordSeparators = [' ', '\r', '\n', '\t'];
         private bool _suppressFontComboChange;
         private DocumentTab ActiveTab => _tabs[_activeTabIndex];
@@ -97,7 +121,7 @@ namespace SmrtPad
             _suppressTabModified = true;
             CreateTab(Res.GetString("DocumentUntitled"));
             ActiveTab.IsModified = false;
-            _suppressTabModified = false;
+            DeferResetTabModified();
 
             InitializeFonts();
             ApplySettings();
@@ -240,8 +264,8 @@ namespace SmrtPad
             ViewModel.NewDocument();
             ActiveTab.IsModified = false;
             UpdateEncoding("UTF-8");
-            _suppressTabModified = false;
             ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
+            DeferResetTabModified();
         }
 
         private static T? FindDescendantByName<T>(DependencyObject parent, string name) where T : FrameworkElement
@@ -271,6 +295,15 @@ namespace SmrtPad
             args.Handled = true;
         }
 
+        private async void CloseTab_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+            if (_activeTabIndex >= 0 && _activeTabIndex < _tabs.Count)
+            {
+                await CloseTabAtIndexAsync(_activeTabIndex);
+            }
+        }
+
         private void ApplyTemplate(DocumentTemplate template)
         {
             string title = template.Key == "blank"
@@ -282,12 +315,16 @@ namespace SmrtPad
             ViewModel.NewDocument();
             ActiveTab.IsModified = false;
             UpdateEncoding("UTF-8");
-            _suppressTabModified = false;
 
             if (!string.IsNullOrEmpty(template.PlainContent))
             {
+                _suppressTabModified = false;
                 Editor.Document.SetText(TextSetOptions.None, template.PlainContent);
                 ViewModel.IsModified = true;
+            }
+            else
+            {
+                DeferResetTabModified();
             }
 
             ViewModel.UpdateStatus(Res.GetFormatted("StatusTemplateApplied", template.DisplayName));
@@ -297,6 +334,12 @@ namespace SmrtPad
         {
             int idx = _tabs.FindIndex(t => t.TabViewItem == args.Tab);
             if (idx < 0) return;
+            await CloseTabAtIndexAsync(idx);
+        }
+
+        private async Task CloseTabAtIndexAsync(int idx)
+        {
+            if (idx < 0 || idx >= _tabs.Count) return;
 
             // If the closing tab has unsaved changes, prompt
             if (_tabs[idx].IsModified)
@@ -307,7 +350,8 @@ namespace SmrtPad
                 if (!await PromptSaveChangesAsync()) return;
             }
 
-            DocumentTabs.TabItems.Remove(args.Tab);
+            var tabItem = _tabs[idx].TabViewItem;
+            DocumentTabs.TabItems.Remove(tabItem);
             _tabs.RemoveAt(idx);
 
             if (_tabs.Count == 0)
@@ -365,6 +409,7 @@ namespace SmrtPad
 
         private async Task OpenStorageFileAsync(StorageFile file)
         {
+            _suppressTabModified = true;
             string ext = file.FileType.ToLowerInvariant();
             if (ext is ".docx")
             {
@@ -452,6 +497,7 @@ namespace SmrtPad
             // loading returns the pre-format state, so the normalization finds nothing
             // to fix. Two nested TryEnqueue calls guarantee we run after all current
             // and immediately-queued RTF formatting work has settled.
+            DeferResetTabModified();
             DispatcherQueue.TryEnqueue(() =>
                 DispatcherQueue.TryEnqueue(NormalizeDocumentColorsForTheme));
         }
@@ -950,6 +996,7 @@ namespace SmrtPad
 
         private void FontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_suppressTabModified) return;
             if (FontSizeComboBox.SelectedItem is double fontSize)
             {
                 ITextSelection selectedText = Editor.Document.Selection;
@@ -986,7 +1033,7 @@ namespace SmrtPad
             ActiveTab.Encoding = "UTF-8";
             ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
             UpdateEncoding("UTF-8");
-            _suppressTabModified = false;
+            DeferResetTabModified();
         }
 
         private void FileMenu_Tapped(object sender, RoutedEventArgs e)

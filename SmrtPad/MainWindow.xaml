@@ -17,6 +17,7 @@
     <Grid>
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="T" Modifiers="Control" Invoked="NewTab_Invoked"/>
+            <KeyboardAccelerator Key="W" Modifiers="Control" Invoked="CloseTab_Invoked"/>
         </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
