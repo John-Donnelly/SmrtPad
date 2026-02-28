@@ -41,7 +41,14 @@ namespace SmrtPad.UITests.Infrastructure
 
         public WindowsDriver Driver { get; }
 
-        public AppiumSession(string appPath)
+        /// <summary>
+        /// Launches SmrtPad and attaches an Appium session.
+        /// When <paramref name="launchArgument"/> is supplied (e.g. a file path to open on startup)
+        /// it is forwarded to AUMID activation so the packaged app retains its identity while
+        /// also receiving the argument through <c>Environment.GetCommandLineArgs()</c>.
+        /// The exe-direct fallback is only used when AUMID activation is unavailable or fails.
+        /// </summary>
+        public AppiumSession(string appPath, string? launchArgument = null)
         {
             Process process;
             bool usedAumid = false;
@@ -50,19 +57,19 @@ namespace SmrtPad.UITests.Infrastructure
             {
                 try
                 {
-                    _launchedPid = ActivateApplication(aumid);
+                    _launchedPid = ActivateApplication(aumid, launchArgument);
                     process = Process.GetProcessById(_launchedPid);
                     usedAumid = true;
                 }
                 catch (InvalidOperationException ex)
                 {
-                    process = StartUnpackaged(appPath, ex);
+                    process = StartUnpackaged(appPath, ex, launchArgument);
                     _launchedPid = process.Id;
                 }
             }
             else
             {
-                process = StartUnpackaged(appPath, null);
+                process = StartUnpackaged(appPath, null, launchArgument);
                 _launchedPid = process.Id;
             }
 
@@ -90,12 +97,14 @@ namespace SmrtPad.UITests.Infrastructure
                 TimeSpan.FromSeconds(30));
         }
 
-        private static Process StartUnpackaged(string appPath, Exception? activationException)
+        private static Process StartUnpackaged(string appPath, Exception? activationException, string? argument = null)
         {
             var startInfo = new ProcessStartInfo(appPath)
             {
                 UseShellExecute = true
             };
+            if (!string.IsNullOrEmpty(argument))
+                startInfo.Arguments = $"\"{argument}\"";
 
             var process = Process.Start(startInfo);
             if (process is null)
@@ -276,14 +285,16 @@ namespace SmrtPad.UITests.Infrastructure
 
         /// <summary>
         /// Activates the app via its AUMID and returns the process ID.
+        /// When <paramref name="argument"/> is supplied it is forwarded to the activation call
+        /// so the app receives it via <c>Environment.GetCommandLineArgs()</c>.
         /// Throws <see cref="InvalidOperationException"/> if COM activation fails.
         /// </summary>
-        private static int ActivateApplication(string aumid)
+        private static int ActivateApplication(string aumid, string? argument = null)
         {
             var manager = (IApplicationActivationManager)
                 Activator.CreateInstance(typeof(ApplicationActivationManagerClass))!;
 
-            int hr = manager.ActivateApplication(aumid, null, 0, out uint pid);
+            int hr = manager.ActivateApplication(aumid, argument, 0, out uint pid);
             if (hr < 0)
                 throw new InvalidOperationException(
                     $"IApplicationActivationManager.ActivateApplication failed for AUMID '{aumid}'" +
