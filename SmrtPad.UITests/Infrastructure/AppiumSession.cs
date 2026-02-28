@@ -47,12 +47,15 @@ namespace SmrtPad.UITests.Infrastructure
         /// it is forwarded to AUMID activation so the packaged app retains its identity while
         /// also receiving the argument through <c>Environment.GetCommandLineArgs()</c>.
         /// The exe-direct fallback is only used when AUMID activation is unavailable or fails.
+        /// When <paramref name="forceUnpackaged"/> is <c>true</c>, AUMID activation is skipped
+        /// entirely and the freshly-built exe is launched directly — useful for testing changes
+        /// that have not yet been deployed as a package.
         /// </summary>
-        public AppiumSession(string appPath, string? launchArgument = null)
+        public AppiumSession(string appPath, string? launchArgument = null, bool forceUnpackaged = false)
         {
             Process process;
             bool usedAumid = false;
-            string? aumid = FindWapAumid(appPath);
+            string? aumid = forceUnpackaged ? null : FindWapAumid(appPath);
             if (!string.IsNullOrWhiteSpace(aumid))
             {
                 try
