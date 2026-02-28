@@ -869,6 +869,9 @@
   <data name="StatusTemplateApplied" xml:space="preserve">
     <value>تم تطبيق القالب: {0}</value>
   </data>
+  <data name="BackstageExitDesc" xml:space="preserve">
+    <value>أغلق التطبيق.</value>
+  </data>
 
 </root>
 

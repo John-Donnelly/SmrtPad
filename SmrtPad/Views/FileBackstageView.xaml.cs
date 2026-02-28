@@ -23,7 +23,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler<string>? RecentFileRequested;
     public event EventHandler<DocumentTemplate>? TemplateRequested;
 
-    private readonly bool _suppressSelectionEvent = true;
+    private bool _suppressSelectionEvent = true;
 
     public FileBackstageView()
     {
@@ -110,6 +110,19 @@ public sealed partial class FileBackstageView : UserControl
         }
     }
 
+    private void NavItem_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (sender is not NavigationViewItem item)
+            return;
+
+        // Select the item so the NavigationView visually highlights it
+        _suppressSelectionEvent = true;
+        Nav.SelectedItem = item;
+        _suppressSelectionEvent = false;
+
+        ShowPaneForTag(item.Tag as string);
+    }
+
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (_suppressSelectionEvent)
@@ -119,6 +132,15 @@ public sealed partial class FileBackstageView : UserControl
             return;
 
         var tag = item.Tag as string;
+        ShowPaneForTag(tag);
+        ExecuteActionForTag(tag);
+    }
+
+    /// <summary>
+    /// Shows the appropriate content pane for the given navigation tag.
+    /// </summary>
+    private void ShowPaneForTag(string? tag)
+    {
         HeaderText.Text = tag is null ? Res.GetString("BackstageFile") : tag;
         RecentFilesPanel.Visibility   = Visibility.Collapsed;
         DocPropertiesPanel.Visibility = Visibility.Collapsed;
@@ -130,7 +152,6 @@ public sealed partial class FileBackstageView : UserControl
             case "New":
                 BodyText.Text = Res.GetString("BackstageNewDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                NewRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Templates":
                 BodyText.Text = Res.GetString("BackstageTemplatesDesc");
@@ -139,45 +160,77 @@ public sealed partial class FileBackstageView : UserControl
             case "Open":
                 BodyText.Text = Res.GetString("BackstageOpenDesc");
                 RecentFilesPanel.Visibility = Visibility.Visible;
-                OpenRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Save":
                 BodyText.Text = Res.GetString("BackstageSaveDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                SaveRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "SaveAs":
                 BodyText.Text = Res.GetString("BackstageSaveAsDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                SaveAsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Print":
                 BodyText.Text = Res.GetString("BackstagePrintDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                PrintRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "ExportPdf":
                 BodyText.Text = Res.GetString("BackstageExportPdfDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                ExportPdfRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "ExportDocx":
                 BodyText.Text = Res.GetString("BackstageExportDocxDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                ExportDocxRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "OneDrive":
                 BodyText.Text = Res.GetString("BackstageSaveOneDriveDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
-                OneDriveRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Options":
                 BodyText.Text = Res.GetString("BackstageOptionsDesc");
+                break;
+            case "Exit":
+                BodyText.Text = Res.GetString("BackstageExitDesc");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Executes the action associated with the given navigation tag (on click).
+    /// </summary>
+    private void ExecuteActionForTag(string? tag)
+    {
+        switch (tag)
+        {
+            case "New":
+                NewRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "Open":
+                OpenRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "Save":
+                SaveRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "SaveAs":
+                SaveAsRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "Print":
+                PrintRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "ExportPdf":
+                ExportPdfRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "ExportDocx":
+                ExportDocxRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "OneDrive":
+                OneDriveRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "Options":
                 OptionsRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Exit":
                 ExitRequested?.Invoke(this, EventArgs.Empty);
-                return;
+                break;
         }
     }
 }

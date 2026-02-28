@@ -870,5 +870,9 @@
     <value>Modèle appliqué : {0}</value>
   </data>
 
+  <data name="BackstageExitDesc" xml:space="preserve">
+    <value>Fermer l'application.</value>
+  </data>
+
 </root>
 

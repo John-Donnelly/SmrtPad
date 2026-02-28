@@ -24,17 +24,17 @@
                 IsSettingsVisible="False"
                 SelectionChanged="Nav_SelectionChanged">
                 <NavigationView.MenuItems>
-                    <NavigationViewItem x:Uid="NewNavItem"       Content="New"              Tag="New"       Icon="Add" />
-                    <NavigationViewItem x:Uid="TemplatesNavItem" Content="Templates"        Tag="Templates" Icon="Page2" />
-                    <NavigationViewItem x:Uid="OpenNavItem"      Content="Open"             Tag="Open"      Icon="OpenFile" />
-                    <NavigationViewItem x:Uid="SaveNavItem" Content="Save"    Tag="Save"    Icon="Save" />
-                    <NavigationViewItem x:Uid="SaveAsNavItem" Content="Save as" Tag="SaveAs"  Icon="SaveLocal" />
-                    <NavigationViewItem x:Uid="PrintNavItem" Content="Print"   Tag="Print"   Icon="Print" />
-                    <NavigationViewItem x:Uid="ExportPdfNavItem" Content="Export to PDF" Tag="ExportPdf" Icon="Document" />
-                    <NavigationViewItem x:Uid="ExportDocxNavItem" Content="Export to DOCX" Tag="ExportDocx" Icon="Document" />
-                    <NavigationViewItem x:Uid="OneDriveNavItem" Content="Save to OneDrive" Tag="OneDrive" Icon="Upload" />
-                    <NavigationViewItem x:Uid="OptionsNavItem" Content="Options" Tag="Options" Icon="Setting" />
-                    <NavigationViewItem x:Uid="ExitNavItem" Content="Exit"    Tag="Exit"    Icon="LeaveChat" />
+                    <NavigationViewItem x:Name="NavNew"        x:Uid="NewNavItem"       Content="New"              Tag="New"       Icon="Add"       PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavTemplates"  x:Uid="TemplatesNavItem" Content="Templates"        Tag="Templates" Icon="Page2"     PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavOpen"       x:Uid="OpenNavItem"      Content="Open"             Tag="Open"      Icon="OpenFile"  PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavSave"       x:Uid="SaveNavItem"      Content="Save"             Tag="Save"      Icon="Save"      PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavSaveAs"     x:Uid="SaveAsNavItem"    Content="Save as"          Tag="SaveAs"    Icon="SaveLocal" PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavPrint"      x:Uid="PrintNavItem"     Content="Print"            Tag="Print"     Icon="Print"     PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavExportPdf"  x:Uid="ExportPdfNavItem" Content="Export to PDF"    Tag="ExportPdf" Icon="Document"  PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavExportDocx" x:Uid="ExportDocxNavItem" Content="Export to DOCX"  Tag="ExportDocx" Icon="Document" PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavOneDrive"   x:Uid="OneDriveNavItem"  Content="Save to OneDrive" Tag="OneDrive"  Icon="Upload"    PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavOptions"    x:Uid="OptionsNavItem"   Content="Options"          Tag="Options"   Icon="Setting"   PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavExit"       x:Uid="ExitNavItem"      Content="Exit"             Tag="Exit"      Icon="LeaveChat" PointerEntered="NavItem_PointerEntered" />
                 </NavigationView.MenuItems>
                 <NavigationView.Content>
                     <TextBlock />

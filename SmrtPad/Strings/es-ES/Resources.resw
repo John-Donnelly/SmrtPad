@@ -869,6 +869,9 @@
   <data name="StatusTemplateApplied" xml:space="preserve">
     <value>Plantilla aplicada: {0}</value>
   </data>
+  <data name="BackstageExitDesc" xml:space="preserve">
+    <value>Cerrar la aplicación.</value>
+  </data>
 
 </root>
 

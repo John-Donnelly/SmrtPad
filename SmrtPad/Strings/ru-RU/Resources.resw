@@ -870,5 +870,9 @@
     <value>Шаблон применён: {0}</value>
   </data>
 
+  <data name="BackstageExitDesc" xml:space="preserve">
+    <value>Close the application.</value>
+  </data>
+
 </root>
 

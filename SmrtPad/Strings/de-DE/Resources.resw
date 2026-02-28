@@ -869,6 +869,9 @@
   <data name="StatusTemplateApplied" xml:space="preserve">
     <value>Vorlage angewendet: {0}</value>
   </data>
+  <data name="BackstageExitDesc" xml:space="preserve">
+    <value>Anwendung schließen.</value>
+  </data>
 
 </root>
 
