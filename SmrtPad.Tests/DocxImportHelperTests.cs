@@ -180,11 +180,9 @@ namespace SmrtPad.Tests
         [Fact]
         public void ConvertToRtf_DefaultColorText_EmitsExplicitBlackCfMarker()
         {
-            // Runs with no explicit colour must emit \cf1 (explicit black) so that
-            // NormalizeDocumentColorsForTheme can detect and reset them when the app
-            // is in dark mode.  Emitting no \cf (auto/cf0) causes Win32 RichEdit to
-            // render text in the Windows system text colour (black) regardless of the
-            // WinUI 3 dark-mode foreground brush.
+            // Runs with no explicit colour emit \cf1 (the first colour table entry,
+            // which is black by default).  In dark mode, OpenStorageFileAsync swaps
+            // the colour table entry from black to white before loading the RTF.
             using var docxStream = CreateDocx(("Default colour text", null));
             string rtf = DocxImportHelper.ConvertToRtf(docxStream);
 
@@ -194,7 +192,7 @@ namespace SmrtPad.Tests
         [Fact]
         public void ConvertToRtf_ExplicitBlackText_EmitsExplicitBlackCfMarker()
         {
-            // Text explicitly coloured black in the DOCX must also emit \cf1.
+            // Text explicitly coloured black ("000000") in the DOCX also emits \cf1.
             var rPr = new RunProperties(new Color { Val = "000000" });
             using var docxStream = CreateDocx(("Black text", rPr));
             string rtf = DocxImportHelper.ConvertToRtf(docxStream);
@@ -219,21 +217,59 @@ namespace SmrtPad.Tests
         public void ConvertToRtf_MultipleParagraphs_ParagraphLevelCf1SetBeforeRuns()
         {
             // \cf1 must appear at the paragraph level (outside run groups) so that
-            // \par paragraph marks revert to cf1 when run groups close.  Without this
-            // the full-range ForegroundColor returns transparent (mixed cf1 run text
-            // + cf0/auto paragraph marks) and NormalizeDocumentColorsForTheme skips
-            // the dark-mode reset.
+            // \par paragraph marks reference the default colour table entry.
             using var docxStream = CreateDocx(
                 ("First paragraph", null),
                 ("Second paragraph", null));
             string rtf = DocxImportHelper.ConvertToRtf(docxStream);
 
-            // \cf1 must appear before the first run group open brace in each paragraph.
-            // The simplest proxy: \cf1 appears before each \par (paragraph mark).
             int parIdx = rtf.IndexOf(@"\par ", StringComparison.Ordinal);
             Assert.True(parIdx > 0, "Expected \\par in output");
             int cf1BeforePar = rtf.LastIndexOf(@"\cf1", parIdx, StringComparison.Ordinal);
-            Assert.True(cf1BeforePar >= 0, "Expected \\cf1 before \\par so paragraph mark carries explicit black");
+            Assert.True(cf1BeforePar >= 0, "Expected \\cf1 before \\par so paragraph mark carries explicit colour");
+        }
+
+        // ── Auto-color / theme-awareness tests ──────────────────────────────
+
+        [Fact]
+        public void ConvertToRtf_AutoColorVal_EmitsCf1()
+        {
+            // OOXML "auto" colour maps to \cf1 (the default colour table entry).
+            // In dark mode, the colour table entry is swapped from black to white.
+            var rPr = new RunProperties(new Color { Val = "auto" });
+            using var docxStream = CreateDocx(("Auto colour text", rPr));
+            string rtf = DocxImportHelper.ConvertToRtf(docxStream);
+
+            Assert.Contains(@"\cf1", rtf);
+        }
+
+        [Fact]
+        public void ConvertToRtf_BlueText_EmitsExplicitCfNotCf0()
+        {
+            // Genuinely non-black colours must NOT be mapped to auto.
+            var rPr = new RunProperties(new Color { Val = "0000FF" });
+            using var docxStream = CreateDocx(("Blue text", rPr));
+            string rtf = DocxImportHelper.ConvertToRtf(docxStream);
+
+            // Should have an explicit \cf entry (cf2 = first non-black collected colour)
+            Assert.Contains(@"\cf2", rtf);
+            Assert.Contains(@"\red0\green0\blue255", rtf);
+        }
+
+        [Fact]
+        public void ConvertToRtf_MixedDefaultAndColored_PreservesColoredRuns()
+        {
+            // First run: no colour (default \cf1), second run: red (explicit \cf2).
+            var redRPr = new RunProperties(new Color { Val = "FF0000" });
+            using var docxStream = CreateDocx(
+                ("Normal text", null),
+                ("Red text", redRPr));
+            string rtf = DocxImportHelper.ConvertToRtf(docxStream);
+
+            // The default-coloured run should have \cf1
+            Assert.Contains(@"\cf1", rtf);
+            // The red run should have \cf2
+            Assert.Contains(@"\cf2", rtf);
         }
 
         // ── Paragraph alignment ────────────────────────────────────────────────
