@@ -84,21 +84,46 @@ namespace SmrtPad
             mainWindow.Closed += (_, _) => Windows.Remove(mainWindow);
             _window.Activate();
 
-            // Handle startup file argument
+            // Handle startup file argument — check command-line args first (exe launch),
+            // then fall back to activation arguments (AUMID / package activation).
+            // AUMID activation may split a space-containing path across multiple
+            // GetCommandLineArgs() entries, so we try progressively joining them.
+            string? filePath = null;
             var cmdArgs = Environment.GetCommandLineArgs();
+
             if (cmdArgs.Length > 1)
             {
-                string filePath = cmdArgs[1];
-                if (System.IO.File.Exists(filePath))
+                // First try the simple case: single quoted argument
+                filePath = cmdArgs[1];
+                if (!System.IO.File.Exists(filePath))
                 {
-                    try
-                    {
-                        await mainWindow.OpenFileByPathAsync(filePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Failed to open startup file: {ex.Message}");
-                    }
+                    // Join all remaining args in case the path was split on spaces
+                    filePath = string.Join(" ", cmdArgs, 1, cmdArgs.Length - 1);
+                    if (!System.IO.File.Exists(filePath))
+                        filePath = null;
+                }
+            }
+
+            // Fall back to activation arguments
+            if (string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(args.Arguments))
+            {
+                filePath = args.Arguments.Trim('"');
+            }
+
+            if (string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(args.Arguments))
+            {
+                filePath = args.Arguments.Trim('"');
+            }
+
+            if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+            {
+                try
+                {
+                    await mainWindow.OpenFileByPathAsync(filePath);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to open startup file: {ex.Message}");
                 }
             }
         }
