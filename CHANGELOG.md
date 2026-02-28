@@ -5,6 +5,11 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- **Blank tabs no longer show save dialog on close** — Added `_suppressTabModified` flag that prevents `TextChanged` from setting `IsModified = true` during tab creation; all tab creation paths (constructor, `+` button, `New_Click`, `ApplyTemplate`) now suppress the flag and explicitly reset `IsModified` to `false` after creation
+- **Last tab close now closes the application** — `DocumentTabs_TabCloseRequested` now calls `Close()` instead of creating a new blank tab when the last tab is closed; the `AppWindow.Closing` handler is unhooked to prevent re-entrance
+- **File backstage hover shows pane** — `FileBackstageView` now separates pane display from action execution; `PointerEntered` handlers on each `NavigationViewItem` show the relevant content pane (description, template picker, recent files) on hover, while click still executes the action (New, Open, Save, etc.)
+
+### Changed
 - **Tab bar: New always opens a new tab** — `New_Click` now always creates a new tab instead of prompting to save changes on the current tab; save prompts are reserved for tab close and app close only
 - **Tab bar: Open opens file in a new tab** — `Open_Click` and `OpenFileByPathAsync` now open files in a new tab (or reuse the current blank unmodified tab), rather than replacing the current document and prompting to save
 - **Tab header set for all file types** — `OpenStorageFileAsync` now consistently sets `ActiveTab.TabViewItem.Header`, `ActiveTab.IsModified`, and `ActiveTab.Encoding` for all file types (DOCX, ODT, HTML, RTF, TXT); previously only RTF/TXT branches updated the tab header
@@ -12,14 +17,13 @@ All notable changes to SmrtPad are documented in this file.
 - **Backstage Exit uses multi-tab save** — the backstage Exit handler and `Exit_Click` now use `PromptSaveAllTabsAsync` to iterate all modified tabs before closing
 
 ### Added
-- **8 new tab management UI tests** (`TabManagementUITests.cs`) covering:
-  - New button creates a new tab without save prompt
-  - New button with modified tab does not prompt save
-  - Close modified tab shows save dialog
-  - Close unmodified tab does not show save dialog
-  - New document tab header is "Untitled"
-  - Multiple tabs with mixed modification state
-  - Plus button and New button both create new tabs
+- **5 new UI tests** for tab and backstage behavior:
+  - New tab via `+` button closes without save dialog
+  - New tab via `New` button closes without save dialog
+  - Last-tab-close with extra tab does not close app
+  - Backstage hover shows correct pane headers
+  - Backstage Exit shows description pane
+- **`BackstageExitDesc` resource string** — added to all 9 locale files
 - **`PromptSaveAllTabsAsync` helper** — new method that iterates all tabs with unsaved changes, switches to each, and prompts save individually; used by `AppWindow_Closing`, `Exit_Click`, and backstage Exit
 
 ### Added
