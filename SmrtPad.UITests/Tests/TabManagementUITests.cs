@@ -118,23 +118,25 @@ namespace SmrtPad.UITests.Tests
         }
 
         /// <summary>
-        /// Closing the last tab should create a new blank tab automatically,
-        /// ensuring the app always has at least one tab open.
+        /// Closing the last tab should close the application.
+        /// Since this would terminate the Appium session, we verify
+        /// indirectly by ensuring an extra tab prevents app closure.
         /// </summary>
         [SkippableFact]
-        public void CloseLastTab_CreatesNewBlankTab()
+        public void CloseLastTab_WithExtraTab_DoesNotCloseApp()
         {
             RequireDriver();
 
-            // Close the current tab — since there's only one, a new blank one should open
+            // Create an extra tab so closing one doesn't close the app
+            AddNewTab();
+            Thread.Sleep(200);
+
+            // Close the extra tab
             CloseActiveTab();
 
-            // The editor should still be present
+            // The editor should still be present (app stays open with first tab)
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             Assert.NotNull(editor);
-
-            // Word count should be 0 (blank tab)
-            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
         }
 
         // ── Tab switching ────────────────────────────────────────────────────
@@ -287,6 +289,45 @@ namespace SmrtPad.UITests.Tests
         }
 
         // ── New button creates a new tab ─────────────────────────────────────
+
+        /// <summary>
+        /// A newly created tab (via +) should close immediately without
+        /// showing a save dialog, proving it is NOT marked as modified.
+        /// </summary>
+        [SkippableFact]
+        public void NewTabViaPlus_CloseImmediately_NoSaveDialog()
+        {
+            RequireDriver();
+
+            AddNewTab();
+            Thread.Sleep(200);
+
+            // Close the fresh tab — should NOT show a save dialog
+            CloseActiveTab();
+
+            // If a dialog appeared, the test would hang or throw.
+            // Verify the tab closed successfully via status text.
+            Assert.Equal("Tab closed.", StatusText);
+        }
+
+        /// <summary>
+        /// A tab created via the New quick-access button should also
+        /// close without a save dialog when unmodified.
+        /// </summary>
+        [SkippableFact]
+        public void NewTabViaNewButton_CloseImmediately_NoSaveDialog()
+        {
+            RequireDriver();
+
+            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            newBtn.Click();
+            Thread.Sleep(500);
+
+            // Close the fresh tab — should NOT show a save dialog
+            CloseActiveTab();
+
+            Assert.Equal("Tab closed.", StatusText);
+        }
 
         /// <summary>
         /// Clicking New (via quick-access toolbar) should create a new tab

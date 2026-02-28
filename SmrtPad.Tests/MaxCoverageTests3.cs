@@ -568,11 +568,11 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
-        public void SuppressSelectionEvent_FieldExistsAndIsReadonly()
+        public void SuppressSelectionEvent_FieldExistsAndIsMutable()
         {
             var f = BSV.GetField("_suppressSelectionEvent", Prv);
             Assert.NotNull(f);
-            Assert.True(f!.IsInitOnly);
+            Assert.False(f!.IsInitOnly);
             Assert.Equal(typeof(bool), f.FieldType);
         }
 

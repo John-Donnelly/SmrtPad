@@ -4172,7 +4172,6 @@ namespace SmrtPad.Tests
             var field = BSV.GetField("_suppressSelectionEvent", Private);
             Assert.NotNull(field);
             Assert.Equal(typeof(bool), field!.FieldType);
-            Assert.True(field.IsInitOnly);
         }
 
         [Fact]
