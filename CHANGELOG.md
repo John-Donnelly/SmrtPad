@@ -13,8 +13,8 @@ All notable changes to SmrtPad are documented in this file.
   - Resource management contracts (`MainWindowResourceManagementTests` — 4 tests)
 
 ### Fixed
-- **Dark Mode DOCX text visibility** — Fixed an issue where `.docx` files loaded in Dark Mode appeared with invisible black text; `NormalizeDocumentColorsForTheme` now correctly ignores the invisible system-injected trailing `\r` when determining if the document's entire range requires a theme-aware explicit colour reset to auto (transparent).
-- **`Bullets_Click`** — now calls `ViewModel.SetListType()` (keeping `ViewModel.ListType` in sync with `IsBullets`) and `_macro.Record(MacroCommandType.SetListType, ...)` (bullets now recorded in macros) when toggling via the toolbar button
+- **Dark Mode DOCX text visibility** — Fixed an issue where `.docx` files loaded in Dark Mode appeared with invisible black text; `NormalizeDocumentColorsForTheme` now iterates through the document's character formatting runs to reset any text that explicitly uses the unreadable wrong-default colour (e.g. black in dark mode) while safely preserving intentional custom text colours throughout the rest of the document.
+- **`Bullets_Click`** — now calls `ViewModel.SetListType()`
 - **Macro `SetAlignment` playback** — `ExecuteMacroCommand` now applies the alignment directly to the RTF document's paragraph format in addition to updating the ViewModel; previously only `ViewModel.SetAlignment()` was called, so replaying a recorded alignment macro had no visible effect
 - **`App.xaml.cs` debug logging** — removed leftover `System.IO.File.WriteAllText/AppendAllText` calls that wrote `SmrtPad_App_Startup.log` to `%TEMP%` on every application launch; startup diagnostics are not appropriate for production builds
 - **Auto-save timer not stopped on close** — `MainWindow.Closed` event now stops `_autoSaveTimer` to prevent the timer from firing after the window is closed

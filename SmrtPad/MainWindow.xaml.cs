@@ -453,29 +453,52 @@ namespace SmrtPad
 
             bool isDark = IsCurrentThemeDark();
 
+            // The unreadable explicit colour we want to reset:
+            // Explicit black in dark mode, explicit white in light mode.
+            var targetColor = isDark 
+                ? Windows.UI.Color.FromArgb(255, 0, 0, 0)
+                : Windows.UI.Color.FromArgb(255, 255, 255, 255);
+
+            var autoColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
+
             // The Win32 RichEdit control implicitly adds a trailing '\r' which inherits
-            // the document's default text colour (\cf0 / auto). If DocxImportHelper
-            // applied explicit black (\cf1) to paragraphs, the overall document range will
-            // have mixed colours (explicit black + auto) and report a transparent
-            // (0,0,0,0) foreground. By restricting the range to docText.Length - 1,
-            // we evaluate only the actual document content.
+            // the document's default text colour (\cf0 / auto). We exclude it from evaluation.
             int length = docText.Length;
             if (docText.EndsWith('\r') && length > 1)
                 length--;
 
-            var textRange = Editor.Document.GetRange(0, length);
-            var docColor = textRange.CharacterFormat.ForegroundColor;
+            // Rather than requiring the *entire* document to be uniformly black,
+            // we iterate through formatting runs and reset any text that explicitly
+            // matches the unreadable wrong-default colour.
+            var range = Editor.Document.GetRange(0, 0);
 
-            // Only act when the entire document has one uniform explicit color that
-            // matches the "wrong default" for the current theme.
-            bool reset = isDark
-                ? docColor == Windows.UI.Color.FromArgb(255, 0, 0, 0)      // explicit black in dark mode
-                : docColor == Windows.UI.Color.FromArgb(255, 255, 255, 255); // explicit white in light mode
-
-            if (reset)
+            while (range.StartPosition < length)
             {
-                var fullRange = Editor.Document.GetRange(0, TextConstants.MaxUnitCount);
-                fullRange.CharacterFormat.ForegroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
+                range.Expand(Microsoft.UI.Text.TextRangeUnit.CharacterFormat);
+
+                // If the expand pushes us beyond the actual visible document length,
+                // cap the end position so we don't accidentally evaluate/modify the trailing \r
+                int endPos = range.EndPosition;
+                if (endPos > length)
+                {
+                    endPos = length;
+                    range.SetRange(range.StartPosition, endPos);
+                }
+
+                if (range.CharacterFormat.ForegroundColor == targetColor)
+                {
+                    range.CharacterFormat.ForegroundColor = autoColor;
+                }
+
+                // Move past this run
+                int nextStart = range.EndPosition;
+                if (nextStart <= range.StartPosition)
+                {
+                    // Fallback to prevent infinite loops if Expand fails to advance
+                    nextStart = range.StartPosition + 1;
+                }
+
+                range.SetRange(nextStart, nextStart);
             }
         }
 
