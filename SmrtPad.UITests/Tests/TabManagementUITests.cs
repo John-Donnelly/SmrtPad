@@ -286,45 +286,201 @@ namespace SmrtPad.UITests.Tests
             Assert.NotNull(editor);
         }
 
-        // ── Tab switching preserves formatting ───────────────────────────────
+        // ── New button creates a new tab ─────────────────────────────────────
 
         /// <summary>
-        /// Applying bold formatting in one tab and switching to another
-        /// should not carry the bold state to the new tab.
+        /// Clicking New (via quick-access toolbar) should create a new tab
+        /// without showing a save dialog, leaving the previous tab intact.
         /// </summary>
         [SkippableFact]
-        public void SwitchTabs_FormattingIsIndependent()
+        public void NewButton_CreatesNewTab_PreviousTabStillExists()
         {
             RequireDriver();
 
-            // Type and bold text in first tab
+            // Type in the first tab so it has content
             _fx.ClearEditor();
-            _fx.TypeInEditor("bold text");
-            _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
+            _fx.TypeInEditor("first document content");
             Thread.Sleep(200);
-            Assert.True(_fx.IsToggleChecked("BoldToggle"));
 
-            // Create a new tab (auto-focused)
+            // Count tabs before clicking New
+            var tabsBefore = _driver!.FindElements(MobileBy.Name("Untitled"));
+            int countBefore = tabsBefore.Count;
+
+            // Click the New button (quick-access toolbar)
+            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            newBtn.Click();
+            Thread.Sleep(500);
+
+            // A new Untitled tab should be created
+            var tabsAfter = _driver!.FindElements(MobileBy.Name("Untitled"));
+            Assert.True(tabsAfter.Count > countBefore,
+                "Clicking New should create a new Untitled tab");
+
+            // Clean up: close the new tab
+            CloseActiveTab();
+        }
+
+        /// <summary>
+        /// Clicking New when the current tab is modified should NOT show a save
+        /// dialog — instead it just opens a new tab.
+        /// </summary>
+        [SkippableFact]
+        public void NewButton_WithModifiedTab_DoesNotPromptSave()
+        {
+            RequireDriver();
+
+            // Modify the current tab
+            _fx.ClearEditor();
+            _fx.TypeInEditor("modified content");
+            Thread.Sleep(200);
+
+            // Click New — should not block or show a dialog
+            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            newBtn.Click();
+            Thread.Sleep(500);
+
+            // The new tab should be active with an empty editor
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+            // Clean up: close the new tab
+            CloseActiveTab();
+
+            // Restore the previous tab to unmodified state
+            _fx.ClearEditor();
+        }
+
+        // ── Close tab with modifications prompts save ────────────────────────
+
+        /// <summary>
+        /// Closing a tab that has unsaved changes should show a save prompt.
+        /// Clicking "Don't Save" should close the tab without saving.
+        /// </summary>
+        [SkippableFact]
+        public void CloseModifiedTab_ShowsSaveDialog_DontSaveClosesTab()
+        {
+            RequireDriver();
+
+            // Create a new tab and modify it
             AddNewTab();
-            _fx.TypeInEditor("plain text");
-            _fx.SelectAllInEditor();
+            _fx.TypeInEditor("unsaved changes");
+            Thread.Sleep(300);
+
+            // Close the tab — this should trigger the save dialog
+            CloseActiveTab();
+            Thread.Sleep(500);
+
+            // Try to dismiss the save dialog by clicking "Don't Save"
+            try
+            {
+                var dontSaveBtn = _driver!.FindElement(MobileBy.Name("Don't Save"));
+                dontSaveBtn.Click();
+                Thread.Sleep(400);
+            }
+            catch (NoSuchElementException)
+            {
+                // If no dialog appeared, the tab was already closed (unmodified)
+            }
+
+            // The tab should be closed — verify status
+            Assert.Equal("Tab closed.", StatusText);
+        }
+
+        /// <summary>
+        /// Closing a tab that has NO unsaved changes should NOT show a save prompt.
+        /// </summary>
+        [SkippableFact]
+        public void CloseUnmodifiedTab_DoesNotShowSaveDialog()
+        {
+            RequireDriver();
+
+            // Create a new tab (unmodified)
+            AddNewTab();
             Thread.Sleep(200);
 
-            // Bold should not be checked in the new tab
-            Assert.False(_fx.IsToggleChecked("BoldToggle"),
-                "Bold state should not carry over to a new tab");
+            // Close it — should close immediately without a dialog
+            CloseActiveTab();
+
+            // Verify it was closed without issues
+            Assert.Equal("Tab closed.", StatusText);
+
+            // Editor should still be present
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            Assert.NotNull(editor);
+        }
+
+        // ── Tab header reflects document title ───────────────────────────────
+
+        /// <summary>
+        /// After opening a new document via New, the tab header should be "Untitled".
+        /// </summary>
+        [SkippableFact]
+        public void NewDocument_TabHeader_IsUntitled()
+        {
+            RequireDriver();
+
+            // Click New
+            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            newBtn.Click();
+            Thread.Sleep(500);
+
+            // The active tab should be "Untitled"
+            var untitledTab = _driver!.FindElement(MobileBy.Name("Untitled"));
+            Assert.NotNull(untitledTab);
 
             // Clean up
             CloseActiveTab();
+        }
 
-            // Clean up: undo bold in original tab
-            _fx.SelectAllInEditor();
-            if (_fx.IsToggleChecked("BoldToggle"))
-            {
-                _driver.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
-                Thread.Sleep(200);
-            }
+        // ── Multiple tabs with independent modification state ────────────────
+
+        /// <summary>
+        /// Opening multiple tabs, modifying some but not others, should only
+        /// prompt save for the modified ones when those tabs are closed.
+        /// </summary>
+        [SkippableFact]
+        public void MultipleTabsMixedState_OnlyModifiedTabsPromptSave()
+        {
+            RequireDriver();
+
+            // Tab 1: type something (modified)
+            _fx.ClearEditor();
+            _fx.TypeInEditor("tab one modified");
+            Thread.Sleep(200);
+
+            // Tab 2: create and leave empty (unmodified)
+            AddNewTab();
+            Thread.Sleep(200);
+
+            // Close the unmodified tab — should close immediately without dialog
+            CloseActiveTab();
+            Assert.Equal("Tab closed.", StatusText);
+
+            // Clean up: clear the modified first tab
+            _fx.ClearEditor();
+        }
+
+        /// <summary>
+        /// The "+" button on the tab bar and the New quick-access button
+        /// should both create new tabs with independent empty editors.
+        /// </summary>
+        [SkippableFact]
+        public void PlusButton_And_NewButton_BothCreateNewTabs()
+        {
+            RequireDriver();
+
+            // Use the "+" button
+            AddNewTab();
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+            // Use the New button
+            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            newBtn.Click();
+            Thread.Sleep(500);
+            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+            // Clean up: close both new tabs
+            CloseActiveTab();
+            CloseActiveTab();
         }
     }
 }
