@@ -98,6 +98,23 @@ namespace SmrtPad.UITests.Tests
             CloseActiveTab();
         }
 
+        /// <summary>
+        /// Using Ctrl+N should create a new document tab.
+        /// </summary>
+        [SkippableFact]
+        public void AddTab_ViaCtrlN_CreatesNewTab()
+        {
+            RequireDriver();
+
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "n");
+            Thread.Sleep(500);
+
+            Assert.Equal("New tab created.", StatusText);
+
+            CloseActiveTab();
+        }
+
         // ── Close tab ────────────────────────────────────────────────────────
 
         /// <summary>

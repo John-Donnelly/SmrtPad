@@ -62,6 +62,21 @@ namespace SmrtPad.UITests.Tests
             CloseBackstage();
         }
 
+        /// <summary>
+        /// The backstage should contain the "Page setup" navigation item.
+        /// </summary>
+        [SkippableFact]
+        public void Backstage_PageSetupNavItem_IsPresent()
+        {
+            RequireDriver();
+            OpenBackstage();
+
+            var item = _driver!.FindElement(MobileBy.Name("Page setup"));
+            Assert.NotNull(item);
+
+            CloseBackstage();
+        }
+
         // ── All navigation items present ─────────────────────────────────────
 
         /// <summary>
