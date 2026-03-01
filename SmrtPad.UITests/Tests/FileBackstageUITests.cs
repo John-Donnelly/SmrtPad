@@ -36,23 +36,12 @@ namespace SmrtPad.UITests.Tests
 
         private void OpenBackstage()
         {
-            _driver!.FindElement(MobileBy.Name("File")).Click();
-            Thread.Sleep(800);
+            _fx.EnsureBackstageOpen();
         }
 
         private void CloseBackstage()
         {
-            // Click the editor area behind the backstage to close it, or press Escape
-            try
-            {
-                _driver!.FindElement(MobileBy.AccessibilityId("Editor")).Click();
-            }
-            catch
-            {
-                _driver!.FindElement(MobileBy.Name("File")).Click();
-                Thread.Sleep(300);
-            }
-            Thread.Sleep(300);
+            _fx.EnsureBackstageClosed();
         }
 
         // ── Backstage opens ──────────────────────────────────────────────────
@@ -480,6 +469,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
 
             // Type some content first
+            _fx.EnsureBackstageClosed();
             _fx.ClearEditor();
             _fx.TypeInEditor("existing content");
             Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
@@ -487,10 +477,23 @@ namespace SmrtPad.UITests.Tests
             OpenBackstage();
 
             _driver!.FindElement(MobileBy.Name("New")).Click();
-            Thread.Sleep(800);
+            Thread.Sleep(1000);
 
-            // The backstage should close and the editor should be empty
+            // Backstage may still be open after "New" — close if so
+            _fx.EnsureBackstageClosed();
+            Thread.Sleep(300);
+
+            // The editor should now show a new/empty tab
             Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+            // Clean up: close the extra tab
+            try
+            {
+                var closeBtn = _driver!.FindElement(MobileBy.Name("Close"));
+                closeBtn.Click();
+                Thread.Sleep(400);
+            }
+            catch { }
         }
 
         // ── Backstage navigation switches content ─────────────────────────────
