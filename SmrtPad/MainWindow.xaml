@@ -97,6 +97,12 @@
                         <ToggleMenuFlyoutItem x:Name="FocusModeToggle" x:Uid="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click"
                                              AutomationProperties.AutomationId="FocusModeToggle" />
                     </MenuBarItem>
+                    <MenuBarItem x:Uid="FormatMenu" Title="Format">
+                        <MenuFlyoutItem x:Uid="FormatFontMenuItem" Text="Font..." Click="FormatFont_Click"
+                                        AutomationProperties.AutomationId="FormatFontMenuItem">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8D2;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuBarItem>
                     <MenuBarItem x:Uid="MacroMenuBar" Title="Macro">
                         <MenuFlyoutItem x:Name="MacroRecordItem" Text="Record Macro" Click="MacroRecord_Click"
                                         AutomationProperties.AutomationId="MacroRecordItem">
@@ -344,6 +350,8 @@
                                             <Button Click="HighlightSwatchButton_Click" Tag="#008000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Ellipse Fill="#008000" Width="20" Height="20" Stroke="#B7B7B7" StrokeThickness="1"/></Button>
                                             <Button Click="HighlightSwatchButton_Click" Tag="#808000" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Ellipse Fill="#808000" Width="20" Height="20" Stroke="#B7B7B7" StrokeThickness="1"/></Button>
                                         </VariableSizedWrapGrid>
+                                        <Button x:Uid="NoHighlightButton" Content="No Highlight" Click="RemoveHighlight_Click" HorizontalAlignment="Stretch"
+                                                AutomationProperties.AutomationId="NoHighlightButton"/>
                                         <ColorPicker x:Name="HighlightColorPicker" ColorChanged="HighlightColorPicker_ColorChanged" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </Flyout>

@@ -38,6 +38,7 @@ using SmrtPad.ViewModels;
 using SmrtPad.Views;
 using SmrtPad.Services;
 using Res = SmrtPad.Helpers.ResourceHelper;
+using AutomationPeer = Microsoft.UI.Xaml.Automation.AutomationProperties;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -2162,7 +2163,6 @@ namespace SmrtPad
             {
                 var color = ColorHelper.ParseHexColor(hex);
                 ApplyTextColor(color);
-                FontColorIndicator.Fill = new SolidColorBrush(color);
             }
         }
 
@@ -2176,6 +2176,7 @@ namespace SmrtPad
         private void ApplyTextColor(Color color)
         {
             _lastFontColor = color;
+            FontColorIndicator.Fill = new SolidColorBrush(color);
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
@@ -2202,12 +2203,12 @@ namespace SmrtPad
             {
                 var color = ColorHelper.ParseHexColor(hex);
                 ApplyHighlightColor(color);
-                HighlightColorIndicator.Fill = new SolidColorBrush(color);
             }
         }
 
         private void ApplyHighlightColor(Color color)
         {
+            HighlightColorIndicator.Fill = new SolidColorBrush(color);
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
@@ -2215,6 +2216,12 @@ namespace SmrtPad
                 charFormatting.BackgroundColor = color;
                 selectedText.CharacterFormat = charFormatting;
             }
+        }
+
+        private void RemoveHighlight_Click(object sender, RoutedEventArgs e)
+        {
+            // Transparent background effectively removes the highlight
+            ApplyHighlightColor(Color.FromArgb(0, 255, 255, 255));
         }
 
         private async void InsertPicture_Click(object sender, RoutedEventArgs e)
@@ -2949,6 +2956,211 @@ namespace SmrtPad
                 ViewModel.UpdateStatus(Res.GetString("StatusFormattingCleared"));
             }
             _macro.Record(MacroCommandType.ClearFormatting);
+        }
+
+        /// <summary>
+        /// Opens a consolidated Format → Font dialog that sets family, size, style,
+        /// effects, and character color in one place — matching WordPad's Format > Font.
+        /// Reads the current selection's character format on open; writes back on OK.
+        /// </summary>
+        private async void FormatFont_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection selectedText = Editor.Document.Selection;
+            ITextCharacterFormat currentFormat = selectedText.CharacterFormat;
+
+            // ── Read current selection state ──
+            string currentFamily = string.IsNullOrEmpty(currentFormat.Name)
+                ? _settings.DefaultFontFamily
+                : currentFormat.Name;
+            float currentSize = currentFormat.Size > 0
+                ? currentFormat.Size
+                : (float)_settings.DefaultFontSize;
+            bool currentBold = currentFormat.Bold == FormatEffect.On;
+            bool currentItalic = currentFormat.Italic == FormatEffect.On;
+            bool currentUnderline = currentFormat.Underline != UnderlineType.None;
+            bool currentStrikethrough = currentFormat.Strikethrough == FormatEffect.On;
+            bool currentSubscript = currentFormat.Subscript == FormatEffect.On;
+            bool currentSuperscript = currentFormat.Superscript == FormatEffect.On;
+            Color currentColor = currentFormat.ForegroundColor;
+
+            // ── Build dialog controls ──
+            var fonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies()
+                .OrderBy(f => f).ToList();
+            var fontFamilyCombo = new ComboBox
+            {
+                ItemsSource = fonts,
+                SelectedItem = fonts.Contains(currentFamily) ? currentFamily : fonts.FirstOrDefault(),
+                IsEditable = true,
+                Header = Res.GetString("FontDialogFamily"),
+                HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Stretch,
+            };
+            AutomationPeer.SetAutomationId(fontFamilyCombo, "FontDialogFamilyCombo");
+
+            var sizes = new List<double> { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72 };
+            var fontSizeCombo = new ComboBox
+            {
+                ItemsSource = sizes,
+                IsEditable = true,
+                Header = Res.GetString("FontDialogSize"),
+                Width = 100,
+            };
+            AutomationPeer.SetAutomationId(fontSizeCombo, "FontDialogSizeCombo");
+
+            // Set the size — try to select from list, otherwise set text
+            if (sizes.Contains((double)currentSize))
+                fontSizeCombo.SelectedItem = (double)currentSize;
+            else
+                fontSizeCombo.Text = currentSize.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            // Style checkboxes
+            var boldCheck = new CheckBox { Content = "Bold", IsChecked = currentBold };
+            AutomationPeer.SetAutomationId(boldCheck, "FontDialogBoldCheck");
+            var italicCheck = new CheckBox { Content = "Italic", IsChecked = currentItalic };
+            AutomationPeer.SetAutomationId(italicCheck, "FontDialogItalicCheck");
+
+            // Effects checkboxes
+            var underlineCheck = new CheckBox { Content = "Underline", IsChecked = currentUnderline };
+            AutomationPeer.SetAutomationId(underlineCheck, "FontDialogUnderlineCheck");
+            var strikethroughCheck = new CheckBox { Content = "Strikethrough", IsChecked = currentStrikethrough };
+            AutomationPeer.SetAutomationId(strikethroughCheck, "FontDialogStrikethroughCheck");
+            var subscriptCheck = new CheckBox { Content = "Subscript", IsChecked = currentSubscript };
+            AutomationPeer.SetAutomationId(subscriptCheck, "FontDialogSubscriptCheck");
+            var superscriptCheck = new CheckBox { Content = "Superscript", IsChecked = currentSuperscript };
+            AutomationPeer.SetAutomationId(superscriptCheck, "FontDialogSuperscriptCheck");
+
+            // Mutual exclusion for subscript/superscript
+            subscriptCheck.Checked += (_, _) => { if (subscriptCheck.IsChecked == true) superscriptCheck.IsChecked = false; };
+            superscriptCheck.Checked += (_, _) => { if (superscriptCheck.IsChecked == true) subscriptCheck.IsChecked = false; };
+
+            // Color picker
+            var colorPicker = new ColorPicker
+            {
+                Color = currentColor,
+                IsAlphaEnabled = false,
+                IsHexInputVisible = true,
+                IsMoreButtonVisible = false,
+            };
+            AutomationPeer.SetAutomationId(colorPicker, "FontDialogColorPicker");
+
+            // ── Layout ──
+            var panel = new StackPanel { Spacing = 12, Width = 340 };
+
+            // Font family row
+            panel.Children.Add(fontFamilyCombo);
+
+            // Size row
+            panel.Children.Add(fontSizeCombo);
+
+            // Style section
+            var styleHeader = new TextBlock
+            {
+                Text = Res.GetString("FontDialogStyleHeader"),
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+            panel.Children.Add(styleHeader);
+
+            var stylePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
+            stylePanel.Children.Add(boldCheck);
+            stylePanel.Children.Add(italicCheck);
+            panel.Children.Add(stylePanel);
+
+            // Effects section
+            var effectsHeader = new TextBlock
+            {
+                Text = Res.GetString("FontDialogEffectsHeader"),
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+            panel.Children.Add(effectsHeader);
+
+            var effectsRow1 = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
+            effectsRow1.Children.Add(underlineCheck);
+            effectsRow1.Children.Add(strikethroughCheck);
+            panel.Children.Add(effectsRow1);
+
+            var effectsRow2 = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
+            effectsRow2.Children.Add(subscriptCheck);
+            effectsRow2.Children.Add(superscriptCheck);
+            panel.Children.Add(effectsRow2);
+
+            // Color section
+            var colorHeader = new TextBlock
+            {
+                Text = Res.GetString("FontDialogColorHeader"),
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+            panel.Children.Add(colorHeader);
+            panel.Children.Add(colorPicker);
+
+            var scrollViewer = new ScrollViewer
+            {
+                Content = panel,
+                MaxHeight = 500,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("FontDialogTitle"),
+                Content = scrollViewer,
+                PrimaryButtonText = Res.GetString("ButtonOK"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
+                XamlRoot = Content.XamlRoot
+            };
+            AutomationPeer.SetAutomationId(dialog, "FormatFontDialog");
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                // ── Apply all settings back to the selection ──
+                ITextCharacterFormat charFormat = selectedText.CharacterFormat;
+
+                // Font family
+                string selectedFamily = fontFamilyCombo.SelectedItem as string ?? fontFamilyCombo.Text;
+                if (!string.IsNullOrWhiteSpace(selectedFamily))
+                {
+                    charFormat.Name = selectedFamily;
+                    ViewModel.FontFamily = selectedFamily;
+                }
+
+                // Font size
+                string sizeText = fontSizeCombo.SelectedItem?.ToString() ?? fontSizeCombo.Text;
+                if (double.TryParse(sizeText, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out double newSize) && newSize >= 1 && newSize <= 999)
+                {
+                    charFormat.Size = (float)newSize;
+                    ViewModel.FontSize = newSize;
+                }
+
+                // Style
+                charFormat.Bold = boldCheck.IsChecked == true ? FormatEffect.On : FormatEffect.Off;
+                charFormat.Italic = italicCheck.IsChecked == true ? FormatEffect.On : FormatEffect.Off;
+                ViewModel.IsBold = boldCheck.IsChecked == true;
+                ViewModel.IsItalic = italicCheck.IsChecked == true;
+
+                // Effects
+                charFormat.Underline = underlineCheck.IsChecked == true ? UnderlineType.Single : UnderlineType.None;
+                charFormat.Strikethrough = strikethroughCheck.IsChecked == true ? FormatEffect.On : FormatEffect.Off;
+                charFormat.Subscript = subscriptCheck.IsChecked == true ? FormatEffect.On : FormatEffect.Off;
+                charFormat.Superscript = superscriptCheck.IsChecked == true ? FormatEffect.On : FormatEffect.Off;
+                ViewModel.IsUnderline = underlineCheck.IsChecked == true;
+                ViewModel.IsStrikethrough = strikethroughCheck.IsChecked == true;
+                ViewModel.IsSubscript = subscriptCheck.IsChecked == true;
+                ViewModel.IsSuperscript = superscriptCheck.IsChecked == true;
+
+                // Color
+                charFormat.ForegroundColor = colorPicker.Color;
+                _lastFontColor = colorPicker.Color;
+                FontColorIndicator.Fill = new SolidColorBrush(colorPicker.Color);
+
+                selectedText.CharacterFormat = charFormat;
+                ViewModel.UpdateStatus(Res.GetString("StatusFontApplied"));
+            }
         }
 
         private async void CustomLineSpacing_Click(object sender, RoutedEventArgs e)
