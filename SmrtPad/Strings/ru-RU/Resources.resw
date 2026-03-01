@@ -916,8 +916,39 @@
   </data>
 
   <data name="BackstageExitDesc" xml:space="preserve">
-    <value>Close the application.</value>
+    <value>Закрыть приложение.</value>
+  </data>
+
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>Без выделения</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>Формат</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>Шрифт...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>Шрифт</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>Семейство шрифтов</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>Размер</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>Стиль</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>Эффекты</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>Цвет</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>Форматирование шрифта применено.</value>
   </data>
 
 </root>
-

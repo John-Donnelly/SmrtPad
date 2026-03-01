@@ -918,5 +918,37 @@
     <value>Cerrar la aplicación.</value>
   </data>
 
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>Sin resaltado</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>Formato</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>Fuente...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>Fuente</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>Familia de fuente</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>Tamaño</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>Estilo</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>Efectos</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>Formato de fuente aplicado.</value>
+  </data>
+
 </root>
 

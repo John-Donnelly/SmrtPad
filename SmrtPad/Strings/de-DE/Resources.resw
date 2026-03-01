@@ -918,5 +918,37 @@
     <value>Anwendung schließen.</value>
   </data>
 
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>Keine Hervorhebung</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>Schriftart...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>Schriftart</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>Schriftfamilie</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>Größe</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>Stil</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>Effekte</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>Farbe</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>Schriftformatierung angewendet.</value>
+  </data>
+
 </root>
 

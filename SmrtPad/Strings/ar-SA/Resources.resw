@@ -918,5 +918,37 @@
     <value>أغلق التطبيق.</value>
   </data>
 
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>بدون تمييز</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>تنسيق</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>خط...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>خط</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>عائلة الخط</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>الحجم</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>النمط</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>التأثيرات</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>اللون</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>تم تطبيق تنسيق الخط.</value>
+  </data>
+
 </root>
 

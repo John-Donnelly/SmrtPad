@@ -919,5 +919,37 @@
     <value>Fermer l'application.</value>
   </data>
 
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>Aucune surbrillance</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>Police...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>Police</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>Famille de police</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>Taille</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>Effets</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>Couleur</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>Mise en forme de police appliquée.</value>
+  </data>
+
 </root>
 

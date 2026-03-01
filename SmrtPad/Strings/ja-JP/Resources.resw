@@ -916,8 +916,39 @@
   </data>
 
   <data name="BackstageExitDesc" xml:space="preserve">
-    <value>Close the application.</value>
+    <value>アプリケーションを閉じます。</value>
+  </data>
+
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>蛍光ペンなし</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>書式</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>フォント...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>フォント</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>フォント ファミリ</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>スタイル</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>文字飾り</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>色</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>フォント書式が適用されました。</value>
   </data>
 
 </root>
-

@@ -916,8 +916,39 @@
   </data>
 
   <data name="BackstageExitDesc" xml:space="preserve">
-    <value>Close the application.</value>
+    <value>关闭应用程序。</value>
+  </data>
+
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>无突出显示</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>字体...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>字体</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>字体系列</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>样式</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>效果</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>颜色</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>字体格式已应用。</value>
   </data>
 
 </root>
-

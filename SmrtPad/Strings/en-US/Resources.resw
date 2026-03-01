@@ -964,4 +964,36 @@
     <value>Close the application.</value>
   </data>
 
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>No Highlight</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>Font...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>Font Family</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>Effects</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>Font formatting applied.</value>
+  </data>
+
 </root>

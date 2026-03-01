@@ -916,8 +916,39 @@
   </data>
 
   <data name="BackstageExitDesc" xml:space="preserve">
-    <value>Close the application.</value>
+    <value>ایپلیکیشن بند کریں۔</value>
+  </data>
+
+  <!-- ═══ Font formatting upgrades ═══ -->
+  <data name="NoHighlightButton.Content" xml:space="preserve">
+    <value>کوئی ہائی لائٹ نہیں</value>
+  </data>
+  <data name="FormatMenu.Title" xml:space="preserve">
+    <value>فارمیٹ</value>
+  </data>
+  <data name="FormatFontMenuItem.Text" xml:space="preserve">
+    <value>فونٹ...</value>
+  </data>
+  <data name="FontDialogTitle" xml:space="preserve">
+    <value>فونٹ</value>
+  </data>
+  <data name="FontDialogFamily" xml:space="preserve">
+    <value>فونٹ فیملی</value>
+  </data>
+  <data name="FontDialogSize" xml:space="preserve">
+    <value>سائز</value>
+  </data>
+  <data name="FontDialogStyleHeader" xml:space="preserve">
+    <value>اسٹائل</value>
+  </data>
+  <data name="FontDialogEffectsHeader" xml:space="preserve">
+    <value>اثرات</value>
+  </data>
+  <data name="FontDialogColorHeader" xml:space="preserve">
+    <value>رنگ</value>
+  </data>
+  <data name="StatusFontApplied" xml:space="preserve">
+    <value>فونٹ فارمیٹنگ لاگو ہوگئی۔</value>
   </data>
 
 </root>
-
