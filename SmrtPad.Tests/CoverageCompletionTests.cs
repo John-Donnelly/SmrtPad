@@ -4286,12 +4286,16 @@ namespace SmrtPad.Tests
         public void AddRecentFile_SavesPersisted()
         {
             var (svc, path) = CreateIsolated();
-            svc.AddRecentFile("C:\\test.rtf");
+            string dir = Path.GetDirectoryName(path)!;
+            string testFile = Path.Combine(dir, "test.rtf");
+            File.WriteAllText(testFile, "data");
+
+            svc.AddRecentFile(testFile);
             svc.Save();
 
             var svc2 = new SettingsService(path);
             Assert.Single(svc2.RecentFiles);
-            Assert.Equal("C:\\test.rtf", svc2.RecentFiles[0]);
+            Assert.Equal(testFile, svc2.RecentFiles[0]);
         }
 
         [Fact]

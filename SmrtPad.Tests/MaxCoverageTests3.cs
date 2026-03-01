@@ -599,11 +599,11 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
-        public void FileBackstageView_HasTwelveEventsDeclared()
+        public void FileBackstageView_HasThirteenEventsDeclared()
         {
             var ownEvents = BSV.GetEvents(
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            Assert.Equal(12, ownEvents.Length);
+            Assert.Equal(13, ownEvents.Length);
         }
 
         [Fact]

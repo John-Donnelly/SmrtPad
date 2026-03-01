@@ -1388,14 +1388,17 @@ namespace SmrtPad.Tests
         public void AddRecentFile_AutoSavesImmediately()
         {
             string path = Path.Combine(_testDir, "settings.json");
+            string testFile = Path.Combine(_testDir, "test.rtf");
+            File.WriteAllText(testFile, "data");
+
             var svc = new SettingsService(path);
-            svc.AddRecentFile("C:\\test.rtf");
+            svc.AddRecentFile(testFile);
 
             // Verify file was written
             Assert.True(File.Exists(path));
             var svc2 = new SettingsService(path);
             Assert.Single(svc2.RecentFiles);
-            Assert.Equal("C:\\test.rtf", svc2.RecentFiles[0]);
+            Assert.Equal(testFile, svc2.RecentFiles[0]);
         }
 
         [Fact]

@@ -529,7 +529,9 @@ namespace SmrtPad.Tests
                 AutoSaveIntervalSeconds = 60,
                 RulerUnits = "cm"
             };
-            settings1.AddRecentFile("C:\\doc.rtf");
+            string testFile = Path.Combine(Path.GetDirectoryName(_settingsPath)!, "doc.rtf");
+            File.WriteAllText(testFile, "data");
+            settings1.AddRecentFile(testFile);
             settings1.Save();
 
             var settings2 = new SettingsService(_settingsPath);
