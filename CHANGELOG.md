@@ -5,6 +5,18 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Format → Font dialog** — new consolidated dialog (Format > Font...) that sets font family, size, style (bold/italic), effects (underline/strikethrough/subscript/superscript with mutual exclusion), and character color in one place — matching WordPad's Format > Font; reads current selection state on open, writes back on OK
+- **Format menu** — new "Format" menu bar item between View and Macro containing the Font... command
+- **"No Highlight" button** — added a "No Highlight" / Remove Highlight entry to the text highlight color flyout, allowing users to remove background highlighting from selected text
+- **30 unit tests** (`FontFormattingUpgradeTests.cs`) covering: ColorHelper hex parsing for all swatch colors (12 tests), remove highlight transparency verification (3 tests), Format > Font dialog ViewModel state management (15 tests)
+- **22 Appium UI tests** (`FontFormattingUpgradeUITests.cs`) covering: font-color indicator from color picker (3 tests), No Highlight button presence and functionality (4 tests), Format > Font dialog controls, state reading, formatting application, and cancel behavior (15 tests)
+- **10 new resource strings** added to all 9 locale files: `NoHighlightButton`, `FormatMenu`, `FormatFontMenuItem`, `FontDialogTitle`, `FontDialogFamily`, `FontDialogSize`, `FontDialogStyleHeader`, `FontDialogEffectsHeader`, `FontDialogColorHeader`, `StatusFontApplied`
+
+### Fixed
+- **Font-color indicator not updating from color picker** — moved `FontColorIndicator.Fill` update into `ApplyTextColor` so both swatch clicks and the `ColorPicker` control update the color-indicator rectangle; previously only swatches updated it, leaving the indicator stale when the picker was used
+- **Highlight-color indicator not updating from color picker** — applied the same fix to `ApplyHighlightColor` and `HighlightColorIndicator` for consistency
+
+### Added
 - **28 file-management tests** (`FileManagementUpgradeTests.cs`) covering:
   - `HtmlConverterHelperTests` — 12 tests: null/empty input, BR tag conversion, list item bullet conversion, HTML entity decoding, blank-line collapse, empty/null HTML output, special character encoding, single-line-break-to-BR, round-trip fidelity
   - `OdtImportExportTests` — 13 tests: ODT entry creation, mimetype validation, null/read-only stream guards, empty text export, content paragraph verification, DOCX/ODT text extraction, ODT-to-RTF null guard and fallback, font/color table presence
