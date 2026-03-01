@@ -141,6 +141,10 @@ namespace SmrtPad.UITests.Tests
             TypeAndSelectAll("italic text");
 
             _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(200);
+
+            // Re-select so SelectionChanged updates toggle states
+            _fx.SelectAllInEditor();
             Thread.Sleep(300);
 
             Assert.True(_fx.IsToggleChecked("ItalicToggle"));
@@ -160,9 +164,12 @@ namespace SmrtPad.UITests.Tests
             TypeAndSelectAll("italic text");
 
             var btn = _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle"));
-            btn.Click(); Thread.Sleep(250);
-            btn.Click(); Thread.Sleep(250);
+            btn.Click(); Thread.Sleep(200);
+            _fx.SelectAllInEditor(); Thread.Sleep(200);
+            btn.Click(); Thread.Sleep(200);
 
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
             Assert.False(_fx.IsToggleChecked("ItalicToggle"));
         }
 
@@ -178,6 +185,9 @@ namespace SmrtPad.UITests.Tests
             TypeAndSelectAll("underline me");
 
             _driver!.FindElement(MobileBy.AccessibilityId("UnderlineToggle")).Click();
+            Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
             Thread.Sleep(300);
 
             Assert.True(_fx.IsToggleChecked("UnderlineToggle"));
@@ -197,9 +207,12 @@ namespace SmrtPad.UITests.Tests
             TypeAndSelectAll("underline me");
 
             var btn = _driver!.FindElement(MobileBy.AccessibilityId("UnderlineToggle"));
-            btn.Click(); Thread.Sleep(250);
-            btn.Click(); Thread.Sleep(250);
+            btn.Click(); Thread.Sleep(200);
+            _fx.SelectAllInEditor(); Thread.Sleep(200);
+            btn.Click(); Thread.Sleep(200);
 
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
             Assert.False(_fx.IsToggleChecked("UnderlineToggle"));
         }
 
@@ -215,6 +228,9 @@ namespace SmrtPad.UITests.Tests
             TypeAndSelectAll("strike this");
 
             _driver!.FindElement(MobileBy.AccessibilityId("StrikethroughToggle")).Click();
+            Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
             Thread.Sleep(300);
 
             Assert.True(_fx.IsToggleChecked("StrikethroughToggle"));
@@ -234,9 +250,12 @@ namespace SmrtPad.UITests.Tests
             TypeAndSelectAll("strike this");
 
             var btn = _driver!.FindElement(MobileBy.AccessibilityId("StrikethroughToggle"));
-            btn.Click(); Thread.Sleep(250);
-            btn.Click(); Thread.Sleep(250);
+            btn.Click(); Thread.Sleep(200);
+            _fx.SelectAllInEditor(); Thread.Sleep(200);
+            btn.Click(); Thread.Sleep(200);
 
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
             Assert.False(_fx.IsToggleChecked("StrikethroughToggle"));
         }
 
@@ -609,6 +628,9 @@ namespace SmrtPad.UITests.Tests
 
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             editor.SendKeys(Keys.Control + "b");
+            Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
             Thread.Sleep(300);
 
             Assert.True(_fx.IsToggleChecked("BoldToggle"));
@@ -655,6 +677,9 @@ namespace SmrtPad.UITests.Tests
 
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             editor.SendKeys(Keys.Control + "u");
+            Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
             Thread.Sleep(300);
 
             Assert.True(_fx.IsToggleChecked("UnderlineToggle"));
@@ -679,15 +704,15 @@ namespace SmrtPad.UITests.Tests
             _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
             Thread.Sleep(200);
 
-            // Re-select (clicking toggle may move cursor)
             _fx.SelectAllInEditor();
+            Thread.Sleep(200);
 
             _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
             Thread.Sleep(200);
 
             // Re-select and verify both
             _fx.SelectAllInEditor();
-            Thread.Sleep(200);
+            Thread.Sleep(300);
 
             Assert.True(_fx.IsToggleChecked("BoldToggle"));
             Assert.True(_fx.IsToggleChecked("ItalicToggle"));
@@ -715,6 +740,9 @@ namespace SmrtPad.UITests.Tests
 
             _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
             Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
             Assert.True(_fx.IsToggleChecked("ItalicToggle"));
 
             _fx.SelectAllInEditor();
@@ -722,7 +750,7 @@ namespace SmrtPad.UITests.Tests
             Thread.Sleep(300);
 
             _fx.SelectAllInEditor();
-            Thread.Sleep(200);
+            Thread.Sleep(300);
             Assert.False(_fx.IsToggleChecked("ItalicToggle"),
                 "Clear Formatting should reset italic to off");
         }
@@ -741,6 +769,9 @@ namespace SmrtPad.UITests.Tests
 
             _driver!.FindElement(MobileBy.AccessibilityId("UnderlineToggle")).Click();
             Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
             Assert.True(_fx.IsToggleChecked("UnderlineToggle"));
 
             _fx.SelectAllInEditor();
@@ -748,7 +779,7 @@ namespace SmrtPad.UITests.Tests
             Thread.Sleep(300);
 
             _fx.SelectAllInEditor();
-            Thread.Sleep(200);
+            Thread.Sleep(300);
             Assert.False(_fx.IsToggleChecked("UnderlineToggle"),
                 "Clear Formatting should reset underline to off");
         }
@@ -768,18 +799,21 @@ namespace SmrtPad.UITests.Tests
             _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
             Thread.Sleep(150);
             _fx.SelectAllInEditor();
+            Thread.Sleep(150);
             _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
             Thread.Sleep(150);
             _fx.SelectAllInEditor();
+            Thread.Sleep(150);
             _driver!.FindElement(MobileBy.AccessibilityId("StrikethroughToggle")).Click();
             Thread.Sleep(200);
 
             _fx.SelectAllInEditor();
+            Thread.Sleep(150);
             _driver!.FindElement(MobileBy.Name("Clear Formatting")).Click();
             Thread.Sleep(300);
 
             _fx.SelectAllInEditor();
-            Thread.Sleep(200);
+            Thread.Sleep(300);
             Assert.False(_fx.IsToggleChecked("BoldToggle"));
             Assert.False(_fx.IsToggleChecked("ItalicToggle"));
             Assert.False(_fx.IsToggleChecked("StrikethroughToggle"));
