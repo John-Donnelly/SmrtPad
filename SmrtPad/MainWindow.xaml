@@ -132,19 +132,22 @@
                 <!-- Quick-access separator -->
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
                 <!-- Quick-access toolbar buttons -->
-                <Button Click="Save_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Save (Ctrl+S)">
+                <Button x:Name="SaveButton" Click="Save_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Save (Ctrl+S)"
+                        AutomationProperties.Name="Save (Ctrl+S)">
                     <Button.KeyboardAccelerators>
                         <KeyboardAccelerator Key="S" Modifiers="Control"/>
                     </Button.KeyboardAccelerators>
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE74E;" FontSize="14"/>
                 </Button>
-                <Button Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New">
+                <Button x:Name="NewButton" Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New"
+                        AutomationProperties.Name="New">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8A5;" FontSize="14"/>
                 </Button>
                 <Button x:Name="UndoButton" AutomationProperties.AutomationId="UndoButton" Click="Undo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Undo (Ctrl+Z)">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A7;" FontSize="14"/>
                 </Button>
-                <Button Click="Redo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Redo (Ctrl+Y)">
+                <Button x:Name="RedoButton" Click="Redo_Click"  Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="Redo (Ctrl+Y)"
+                        AutomationProperties.Name="Redo (Ctrl+Y)">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7A6;" FontSize="14"/>
                 </Button>
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
@@ -241,12 +244,14 @@
                                   AutomationProperties.AutomationId="FontSizeComboBox"
                                   SelectionChanged="FontSizeComboBox_SelectionChanged"
                                   IsEditable="True"/>
-                        <Button Click="GrowFont_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Grow Font">
+                        <Button x:Name="GrowFontButton" Click="GrowFont_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Grow Font"
+                                AutomationProperties.Name="Grow Font">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="13"/>
                         </Button>
-                        <Button Click="ShrinkFont_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Shrink Font">
+                        <Button x:Name="ShrinkFontButton" Click="ShrinkFont_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Shrink Font"
+                                AutomationProperties.Name="Shrink Font">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E7;" FontSize="13"/>
                         </Button>
                     </StackPanel>
@@ -352,8 +357,9 @@
                             </Grid>
                         </Button>
                         <!-- Clear Formatting -->
-                        <Button Click="ClearFormatting_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Clear Formatting">
+                        <Button x:Name="ClearFormattingButton" Click="ClearFormatting_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Clear Formatting"
+                                AutomationProperties.Name="Clear Formatting">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E6;" FontSize="16"/>
                         </Button>
                     </StackPanel>
@@ -374,12 +380,14 @@
 
                     <!-- Row 1: indent decrease · indent increase · list toggle+dropdown · line spacing dropdown -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="0" Margin="0,0,0,3">
-                        <Button Click="DecreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Decrease Indent">
+                        <Button x:Name="DecreaseIndentButton" Click="DecreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Decrease Indent"
+                                AutomationProperties.Name="Decrease Indent">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E7;" FontSize="14"/>
                         </Button>
-                        <Button Click="IncreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Increase Indent">
+                        <Button x:Name="IncreaseIndentButton" Click="IncreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Increase Indent"
+                                AutomationProperties.Name="Increase Indent">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="14"/>
                         </Button>
                         <!-- List type button with dropdown -->
@@ -460,8 +468,9 @@
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE7FD;" FontSize="14"/>
                         </Button>
                         <!-- Paragraph Styles -->
-                        <Button Padding="4,3" CornerRadius="4" Height="28"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Styles">
+                        <Button x:Name="StylesButton" Padding="4,3" CornerRadius="4" Height="28"
+                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Styles"
+                                AutomationProperties.Name="Styles">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
                                     <MenuFlyoutItem x:Uid="StyleNormalItem" Text="Normal" Click="StyleNormal_Click"/>
@@ -554,8 +563,9 @@
                             </StackPanel>
                         </Button>
                         <!-- SmrtDoodle -->
-                        <Button Grid.Column="1" Click="PaintDrawing_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
+                        <Button x:Name="SmrtDoodleButton" Grid.Column="1" Click="PaintDrawing_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="SmrtDoodle - Create A Drawing"
+                                AutomationProperties.Name="SmrtDoodle - Create A Drawing"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <Image Source="{ThemeResource SmrtDoodleSource}" Height="22" Stretch="Uniform" HorizontalAlignment="Center"/>
@@ -563,8 +573,9 @@
                             </StackPanel>
                         </Button>
                         <!-- Insert object -->
-                        <Button Grid.Column="2" Click="InsertObject_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
+                        <Button x:Name="ObjectButton" Grid.Column="2" Click="InsertObject_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Object"
+                                AutomationProperties.Name="Insert Object"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xF4A5;" FontSize="22"/>
@@ -572,8 +583,9 @@
                             </StackPanel>
                         </Button>
                         <!-- Date and Time -->
-                        <Button Grid.Column="3" Click="InsertDateTime_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
+                        <Button x:Name="DateTimeButton" Grid.Column="3" Click="InsertDateTime_Click" Width="52" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Date and Time"
+                                AutomationProperties.Name="Date and Time"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE787;" FontSize="22"/>
@@ -581,8 +593,9 @@
                             </StackPanel>
                         </Button>
                         <!-- Insert Hyperlink -->
-                        <Button Grid.Column="4" Click="InsertHyperlink_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
+                        <Button x:Name="HyperlinkButton" Grid.Column="4" Click="InsertHyperlink_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Hyperlink"
+                                AutomationProperties.Name="Insert Hyperlink"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE71B;" FontSize="22"/>
@@ -590,8 +603,9 @@
                             </StackPanel>
                         </Button>
                         <!-- Insert Table -->
-                        <Button Grid.Column="5" Click="InsertTable_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
+                        <Button x:Name="TableButton" Grid.Column="5" Click="InsertTable_Click" Width="40" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Table"
+                                AutomationProperties.Name="Insert Table"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE80A;" FontSize="22"/>
@@ -599,8 +613,9 @@
                             </StackPanel>
                         </Button>
                         <!-- Insert Symbol -->
-                        <Button Grid.Column="6" Click="InsertSymbol_Click" Width="44" Height="48" Padding="0" CornerRadius="4"
+                        <Button x:Name="SymbolButton" Grid.Column="6" Click="InsertSymbol_Click" Width="44" Height="48" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Insert Symbol"
+                                AutomationProperties.Name="Insert Symbol"
                                 VerticalAlignment="Top">
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE710;" FontSize="22"/>
