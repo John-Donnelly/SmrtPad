@@ -46,7 +46,7 @@ namespace SmrtPad.UITests.Tests
             _fx.ClearEditor();
             _fx.TypeInEditor("indent test");
 
-            var btn = _driver!.FindElement(MobileBy.Name("Increase Indent"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("IncreaseIndentButton"));
             Assert.NotNull(btn);
 
             btn.Click();
@@ -68,10 +68,10 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("indent test");
 
             // First increase indent so there's something to decrease
-            _driver!.FindElement(MobileBy.Name("Increase Indent")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("IncreaseIndentButton")).Click();
             Thread.Sleep(200);
 
-            var btn = _driver!.FindElement(MobileBy.Name("Decrease Indent"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("DecreaseIndentButton"));
             Assert.NotNull(btn);
 
             btn.Click();
@@ -95,14 +95,14 @@ namespace SmrtPad.UITests.Tests
             // Increase indent 3 times
             for (int i = 0; i < 3; i++)
             {
-                _driver!.FindElement(MobileBy.Name("Increase Indent")).Click();
+                _driver!.FindElement(MobileBy.AccessibilityId("IncreaseIndentButton")).Click();
                 Thread.Sleep(150);
             }
 
             // Decrease indent 3 times
             for (int i = 0; i < 3; i++)
             {
-                _driver!.FindElement(MobileBy.Name("Decrease Indent")).Click();
+                _driver!.FindElement(MobileBy.AccessibilityId("DecreaseIndentButton")).Click();
                 Thread.Sleep(150);
             }
 
@@ -218,7 +218,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
 
             // The Styles button has a tooltip "Styles"
-            var stylesBtn = _driver!.FindElement(MobileBy.Name("Styles"));
+            var stylesBtn = _driver!.FindElement(MobileBy.AccessibilityId("StylesButton"));
             Assert.NotNull(stylesBtn);
 
             stylesBtn.Click();
@@ -250,7 +250,7 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("My Heading");
             _fx.SelectAllInEditor();
 
-            var stylesBtn = _driver!.FindElement(MobileBy.Name("Styles"));
+            var stylesBtn = _driver!.FindElement(MobileBy.AccessibilityId("StylesButton"));
             stylesBtn.Click();
             Thread.Sleep(500);
 
@@ -263,7 +263,7 @@ namespace SmrtPad.UITests.Tests
 
             // Reset to Normal
             _fx.SelectAllInEditor();
-            stylesBtn = _driver!.FindElement(MobileBy.Name("Styles"));
+            stylesBtn = _driver!.FindElement(MobileBy.AccessibilityId("StylesButton"));
             stylesBtn.Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Normal")).Click();
@@ -349,19 +349,26 @@ namespace SmrtPad.UITests.Tests
             // Apply bold
             _driver!.FindElement(MobileBy.AccessibilityId("BoldToggle")).Click();
             Thread.Sleep(200);
+
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
             Assert.True(_fx.IsToggleChecked("BoldToggle"));
 
             // Re-select all
             _fx.SelectAllInEditor();
+            Thread.Sleep(200);
 
             // Click Clear Formatting
-            var clearBtn = _driver!.FindElement(MobileBy.Name("Clear Formatting"));
+            var clearBtn = _driver!.FindElement(MobileBy.AccessibilityId("ClearFormattingButton"));
             clearBtn.Click();
             Thread.Sleep(300);
 
-            // Re-select and check bold is off
-            _fx.SelectAllInEditor();
+            // Click editor to restore focus, then re-select and check bold is off
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.Click();
             Thread.Sleep(200);
+            _fx.SelectAllInEditor();
+            Thread.Sleep(300);
             Assert.False(_fx.IsToggleChecked("BoldToggle"),
                 "Clear Formatting should reset bold to off");
         }
@@ -379,10 +386,10 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("font size test");
             _fx.SelectAllInEditor();
 
-            _driver!.FindElement(MobileBy.Name("Grow Font")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("GrowFontButton")).Click();
             Thread.Sleep(200);
 
-            _driver!.FindElement(MobileBy.Name("Shrink Font")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("ShrinkFontButton")).Click();
             Thread.Sleep(200);
 
             // Editor should still be functional
@@ -620,7 +627,7 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("Sub Heading");
             _fx.SelectAllInEditor();
 
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Heading 2")).Click();
             Thread.Sleep(300);
@@ -630,7 +637,7 @@ namespace SmrtPad.UITests.Tests
 
             // Reset to Normal
             _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Normal")).Click();
             Thread.Sleep(200);
@@ -649,7 +656,7 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("Minor Heading");
             _fx.SelectAllInEditor();
 
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Heading 3")).Click();
             Thread.Sleep(300);
@@ -659,7 +666,7 @@ namespace SmrtPad.UITests.Tests
 
             // Reset to Normal
             _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Normal")).Click();
             Thread.Sleep(200);
@@ -678,7 +685,7 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("My Subtitle");
             _fx.SelectAllInEditor();
 
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Subtitle")).Click();
             Thread.Sleep(300);
@@ -688,7 +695,7 @@ namespace SmrtPad.UITests.Tests
 
             // Reset to Normal
             _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Normal")).Click();
             Thread.Sleep(200);
@@ -707,7 +714,7 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("A famous quote");
             _fx.SelectAllInEditor();
 
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Quote")).Click();
             Thread.Sleep(300);
@@ -717,7 +724,7 @@ namespace SmrtPad.UITests.Tests
 
             // Reset to Normal
             _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.Name("Styles")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("StylesButton")).Click();
             Thread.Sleep(500);
             _driver!.FindElement(MobileBy.Name("Normal")).Click();
             Thread.Sleep(200);
@@ -739,7 +746,7 @@ namespace SmrtPad.UITests.Tests
 
             for (int i = 0; i < 3; i++)
             {
-                _driver!.FindElement(MobileBy.Name("Increase Indent")).Click();
+                _driver!.FindElement(MobileBy.AccessibilityId("IncreaseIndentButton")).Click();
                 Thread.Sleep(150);
             }
 
@@ -748,7 +755,7 @@ namespace SmrtPad.UITests.Tests
             // Reset
             for (int i = 0; i < 3; i++)
             {
-                _driver!.FindElement(MobileBy.Name("Decrease Indent")).Click();
+                _driver!.FindElement(MobileBy.AccessibilityId("DecreaseIndentButton")).Click();
                 Thread.Sleep(150);
             }
         }
