@@ -52,7 +52,7 @@ namespace SmrtPad.UITests.Tests
         public void InsertGroup_SmrtDoodleButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("SmrtDoodle - Create A Drawing"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("SmrtDoodleButton"));
             Assert.NotNull(btn);
         }
 
@@ -63,7 +63,7 @@ namespace SmrtPad.UITests.Tests
         public void InsertGroup_ObjectButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Insert Object"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("ObjectButton"));
             Assert.NotNull(btn);
         }
 
@@ -74,7 +74,7 @@ namespace SmrtPad.UITests.Tests
         public void InsertGroup_DateTimeButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Date and Time"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("DateTimeButton"));
             Assert.NotNull(btn);
         }
 
@@ -85,7 +85,7 @@ namespace SmrtPad.UITests.Tests
         public void InsertGroup_HyperlinkButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Insert Hyperlink"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("HyperlinkButton"));
             Assert.NotNull(btn);
         }
 
@@ -96,7 +96,7 @@ namespace SmrtPad.UITests.Tests
         public void InsertGroup_TableButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Insert Table"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("TableButton"));
             Assert.NotNull(btn);
         }
 
@@ -107,7 +107,7 @@ namespace SmrtPad.UITests.Tests
         public void InsertGroup_SymbolButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Insert Symbol"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("SymbolButton"));
             Assert.NotNull(btn);
         }
 
@@ -212,7 +212,7 @@ namespace SmrtPad.UITests.Tests
         public void QuickAccess_SaveButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Save (Ctrl+S)"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("SaveButton"));
             Assert.NotNull(btn);
         }
 
@@ -223,7 +223,7 @@ namespace SmrtPad.UITests.Tests
         public void QuickAccess_NewButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("New"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("NewButton"));
             Assert.NotNull(btn);
         }
 
@@ -245,7 +245,7 @@ namespace SmrtPad.UITests.Tests
         public void QuickAccess_RedoButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.Name("Redo (Ctrl+Y)"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("RedoButton"));
             Assert.NotNull(btn);
         }
     }

@@ -251,6 +251,8 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
 
+            _fx.EnsureBackstageClosed();
+
             // Click the TabView's add-tab button.
             var addTabBtn = _driver!.FindElement(MobileBy.AccessibilityId("AddButton"));
             addTabBtn.Click();

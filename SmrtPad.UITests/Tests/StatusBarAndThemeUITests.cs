@@ -188,16 +188,22 @@ namespace SmrtPad.UITests.Tests
         // ── Status bar visibility ────────────────────────────────────────────
 
         /// <summary>
-        /// The StatusBar ContentControl should be visible and accessible.
+        /// The StatusBar should be visible and accessible (verified through
+        /// its child elements, since ContentControl may not expose a UIA peer).
         /// </summary>
         [SkippableFact]
         public void StatusBar_IsVisible_AndAccessible()
         {
             RequireDriver();
 
-            var statusBar = _driver!.FindElement(MobileBy.AccessibilityId("StatusBar"));
-            Assert.NotNull(statusBar);
-            Assert.True(statusBar.Displayed, "StatusBar should be visible");
+            // Ensure backstage is closed so status bar is visible
+            _fx.EnsureBackstageClosed();
+            Thread.Sleep(200);
+
+            // Verify via a known status bar child element
+            var statusText = _driver!.FindElement(MobileBy.AccessibilityId("StatusText"));
+            Assert.NotNull(statusText);
+            Assert.True(statusText.Displayed, "StatusBar should be visible");
         }
 
         // ── All status bar elements present ──────────────────────────────────

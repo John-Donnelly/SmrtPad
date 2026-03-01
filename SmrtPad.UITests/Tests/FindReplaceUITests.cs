@@ -104,6 +104,11 @@ namespace SmrtPad.UITests.Tests
             _fx.ClearEditor();
             _fx.TypeInEditor("the quick brown fox jumps over the lazy dog");
 
+            // Move cursor to start so forward find can locate "fox"
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + Keys.Home);
+            Thread.Sleep(200);
+
             OpenFindFlyout();
 
             // Type search term in FindTextBox
@@ -437,9 +442,9 @@ namespace SmrtPad.UITests.Tests
             _fx.ClearEditor();
             _fx.TypeInEditor("unique word here");
 
-            // Move cursor to end
+            // Move cursor to start so forward find can locate "unique"
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-            editor.SendKeys(Keys.Control + Keys.End);
+            editor.SendKeys(Keys.Control + Keys.Home);
             Thread.Sleep(200);
 
             OpenFindFlyout();

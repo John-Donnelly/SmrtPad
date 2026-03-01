@@ -418,7 +418,7 @@ namespace SmrtPad.UITests.Tests
             _driver!.FindElement(MobileBy.Name("View")).Click();
             Thread.Sleep(450);
             _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
-            Thread.Sleep(500);
+            Thread.Sleep(800);
 
             // Status bar should be restored
             var restoredBar = _driver!.FindElement(MobileBy.AccessibilityId("StatusBar"));

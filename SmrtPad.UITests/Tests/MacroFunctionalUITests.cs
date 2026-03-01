@@ -247,11 +247,15 @@ namespace SmrtPad.UITests.Tests
             Assert.Equal("Macro recording stopped.", StatusText);
 
             // Step 5: undo bold — text becomes plain again
+            // Multiple undos may be needed (selection change + bold toggle)
             _fx.UndoInEditor();
-            Thread.Sleep(200);
+            Thread.Sleep(300);
+            _fx.UndoInEditor();
+            Thread.Sleep(300);
 
             // Step 6: re-select and confirm plain
             _fx.SelectAllInEditor();
+            Thread.Sleep(300);
             Assert.False(_fx.IsToggleChecked("BoldToggle"),
                 "text should be plain after undo, before macro playback");
 

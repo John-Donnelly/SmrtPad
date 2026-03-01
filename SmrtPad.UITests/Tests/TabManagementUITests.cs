@@ -38,9 +38,11 @@ namespace SmrtPad.UITests.Tests
 
         /// <summary>
         /// Clicks the TabView "+" button to add a new tab.
+        /// Ensures backstage is closed first.
         /// </summary>
         private void AddNewTab()
         {
+            _fx.EnsureBackstageClosed();
             _driver!.FindElement(MobileBy.AccessibilityId("AddButton")).Click();
             Thread.Sleep(500);
         }
