@@ -14,6 +14,12 @@ namespace SmrtPad.Services
         string Language { get; set; }
         string RulerUnits { get; set; }
         bool SpellCheckEnabled { get; set; }
+        string PagePaperSize { get; set; }
+        string PageOrientation { get; set; }
+        double PageMarginTopInches { get; set; }
+        double PageMarginBottomInches { get; set; }
+        double PageMarginLeftInches { get; set; }
+        double PageMarginRightInches { get; set; }
         List<string> RecentFiles { get; }
         void AddRecentFile(string path);
         void ClearRecentFiles();

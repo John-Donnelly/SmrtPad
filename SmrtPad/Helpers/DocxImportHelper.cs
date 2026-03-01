@@ -156,6 +156,14 @@ namespace SmrtPad.Helpers
                         {
                             rtf.Append(@"\tab ");
                         }
+                        else if (child is Drawing drawing)
+                        {
+                            string? pict = ConvertDrawingToRtf(mainPart, drawing);
+                            if (!string.IsNullOrEmpty(pict))
+                            {
+                                rtf.Append(pict);
+                            }
+                        }
                     }
 
                     rtf.Append('}');
@@ -233,6 +241,72 @@ namespace SmrtPad.Helpers
                 }
             }
             return sb.ToString();
+        }
+
+        private static string? ConvertDrawingToRtf(MainDocumentPart mainPart, DocumentFormat.OpenXml.Wordprocessing.Drawing drawing)
+        {
+            string? relationshipId = drawing
+                .Descendants<DocumentFormat.OpenXml.Drawing.Blip>()
+                .Select(static blip => blip.Embed?.Value)
+                .FirstOrDefault(static id => !string.IsNullOrWhiteSpace(id));
+
+            if (string.IsNullOrWhiteSpace(relationshipId))
+            {
+                return null;
+            }
+
+            ImagePart? imagePart = mainPart.GetPartById(relationshipId) as ImagePart;
+            if (imagePart is null)
+            {
+                return null;
+            }
+
+            string blipControl = imagePart.ContentType switch
+            {
+                "image/png" => @"\pngblip",
+                "image/jpeg" or "image/jpg" => @"\jpegblip",
+                "image/gif" => @"\pngblip",
+                "image/bmp" => @"\dibitmap0",
+                _ => string.Empty
+            };
+
+            if (string.IsNullOrEmpty(blipControl))
+            {
+                return null;
+            }
+
+            using var imageStream = imagePart.GetStream();
+            using var imageBytesStream = new MemoryStream();
+            imageStream.CopyTo(imageBytesStream);
+            byte[] imageBytes = imageBytesStream.ToArray();
+            if (imageBytes.Length == 0)
+            {
+                return null;
+            }
+
+            long cx = drawing.Descendants<DocumentFormat.OpenXml.Drawing.Wordprocessing.Extent>()
+                .Select(static extent => extent.Cx?.Value ?? 0L)
+                .FirstOrDefault();
+            long cy = drawing.Descendants<DocumentFormat.OpenXml.Drawing.Wordprocessing.Extent>()
+                .Select(static extent => extent.Cy?.Value ?? 0L)
+                .FirstOrDefault();
+
+            int picwgoal = cx > 0 ? (int)Math.Max(1, cx * 1440 / 914400) : 0;
+            int pichgoal = cy > 0 ? (int)Math.Max(1, cy * 1440 / 914400) : 0;
+
+            var pict = new StringBuilder();
+            pict.Append(@"{\pict");
+            pict.Append(blipControl);
+            if (picwgoal > 0) pict.Append($@"\picwgoal{picwgoal}");
+            if (pichgoal > 0) pict.Append($@"\pichgoal{pichgoal}");
+            pict.Append(' ');
+            foreach (byte b in imageBytes)
+            {
+                pict.Append(b.ToString("x2"));
+            }
+
+            pict.Append('}');
+            return pict.ToString();
         }
     }
 }

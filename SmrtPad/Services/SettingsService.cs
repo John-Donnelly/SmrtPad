@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace SmrtPad.Services
@@ -92,6 +93,42 @@ namespace SmrtPad.Services
             set => _data.SpellCheckEnabled = value;
         }
 
+        public string PagePaperSize
+        {
+            get => _data.PagePaperSize;
+            set => _data.PagePaperSize = value;
+        }
+
+        public string PageOrientation
+        {
+            get => _data.PageOrientation;
+            set => _data.PageOrientation = value;
+        }
+
+        public double PageMarginTopInches
+        {
+            get => _data.PageMarginTopInches;
+            set => _data.PageMarginTopInches = value;
+        }
+
+        public double PageMarginBottomInches
+        {
+            get => _data.PageMarginBottomInches;
+            set => _data.PageMarginBottomInches = value;
+        }
+
+        public double PageMarginLeftInches
+        {
+            get => _data.PageMarginLeftInches;
+            set => _data.PageMarginLeftInches = value;
+        }
+
+        public double PageMarginRightInches
+        {
+            get => _data.PageMarginRightInches;
+            set => _data.PageMarginRightInches = value;
+        }
+
         public List<string> RecentFiles => _data.RecentFiles;
 
         public void AddRecentFile(string path)
@@ -133,6 +170,19 @@ namespace SmrtPad.Services
                 {
                     var json = File.ReadAllText(_settingsFilePath);
                     _data = JsonSerializer.Deserialize<SettingsData>(json) ?? new SettingsData();
+
+                    var validPaths = _data.RecentFiles
+                        .Where(static path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Take(MaxRecentFiles)
+                        .ToList();
+
+                    if (validPaths.Count != _data.RecentFiles.Count ||
+                        !_data.RecentFiles.SequenceEqual(validPaths, StringComparer.OrdinalIgnoreCase))
+                    {
+                        _data.RecentFiles = validPaths;
+                        Save();
+                    }
                 }
             }
             catch (Exception ex)
@@ -154,6 +204,12 @@ namespace SmrtPad.Services
             public string Language { get; set; } = "en-US";
             public string RulerUnits { get; set; } = "in";
             public bool SpellCheckEnabled { get; set; } = true;
+            public string PagePaperSize { get; set; } = "Letter";
+            public string PageOrientation { get; set; } = "Portrait";
+            public double PageMarginTopInches { get; set; } = 1.0;
+            public double PageMarginBottomInches { get; set; } = 1.0;
+            public double PageMarginLeftInches { get; set; } = 1.0;
+            public double PageMarginRightInches { get; set; } = 1.0;
             public List<string> RecentFiles { get; set; } = [];
         }
     }
