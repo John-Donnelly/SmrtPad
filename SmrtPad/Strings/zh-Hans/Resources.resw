@@ -628,6 +628,51 @@
   <data name="BackstageSaveAsDesc" xml:space="preserve">
     <value>将当前文档另存为新名称。</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>页面设置</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>配置纸张大小、方向和边距以进行页面视图和打印。</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>页面设置</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>纸张大小</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>信纸</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>法律纸</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>方向</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>纵向</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>横向</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>上边距 (英寸)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>下边距 (英寸)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>左边距 (英寸)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>右边距 (英寸)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>页面设置已保存。</value>
+  </data>
   <data name="BackstagePrintDesc" xml:space="preserve">
     <value>打印当前文档。</value>
   </data>

@@ -625,6 +625,51 @@
   <data name="BackstageSaveDesc" xml:space="preserve">
     <value>現在のドキュメントの変更を保存します。</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>ページ設定</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>ページビューと印刷のための用紙サイズ、向き、余白を設定します。</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>ページ設定</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>用紙サイズ</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>レター</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>リーガル</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>向き</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>縦</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>横</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>上余白 (インチ)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>下余白 (インチ)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>左余白 (インチ)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>右余白 (インチ)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>ページ設定が保存されました。</value>
+  </data>
   <data name="BackstageSaveAsDesc" xml:space="preserve">
     <value>現在のドキュメントを別の名前で保存します。</value>
   </data>

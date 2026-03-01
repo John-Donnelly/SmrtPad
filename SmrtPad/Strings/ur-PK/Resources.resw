@@ -628,6 +628,51 @@
   <data name="BackstageSaveAsDesc" xml:space="preserve">
     <value>موجودہ دستاویز نئے نام سے محفوظ کریں۔</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>صفحہ ترتیب</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>صفحہ منظر اور پرنٹنگ کے لیے کاغذ کا سائز، سمت، اور مارجن ترتیب دیں۔</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>صفحہ ترتیب</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>کاغذ کا سائز</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>خط</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>قانونی</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>سمت</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>عمودی</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>افقی</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>اوپر کا مارجن (انچ)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>نیچے کا مارجن (انچ)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>بائیں مارجن (انچ)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>دائیں مارجن (انچ)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>صفحہ ترتیب محفوظ کر لی گئی۔</value>
+  </data>
   <data name="BackstagePrintDesc" xml:space="preserve">
     <value>موجودہ دستاویز پرنٹ کریں۔</value>
   </data>

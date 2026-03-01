@@ -799,6 +799,51 @@
   <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
     <value>حفظ المستند الحالي مباشرة في مجلد OneDrive الخاص بك.</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>إعداد الصفحة</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>تكوين حجم الورق، الاتجاه، والهوامش لعرض الصفحة والطباعة.</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>إعداد الصفحة</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>حجم الورق</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>خطاب</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>قانوني</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>الاتجاه</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>عمودي</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>أفقي</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>الهامش العلوي (بوصة)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>الهامش السفلي (بوصة)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>الهامش الأيسر (بوصة)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>الهامش الأيمن (بوصة)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>تم حفظ إعداد الصفحة.</value>
+  </data>
   <data name="MacroRecord" xml:space="preserve">
     <value>تسجيل ماكرو</value>
   </data>

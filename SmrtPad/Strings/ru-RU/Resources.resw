@@ -799,6 +799,51 @@
   <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
     <value>Сохранить текущий документ непосредственно в папку OneDrive.</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>Настройка страницы</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>Настройте размер бумаги, ориентацию и поля для просмотра страницы и печати.</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>Настройка страницы</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>Размер бумаги</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>Письмо</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>Юридический</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>Ориентация</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>Портретная</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>Ландшафтная</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>Верхнее поле (дюймы)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>Нижнее поле (дюймы)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>Левое поле (дюймы)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>Правое поле (дюймы)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>Настройка страницы сохранена.</value>
+  </data>
   <data name="MacroRecord" xml:space="preserve">
     <value>Записать макрос</value>
   </data>

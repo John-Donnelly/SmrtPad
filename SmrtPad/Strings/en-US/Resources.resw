@@ -850,6 +850,51 @@
   <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
     <value>Save the current document directly to your OneDrive folder.</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>Page setup</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>Configure paper size, orientation, and margins for page view and printing.</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>Page Setup</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>Paper size</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>Letter</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>Legal</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>Orientation</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>Portrait</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>Landscape</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>Top margin (in)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>Bottom margin (in)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>Left margin (in)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>Right margin (in)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>Page setup saved.</value>
+  </data>
 
   <!-- ═══ Macro recording ═══ -->
   <data name="MacroMenuBar.Title" xml:space="preserve">

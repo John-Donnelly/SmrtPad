@@ -799,6 +799,51 @@
   <data name="BackstageSaveOneDriveDesc" xml:space="preserve">
     <value>Das aktuelle Dokument direkt in Ihrem OneDrive-Ordner speichern.</value>
   </data>
+  <data name="PageSetupNavItem.Content" xml:space="preserve">
+    <value>Seitenlayout</value>
+  </data>
+  <data name="BackstagePageSetupDesc" xml:space="preserve">
+    <value>Papiergröße, Ausrichtung und Ränder für die Seitenansicht und den Druck konfigurieren.</value>
+  </data>
+  <data name="PageSetupTitle" xml:space="preserve">
+    <value>Seitenlayout</value>
+  </data>
+  <data name="PageSetupPaperSize" xml:space="preserve">
+    <value>Papiergröße</value>
+  </data>
+  <data name="PageSetupPaperA4" xml:space="preserve">
+    <value>A4</value>
+  </data>
+  <data name="PageSetupPaperLetter" xml:space="preserve">
+    <value>Letter</value>
+  </data>
+  <data name="PageSetupPaperLegal" xml:space="preserve">
+    <value>Legal</value>
+  </data>
+  <data name="PageSetupOrientation" xml:space="preserve">
+    <value>Ausrichtung</value>
+  </data>
+  <data name="PageSetupOrientationPortrait" xml:space="preserve">
+    <value>Hochformat</value>
+  </data>
+  <data name="PageSetupOrientationLandscape" xml:space="preserve">
+    <value>Querformat</value>
+  </data>
+  <data name="PageSetupMarginTop" xml:space="preserve">
+    <value>Obere Marge (in)</value>
+  </data>
+  <data name="PageSetupMarginBottom" xml:space="preserve">
+    <value>Untere Marge (in)</value>
+  </data>
+  <data name="PageSetupMarginLeft" xml:space="preserve">
+    <value>Linke Marge (in)</value>
+  </data>
+  <data name="PageSetupMarginRight" xml:space="preserve">
+    <value>Rechte Marge (in)</value>
+  </data>
+  <data name="StatusPageSetupSaved" xml:space="preserve">
+    <value>Seitenlayout gespeichert.</value>
+  </data>
   <data name="MacroRecord" xml:space="preserve">
     <value>Makro aufzeichnen</value>
   </data>
