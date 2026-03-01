@@ -4,6 +4,9 @@ using System.Text;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using A = DocumentFormat.OpenXml.Drawing;
+using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
 using Xunit;
 using SmrtPad.Helpers;
 
@@ -382,6 +385,16 @@ namespace SmrtPad.Tests
             Assert.DoesNotContain(@"\b", runContent);
         }
 
+        [Fact]
+        public void ConvertToRtf_DocxWithInlineImage_ContainsRtfPict()
+        {
+            using var docxStream = CreateDocxWithImage();
+            string rtf = DocxImportHelper.ConvertToRtf(docxStream);
+
+            Assert.Contains(@"\pict", rtf);
+            Assert.Contains(@"\pngblip", rtf);
+        }
+
         // ── Helper: creates a DOCX in memory ──────────────────────────────────
 
         private static MemoryStream CreateDocx(params (string text, RunProperties? rPr)[] paragraphs)
@@ -405,6 +418,71 @@ namespace SmrtPad.Tests
 
                 mainPart.Document.Save();
             }
+            ms.Position = 0;
+            return ms;
+        }
+
+        private static MemoryStream CreateDocxWithImage()
+        {
+            var ms = new MemoryStream();
+            using (var doc = WordprocessingDocument.Create(ms, WordprocessingDocumentType.Document))
+            {
+                MainDocumentPart mainPart = doc.AddMainDocumentPart();
+                mainPart.Document = new Document(new Body());
+
+                ImagePart imagePart = mainPart.AddImagePart(ImagePartType.Png);
+                using (var imageStream = new MemoryStream(Convert.FromBase64String(
+                           "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Yx3D7QAAAAASUVORK5CYII=")))
+                {
+                    imagePart.FeedData(imageStream);
+                }
+
+                string relationId = mainPart.GetIdOfPart(imagePart);
+                var graphicData = new A.GraphicData(
+                    new PIC.Picture(
+                        new PIC.NonVisualPictureProperties(
+                            new PIC.NonVisualDrawingProperties { Id = 0U, Name = "image.png" },
+                            new PIC.NonVisualPictureDrawingProperties()),
+                        new PIC.BlipFill(
+                            new A.Blip { Embed = relationId },
+                            new A.Stretch(new A.FillRectangle())),
+                        new PIC.ShapeProperties(
+                            new A.Transform2D(
+                                new A.Offset { X = 0L, Y = 0L },
+                                new A.Extents { Cx = 9525L, Cy = 9525L }),
+                            new A.PresetGeometry(new A.AdjustValueList()) { Preset = A.ShapeTypeValues.Rectangle })))
+                {
+                    Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+                };
+
+                var graphic = new A.Graphic(graphicData);
+
+                var inline = new DW.Inline(
+                    new DW.Extent { Cx = 9525L, Cy = 9525L },
+                    new DW.EffectExtent
+                    {
+                        LeftEdge = 0L,
+                        TopEdge = 0L,
+                        RightEdge = 0L,
+                        BottomEdge = 0L
+                    },
+                    new DW.DocProperties { Id = 1U, Name = "Image" },
+                    new DW.NonVisualGraphicFrameDrawingProperties(new A.GraphicFrameLocks { NoChangeAspect = true }),
+                    graphic)
+                {
+                    DistanceFromTop = 0U,
+                    DistanceFromBottom = 0U,
+                    DistanceFromLeft = 0U,
+                    DistanceFromRight = 0U
+                };
+
+                var drawing = new DocumentFormat.OpenXml.Wordprocessing.Drawing(inline);
+
+                var paragraph = new Paragraph(new Run(new Text("before"), drawing, new Text("after")));
+                mainPart.Document.Body!.Append(paragraph);
+                mainPart.Document.Save();
+            }
+
             ms.Position = 0;
             return ms;
         }
