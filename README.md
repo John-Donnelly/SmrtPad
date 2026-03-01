@@ -23,14 +23,16 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 
 ### File Operations
 - New, Open (RTF, TXT, DOCX, HTML, ODT), Save, Save As, Print
+- **Save/Save As** supports RTF, TXT, DOCX, ODT, and HTML formats
 - **Export to PDF** — multi-page PDF 1.4 (Helvetica, A4, 72 pt margins)
-- **Export to DOCX** — valid OOXML `.docx` via `ZipArchive` + `XDocument`
+- **Export to DOCX** — lossless RTF-to-DOCX via OpenXml AltChunk; import preserves bold, italic, underline, strikethrough, fonts, colors, alignment, page breaks, and embedded images
 - **Save to OneDrive** — saves via standard file picker to the user's OneDrive folder; guarded with availability check
 - Auto-save to recovery folder for unnamed documents; saves in-place for named documents
-- Recent files list (MRU, max 10) in the backstage
+- Recent files list (MRU, max 10, auto-pruned on load) in the backstage
 
 ### File Backstage
-- WordPad-style backstage for New, Templates, Open, Save, Save As, Print, Export PDF, Export DOCX, OneDrive, Options, and Exit
+- WordPad-style backstage for New, Templates, Open, Save, Save As, Print, Export PDF, Export DOCX, OneDrive, Page Setup, Options, and Exit
+- **Page Setup** — paper size (Letter, A4, Legal), orientation (Portrait, Landscape), and custom margins; persisted in settings
 - **Document Templates** — 5 built-in templates (Blank, Letter, Meeting Notes, To-Do List, Report)
 - Fully opaque overlay that covers the tab strip and editor when open
 
@@ -78,7 +80,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite has **2,301 tests** (2,060 unit/integration across 8 files + 241 UI automation across 13 classes) covering:
+The test suite has **2,370+ tests** (2,100+ unit/integration + 241 UI automation across 13 classes) covering:
 - ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
 - Alignment, list type, and line spacing for all defined values
@@ -88,9 +90,11 @@ The test suite has **2,301 tests** (2,060 unit/integration across 8 files + 241 
 - PDF generation (page count, header content, byte-array structure)
 - DOCX generation (ZIP structure, `word/document.xml` content, paragraph mapping, rich formatting via RTF parser)
 - OneDrive availability detection
-- Document import (DOCX, ODT text extraction)
+- Document import (DOCX, ODT text extraction; DOCX-to-RTF with formatting and images)
+- HTML import/export (tag stripping, entity decoding, paragraph preservation, round-trip)
+- ODT export (valid ODF packages with mimetype, content.xml, manifest)
 - Macro recording and playback
-- Settings persistence, concurrency, and recent-files MRU
+- Settings persistence, concurrency, recent-files MRU, and page setup round-trip
 - Localization — all 9 locales, all 255 resource keys present and non-empty
 - UI automation (WinAppDriver/Appium 2.x) — editor interaction, formatting, tabs, find/replace, file backstage, macros, view menu, paragraph formatting, status bar
 
@@ -100,8 +104,9 @@ The test suite has **2,301 tests** (2,060 unit/integration across 8 files + 241 
 SmrtPad/
 ├── SmrtPad/
 │   ├── Assets/              # App icon (SmrtPad.ico/.png), SmrtDoodle icons
-│   ├── Helpers/             # ColorHelper, DocxExportHelper, DocumentImportHelper,
-│   │                        # DocumentTemplates, MacroHelper, OneDriveHelper,
+│   ├── Helpers/             # ColorHelper, DocxAltChunkExporter, DocxImportHelper,
+│   │                        # DocumentImportHelper, DocumentTemplates, HtmlConverterHelper,
+│   │                        # MacroHelper, OdtExportHelper, OneDriveHelper,
 │   │                        # ParagraphStyleHelper, PdfHelper, ResourceHelper,
 │   │                        # RtfHelper, RulerHelper
 │   ├── Models/              # DocumentTemplate

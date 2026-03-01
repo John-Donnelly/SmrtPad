@@ -4,6 +4,12 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **28 file-management tests** (`FileManagementUpgradeTests.cs`) covering:
+  - `HtmlConverterHelperTests` — 12 tests: null/empty input, BR tag conversion, list item bullet conversion, HTML entity decoding, blank-line collapse, empty/null HTML output, special character encoding, single-line-break-to-BR, round-trip fidelity
+  - `OdtImportExportTests` — 13 tests: ODT entry creation, mimetype validation, null/read-only stream guards, empty text export, content paragraph verification, DOCX/ODT text extraction, ODT-to-RTF null guard and fallback, font/color table presence
+  - `SettingsServiceRecentFilePruningTests` — 8 tests: missing-file pruning, duplicate removal, empty-path guard, MRU reorder-to-top, clear all, page setup defaults, page setup persistence round-trip, max-10 limit enforcement
+
 ### Fixed
 - **Blank tabs no longer show save dialog on close** — Added `_suppressTabModified` flag that prevents `TextChanged` from setting `IsModified = true` during tab creation; all tab creation paths (constructor, `+` button, `New_Click`, `ApplyTemplate`) now suppress the flag and explicitly reset `IsModified` to `false` after creation
 - **Last tab close now closes the application** — `DocumentTabs_TabCloseRequested` now calls `Close()` instead of creating a new blank tab when the last tab is closed; the `AppWindow.Closing` handler is unhooked to prevent re-entrance
