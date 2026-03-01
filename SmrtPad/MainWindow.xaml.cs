@@ -61,6 +61,14 @@ namespace SmrtPad
         private bool _pageViewActive;
         private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
         private bool _fontDropdownStyled;
+        private const double Dpi = 96.0;
+        private static readonly IReadOnlyDictionary<string, (double WidthIn, double HeightIn)> s_paperSizes =
+            new Dictionary<string, (double WidthIn, double HeightIn)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["A4"] = (8.27, 11.69),
+                ["Letter"] = (8.5, 11.0),
+                ["Legal"] = (8.5, 14.0)
+            };
 
         // ?? Tab management ??????????????????????????????????????????????????????
         private readonly List<DocumentTab> _tabs = [];
@@ -142,6 +150,7 @@ namespace SmrtPad
             FileBackstage.ExportPdfRequested += (s, e) => { HideBackstage(); ExportPdf_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExportDocxRequested += (s, e) => { HideBackstage(); ExportDocx_Click(this, new RoutedEventArgs()); };
             FileBackstage.OneDriveRequested  += (s, e)    => { HideBackstage(); SaveToOneDrive_Click(this, new RoutedEventArgs()); };
+            FileBackstage.PageSetupRequested += (s, e)    => { HideBackstage(); PageSetup_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested   += (s, e)    => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested      += async (s, e) => { if (await PromptSaveAllTabsAsync()) Close(); };
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
@@ -295,6 +304,12 @@ namespace SmrtPad
             args.Handled = true;
         }
 
+        private void NewDocument_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            New_Click(this, new RoutedEventArgs());
+            args.Handled = true;
+        }
+
         private async void CloseTab_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             args.Handled = true;
@@ -443,33 +458,36 @@ namespace SmrtPad
             }
             else if (ext is ".odt")
             {
-                string text = await ExtractTextFromArchiveAsync(file, ext);
-                Editor.Document.SetText(TextSetOptions.None, text);
+                using var stream = await file.OpenStreamForReadAsync();
+                string odtRtf = DocumentImportHelper.ConvertOdtToRtf(stream);
+                using var rtfStream = new MemoryStream(System.Text.Encoding.ASCII.GetBytes(odtRtf));
+                Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, rtfStream.AsRandomAccessStream());
                 ActiveTab.CurrentFile = null;
                 ActiveTab.IsModified = false;
                 ActiveTab.TabViewItem.Header = file.Name;
-                ActiveTab.Encoding = "UTF-8";
+                ActiveTab.Encoding = "ODT";
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
                 _settings.AddRecentFile(file.Path);
                 UpdateStatusBarCounts();
-                UpdateEncoding("UTF-8");
+                UpdateEncoding("ODT");
             }
             else if (ext is ".htm" or ".html")
             {
                 string html = await FileIO.ReadTextAsync(file);
-                Editor.Document.SetText(TextSetOptions.None, html);
+                string plainText = HtmlConverterHelper.ToPlainText(html);
+                Editor.Document.SetText(TextSetOptions.None, plainText);
                 ActiveTab.CurrentFile = null;
                 ActiveTab.IsModified = false;
                 ActiveTab.TabViewItem.Header = file.Name;
-                ActiveTab.Encoding = "UTF-8";
+                ActiveTab.Encoding = "HTML";
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusOpened", file.Name));
                 _settings.AddRecentFile(file.Path);
                 UpdateStatusBarCounts();
-                UpdateEncoding("UTF-8");
+                UpdateEncoding("HTML");
             }
             else
             {
@@ -517,6 +535,10 @@ namespace SmrtPad
             Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
             SpellCheckToggle?.IsChecked = _settings.SpellCheckEnabled;
             ApplyThemeFromSettings();
+            if (_pageViewActive)
+            {
+                ApplyPageViewLayout();
+            }
         }
 
         private void ApplyThemeFromSettings()
@@ -1088,6 +1110,9 @@ namespace SmrtPad
                     picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                     picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
                     picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeHtml"), [".html"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeOdt"), [".odt"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), [".docx"]);
                     picker.SuggestedFileName = Res.GetString("FileDefaultName");
 
                     StorageFile file = await picker.PickSaveFileAsync();
@@ -1098,12 +1123,7 @@ namespace SmrtPad
                 }
                 else
                 {
-                    using (var randAccStream = await ActiveTab.CurrentFile.OpenAsync(FileAccessMode.ReadWrite))
-                    {
-                        Editor.Document.SaveToStream(TextGetOptions.FormatRtf, randAccStream);
-                    }
-                    ViewModel.IsModified = false;
-                    ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", ActiveTab.CurrentFile.Name));
+                    await SaveToFileAsync(ActiveTab.CurrentFile!);
                 }
             }
             catch (Exception ex)
@@ -1122,6 +1142,8 @@ namespace SmrtPad
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeRtf"), [".rtf"]);
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeTxt"), [".txt"]);
                 picker.FileTypeChoices.Add(Res.GetString("FileTypeDocx"), [".docx"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeOdt"), [".odt"]);
+                picker.FileTypeChoices.Add(Res.GetString("FileTypeHtml"), [".html"]);
                 picker.SuggestedFileName = ActiveTab.CurrentFile?.DisplayName ?? Res.GetString("FileDefaultName");
 
                 StorageFile file = await picker.PickSaveFileAsync();
@@ -1151,6 +1173,20 @@ namespace SmrtPad
                 DocxAltChunkExporter.ExportToDocx(rtf, stream);
                 await stream.FlushAsync();
             }
+            else if (file.FileType.Equals(".odt", StringComparison.OrdinalIgnoreCase))
+            {
+                Editor.Document.GetText(TextGetOptions.None, out string plainText);
+                using var stream = await file.OpenStreamForWriteAsync();
+                OdtExportHelper.Export(plainText.TrimEnd('\r'), stream);
+                await stream.FlushAsync();
+            }
+            else if (file.FileType.Equals(".htm", StringComparison.OrdinalIgnoreCase)
+                || file.FileType.Equals(".html", StringComparison.OrdinalIgnoreCase))
+            {
+                Editor.Document.GetText(TextGetOptions.None, out string plainText);
+                string html = HtmlConverterHelper.FromPlainText(plainText.TrimEnd('\r'));
+                await FileIO.WriteTextAsync(file, html);
+            }
             else
             {
                 using var randAccStream = await file.OpenAsync(FileAccessMode.ReadWrite);
@@ -1164,10 +1200,19 @@ namespace SmrtPad
             if (status == FileUpdateStatus.Complete)
             {
                 ActiveTab.CurrentFile = file;
+                ActiveTab.Encoding = file.FileType.ToLowerInvariant() switch
+                {
+                    ".txt" => "UTF-8",
+                    ".docx" => "DOCX",
+                    ".odt" => "ODT",
+                    ".htm" or ".html" => "HTML",
+                    _ => "RTF"
+                };
                 ViewModel.DocumentTitle = file.Name;
                 ViewModel.IsModified = false;
                 ViewModel.UpdateStatus(Res.GetFormatted("StatusSaved", file.Name));
                 _settings.AddRecentFile(file.Path);
+                UpdateEncoding(ActiveTab.Encoding);
             }
         }
 
@@ -1241,16 +1286,16 @@ namespace SmrtPad
         {
             _printPreviewPages.Clear();
 
-            PrintTaskOptions options = (PrintTaskOptions)e.PrintTaskOptions;
-            PrintPageDescription pageDesc = options.GetPageDescription(0);
-            double pageWidth = pageDesc.PageSize.Width;
-            double pageHeight = pageDesc.PageSize.Height;
-            double margin = 48;
+            var (pageWidth, pageHeight) = GetConfiguredPageSizePixels();
+            Thickness margins = GetConfiguredPageMarginsPixels();
+            double contentWidth = Math.Max(100, pageWidth - margins.Left - margins.Right);
+            double contentHeight = Math.Max(100, pageHeight - margins.Top - margins.Bottom);
+            double lineHeight = Math.Max(14, ViewModel.FontSize * 1.6);
 
             Editor.Document.GetText(TextGetOptions.None, out string fullText);
             string[] lines = fullText.TrimEnd('\r').Split('\r');
 
-            int linesPerPage = Math.Max(1, (int)((pageHeight - margin * 2) / 18));
+            int linesPerPage = Math.Max(1, (int)(contentHeight / lineHeight));
             int totalPages = Math.Max(1, (int)Math.Ceiling((double)lines.Length / linesPerPage));
 
             for (int page = 0; page < totalPages; page++)
@@ -1259,7 +1304,7 @@ namespace SmrtPad
                 {
                     Width = pageWidth,
                     Height = pageHeight,
-                    Padding = new Thickness(margin)
+                    Padding = margins
                 };
 
                 int startLine = page * linesPerPage;
@@ -1272,7 +1317,7 @@ namespace SmrtPad
                     FontFamily = new FontFamily(ViewModel.FontFamily),
                     FontSize = ViewModel.FontSize,
                     TextWrapping = TextWrapping.Wrap,
-                    Width = pageWidth - margin * 2
+                    Width = contentWidth
                 });
 
                 _printPreviewPages.Add(pagePanel);
@@ -1296,6 +1341,99 @@ namespace SmrtPad
                 printDoc.AddPage(page);
             }
             printDoc.AddPagesComplete();
+        }
+
+        private async void PageSetup_Click(object _, RoutedEventArgs _1)
+        {
+            var panel = new StackPanel { Spacing = 10, MinWidth = 320 };
+
+            var paperSizeBox = new ComboBox { Header = Res.GetString("PageSetupPaperSize") };
+            paperSizeBox.Items.Add(new ComboBoxItem { Tag = "A4", Content = Res.GetString("PageSetupPaperA4") });
+            paperSizeBox.Items.Add(new ComboBoxItem { Tag = "Letter", Content = Res.GetString("PageSetupPaperLetter") });
+            paperSizeBox.Items.Add(new ComboBoxItem { Tag = "Legal", Content = Res.GetString("PageSetupPaperLegal") });
+            paperSizeBox.SelectedItem = paperSizeBox.Items
+                .OfType<ComboBoxItem>()
+                .FirstOrDefault(item => string.Equals(item.Tag as string, _settings.PagePaperSize, StringComparison.OrdinalIgnoreCase))
+                ?? paperSizeBox.Items.OfType<ComboBoxItem>().First(item => string.Equals(item.Tag as string, "Letter", StringComparison.Ordinal));
+            panel.Children.Add(paperSizeBox);
+
+            var orientationBox = new ComboBox { Header = Res.GetString("PageSetupOrientation") };
+            orientationBox.Items.Add(new ComboBoxItem { Tag = "Portrait", Content = Res.GetString("PageSetupOrientationPortrait") });
+            orientationBox.Items.Add(new ComboBoxItem { Tag = "Landscape", Content = Res.GetString("PageSetupOrientationLandscape") });
+            orientationBox.SelectedItem = orientationBox.Items
+                .OfType<ComboBoxItem>()
+                .FirstOrDefault(item => string.Equals(item.Tag as string, _settings.PageOrientation, StringComparison.OrdinalIgnoreCase))
+                ?? orientationBox.Items.OfType<ComboBoxItem>().First(item => string.Equals(item.Tag as string, "Portrait", StringComparison.Ordinal));
+            panel.Children.Add(orientationBox);
+
+            var marginTopBox = new NumberBox
+            {
+                Header = Res.GetString("PageSetupMarginTop"),
+                Minimum = 0,
+                Maximum = 5,
+                Value = _settings.PageMarginTopInches,
+                SmallChange = 0.1,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            panel.Children.Add(marginTopBox);
+
+            var marginBottomBox = new NumberBox
+            {
+                Header = Res.GetString("PageSetupMarginBottom"),
+                Minimum = 0,
+                Maximum = 5,
+                Value = _settings.PageMarginBottomInches,
+                SmallChange = 0.1,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            panel.Children.Add(marginBottomBox);
+
+            var marginLeftBox = new NumberBox
+            {
+                Header = Res.GetString("PageSetupMarginLeft"),
+                Minimum = 0,
+                Maximum = 5,
+                Value = _settings.PageMarginLeftInches,
+                SmallChange = 0.1,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            panel.Children.Add(marginLeftBox);
+
+            var marginRightBox = new NumberBox
+            {
+                Header = Res.GetString("PageSetupMarginRight"),
+                Minimum = 0,
+                Maximum = 5,
+                Value = _settings.PageMarginRightInches,
+                SmallChange = 0.1,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            panel.Children.Add(marginRightBox);
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("PageSetupTitle"),
+                Content = panel,
+                PrimaryButtonText = Res.GetString("ButtonSave"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
+                XamlRoot = Content.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
+
+            _settings.PagePaperSize = (paperSizeBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "Letter";
+            _settings.PageOrientation = (orientationBox.SelectedItem as ComboBoxItem)?.Tag as string ?? "Portrait";
+            _settings.PageMarginTopInches = marginTopBox.Value;
+            _settings.PageMarginBottomInches = marginBottomBox.Value;
+            _settings.PageMarginLeftInches = marginLeftBox.Value;
+            _settings.PageMarginRightInches = marginRightBox.Value;
+            _settings.Save();
+
+            ApplyPageViewLayout();
+            ViewModel.UpdateStatus(Res.GetString("StatusPageSetupSaved"));
         }
 
         private async void Options_Click(object _, RoutedEventArgs _1)
@@ -2542,12 +2680,27 @@ namespace SmrtPad
             }
         }
 
-        // Page dimensions at 96 DPI: US Letter 8.5×11 = 816×1056px
-        // 1-inch margins on each side ? printable area = 624px wide
-        private const double PageWidthPx = 816;
-        private const double PageHeightPx = 1056;
-        private const double PageMarginPx = 96; // 1 inch each side
-        private const double PrintableWidthPx = PageWidthPx - (PageMarginPx * 2); // 624
+        private (double PageWidthPx, double PageHeightPx) GetConfiguredPageSizePixels()
+        {
+            var baseSize = s_paperSizes.TryGetValue(_settings.PagePaperSize, out var selected)
+                ? selected
+                : s_paperSizes["Letter"];
+
+            bool landscape = string.Equals(_settings.PageOrientation, "Landscape", StringComparison.OrdinalIgnoreCase);
+            double widthIn = landscape ? baseSize.HeightIn : baseSize.WidthIn;
+            double heightIn = landscape ? baseSize.WidthIn : baseSize.HeightIn;
+
+            return (widthIn * Dpi, heightIn * Dpi);
+        }
+
+        private Thickness GetConfiguredPageMarginsPixels()
+        {
+            return new Thickness(
+                Math.Max(0, _settings.PageMarginLeftInches * Dpi),
+                Math.Max(0, _settings.PageMarginTopInches * Dpi),
+                Math.Max(0, _settings.PageMarginRightInches * Dpi),
+                Math.Max(0, _settings.PageMarginBottomInches * Dpi));
+        }
 
         private void PageView_Click(object sender, RoutedEventArgs e)
         {
@@ -2564,13 +2717,17 @@ namespace SmrtPad
         {
             if (_pageViewActive)
             {
+                var (pageWidthPx, pageHeightPx) = GetConfiguredPageSizePixels();
+                Thickness margins = GetConfiguredPageMarginsPixels();
+                double printableWidthPx = Math.Max(100, pageWidthPx - margins.Left - margins.Right);
+
                 PageViewBorder.Visibility = Visibility.Visible;
-                PageViewBorder.Width = PageWidthPx;
-                PageViewBorder.MinHeight = PageHeightPx;
+                PageViewBorder.Width = pageWidthPx;
+                PageViewBorder.MinHeight = pageHeightPx;
                 Editor.HorizontalAlignment = HorizontalAlignment.Center;
-                Editor.Width = PrintableWidthPx;
-                Editor.MaxWidth = PrintableWidthPx;
-                Editor.Margin = new Thickness(0, PageMarginPx, 0, PageMarginPx);
+                Editor.Width = printableWidthPx;
+                Editor.MaxWidth = printableWidthPx;
+                Editor.Margin = margins;
             }
             else
             {

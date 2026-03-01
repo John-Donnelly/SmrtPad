@@ -18,6 +18,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? ExportPdfRequested;
     public event EventHandler? ExportDocxRequested;
     public event EventHandler? OneDriveRequested;
+    public event EventHandler? PageSetupRequested;
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
     public event EventHandler<string>? RecentFileRequested;
@@ -188,6 +189,11 @@ public sealed partial class FileBackstageView : UserControl
             case "Options":
                 BodyText.Text = Res.GetString("BackstageOptionsDesc");
                 break;
+            case "PageSetup":
+                HeaderText.Text = Res.GetString("PageSetupNavItem.Content");
+                BodyText.Text = Res.GetString("BackstagePageSetupDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
+                break;
             case "Exit":
                 BodyText.Text = Res.GetString("BackstageExitDesc");
                 break;
@@ -227,6 +233,9 @@ public sealed partial class FileBackstageView : UserControl
                 break;
             case "Options":
                 OptionsRequested?.Invoke(this, EventArgs.Empty);
+                break;
+            case "PageSetup":
+                PageSetupRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Exit":
                 ExitRequested?.Invoke(this, EventArgs.Empty);

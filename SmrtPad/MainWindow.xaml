@@ -16,6 +16,7 @@
 
     <Grid>
         <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="N" Modifiers="Control" Invoked="NewDocument_Invoked"/>
             <KeyboardAccelerator Key="T" Modifiers="Control" Invoked="NewTab_Invoked"/>
             <KeyboardAccelerator Key="W" Modifiers="Control" Invoked="CloseTab_Invoked"/>
         </Grid.KeyboardAccelerators>

@@ -33,6 +33,7 @@
                     <NavigationViewItem x:Name="NavExportPdf"  x:Uid="ExportPdfNavItem" Content="Export to PDF"    Tag="ExportPdf" Icon="Document"  PointerEntered="NavItem_PointerEntered" />
                     <NavigationViewItem x:Name="NavExportDocx" x:Uid="ExportDocxNavItem" Content="Export to DOCX"  Tag="ExportDocx" Icon="Document" PointerEntered="NavItem_PointerEntered" />
                     <NavigationViewItem x:Name="NavOneDrive"   x:Uid="OneDriveNavItem"  Content="Save to OneDrive" Tag="OneDrive"  Icon="Upload"    PointerEntered="NavItem_PointerEntered" />
+                    <NavigationViewItem x:Name="NavPageSetup"  x:Uid="PageSetupNavItem" Content="Page setup"      Tag="PageSetup" Icon="Print"     PointerEntered="NavItem_PointerEntered" />
                     <NavigationViewItem x:Name="NavOptions"    x:Uid="OptionsNavItem"   Content="Options"          Tag="Options"   Icon="Setting"   PointerEntered="NavItem_PointerEntered" />
                     <NavigationViewItem x:Name="NavExit"       x:Uid="ExitNavItem"      Content="Exit"             Tag="Exit"      Icon="LeaveChat" PointerEntered="NavItem_PointerEntered" />
                 </NavigationView.MenuItems>
