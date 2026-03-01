@@ -58,9 +58,12 @@ namespace SmrtPad.UITests.Infrastructure
         /// <summary>
         /// Clears all text in the editor via Ctrl+A → Delete.
         /// Waits briefly for the UI to settle after each step.
+        /// Ensures backstage is closed first so editor is accessible.
         /// </summary>
         public void ClearEditor()
         {
+            EnsureBackstageClosed();
+
             bool usedMenu = TryClickMenuItem("Edit", "Select All")
                 && TryClickMenuItem("Edit", "Cut");
 
@@ -167,5 +170,48 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public string GetStatusBarText(string automationId)
             => Driver!.FindElement(MobileBy.AccessibilityId(automationId)).Text;
+
+        /// <summary>
+        /// Returns <c>true</c> when the File backstage overlay is currently visible.
+        /// Detected by the presence of the backstage <c>HeaderText</c> element.
+        /// </summary>
+        public bool IsBackstageOpen()
+        {
+            try
+            {
+                var header = Driver!.FindElements(MobileBy.AccessibilityId("HeaderText"));
+                return header.Count > 0 && header[0].Displayed;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Ensures the backstage is closed. If it is currently open, clicks the
+        /// File button to toggle it shut.
+        /// </summary>
+        public void EnsureBackstageClosed()
+        {
+            if (!IsBackstageOpen()) return;
+            try
+            {
+                Driver!.FindElement(MobileBy.Name("File")).Click();
+                Thread.Sleep(400);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Ensures the backstage is open. If it is currently closed, clicks the
+        /// File button to open it. If already open, does nothing.
+        /// </summary>
+        public void EnsureBackstageOpen()
+        {
+            if (IsBackstageOpen()) return;
+            Driver!.FindElement(MobileBy.Name("File")).Click();
+            Thread.Sleep(800);
+        }
     }
 }
