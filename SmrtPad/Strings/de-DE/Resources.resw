@@ -950,5 +950,121 @@
     <value>Schriftformatierung angewendet.</value>
   </data>
 
+
+  <!-- ═══ New features (batch) ═══ -->
+  <data name="StatusDuplicatedLine" xml:space="preserve">
+    <value>Line duplicated.</value>
+  </data>
+  <data name="StatusDuplicatedSelection" xml:space="preserve">
+    <value>Selection duplicated.</value>
+  </data>
+  <data name="ZoomSliderAccessibleName" xml:space="preserve">
+    <value>Zoom slider</value>
+  </data>
+  <data name="ZoomPercentBoxAccessibleName" xml:space="preserve">
+    <value>Zoom percentage</value>
+  </data>
+  <data name="FormatParagraphMenuItem.Text" xml:space="preserve">
+    <value>Paragraph...</value>
+  </data>
+  <data name="ParagraphDialogTitle" xml:space="preserve">
+    <value>Paragraph</value>
+  </data>
+  <data name="ParagraphDialogAlignment" xml:space="preserve">
+    <value>Alignment</value>
+  </data>
+  <data name="ParagraphDialogIndentation" xml:space="preserve">
+    <value>Indentation</value>
+  </data>
+  <data name="ParagraphDialogIndentLeft" xml:space="preserve">
+    <value>Left indent (in)</value>
+  </data>
+  <data name="ParagraphDialogIndentRight" xml:space="preserve">
+    <value>Right indent (in)</value>
+  </data>
+  <data name="ParagraphDialogIndentFirst" xml:space="preserve">
+    <value>First line (in)</value>
+  </data>
+  <data name="ParagraphDialogSpacing" xml:space="preserve">
+    <value>Spacing</value>
+  </data>
+  <data name="ParagraphDialogLineSpacing" xml:space="preserve">
+    <value>Line spacing</value>
+  </data>
+  <data name="ParagraphDialogSpaceBefore" xml:space="preserve">
+    <value>Before (pt)</value>
+  </data>
+  <data name="ParagraphDialogSpaceAfter" xml:space="preserve">
+    <value>After (pt)</value>
+  </data>
+  <data name="StatusParagraphApplied" xml:space="preserve">
+    <value>Paragraph formatting applied.</value>
+  </data>
+  <data name="StatusBarToggle.Text" xml:space="preserve">
+    <value>Status Bar</value>
+  </data>
+  <data name="StatusStatusBarShown" xml:space="preserve">
+    <value>Status bar shown.</value>
+  </data>
+  <data name="StatusStatusBarHidden" xml:space="preserve">
+    <value>Status bar hidden.</value>
+  </data>
+  <data name="PasteSpecialTitle" xml:space="preserve">
+    <value>Paste Special</value>
+  </data>
+  <data name="PasteSpecialHint" xml:space="preserve">
+    <value>Choose the format to paste from the clipboard:</value>
+  </data>
+  <data name="PasteSpecialRichText" xml:space="preserve">
+    <value>Rich Text (RTF)</value>
+  </data>
+  <data name="PasteSpecialPlainText" xml:space="preserve">
+    <value>Unformatted Text</value>
+  </data>
+  <data name="PasteSpecialHtml" xml:space="preserve">
+    <value>HTML Format</value>
+  </data>
+  <data name="StatusPastedSpecial" xml:space="preserve">
+    <value>Paste special applied.</value>
+  </data>
+  <data name="PastePlainRibbonLabel.Text" xml:space="preserve">
+    <value>Paste Plain</value>
+  </data>
+  <data name="PasteSpecialRibbonItem.Text" xml:space="preserve">
+    <value>Paste Special...</value>
+  </data>
+  <data name="OptionsRulerPoints" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="OptionsRulerPicas" xml:space="preserve">
+    <value>Picas</value>
+  </data>
+  <data name="WordWrapOffItem.Text" xml:space="preserve">
+    <value>No Wrap</value>
+  </data>
+  <data name="WordWrapWrapItem.Text" xml:space="preserve">
+    <value>Wrap</value>
+  </data>
+  <data name="WordWrapToRulerItem.Text" xml:space="preserve">
+    <value>Wrap to Ruler</value>
+  </data>
+  <data name="SendEmailMenuItem.Text" xml:space="preserve">
+    <value>Send by Email...</value>
+  </data>
+  <data name="SendEmailSubject" xml:space="preserve">
+    <value>SmrtPad Document: {0}</value>
+  </data>
+  <data name="StatusEmailSent" xml:space="preserve">
+    <value>Document prepared for email.</value>
+  </data>
+  <data name="BackstageSendEmailDesc" xml:space="preserve">
+    <value>Send the current document by email using your default mail client.</value>
+  </data>
+  <data name="FontColorIndicatorName" xml:space="preserve">
+    <value>Font color: {0}</value>
+  </data>
+  <data name="HighlightColorIndicatorName" xml:space="preserve">
+    <value>Highlight color: {0}</value>
+  </data>
 </root>
 
