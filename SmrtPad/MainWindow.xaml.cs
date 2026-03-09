@@ -151,7 +151,7 @@ namespace SmrtPad
             FileBackstage.ExportPdfRequested += (s, e) => { HideBackstage(); ExportPdf_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExportDocxRequested += (s, e) => { HideBackstage(); ExportDocx_Click(this, new RoutedEventArgs()); };
             FileBackstage.OneDriveRequested  += (s, e)    => { HideBackstage(); SaveToOneDrive_Click(this, new RoutedEventArgs()); };
-            FileBackstage.PageSetupRequested += (s, e)    => { HideBackstage(); PageSetup_Click(this, new RoutedEventArgs()); };
+            FileBackstage.SendEmailRequested += (s, e)    => { HideBackstage(); SendEmail_Click(this, new RoutedEventArgs()); };
             FileBackstage.OptionsRequested   += (s, e)    => { HideBackstage(); Options_Click(this, new RoutedEventArgs()); };
             FileBackstage.ExitRequested      += async (s, e) => { if (await PromptSaveAllTabsAsync()) Close(); };
             FileBackstage.RecentFileRequested += async (s, path) => { HideBackstage(); await OpenFileByPathAsync(path); };
@@ -309,6 +309,57 @@ namespace SmrtPad
         {
             New_Click(this, new RoutedEventArgs());
             args.Handled = true;
+        }
+
+        private void OpenFind_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            FindButton.Flyout?.ShowAt(FindButton);
+            args.Handled = true;
+        }
+
+        private void OpenReplace_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            ReplaceButton.Flyout?.ShowAt(ReplaceButton);
+            args.Handled = true;
+        }
+
+        private void FindNextShortcut_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            FindNext_Click(sender, new RoutedEventArgs());
+            args.Handled = true;
+        }
+
+        private void DuplicateLine_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            DuplicateLineOrSelection();
+            args.Handled = true;
+        }
+
+        private void DuplicateLineOrSelection()
+        {
+            var selection = Editor.Document.Selection;
+            if (selection == null) return;
+
+            if (selection.Length != 0)
+            {
+                string text = selection.Text;
+                int end = selection.EndPosition;
+                Editor.Document.Selection.SetRange(end, end);
+                Editor.Document.Selection.Text = text;
+                ViewModel.UpdateStatus(Res.GetString("StatusDuplicatedSelection"));
+            }
+            else
+            {
+                Editor.Document.GetText(TextGetOptions.None, out string fullText);
+                int pos = selection.StartPosition;
+                int lineStart = pos > 0 ? fullText.LastIndexOf('\r', pos - 1) + 1 : 0;
+                int lineEnd = fullText.IndexOf('\r', pos);
+                if (lineEnd < 0) lineEnd = fullText.Length;
+                string lineText = fullText[lineStart..lineEnd];
+                Editor.Document.Selection.SetRange(lineEnd, lineEnd);
+                Editor.Document.Selection.Text = "\r" + lineText;
+                ViewModel.UpdateStatus(Res.GetString("StatusDuplicatedLine"));
+            }
         }
 
         private async void CloseTab_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -529,12 +580,14 @@ namespace SmrtPad
 
         private void ApplySettings()
         {
-            Editor.TextWrapping = _settings.DefaultWordWrap ? TextWrapping.Wrap : TextWrapping.NoWrap;
-            ViewModel.IsWordWrap = _settings.DefaultWordWrap;
+            ApplyWordWrapMode(_settings.WordWrapMode);
+            ViewModel.IsWordWrap = _settings.WordWrapMode != "Off";
             ViewModel.FontFamily = _settings.DefaultFontFamily;
             ViewModel.FontSize = _settings.DefaultFontSize;
             Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
             SpellCheckToggle?.IsChecked = _settings.SpellCheckEnabled;
+            StatusBar.Visibility = _settings.ShowStatusBar ? Visibility.Visible : Visibility.Collapsed;
+            if (StatusBarToggle != null) StatusBarToggle.IsChecked = _settings.ShowStatusBar;
             ApplyThemeFromSettings();
             if (_pageViewActive)
             {
@@ -1495,7 +1548,15 @@ namespace SmrtPad
             var rulerUnitsBox = new ComboBox { Header = Res.GetString("OptionsRulerUnits"), Width = 200 };
             rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerInches"));
             rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerCentimeters"));
-            rulerUnitsBox.SelectedIndex = _settings.RulerUnits == "cm" ? 1 : 0;
+            rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerPoints"));
+            rulerUnitsBox.Items.Add(Res.GetString("OptionsRulerPicas"));
+            rulerUnitsBox.SelectedIndex = _settings.RulerUnits switch
+            {
+                "cm" => 1,
+                "pt" => 2,
+                "pc" => 3,
+                _    => 0
+            };
             panel.Children.Add(rulerUnitsBox);
 
             var spellCheckBox = new CheckBox { Content = Res.GetString("OptionsSpellCheck"), IsChecked = _settings.SpellCheckEnabled };
@@ -1524,7 +1585,13 @@ namespace SmrtPad
                 _settings.Language = langIdx >= 0 && langIdx < supportedLocales.Length
                     ? supportedLocales[langIdx].Tag
                     : "en-US";
-                _settings.RulerUnits = rulerUnitsBox.SelectedIndex == 1 ? "cm" : "in";
+                _settings.RulerUnits = rulerUnitsBox.SelectedIndex switch
+                {
+                    1 => "cm",
+                    2 => "pt",
+                    3 => "pc",
+                    _ => "in"
+                };
                 _settings.SpellCheckEnabled = spellCheckBox.IsChecked == true;
                 Editor.IsSpellCheckEnabled = _settings.SpellCheckEnabled;
                 SpellCheckToggle?.IsChecked = _settings.SpellCheckEnabled;
@@ -1684,6 +1751,46 @@ namespace SmrtPad
         }
 
         // ── Macro recording & playback ───────────────────────────────────────────
+
+        /// <summary>
+        /// Saves a temporary RTF copy of the active document and launches the default
+        /// mail client with the document attached and a pre-filled subject line.
+        /// </summary>
+        private async void SendEmail_Click(object _, RoutedEventArgs _1)
+        {
+            try
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "SmrtPad", "Email");
+                Directory.CreateDirectory(tempDir);
+
+                string safeName = ViewModel.DocumentTitle
+                    .Replace(Path.DirectorySeparatorChar, '_')
+                    .Replace(Path.AltDirectorySeparatorChar, '_')
+                    .TrimEnd('.');
+                if (string.IsNullOrWhiteSpace(safeName)) safeName = "Document";
+                string tempFile = Path.Combine(tempDir, $"{safeName}.rtf");
+
+                // Write current content to temp file
+                var storageFolder = await StorageFolder.GetFolderFromPathAsync(tempDir);
+                var storageFile = await storageFolder.CreateFileAsync(
+                    Path.GetFileName(tempFile), CreationCollisionOption.ReplaceExisting);
+                using (var stream = await storageFile.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
+                }
+
+                // Build mailto URI — body is kept empty; attachment handled via shell
+                string subject = Uri.EscapeDataString(
+                    Res.GetFormatted("SendEmailSubject", ViewModel.DocumentTitle));
+                var mailto = new Uri($"mailto:?subject={subject}");
+                await Launcher.LaunchUriAsync(mailto);
+                ViewModel.UpdateStatus(Res.GetString("StatusEmailSent"));
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorGeneric"), ex.Message);
+            }
+        }
 
         private void MacroRecord_Click(object _sender, RoutedEventArgs _e)
         {
@@ -1849,6 +1956,35 @@ namespace SmrtPad
             Editor.Document.Selection.Paste(0);
         }
 
+        private void PasteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
+        {
+            Editor.Document.Selection.Paste(0);
+        }
+
+        private async void PastePlain_Click(object sender, RoutedEventArgs e)
+        {
+            await PasteAsPlainTextAsync();
+        }
+
+        /// <summary>
+        /// Pastes the current clipboard content as plain (unformatted) text into the active editor.
+        /// </summary>
+        private async Task PasteAsPlainTextAsync()
+        {
+            var dataView = Clipboard.GetContent();
+            if (!dataView.Contains(StandardDataFormats.Text))
+                return;
+            try
+            {
+                string text = await dataView.GetTextAsync();
+                Editor.Document.Selection.Text = text;
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorPaste"), ex.Message);
+            }
+        }
+
         private void Bold_Click(object sender, RoutedEventArgs e)
         {
             ITextSelection selectedText = Editor.Document.Selection;
@@ -1978,11 +2114,57 @@ namespace SmrtPad
             _macro.Record(MacroCommandType.ZoomOut);
         }
 
+        private void ZoomSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            double snapped = Math.Round(e.NewValue / 10.0) * 10.0;
+            if (Math.Abs(ViewModel.ZoomLevel - snapped) > 0.01)
+            {
+                ViewModel.ZoomLevel = snapped;
+                ApplyZoom();
+            }
+        }
+
+        private void ZoomPercentBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                ApplyZoomFromPercentBox();
+                e.Handled = true;
+            }
+        }
+
+        private void ZoomPercentBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ApplyZoomFromPercentBox();
+        }
+
+        private void ApplyZoomFromPercentBox()
+        {
+            string raw = ZoomPercentBox.Text.TrimEnd('%').Trim();
+            if (double.TryParse(raw, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out double level))
+            {
+                level = Math.Clamp(level, 10.0, 500.0);
+                ViewModel.ZoomLevel = level;
+                ApplyZoom();
+            }
+            else
+            {
+                ZoomPercentBox.Text = ViewModel.ZoomDisplay;
+            }
+        }
+
         private void ApplyZoom()
         {
             double scale = ViewModel.ZoomLevel / 100.0;
             EditorScaleTransform.ScaleX = scale;
             EditorScaleTransform.ScaleY = scale;
+
+            // Keep the slider and percent box in sync without re-triggering handlers
+            if (ZoomSlider != null && Math.Abs(ZoomSlider.Value - ViewModel.ZoomLevel) > 0.01)
+                ZoomSlider.Value = ViewModel.ZoomLevel;
+            if (ZoomPercentBox != null)
+                ZoomPercentBox.Text = ViewModel.ZoomDisplay;
 
             if (_rulersVisible)
                 RedrawRulers();
@@ -2177,6 +2359,8 @@ namespace SmrtPad
         {
             _lastFontColor = color;
             FontColorIndicator.Fill = new SolidColorBrush(color);
+            string hexName = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            AutomationPeer.SetName(FontColorIndicator, Res.GetFormatted("FontColorIndicatorName", hexName));
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
@@ -2209,6 +2393,8 @@ namespace SmrtPad
         private void ApplyHighlightColor(Color color)
         {
             HighlightColorIndicator.Fill = new SolidColorBrush(color);
+            string hexName = color.A == 0 ? "None" : $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            AutomationPeer.SetName(HighlightColorIndicator, Res.GetFormatted("HighlightColorIndicatorName", hexName));
             ITextSelection selectedText = Editor.Document.Selection;
             if (selectedText != null)
             {
@@ -2516,10 +2702,43 @@ namespace SmrtPad
 
         private void WordWrap_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is ToggleMenuFlyoutItem toggleItem)
+            if (sender is MenuFlyoutItem item && item.Tag is string mode)
             {
-                Editor.TextWrapping = toggleItem.IsChecked ? TextWrapping.Wrap : TextWrapping.NoWrap;
-                ViewModel.IsWordWrap = toggleItem.IsChecked;
+                ApplyWordWrapMode(mode);
+                _settings.WordWrapMode = mode;
+                _settings.DefaultWordWrap = mode != "Off";
+                _settings.Save();
+                ViewModel.IsWordWrap = mode != "Off";
+            }
+        }
+
+        /// <summary>
+        /// Applies the word-wrap mode: Off, Wrap, or WrapToRuler.
+        /// WrapToRuler constrains the editor width to a page-ruler column (6.5 in default).
+        /// </summary>
+        private void ApplyWordWrapMode(string mode)
+        {
+            switch (mode)
+            {
+                case "Off":
+                    Editor.TextWrapping = TextWrapping.NoWrap;
+                    Editor.MaxWidth = double.PositiveInfinity;
+                    break;
+                case "WrapToRuler":
+                    Editor.TextWrapping = TextWrapping.Wrap;
+                    // Default usable page width: Letter (8.5 in) – 2 × 1 in margin = 6.5 in × 96 dpi
+                    double printableWidthPx = (_settings.PageMarginLeftInches == 0 && _settings.PageMarginRightInches == 0)
+                        ? 6.5 * 96.0
+                        : Math.Max(100,
+                            (s_paperSizes.TryGetValue(_settings.PagePaperSize, out var ps) ? ps.WidthIn : 8.5)
+                            * 96.0
+                            - (_settings.PageMarginLeftInches + _settings.PageMarginRightInches) * 96.0);
+                    Editor.MaxWidth = printableWidthPx;
+                    break;
+                default:
+                    Editor.TextWrapping = TextWrapping.Wrap;
+                    Editor.MaxWidth = double.PositiveInfinity;
+                    break;
             }
         }
 
@@ -2531,6 +2750,18 @@ namespace SmrtPad
                 RibbonBar.Visibility = visibility;
                 StatusBar.Visibility = visibility;
                 ViewModel.UpdateStatus(toggleItem.IsChecked ? Res.GetString("StatusFocusModeEnabled") : Res.GetString("StatusFocusModeDisabled"));
+            }
+        }
+
+        private void StatusBarToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is ToggleMenuFlyoutItem toggle)
+            {
+                bool show = toggle.IsChecked;
+                StatusBar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+                _settings.ShowStatusBar = show;
+                _settings.Save();
+                ViewModel.UpdateStatus(show ? Res.GetString("StatusStatusBarShown") : Res.GetString("StatusStatusBarHidden"));
             }
         }
 
@@ -2904,21 +3135,66 @@ namespace SmrtPad
             await _dialogService.ShowErrorAsync(title, message);
         }
 
-        private void PasteSpecial_Click(object sender, RoutedEventArgs e)
+        private async void PasteSpecial_Click(object sender, RoutedEventArgs e)
         {
-            var dataPackageView = Clipboard.GetContent();
-            if (dataPackageView.Contains(StandardDataFormats.Text))
-            {
-                PasteAsPlainTextAsync(dataPackageView);
-            }
-        }
+            var dataView = Clipboard.GetContent();
+            bool hasRtf   = dataView.Contains(StandardDataFormats.Rtf);
+            bool hasText  = dataView.Contains(StandardDataFormats.Text);
+            bool hasHtml  = dataView.Contains(StandardDataFormats.Html);
 
-        private async void PasteAsPlainTextAsync(DataPackageView dataPackageView)
-        {
+            if (!hasRtf && !hasText && !hasHtml)
+            {
+                await ShowErrorDialogAsync(Res.GetString("PasteSpecialTitle"), Res.GetString("ErrorPaste"));
+                return;
+            }
+
+            var hintText = new TextBlock { Text = Res.GetString("PasteSpecialHint"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
+
+            var richRadio  = new RadioButton { Content = Res.GetString("PasteSpecialRichText"),  IsChecked = hasRtf,  IsEnabled = hasRtf,  GroupName = "PasteFormat" };
+            var plainRadio = new RadioButton { Content = Res.GetString("PasteSpecialPlainText"), IsChecked = !hasRtf && hasText, IsEnabled = hasText, GroupName = "PasteFormat" };
+            var htmlRadio  = new RadioButton { Content = Res.GetString("PasteSpecialHtml"),      IsChecked = false,   IsEnabled = hasHtml, GroupName = "PasteFormat" };
+            AutomationPeer.SetAutomationId(richRadio,  "PasteSpecialRichRadio");
+            AutomationPeer.SetAutomationId(plainRadio, "PasteSpecialPlainRadio");
+            AutomationPeer.SetAutomationId(htmlRadio,  "PasteSpecialHtmlRadio");
+
+            var panel = new StackPanel { Spacing = 6, MinWidth = 260 };
+            panel.Children.Add(hintText);
+            panel.Children.Add(richRadio);
+            panel.Children.Add(plainRadio);
+            panel.Children.Add(htmlRadio);
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("PasteSpecialTitle"),
+                Content = panel,
+                PrimaryButtonText = Res.GetString("ButtonOK"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
+                XamlRoot = Content.XamlRoot
+            };
+            AutomationPeer.SetAutomationId(dialog, "PasteSpecialDialog");
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
             try
             {
-                string text = await dataPackageView.GetTextAsync();
-                Editor.Document.Selection.Text = text;
+                if (richRadio.IsChecked == true && hasRtf)
+                {
+                    string rtf = await dataView.GetRtfAsync();
+                    Editor.Document.Selection.SetText(TextSetOptions.FormatRtf, rtf);
+                }
+                else if (htmlRadio.IsChecked == true && hasHtml)
+                {
+                    string html = await dataView.GetHtmlFormatAsync();
+                    string plain = HtmlConverterHelper.ToPlainText(html);
+                    Editor.Document.Selection.Text = plain;
+                }
+                else if (hasText)
+                {
+                    string text = await dataView.GetTextAsync();
+                    Editor.Document.Selection.Text = text;
+                }
+                ViewModel.UpdateStatus(Res.GetString("StatusPastedSpecial"));
             }
             catch (Exception ex)
             {
@@ -3161,6 +3437,149 @@ namespace SmrtPad
                 selectedText.CharacterFormat = charFormat;
                 ViewModel.UpdateStatus(Res.GetString("StatusFontApplied"));
             }
+        }
+
+        /// <summary>
+        /// Opens a consolidated Format → Paragraph dialog: alignment, indents, line spacing,
+        /// and space before/after — all in one ContentDialog.
+        /// </summary>
+        private async void FormatParagraph_Click(object sender, RoutedEventArgs e)
+        {
+            ITextSelection sel = Editor.Document.Selection;
+            ITextParagraphFormat pf = sel.ParagraphFormat;
+
+            // Read current state
+            string currentAlignment = pf.Alignment switch
+            {
+                ParagraphAlignment.Center  => "Center",
+                ParagraphAlignment.Right   => "Right",
+                ParagraphAlignment.Justify => "Justify",
+                _                          => "Left"
+            };
+            double leftIndentIn  = pf.LeftIndent / 72.0;
+            double rightIndentIn = pf.RightIndent / 72.0;
+            double firstLineIn   = pf.FirstLineIndent / 72.0;
+            double spaceBefore   = pf.SpaceBefore;
+            double spaceAfter    = pf.SpaceAfter;
+
+            // Alignment
+            var alignCombo = new ComboBox
+            {
+                Header = Res.GetString("ParagraphDialogAlignment"),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            alignCombo.Items.Add("Left");
+            alignCombo.Items.Add("Center");
+            alignCombo.Items.Add("Right");
+            alignCombo.Items.Add("Justify");
+            alignCombo.SelectedItem = currentAlignment;
+            AutomationPeer.SetAutomationId(alignCombo, "ParagraphAlignCombo");
+
+            // Indentation
+            var indentLeftBox = new NumberBox
+            {
+                Header = Res.GetString("ParagraphDialogIndentLeft"),
+                Minimum = 0, Maximum = 22, SmallChange = 0.1,
+                Value = Math.Round(leftIndentIn, 2),
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationPeer.SetAutomationId(indentLeftBox, "ParagraphIndentLeftBox");
+
+            var indentRightBox = new NumberBox
+            {
+                Header = Res.GetString("ParagraphDialogIndentRight"),
+                Minimum = 0, Maximum = 22, SmallChange = 0.1,
+                Value = Math.Round(rightIndentIn, 2),
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationPeer.SetAutomationId(indentRightBox, "ParagraphIndentRightBox");
+
+            var indentFirstBox = new NumberBox
+            {
+                Header = Res.GetString("ParagraphDialogIndentFirst"),
+                Minimum = -5, Maximum = 22, SmallChange = 0.1,
+                Value = Math.Round(firstLineIn, 2),
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationPeer.SetAutomationId(indentFirstBox, "ParagraphIndentFirstBox");
+
+            // Spacing
+            var spaceBeforeBox = new NumberBox
+            {
+                Header = Res.GetString("ParagraphDialogSpaceBefore"),
+                Minimum = 0, Maximum = 200, SmallChange = 1,
+                Value = spaceBefore,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationPeer.SetAutomationId(spaceBeforeBox, "ParagraphSpaceBeforeBox");
+
+            var spaceAfterBox = new NumberBox
+            {
+                Header = Res.GetString("ParagraphDialogSpaceAfter"),
+                Minimum = 0, Maximum = 200, SmallChange = 1,
+                Value = spaceAfter,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationPeer.SetAutomationId(spaceAfterBox, "ParagraphSpaceAfterBox");
+
+            var lineSpacingBox = new NumberBox
+            {
+                Header = Res.GetString("ParagraphDialogLineSpacing"),
+                Minimum = 0.5, Maximum = 10, SmallChange = 0.25,
+                Value = ViewModel.LineSpacing > 0 ? ViewModel.LineSpacing : 1.0,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            AutomationPeer.SetAutomationId(lineSpacingBox, "ParagraphLineSpacingBox");
+
+            var panel = new StackPanel { Spacing = 10, MinWidth = 300 };
+            panel.Children.Add(alignCombo);
+            panel.Children.Add(new TextBlock { Text = Res.GetString("ParagraphDialogIndentation"), FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0) });
+            var indentRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            indentRow.Children.Add(indentLeftBox);
+            indentRow.Children.Add(indentRightBox);
+            panel.Children.Add(indentRow);
+            panel.Children.Add(indentFirstBox);
+            panel.Children.Add(new TextBlock { Text = Res.GetString("ParagraphDialogSpacing"), FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 0) });
+            panel.Children.Add(lineSpacingBox);
+            var spacingRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            spacingRow.Children.Add(spaceBeforeBox);
+            spacingRow.Children.Add(spaceAfterBox);
+            panel.Children.Add(spacingRow);
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("ParagraphDialogTitle"),
+                Content = panel,
+                PrimaryButtonText = Res.GetString("ButtonOK"),
+                CloseButtonText = Res.GetString("ButtonCancel"),
+                XamlRoot = Content.XamlRoot
+            };
+            AutomationPeer.SetAutomationId(dialog, "FormatParagraphDialog");
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            ITextParagraphFormat newPf = sel.ParagraphFormat;
+            newPf.Alignment = alignCombo.SelectedItem as string switch
+            {
+                "Center"  => ParagraphAlignment.Center,
+                "Right"   => ParagraphAlignment.Right,
+                "Justify" => ParagraphAlignment.Justify,
+                _         => ParagraphAlignment.Left
+            };
+            newPf.SetIndents(
+                (float)(indentFirstBox.Value * 72.0),
+                (float)(indentLeftBox.Value  * 72.0),
+                (float)(indentRightBox.Value * 72.0));
+            newPf.SpaceBefore = (float)spaceBeforeBox.Value;
+            newPf.SpaceAfter  = (float)spaceAfterBox.Value;
+            newPf.SetLineSpacing(LineSpacingRule.Multiple, (float)lineSpacingBox.Value);
+            sel.ParagraphFormat = newPf;
+
+            ViewModel.LineSpacing = lineSpacingBox.Value;
+            ViewModel.ParagraphSpacingBefore = spaceBeforeBox.Value;
+            ViewModel.ParagraphSpacingAfter  = spaceAfterBox.Value;
+            ViewModel.UpdateStatus(Res.GetString("StatusParagraphApplied"));
         }
 
         private async void CustomLineSpacing_Click(object sender, RoutedEventArgs e)

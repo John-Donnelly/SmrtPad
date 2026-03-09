@@ -19,6 +19,10 @@
             <KeyboardAccelerator Key="N" Modifiers="Control" Invoked="NewDocument_Invoked"/>
             <KeyboardAccelerator Key="T" Modifiers="Control" Invoked="NewTab_Invoked"/>
             <KeyboardAccelerator Key="W" Modifiers="Control" Invoked="CloseTab_Invoked"/>
+            <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OpenFind_Invoked"/>
+            <KeyboardAccelerator Key="H" Modifiers="Control" Invoked="OpenReplace_Invoked"/>
+            <KeyboardAccelerator Key="F3" Invoked="FindNextShortcut_Invoked"/>
+            <KeyboardAccelerator Key="D" Modifiers="Control" Invoked="DuplicateLine_Invoked"/>
         </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -84,7 +88,14 @@
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <ToggleMenuFlyoutItem x:Uid="WordWrapMenuItem" Text="Word Wrap" IsChecked="True" Click="WordWrap_Click" />
+                        <MenuFlyoutSubItem x:Uid="WordWrapMenuItem" Text="Word Wrap">
+                            <MenuFlyoutItem x:Name="WordWrapOffItem"      x:Uid="WordWrapOffItem"      Text="No Wrap"        Click="WordWrap_Click" Tag="Off"
+                                            AutomationProperties.AutomationId="WordWrapOffItem"/>
+                            <MenuFlyoutItem x:Name="WordWrapWrapItem"     x:Uid="WordWrapWrapItem"     Text="Wrap"           Click="WordWrap_Click" Tag="Wrap"
+                                            AutomationProperties.AutomationId="WordWrapWrapItem"/>
+                            <MenuFlyoutItem x:Name="WordWrapToRulerItem"  x:Uid="WordWrapToRulerItem"  Text="Wrap to Ruler"  Click="WordWrap_Click" Tag="WrapToRuler"
+                                            AutomationProperties.AutomationId="WordWrapToRulerItem"/>
+                        </MenuFlyoutSubItem>
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem x:Name="SpellCheckToggle" x:Uid="SpellCheckToggle" Text="Spell Check" IsChecked="True" Click="SpellCheck_Click"
                                              AutomationProperties.AutomationId="SpellCheckToggle" />
@@ -96,11 +107,18 @@
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem x:Name="FocusModeToggle" x:Uid="FocusModeToggle" Text="Focus Mode" Click="FocusMode_Click"
                                              AutomationProperties.AutomationId="FocusModeToggle" />
+                        <MenuFlyoutSeparator />
+                        <ToggleMenuFlyoutItem x:Name="StatusBarToggle" x:Uid="StatusBarToggle" Text="Status Bar" IsChecked="True" Click="StatusBarToggle_Click"
+                                             AutomationProperties.AutomationId="StatusBarToggle" />
                     </MenuBarItem>
                     <MenuBarItem x:Uid="FormatMenu" Title="Format">
                         <MenuFlyoutItem x:Uid="FormatFontMenuItem" Text="Font..." Click="FormatFont_Click"
                                         AutomationProperties.AutomationId="FormatFontMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8D2;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem x:Uid="FormatParagraphMenuItem" Text="Paragraph..." Click="FormatParagraph_Click"
+                                        AutomationProperties.AutomationId="FormatParagraphMenuItem">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE1D0;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                     </MenuBarItem>
                     <MenuBarItem x:Uid="MacroMenuBar" Title="Macro">
@@ -196,15 +214,31 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Large Paste button -->
-                        <Button Grid.Column="0" Click="Paste_Click" Width="48" Height="56" Padding="0" CornerRadius="4"
-                                Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Paste (Ctrl+V)"
-                                VerticalAlignment="Top" Margin="0,2,4,0">
+                        <!-- Large Paste SplitButton: primary=rich paste, dropdown=plain/special -->
+                        <SplitButton x:Name="PasteSplitButton" Grid.Column="0" Click="PasteSplitButton_Click"
+                                     Width="48" Height="56" Padding="0" CornerRadius="4"
+                                     Background="Transparent" BorderThickness="0"
+                                     ToolTipService.ToolTip="Paste (Ctrl+V)"
+                                     VerticalAlignment="Top" Margin="0,2,4,0"
+                                     AutomationProperties.AutomationId="PasteSplitButton"
+                                     AutomationProperties.Name="Paste (Ctrl+V)">
+                            <SplitButton.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem x:Uid="PastePlainRibbonLabel" Text="Paste Plain" Click="PastePlain_Click"
+                                                    AutomationProperties.AutomationId="PastePlainMenuItem">
+                                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem x:Uid="PasteSpecialRibbonItem" Text="Paste Special..." Click="PasteSpecial_Click"
+                                                    AutomationProperties.AutomationId="PasteSpecialRibbonMenuItem">
+                                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
                             <StackPanel HorizontalAlignment="Center" Spacing="2">
                                 <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE77F;" FontSize="24"/>
                                 <TextBlock x:Uid="PasteRibbonLabel" Text="Paste" FontSize="10" HorizontalAlignment="Center"/>
                             </StackPanel>
-                        </Button>
+                        </SplitButton>
                         <!-- Cut / Copy / Paste Special stacked -->
                         <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Top" Margin="0,4,0,0">
                             <Button Click="Cut_Click" Height="26" Padding="6,2" CornerRadius="4"
@@ -329,7 +363,9 @@
                                     <RowDefinition Height="3"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Text="A" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center"/>
-                                <Rectangle x:Name="FontColorIndicator" Grid.Row="1" Fill="#E81123" RadiusX="1" RadiusY="1" Margin="1,0"/>
+                                <Rectangle x:Name="FontColorIndicator" Grid.Row="1" Fill="#E81123" RadiusX="1" RadiusY="1" Margin="1,0"
+                                           AutomationProperties.AutomationId="FontColorIndicator"
+                                           AutomationProperties.Name="Font color: Red"/>
                             </Grid>
                         </Button>
                         <!-- Highlight Color -->
@@ -362,7 +398,9 @@
                                     <RowDefinition Height="3"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Text="A" FontSize="14" HorizontalAlignment="Center"/>
-                                <Rectangle x:Name="HighlightColorIndicator" Grid.Row="1" Fill="#FFFF00" RadiusX="1" RadiusY="1" Margin="1,0"/>
+                                <Rectangle x:Name="HighlightColorIndicator" Grid.Row="1" Fill="#FFFF00" RadiusX="1" RadiusY="1" Margin="1,0"
+                                           AutomationProperties.AutomationId="HighlightColorIndicator"
+                                           AutomationProperties.Name="Highlight color: Yellow"/>
                             </Grid>
                         </Button>
                         <!-- Clear Formatting -->
@@ -647,8 +685,13 @@
 
                     <StackPanel Grid.Row="0" VerticalAlignment="Center" Spacing="1">
                         <!-- Find with dropdown flyout -->
-                        <Button Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                        <Button x:Name="FindButton" Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                AutomationProperties.AutomationId="FindButton"
+                                AutomationProperties.Name="Find (Ctrl+F)">
+                            <Button.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="F" Modifiers="Control" IsEnabled="False"/>
+                            </Button.KeyboardAccelerators>
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
@@ -677,8 +720,13 @@
                             </StackPanel>
                         </Button>
                         <!-- Replace with dropdown flyout -->
-                        <Button Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                        <Button x:Name="ReplaceButton" Padding="6,2" Height="24" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                AutomationProperties.AutomationId="ReplaceButton"
+                                AutomationProperties.Name="Replace (Ctrl+H)">
+                            <Button.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="H" Modifiers="Control" IsEnabled="False"/>
+                            </Button.KeyboardAccelerators>
                             <Button.Flyout>
                                 <Flyout>
                                     <StackPanel Spacing="6" Width="300">
@@ -775,11 +823,13 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
                     <TextBlock x:Name="StatusText" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
-                               AutomationProperties.AutomationId="StatusText"/>
+                               AutomationProperties.AutomationId="StatusText"
+                               AutomationProperties.LiveSetting="Polite"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
                     <TextBlock x:Name="WordCountText" Text="{x:Bind ViewModel.WordCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="WordCountText"
+                               AutomationProperties.LiveSetting="Polite"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="CharCountText" Text="{x:Bind ViewModel.CharCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="CharCountText"
@@ -796,6 +846,21 @@
                     <TextBlock x:Name="ZoomText" Text="{x:Bind ViewModel.ZoomDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="ZoomText"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Slider x:Name="ZoomSlider"
+                            Minimum="10" Maximum="500" StepFrequency="10"
+                            Value="{x:Bind ViewModel.ZoomLevel, Mode=TwoWay}"
+                            Width="120" VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="ZoomSlider"
+                            AutomationProperties.Name="Zoom slider"
+                            ValueChanged="ZoomSlider_ValueChanged"/>
+                    <TextBox x:Name="ZoomPercentBox"
+                             Width="48" Height="24" FontSize="11"
+                             Text="{x:Bind ViewModel.ZoomDisplay, Mode=OneWay}"
+                             VerticalAlignment="Center"
+                             AutomationProperties.AutomationId="ZoomPercentBox"
+                             AutomationProperties.Name="Zoom percentage"
+                             KeyDown="ZoomPercentBox_KeyDown"
+                             LostFocus="ZoomPercentBox_LostFocus"/>
                 </StackPanel>
             </Grid>
         </ContentControl>
