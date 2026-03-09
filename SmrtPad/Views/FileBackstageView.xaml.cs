@@ -18,7 +18,7 @@ public sealed partial class FileBackstageView : UserControl
     public event EventHandler? ExportPdfRequested;
     public event EventHandler? ExportDocxRequested;
     public event EventHandler? OneDriveRequested;
-    public event EventHandler? PageSetupRequested;
+    public event EventHandler? SendEmailRequested;
     public event EventHandler? OptionsRequested;
     public event EventHandler? ExitRequested;
     public event EventHandler<string>? RecentFileRequested;
@@ -186,6 +186,10 @@ public sealed partial class FileBackstageView : UserControl
                 BodyText.Text = Res.GetString("BackstageSaveOneDriveDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
                 break;
+            case "SendEmail":
+                BodyText.Text = Res.GetString("BackstageSendEmailDesc");
+                DocPropertiesPanel.Visibility = Visibility.Visible;
+                break;
             case "Options":
                 BodyText.Text = Res.GetString("BackstageOptionsDesc");
                 break;
@@ -231,11 +235,11 @@ public sealed partial class FileBackstageView : UserControl
             case "OneDrive":
                 OneDriveRequested?.Invoke(this, EventArgs.Empty);
                 break;
+            case "SendEmail":
+                SendEmailRequested?.Invoke(this, EventArgs.Empty);
+                break;
             case "Options":
                 OptionsRequested?.Invoke(this, EventArgs.Empty);
-                break;
-            case "PageSetup":
-                PageSetupRequested?.Invoke(this, EventArgs.Empty);
                 break;
             case "Exit":
                 ExitRequested?.Invoke(this, EventArgs.Empty);
