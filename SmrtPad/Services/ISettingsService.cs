@@ -20,6 +20,8 @@ namespace SmrtPad.Services
         double PageMarginBottomInches { get; set; }
         double PageMarginLeftInches { get; set; }
         double PageMarginRightInches { get; set; }
+        bool ShowStatusBar { get; set; }
+        string WordWrapMode { get; set; }
         List<string> RecentFiles { get; }
         void AddRecentFile(string path);
         void ClearRecentFiles();

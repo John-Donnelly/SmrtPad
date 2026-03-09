@@ -129,6 +129,18 @@ namespace SmrtPad.Services
             set => _data.PageMarginRightInches = value;
         }
 
+        public bool ShowStatusBar
+        {
+            get => _data.ShowStatusBar;
+            set => _data.ShowStatusBar = value;
+        }
+
+        public string WordWrapMode
+        {
+            get => _data.WordWrapMode;
+            set => _data.WordWrapMode = value;
+        }
+
         public List<string> RecentFiles => _data.RecentFiles;
 
         public void AddRecentFile(string path)
@@ -210,6 +222,8 @@ namespace SmrtPad.Services
             public double PageMarginBottomInches { get; set; } = 1.0;
             public double PageMarginLeftInches { get; set; } = 1.0;
             public double PageMarginRightInches { get; set; } = 1.0;
+            public bool ShowStatusBar { get; set; } = true;
+            public string WordWrapMode { get; set; } = "Wrap";
             public List<string> RecentFiles { get; set; } = [];
         }
     }
