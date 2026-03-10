@@ -40,49 +40,50 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="0">
                 <!-- File → backstage -->
                 <Button x:Uid="FileMenuButton" Content="File" Click="FileMenu_Tapped"
+                        AutomationProperties.AutomationId="FileMenuButton"
                         Padding="10,5" Background="Transparent" BorderThickness="0"
                         CornerRadius="0" FontSize="13"/>
                 <!-- Edit / View menus -->
                 <MenuBar VerticalAlignment="Center" Background="Transparent" Padding="0">
-                    <MenuBarItem x:Uid="EditMenu" Title="Edit">
-                        <MenuFlyoutItem x:Uid="CutMenuItem" Text="Cut" Click="Cut_Click">
+                    <MenuBarItem x:Uid="EditMenu" Title="Edit" AutomationProperties.AutomationId="EditMenuBarItem">
+                        <MenuFlyoutItem x:Uid="CutMenuItem" Text="Cut" Click="Cut_Click" AutomationProperties.AutomationId="CutMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C6;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="X" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="CopyMenuItem" Text="Copy" Click="Copy_Click">
+                        <MenuFlyoutItem x:Uid="CopyMenuItem" Text="Copy" Click="Copy_Click" AutomationProperties.AutomationId="CopyMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="C" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="PasteMenuItem" Text="Paste" Click="Paste_Click">
+                        <MenuFlyoutItem x:Uid="PasteMenuItem" Text="Paste" Click="Paste_Click" AutomationProperties.AutomationId="PasteMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="V" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="PasteSpecialMenuItem" Text="Paste Special" Click="PasteSpecial_Click">
+                        <MenuFlyoutItem x:Uid="PasteSpecialMenuItem" Text="Paste Special" Click="PasteSpecial_Click" AutomationProperties.AutomationId="PasteSpecialMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="V" Modifiers="Control,Shift"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="SelectAllMenuItem" Text="Select All" Click="SelectAll_Click">
+                        <MenuFlyoutItem x:Uid="SelectAllMenuItem" Text="Select All" Click="SelectAll_Click" AutomationProperties.AutomationId="SelectAllMenuItem">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="A" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                     </MenuBarItem>
-                    <MenuBarItem x:Uid="ViewMenu" Title="View">
-                        <MenuFlyoutItem x:Uid="ZoomInMenuItem" Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click">
+                    <MenuBarItem x:Uid="ViewMenu" Title="View" AutomationProperties.AutomationId="ViewMenuBarItem">
+                        <MenuFlyoutItem x:Uid="ZoomInMenuItem" Text="Zoom In"  Icon="ZoomIn"  Click="ZoomIn_Click" AutomationProperties.AutomationId="ZoomInMenuItem">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="Add" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="ZoomOutMenuItem" Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click">
+                        <MenuFlyoutItem x:Uid="ZoomOutMenuItem" Text="Zoom Out" Icon="ZoomOut" Click="ZoomOut_Click" AutomationProperties.AutomationId="ZoomOutMenuItem">
                             <MenuFlyoutItem.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="Subtract" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
@@ -165,6 +166,7 @@
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE74E;" FontSize="14"/>
                 </Button>
                 <Button x:Name="NewButton" Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New"
+                        AutomationProperties.AutomationId="QuickAccessNewButton"
                         AutomationProperties.Name="New">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8A5;" FontSize="14"/>
                 </Button>
@@ -405,6 +407,7 @@
                         </Button>
                         <!-- Clear Formatting -->
                         <Button x:Name="ClearFormattingButton" Click="ClearFormatting_Click" Width="32" Height="32" Padding="0" CornerRadius="4"
+                                AutomationProperties.AutomationId="ClearFormattingButton"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Clear Formatting"
                                 AutomationProperties.Name="Clear Formatting">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E6;" FontSize="16"/>
