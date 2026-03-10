@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using SmrtPad.Services;
 using SmrtPad.Services.Licensing;
 using SmrtPad.ViewModels;
 using System;
+using System.Linq;
 using Windows.Globalization;
+using Res = SmrtPad.Helpers.ResourceHelper;
 
 namespace SmrtPad
 {
@@ -14,8 +17,12 @@ namespace SmrtPad
     public partial class App : Application
     {
         private Window? _window;
+        private IAIDispatcher? _aiDispatcher;
 
         public static Window MainWindow { get; private set; } = null!;
+
+        /// <summary>The AI dispatcher loaded via ALC when Pro is licensed; null for Free tier.</summary>
+        public IAIDispatcher? AIDispatcher => _aiDispatcher;
 
         /// <summary>All currently open <see cref="MainWindow"/> instances.</summary>
         public static System.Collections.Generic.List<MainWindow> Windows { get; } = [];
@@ -25,7 +32,8 @@ namespace SmrtPad
         {
             var w = new MainWindow();
             Windows.Add(w);
-            w.Closed += (_, _) => Windows.Remove(w);
+            w.Closed += async (_, _) => await Current.HandleWindowClosedAsync(w);
+            w.RefreshProGatedUi();
             w.Activate();
             return w;
         }
@@ -68,6 +76,7 @@ namespace SmrtPad
             services.AddSingleton<EditorViewModel>();
             services.AddTransient<IDialogService, DialogService>();
             services.AddTransient<IFileService, FileService>();
+            services.AddSingleton<ISessionRestoreService, SessionRestoreService>();
             services.AddSingleton<IStoreContextAdapter, StubStoreContextAdapter>();
             services.AddSingleton<LocalKeyValidator>();
             services.AddSingleton<LicenseOrchestrator>();
@@ -79,29 +88,64 @@ namespace SmrtPad
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             var mainWindow = new MainWindow();
             _window = mainWindow;
             MainWindow = _window;
             Windows.Add(mainWindow);
-            mainWindow.Closed += (_, _) => Windows.Remove(mainWindow);
+            mainWindow.Closed += async (_, _) => await HandleWindowClosedAsync(mainWindow);
+
+            mainWindow.RefreshProGatedUi();
             _window.Activate();
 
-            // Initialize licence orchestrator — enables Pro features if licensed.
+            _ = RunPostActivationStartupAsync(mainWindow, args);
+        }
+
+        private async Task RunPostActivationStartupAsync(MainWindow mainWindow, Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        {
+            await Task.Yield();
+
+            _ = InitializeLicenseAfterLaunchAsync(mainWindow);
+
             try
             {
-                var orchestrator = Services.GetService<LicenseOrchestrator>();
-                if (orchestrator is not null)
-                {
-                    await orchestrator.InitializeAsync();
-                }
+                await PromptForSessionRestoreAsync(mainWindow);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Session restore check failed: {ex.Message}");
+            }
+
+            var filePath = GetStartupFilePath(args);
+            if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath))
+                return;
+
+            try
+            {
+                await mainWindow.OpenFileByPathAsync(filePath);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to open startup file: {ex.Message}");
+            }
+        }
+
+        private async Task InitializeLicenseAfterLaunchAsync(MainWindow mainWindow)
+        {
+            try
+            {
+                await InitializeLicenseOrchestratorAsync();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Licence check failed: {ex.Message}");
             }
+            mainWindow.DispatcherQueue.TryEnqueue(mainWindow.RefreshProGatedUi);
+        }
 
+        private static string? GetStartupFilePath(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        {
             // Handle startup file argument — check command-line args first (exe launch),
             // then fall back to activation arguments (AUMID / package activation).
             // AUMID activation may split a space-containing path across multiple
@@ -128,21 +172,101 @@ namespace SmrtPad
                 filePath = args.Arguments.Trim('"');
             }
 
-            if (string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(args.Arguments))
+            return filePath;
+        }
+
+        private async Task InitializeLicenseOrchestratorAsync()
+        {
+            var orchestrator = Services.GetService<LicenseOrchestrator>();
+            if (orchestrator is null)
+                return;
+
+            await Task.Run(() => orchestrator.InitializeAsync());
+
+            if (orchestrator.IsPro)
             {
-                filePath = args.Arguments.Trim('"');
+                _aiDispatcher = TryLoadAIDispatcher();
             }
 
-            if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+            orchestrator.ProLicenseChanged += (_, isPro) =>
             {
-                try
+                if (_window is not MainWindow mainWindow)
+                    return;
+
+                mainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
-                    await mainWindow.OpenFileByPathAsync(filePath);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to open startup file: {ex.Message}");
-                }
+                    _aiDispatcher = isPro ? _aiDispatcher ?? TryLoadAIDispatcher() : null;
+
+                    foreach (var window in Windows.ToArray())
+                    {
+                        window.RefreshProGatedUi();
+                    }
+                });
+            };
+        }
+
+        private async Task PromptForSessionRestoreAsync(MainWindow mainWindow)
+        {
+            var sessionRestoreService = Services.GetRequiredService<ISessionRestoreService>();
+            var sessionTabs = await sessionRestoreService.LoadSessionAsync();
+            if (sessionTabs.Count == 0)
+                return;
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("SessionRestoreTitle"),
+                Content = Res.GetString("SessionRestoreContent"),
+                PrimaryButtonText = Res.GetString("SessionRestoreRestore"),
+                CloseButtonText = Res.GetString("SessionRestoreDiscard"),
+                XamlRoot = mainWindow.Content.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await mainWindow.RestoreSessionAsync(sessionTabs);
+                return;
+            }
+
+            await sessionRestoreService.ClearSessionAsync();
+        }
+
+        private async Task HandleWindowClosedAsync(MainWindow window)
+        {
+            Windows.Remove(window);
+
+            if (Windows.Count == 0)
+            {
+                var sessionRestoreService = Services.GetRequiredService<ISessionRestoreService>();
+                await sessionRestoreService.ClearSessionAsync();
+            }
+        }
+
+        /// <summary>
+        /// Attempts to load <c>SmrtPad.AI.dll</c> via a dedicated <see cref="System.Runtime.Loader.AssemblyLoadContext"/>
+        /// and create a proxy dispatcher. Returns <c>null</c> if the DLL is absent or loading fails.
+        /// </summary>
+        private static IAIDispatcher? TryLoadAIDispatcher()
+        {
+            try
+            {
+                var aiDllPath = Path.Combine(AppContext.BaseDirectory, "SmrtPad.AI.dll");
+                if (!File.Exists(aiDllPath))
+                    return null;
+
+                var alc = new AIAssemblyLoadContext(aiDllPath);
+                var assembly = alc.LoadFromAssemblyPath(aiDllPath);
+                var factoryType = assembly.GetType("SmrtPad.AI.AIDispatcherFactory");
+                if (factoryType is null)
+                    return null;
+
+                dynamic factory = Activator.CreateInstance(factoryType)!;
+                dynamic dispatcher = factory.Create();
+                return new AIDispatcherProxy(dispatcher);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load SmrtPad.AI: {ex.Message}");
+                return null;
             }
         }
     }

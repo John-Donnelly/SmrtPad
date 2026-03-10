@@ -53,7 +53,9 @@ namespace SmrtPad
         private readonly ISettingsService _settings;
         private readonly IDialogService _dialogService;
         private readonly IFileService _fileService;
+        private readonly ISessionRestoreService _sessionRestoreService;
         private DispatcherTimer? _autoSaveTimer;
+        private DispatcherTimer? _sessionSaveTimer;
         private System.ComponentModel.PropertyChangedEventHandler? _docTitleHandler;
         private PrintDocument? _printDocument;
         private IPrintDocumentSource? _printDocumentSource;
@@ -62,6 +64,8 @@ namespace SmrtPad
         private bool _pageViewActive;
         private Color _lastFontColor = Color.FromArgb(255, 0xE8, 0x11, 0x23);
         private bool _fontDropdownStyled;
+        private bool _fontsInitialized;
+        private bool _printingRegistered;
         private const double Dpi = 96.0;
         private static readonly IReadOnlyDictionary<string, (double WidthIn, double HeightIn)> s_paperSizes =
             new Dictionary<string, (double WidthIn, double HeightIn)>(StringComparer.OrdinalIgnoreCase)
@@ -76,6 +80,7 @@ namespace SmrtPad
         private int _activeTabIndex = -1;
         private bool _suppressTabModified;
         private readonly MacroHelper _macro = new();
+        private int _nextTabId = 1;
 
         /// <summary>
         /// Defers un-suppression of <c>_suppressTabModified</c> using a short timer
@@ -103,6 +108,7 @@ namespace SmrtPad
 
         private static readonly char[] s_wordSeparators = [' ', '\r', '\n', '\t'];
         private bool _suppressFontComboChange;
+        private bool HasActiveTab => _activeTabIndex >= 0 && _activeTabIndex < _tabs.Count;
         private DocumentTab ActiveTab => _tabs[_activeTabIndex];
         private RichEditBox Editor => ActiveTab.Editor;
         private ScrollViewer EditorScrollViewer => ActiveTab.ScrollViewer;
@@ -116,6 +122,7 @@ namespace SmrtPad
             _settings = App.Current.Services.GetRequiredService<ISettingsService>();
             _dialogService = App.Current.Services.GetRequiredService<IDialogService>();
             _fileService = App.Current.Services.GetRequiredService<IFileService>();
+            _sessionRestoreService = App.Current.Services.GetRequiredService<ISessionRestoreService>();
             ViewModel = App.Current.Services.GetRequiredService<EditorViewModel>();
             InitializeComponent();
             Title = Res.GetFormatted("AppTitle", ViewModel.DocumentTitle);
@@ -132,14 +139,16 @@ namespace SmrtPad
             ActiveTab.IsModified = false;
             DeferResetTabModified();
 
-            InitializeFonts();
             ApplySettings();
             SetupAutoSave();
+            SetupSessionPersistence();
+            ScheduleDeferredStartupWork();
 
             // Clean up on window close: stop auto-save timer and unsubscribe from ViewModel events
             Closed += (_, _) =>
             {
                 _autoSaveTimer?.Stop();
+                _sessionSaveTimer?.Stop();
                 ViewModel.PropertyChanged -= _docTitleHandler;
             };
 
@@ -183,6 +192,60 @@ namespace SmrtPad
             }
         }
 
+        private void SetupSessionPersistence()
+        {
+            _sessionSaveTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(30)
+            };
+            _sessionSaveTimer.Tick += async (_, _) =>
+            {
+                try
+                {
+                    await PersistSessionSnapshotAsync();
+                }
+                catch (IOException ex)
+                {
+                    Debug.WriteLine($"Session snapshot failed: {ex.Message}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Debug.WriteLine($"Session snapshot access denied: {ex.Message}");
+                }
+            };
+            _sessionSaveTimer.Start();
+        }
+
+        private void ScheduleDeferredStartupWork()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                InitializeFonts();
+                RegisterForPrinting();
+                ApplyToolbarAutomationNames();
+            });
+        }
+
+        internal async Task RestoreSessionAsync(IReadOnlyList<SessionTabState> tabs)
+        {
+            ArgumentNullException.ThrowIfNull(tabs);
+
+            if (tabs.Count == 0)
+                return;
+
+            ResetTabsForSessionRestore();
+
+            foreach (var state in tabs)
+            {
+                CreateTab(string.IsNullOrWhiteSpace(state.Title) ? Res.GetString("DocumentUntitled") : state.Title);
+                await RestoreTabStateAsync(state);
+            }
+
+            DocumentTabs.SelectedIndex = 0;
+            _activeTabIndex = 0;
+            SyncViewModelFromActiveTab();
+        }
+
         /// <summary>
         /// Iterates through all tabs that have unsaved changes, switches to each one,
         /// and prompts the user to save individually. Returns <c>true</c> if all tabs
@@ -219,7 +282,10 @@ namespace SmrtPad
 
         private DocumentTab CreateTab(string title)
         {
-            var tab = new DocumentTab(title, _settings);
+            var tab = new DocumentTab(title, _settings)
+            {
+                Id = _nextTabId++,
+            };
 
             tab.Editor.TextChanged += (s, e) =>
             {
@@ -404,6 +470,16 @@ namespace SmrtPad
             await CloseTabAtIndexAsync(idx);
         }
 
+        private async void DocumentTabs_TabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
+        {
+            int idx = _tabs.FindIndex(t => t.TabViewItem == args.Tab);
+            if (idx < 0) return;
+
+            var targetWindow = App.NewWindow();
+            await targetWindow.ImportDetachedTabAsync(_tabs[idx]);
+            RemoveTabAtIndex(idx, null);
+        }
+
         private async Task CloseTabAtIndexAsync(int idx)
         {
             if (idx < 0 || idx >= _tabs.Count) return;
@@ -417,7 +493,15 @@ namespace SmrtPad
                 if (!await PromptSaveChangesAsync()) return;
             }
 
+            RemoveTabAtIndex(idx, Res.GetString("StatusTabClosed"));
+        }
+
+        private void RemoveTabAtIndex(int idx, string? statusMessage)
+        {
+            if (idx < 0 || idx >= _tabs.Count) return;
+
             var tabItem = _tabs[idx].TabViewItem;
+            App.Current.AIDispatcher?.RemoveIndexedTab(_tabs[idx].Id);
             DocumentTabs.TabItems.Remove(tabItem);
             _tabs.RemoveAt(idx);
 
@@ -433,7 +517,54 @@ namespace SmrtPad
                 DocumentTabs.SelectedIndex = _activeTabIndex;
                 SyncViewModelFromActiveTab();
             }
-            ViewModel.UpdateStatus(Res.GetString("StatusTabClosed"));
+
+            if (!string.IsNullOrWhiteSpace(statusMessage))
+                ViewModel.UpdateStatus(statusMessage);
+        }
+
+        private async Task ImportDetachedTabAsync(DocumentTab sourceTab)
+        {
+            ArgumentNullException.ThrowIfNull(sourceTab);
+
+            RemoveInitialBlankTab();
+
+            _suppressTabModified = true;
+            CreateTab(sourceTab.TabViewItem.Header as string ?? Res.GetString("DocumentUntitled"));
+
+            using var stream = new InMemoryRandomAccessStream();
+            sourceTab.Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream);
+            stream.Seek(0);
+            Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, stream);
+
+            ActiveTab.CurrentFile = sourceTab.CurrentFile;
+            ActiveTab.IsModified = sourceTab.IsModified;
+            ActiveTab.Encoding = sourceTab.Encoding;
+            ActiveTab.ZoomLevel = sourceTab.ZoomLevel;
+            ViewModel.ZoomLevel = sourceTab.ZoomLevel;
+            ApplyZoom();
+            SyncViewModelFromActiveTab();
+
+            if (sourceTab.IsModified)
+            {
+                ViewModel.IsModified = true;
+                _suppressTabModified = false;
+            }
+            else
+            {
+                DeferResetTabModified();
+            }
+
+            await Task.CompletedTask;
+        }
+
+        private void RemoveInitialBlankTab()
+        {
+            if (_tabs.Count != 1 || _tabs[0].CurrentFile is not null || _tabs[0].IsModified)
+                return;
+
+            DocumentTabs.TabItems.Clear();
+            _tabs.Clear();
+            _activeTabIndex = -1;
         }
 
         private void DocumentTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -856,6 +987,104 @@ namespace SmrtPad
             catch { }
         }
 
+        private async Task PersistSessionSnapshotAsync()
+        {
+            var tabs = new List<SessionTabState>(_tabs.Count);
+
+            foreach (var tab in _tabs)
+            {
+                string? backupPath = null;
+                if (tab.IsModified || tab.CurrentFile is null)
+                {
+                    backupPath = SaveTabBackup(tab);
+                }
+
+                tabs.Add(new SessionTabState(
+                    tab.TabViewItem.Header as string ?? Res.GetString("DocumentUntitled"),
+                    tab.CurrentFile?.Path,
+                    backupPath,
+                    GetCursorPosition(tab)));
+            }
+
+            await _sessionRestoreService.SaveSessionAsync(tabs);
+        }
+
+        private void ResetTabsForSessionRestore()
+        {
+            DocumentTabs.TabItems.Clear();
+            _tabs.Clear();
+            _activeTabIndex = -1;
+            _nextTabId = 1;
+        }
+
+        private async Task RestoreTabStateAsync(SessionTabState state)
+        {
+            if (!string.IsNullOrWhiteSpace(state.TempBackupPath) && File.Exists(state.TempBackupPath))
+            {
+                using var stream = File.Open(state.TempBackupPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                Editor.Document.LoadFromStream(TextSetOptions.FormatRtf, stream.AsRandomAccessStream());
+                ActiveTab.CurrentFile = await TryGetStorageFileAsync(state.FilePath);
+                ActiveTab.IsModified = true;
+                ActiveTab.Encoding = "RTF";
+                ActiveTab.TabViewItem.Header = string.IsNullOrWhiteSpace(state.Title) ? Res.GetString("DocumentUntitled") : state.Title;
+            }
+            else if (!string.IsNullOrWhiteSpace(state.FilePath) && File.Exists(state.FilePath))
+            {
+                await OpenFileByPathAsync(state.FilePath);
+            }
+            else
+            {
+                Editor.Document.SetText(TextSetOptions.None, string.Empty);
+                ActiveTab.CurrentFile = null;
+                ActiveTab.IsModified = false;
+                ActiveTab.Encoding = "UTF-8";
+                ActiveTab.TabViewItem.Header = string.IsNullOrWhiteSpace(state.Title) ? Res.GetString("DocumentUntitled") : state.Title;
+            }
+
+            Editor.Document.GetText(TextGetOptions.None, out var documentText);
+            var safeCursorPosition = Math.Clamp(state.CursorPosition, 0, documentText.Length);
+            Editor.Document.Selection.SetRange(safeCursorPosition, safeCursorPosition);
+        }
+
+        private string SaveTabBackup(DocumentTab tab)
+        {
+            var backupDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SmrtPad",
+                "backups");
+            Directory.CreateDirectory(backupDirectory);
+
+            var backupPath = Path.Combine(backupDirectory, $"tab_{tab.Id}.rtf");
+            using var stream = File.Open(backupPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+            tab.Editor.Document.SaveToStream(TextGetOptions.FormatRtf, stream.AsRandomAccessStream());
+            return backupPath;
+        }
+
+        private static async Task<StorageFile?> TryGetStorageFileAsync(string? filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                return null;
+
+            try
+            {
+                return await StorageFile.GetFileFromPathAsync(filePath);
+            }
+            catch (FileNotFoundException)
+            {
+                return null;
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return null;
+            }
+        }
+
+        private static int GetCursorPosition(DocumentTab tab)
+        {
+            var selection = tab.Editor.Document.Selection;
+            return selection?.StartPosition ?? 0;
+        }
+
         private void UpdateStatusBarCounts()
         {
             Editor.Document.GetText(TextGetOptions.None, out string text);
@@ -976,6 +1205,10 @@ namespace SmrtPad
 
         private void InitializeFonts()
         {
+            if (_fontsInitialized)
+                return;
+
+            _fontsInitialized = true;
             var fonts = Microsoft.Graphics.Canvas.Text.CanvasTextFormat.GetSystemFontFamilies();
             FontFamilyComboBox.ItemsSource = fonts.OrderBy(f => f).ToList();
             _suppressFontComboChange = true;
@@ -1299,6 +1532,10 @@ namespace SmrtPad
 
         private void RegisterForPrinting()
         {
+            if (_printingRegistered)
+                return;
+
+            _printingRegistered = true;
             _printDocument = new PrintDocument();
             _printDocumentSource = _printDocument.DocumentSource;
             _printDocument.Paginate += PrintDocument_Paginate;
@@ -2112,6 +2349,82 @@ namespace SmrtPad
             App.NewWindow();
         }
 
+        private void ApplyToolbarAutomationNames()
+        {
+            if (Content is not DependencyObject root)
+                return;
+
+            foreach (var descendant in EnumerateDescendants(root))
+            {
+                switch (descendant)
+                {
+                    case Button button:
+                        ApplyAutomationName(button, button.Content);
+                        break;
+                    case ToggleButton toggleButton:
+                        ApplyAutomationName(toggleButton, toggleButton.Content);
+                        break;
+                    case SplitButton splitButton:
+                        ApplyAutomationName(splitButton, splitButton.Content);
+                        break;
+                }
+            }
+        }
+
+        private static void ApplyAutomationName(FrameworkElement element, object? content)
+        {
+            if (!string.IsNullOrWhiteSpace(AutomationPeer.GetName(element)))
+                return;
+
+            if (ToolTipService.GetToolTip(element) is string toolTip && !string.IsNullOrWhiteSpace(toolTip))
+            {
+                AutomationPeer.SetName(element, toolTip);
+                return;
+            }
+
+            if (content is string text && !string.IsNullOrWhiteSpace(text))
+            {
+                AutomationPeer.SetName(element, text);
+                return;
+            }
+
+            if (content is DependencyObject contentRoot)
+            {
+                var contentText = FindFirstText(contentRoot);
+                if (!string.IsNullOrWhiteSpace(contentText))
+                    AutomationPeer.SetName(element, contentText);
+            }
+        }
+
+        private static IEnumerable<DependencyObject> EnumerateDescendants(DependencyObject root)
+        {
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                yield return child;
+
+                foreach (var descendant in EnumerateDescendants(child))
+                    yield return descendant;
+            }
+        }
+
+        private static string? FindFirstText(DependencyObject root)
+        {
+            if (root is TextBlock textBlock && !string.IsNullOrWhiteSpace(textBlock.Text))
+                return textBlock.Text;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childCount; i++)
+            {
+                var text = FindFirstText(VisualTreeHelper.GetChild(root, i));
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text;
+            }
+
+            return null;
+        }
+
         private async void Exit_Click(object _, RoutedEventArgs _1)
         {
             if (!await PromptSaveAllTabsAsync())
@@ -2181,6 +2494,9 @@ namespace SmrtPad
 
         private void ApplyZoom()
         {
+            if (!HasActiveTab)
+                return;
+
             double scale = ViewModel.ZoomLevel / 100.0;
             EditorScaleTransform.ScaleX = scale;
             EditorScaleTransform.ScaleY = scale;
@@ -2796,6 +3112,231 @@ namespace SmrtPad
                 _settings.ShowStatusBar = show;
                 _settings.Save();
                 ViewModel.UpdateStatus(show ? Res.GetString("StatusStatusBarShown") : Res.GetString("StatusStatusBarHidden"));
+            }
+        }
+
+        private async void SmartSidebarToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not ToggleMenuFlyoutItem toggle)
+                return;
+
+            if (toggle.IsChecked)
+            {
+                if (!Services.Licensing.FeatureFlags.IsEnabled(Services.Licensing.SmrtPadFeature.SmartSidebar))
+                {
+                    toggle.IsChecked = false;
+                    await ShowProUpsellAsync();
+                    return;
+                }
+
+                var aiDispatcher = App.Current.AIDispatcher;
+                if (aiDispatcher is null)
+                {
+                    toggle.IsChecked = false;
+                    await ShowProUpsellAsync();
+                    return;
+                }
+
+                var sidebar = new Controls.SmartSidebar(aiDispatcher);
+                sidebar.GetSelectedText = GetSelectionOrDocumentText;
+                sidebar.GetRewriteSourceText = GetSelectionOrCurrentParagraphText;
+                sidebar.ApplyToneRewrite = text => ApplySidebarRewrite(text, highlightTemporarily: true);
+                sidebar.ApplyClarityRewrite = text => ApplySidebarRewrite(text, highlightTemporarily: false);
+                sidebar.InsertGeneratedText = InsertSidebarText;
+                sidebar.GetSemanticDocuments = GetSemanticDocumentsSnapshot;
+                sidebar.NavigateToSemanticResult = NavigateToSemanticResult;
+                sidebar.CloseRequested += (_, _) => CloseSmartSidebar();
+                SidebarHost.Content = sidebar;
+                SidebarHost.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                CloseSmartSidebar();
+            }
+        }
+
+        internal void RefreshProGatedUi()
+        {
+            if (Services.Licensing.FeatureFlags.IsEnabled(Services.Licensing.SmrtPadFeature.SmartSidebar)
+                && App.Current.AIDispatcher is not null)
+            {
+                return;
+            }
+
+            CloseSmartSidebar();
+        }
+
+        private void CloseSmartSidebar()
+        {
+            SidebarHost.Content = null;
+            SidebarHost.Visibility = Visibility.Collapsed;
+            SmartSidebarToggle.IsChecked = false;
+        }
+
+        private string GetSelectionOrDocumentText()
+        {
+            Editor.Document.GetText(TextGetOptions.None, out var text);
+            var selection = Editor.Document.Selection;
+            if (selection is not null && selection.Length != 0)
+            {
+                selection.GetText(TextGetOptions.None, out var selectedText);
+                return selectedText;
+            }
+
+            return text;
+        }
+
+        private string GetSelectionOrCurrentParagraphText()
+        {
+            var (start, end) = GetSidebarRewriteRange();
+            var range = Editor.Document.GetRange(start, end);
+            range.GetText(TextGetOptions.None, out var text);
+            return text;
+        }
+
+        private void ApplySidebarRewrite(string text, bool highlightTemporarily)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var (start, end) = GetSidebarRewriteRange();
+            var range = Editor.Document.GetRange(start, end);
+            range.Text = text;
+            var rewrittenRange = Editor.Document.GetRange(start, start + text.Length);
+            if (highlightTemporarily)
+            {
+                HighlightSidebarRange(rewrittenRange.StartPosition, rewrittenRange.EndPosition);
+            }
+
+            Editor.Document.Selection.SetRange(rewrittenRange.StartPosition, rewrittenRange.EndPosition);
+            RefreshEditorState();
+        }
+
+        private void InsertSidebarText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var selection = Editor.Document.Selection;
+            if (selection is null)
+                return;
+
+            selection.Text = text;
+            RefreshEditorState();
+        }
+
+        private (int Start, int End) GetSidebarRewriteRange()
+        {
+            var selection = Editor.Document.Selection;
+            if (selection is null)
+                return (0, 0);
+
+            var start = Math.Min(selection.StartPosition, selection.EndPosition);
+            var end = Math.Max(selection.StartPosition, selection.EndPosition);
+            if (end > start)
+                return (start, end);
+
+            Editor.Document.GetText(TextGetOptions.None, out var fullText);
+            if (string.IsNullOrEmpty(fullText))
+                return (0, 0);
+
+            var safePosition = Math.Clamp(start, 0, fullText.Length);
+            var paragraphStart = safePosition > 0
+                ? fullText.LastIndexOf('\r', safePosition - 1) + 1
+                : 0;
+            var paragraphEnd = fullText.IndexOf('\r', safePosition);
+            if (paragraphEnd < 0)
+                paragraphEnd = fullText.Length;
+
+            return (paragraphStart, paragraphEnd);
+        }
+
+        private void HighlightSidebarRange(int start, int end)
+        {
+            if (end <= start)
+                return;
+
+            var range = Editor.Document.GetRange(start, end);
+            range.CharacterFormat.BackgroundColor = Color.FromArgb(255, 255, 255, 0);
+
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                Editor.Document.GetText(TextGetOptions.None, out var currentText);
+                var safeStart = Math.Clamp(start, 0, currentText.Length);
+                var safeEnd = Math.Clamp(end, safeStart, currentText.Length);
+                if (safeEnd <= safeStart)
+                    return;
+
+                var clearRange = Editor.Document.GetRange(safeStart, safeEnd);
+                clearRange.CharacterFormat.BackgroundColor = Color.FromArgb(0, 0, 0, 0);
+            };
+            timer.Start();
+        }
+
+        private IReadOnlyList<SemanticSearchDocument> GetSemanticDocumentsSnapshot()
+        {
+            return _tabs
+                .Select(tab => new SemanticSearchDocument(tab.Id, GetSemanticTabName(tab), GetTabDocumentText(tab)))
+                .ToArray();
+        }
+
+        private void NavigateToSemanticResult(int tabId, string chunkText)
+        {
+            if (string.IsNullOrWhiteSpace(chunkText))
+                return;
+
+            var tabIndex = _tabs.FindIndex(tab => tab.Id == tabId);
+            if (tabIndex < 0)
+                return;
+
+            _activeTabIndex = tabIndex;
+            DocumentTabs.SelectedIndex = tabIndex;
+            SyncViewModelFromActiveTab();
+
+            var selection = Editor.Document.Selection;
+            if (selection is null)
+                return;
+
+            Editor.Focus(FocusState.Programmatic);
+            var found = selection.FindText(chunkText, TextConstants.MaxUnitCount, FindOptions.None);
+            if (found == 0)
+            {
+                Editor.Document.GetText(TextGetOptions.None, out var fullText);
+                var index = fullText.IndexOf(chunkText, StringComparison.OrdinalIgnoreCase);
+                if (index >= 0)
+                {
+                    selection.SetRange(index, index + chunkText.Length);
+                }
+            }
+        }
+
+        private static string GetSemanticTabName(DocumentTab tab) =>
+            tab.CurrentFile?.Name ?? tab.TabViewItem.Header?.ToString() ?? string.Empty;
+
+        private static string GetTabDocumentText(DocumentTab tab)
+        {
+            tab.Editor.Document.GetText(TextGetOptions.None, out var text);
+            return text;
+        }
+
+        /// <summary>Shows the Pro upsell dialog directing users to the Store.</summary>
+        private async Task ShowProUpsellAsync()
+        {
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("ProUpsellTitle"),
+                Content = Res.GetString("ProUpsellContent"),
+                PrimaryButtonText = Res.GetString("ProUpsellUpgrade"),
+                CloseButtonText = Res.GetString("ProUpsellDismiss"),
+                XamlRoot = Content.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await Windows.System.Launcher.LaunchUriAsync(
+                    new Uri("ms-windows-store://pdp/?productid=SmrtPadPro"));
             }
         }
 
@@ -4029,6 +4570,7 @@ namespace SmrtPad
 
     internal sealed class DocumentTab
     {
+        public int Id { get; internal set; }
         public TabViewItem TabViewItem { get; }
         public RichEditBox Editor { get; }
         public ScrollViewer ScrollViewer { get; }

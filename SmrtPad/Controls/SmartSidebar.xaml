@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="SmrtPad.Controls.SmartSidebar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Width="340"
+    MinWidth="280">
+
+    <UserControl.Transitions>
+        <TransitionCollection>
+            <RepositionThemeTransition />
+        </TransitionCollection>
+    </UserControl.Transitions>
+
+    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+          BorderThickness="1,0,0,0"
+          Padding="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ═══ HEADER ═══ -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="✨ Smart Sidebar" FontSize="16" FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+            <Button x:Name="CloseButton" Grid.Column="1" Click="CloseButton_Click"
+                    AutomationProperties.Name="Close sidebar"
+                    Background="Transparent" BorderThickness="0" Padding="6">
+                <FontIcon Glyph="&#xE711;" FontSize="12" />
+            </Button>
+        </Grid>
+
+        <!-- ═══ SUMMARIZE SECTION ═══ -->
+        <StackPanel x:Name="SummarizeSection" Grid.Row="1" Spacing="8" Margin="0,0,0,16">
+            <TextBlock Text="📝 SUMMARIZE" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="SummarizeButton" Content="Summarize selection"
+                        AutomationProperties.AutomationId="SummarizeSectionButton"
+                        Click="SummarizeButton_Click"
+                        HorizontalAlignment="Stretch" />
+                <Button x:Name="StopSummarizeButton" Grid.Column="1" Content="Stop"
+                        Click="StopSummarizeButton_Click"
+                        Visibility="Collapsed" Margin="4,0,0,0" />
+            </Grid>
+            <ProgressRing x:Name="SummarizeProgress" IsActive="False" Visibility="Collapsed"
+                          Width="20" Height="20" HorizontalAlignment="Left"
+                          AutomationProperties.Name="Loading" />
+            <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="SummarizeOutput" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                           AutomationProperties.LiveSetting="Assertive" />
+            </ScrollViewer>
+        </StackPanel>
+
+        <!-- ═══ TONE SECTION ═══ -->
+        <StackPanel x:Name="ToneSection" Grid.Row="2" Spacing="8" Margin="0,0,0,16">
+            <TextBlock Text="🎨 TONE" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <ToggleSwitch x:Name="ToneToggle" OnContent="Professional" OffContent="Casual"
+                          AutomationProperties.AutomationId="ToneToggleSwitch" IsOn="True" />
+            <Button x:Name="RewriteButton" Content="Rewrite" Click="RewriteButton_Click"
+                    HorizontalAlignment="Stretch" />
+            <ProgressRing x:Name="ToneProgress" IsActive="False" Visibility="Collapsed"
+                          Width="20" Height="20" HorizontalAlignment="Left"
+                          AutomationProperties.Name="Loading" />
+            <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="ToneOutput" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                           AutomationProperties.LiveSetting="Assertive" />
+            </ScrollViewer>
+            <Button x:Name="ClarityRewriteButton"
+                    AutomationProperties.AutomationId="ClarityRewriteButton"
+                    Click="ClarityRewriteButton_Click"
+                    HorizontalAlignment="Stretch" />
+            <ProgressRing x:Name="ClarityProgress" IsActive="False" Visibility="Collapsed"
+                          Width="20" Height="20" HorizontalAlignment="Left"
+                          AutomationProperties.Name="Loading" />
+            <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                <TextBlock x:Name="ClarityOutput" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                           AutomationProperties.LiveSetting="Assertive" />
+            </ScrollViewer>
+        </StackPanel>
+
+        <!-- ═══ SEMANTIC SEARCH SECTION ═══ -->
+        <StackPanel x:Name="SemanticSection" Grid.Row="3" Spacing="8">
+            <TextBlock Text="🔎 SEMANTIC" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Grid x:Name="OcrDropHost">
+                <Border x:Name="OcrDropZone"
+                        AutomationProperties.AutomationId="OcrDropZone"
+                        AllowDrop="True"
+                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12"
+                        DragOver="OcrDropZone_DragOver"
+                        Drop="OcrDropZone_Drop">
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="OcrDropPromptText" FontWeight="SemiBold" />
+                        <TextBlock x:Name="OcrDropHintText"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+            <ProgressRing x:Name="OcrProgress" IsActive="False" Visibility="Collapsed"
+                          Width="20" Height="20" HorizontalAlignment="Left"
+                          AutomationProperties.Name="Loading" />
+            <AutoSuggestBox x:Name="SemanticSearchBox" PlaceholderText="Search across all tabs..."
+                            AutomationProperties.AutomationId="SemanticSearchBox"
+                            QuerySubmitted="SemanticSearchBox_QuerySubmitted" />
+            <ProgressRing x:Name="SearchProgress" IsActive="False" Visibility="Collapsed"
+                          Width="20" Height="20" HorizontalAlignment="Left"
+                          AutomationProperties.Name="Loading" />
+            <ListView x:Name="SearchResultsList" SelectionMode="Single"
+                      SelectionChanged="SearchResultsList_SelectionChanged"
+                      MaxHeight="300">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Spacing="2">
+                            <Border Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="999"
+                                    HorizontalAlignment="Left"
+                                    Padding="8,2">
+                                <TextBlock Text="{Binding TabName}"
+                                           FontSize="11"
+                                           Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                            </Border>
+                            <TextBlock Text="{Binding ChunkText}" TextTrimming="CharacterEllipsis"
+                                       MaxLines="2" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
+
+        <!-- ═══ HARDWARE BADGE ═══ -->
+        <Grid x:Name="HardwareBadgeHost" Grid.Row="4" HorizontalAlignment="Left">
+            <TextBlock x:Name="HardwareBadge"
+                       FontSize="11"
+                       Margin="0,12,0,0"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                       HorizontalAlignment="Left"
+                       Tapped="HardwareBadge_Tapped" />
+        </Grid>
+    </Grid>
+</UserControl>

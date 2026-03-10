@@ -111,6 +111,9 @@
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem x:Name="StatusBarToggle" x:Uid="StatusBarToggle" Text="Status Bar" IsChecked="True" Click="StatusBarToggle_Click"
                                              AutomationProperties.AutomationId="StatusBarToggle" />
+                        <MenuFlyoutSeparator />
+                        <ToggleMenuFlyoutItem x:Name="SmartSidebarToggle" x:Uid="SmartSidebarToggle" Text="✨ Smart Sidebar" Click="SmartSidebarToggle_Click"
+                                             AutomationProperties.AutomationId="SmartSidebarToggle" />
                     </MenuBarItem>
                     <MenuBarItem x:Uid="FormatMenu" Title="Format">
                         <MenuFlyoutItem x:Uid="FormatFontMenuItem" Text="Font..." Click="FormatFont_Click"
@@ -772,6 +775,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="VerticalRulerColumn" Width="0" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="SidebarColumn" Width="Auto" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition x:Name="HorizontalRulerRow" Height="0" />
@@ -806,6 +810,8 @@
                      IsAddTabButtonVisible="True"
                      AddTabButtonClick="DocumentTabs_AddTabButtonClick"
                      TabCloseRequested="DocumentTabs_TabCloseRequested"
+                      TabDroppedOutside="DocumentTabs_TabDroppedOutside"
+                      CanDragTabs="True"
                      SelectionChanged="DocumentTabs_SelectionChanged"
                      TabWidthMode="SizeToContent"
                      VerticalAlignment="Stretch"
@@ -814,7 +820,11 @@
 
             <!-- Backstage overlay -->
             <views:FileBackstageView x:Name="FileBackstage" Grid.Row="0" Grid.RowSpan="2"
-                                     Grid.Column="0" Grid.ColumnSpan="2" Visibility="Collapsed" />
+                                     Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed" />
+
+            <!-- Smart Sidebar (Pro only) -->
+            <ContentControl x:Name="SidebarHost" Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
+                            Visibility="Collapsed" />
         </Grid>
 
         <!-- ═══ STATUS BAR ═══ -->
@@ -836,18 +846,23 @@
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="CharCountText" Text="{x:Bind ViewModel.CharCountDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="CharCountText"
+                               AutomationProperties.LiveSetting="Polite"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="SelectionLengthText" Text="{x:Bind ViewModel.SelectionLengthDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="SelectionLengthText"
+                               AutomationProperties.LiveSetting="Polite"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="LineColText" Text="{x:Bind ViewModel.LineColDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="LineColText"
+                               AutomationProperties.LiveSetting="Polite"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="EncodingText" Text="{x:Bind ViewModel.EncodingDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="EncodingText"
+                               AutomationProperties.LiveSetting="Polite"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock x:Name="ZoomText" Text="{x:Bind ViewModel.ZoomDisplay, Mode=OneWay}" VerticalAlignment="Center" FontSize="11"
                                AutomationProperties.AutomationId="ZoomText"
+                               AutomationProperties.LiveSetting="Polite"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <Slider x:Name="ZoomSlider"
                             Minimum="10" Maximum="500" StepFrequency="10"
