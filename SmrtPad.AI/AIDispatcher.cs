@@ -1,3 +1,5 @@
+using SmrtPad.AI.Skills;
+
 namespace SmrtPad.AI;
 
 /// <summary>Abstraction for streaming text generation and embedding from a language model.</summary>
@@ -20,6 +22,7 @@ public sealed class AIDispatcher : IAsyncDisposable
     private readonly Func<AIExecutionTarget, Task<ILanguageModelAdapter>> _modelFactory;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private ILanguageModelAdapter? _model;
+    private SemanticSearchService? _semanticSearchService;
 
     /// <summary>The execution target selected after initialization.</summary>
     public AIExecutionTarget ExecutionTarget { get; private set; }
@@ -109,9 +112,45 @@ public sealed class AIDispatcher : IAsyncDisposable
         return await _model!.GenerateEmbeddingAsync(text, ct).ConfigureAwait(false);
     }
 
+    /// <summary>Indexes a document for semantic search. Auto-initializes if not yet done.</summary>
+    public async Task IndexDocumentAsync(int tabId, string documentText, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(documentText);
+
+        if (!IsInitialized)
+            await InitializeAsync(ct).ConfigureAwait(false);
+
+        _semanticSearchService ??= new SemanticSearchService(this);
+        await _semanticSearchService.IndexDocumentAsync(tabId, documentText, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Queries the semantic index. Auto-initializes if not yet done.</summary>
+    public async Task<IReadOnlyList<SearchResult>> QuerySemanticAsync(string queryText, int topK = 5, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(queryText);
+
+        if (!IsInitialized)
+            await InitializeAsync(ct).ConfigureAwait(false);
+
+        _semanticSearchService ??= new SemanticSearchService(this);
+        return await _semanticSearchService.QueryAsync(queryText, topK, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Removes semantic-search index entries for the given tab.</summary>
+    public void RemoveIndexedTab(int tabId)
+    {
+        _semanticSearchService?.RemoveTab(tabId);
+    }
+
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        if (_semanticSearchService is not null)
+        {
+            await _semanticSearchService.DisposeAsync().ConfigureAwait(false);
+            _semanticSearchService = null;
+        }
+
         if (_model is not null)
         {
             await _model.DisposeAsync().ConfigureAwait(false);
