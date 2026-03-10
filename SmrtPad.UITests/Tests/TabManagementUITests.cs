@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
@@ -47,18 +48,25 @@ namespace SmrtPad.UITests.Tests
             Thread.Sleep(500);
         }
 
+        private AppiumElement FindQuickAccessNewButton()
+        {
+            return _driver!.FindElement(MobileBy.AccessibilityId("QuickAccessNewButton"));
+        }
+
+        private System.Collections.ObjectModel.ReadOnlyCollection<AppiumElement> FindUntitledTabs()
+        {
+            var tabs = _driver!.FindElement(MobileBy.AccessibilityId("DocumentTabs"));
+            return tabs.FindElements(MobileBy.Name("Untitled"));
+        }
+
         /// <summary>
         /// Closes the currently active tab by clicking its Close button.
         /// </summary>
         private void CloseActiveTab()
         {
-            try
-            {
-                var closeBtn = _driver!.FindElement(MobileBy.Name("Close"));
-                closeBtn.Click();
-                Thread.Sleep(400);
-            }
-            catch { /* tab may have been already closed */ }
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "w");
+            Thread.Sleep(500);
         }
 
         // ── Create tab ───────────────────────────────────────────────────────
@@ -184,7 +192,7 @@ namespace SmrtPad.UITests.Tests
             Assert.Equal("Words: 2", secondTabWords);
 
             // Switch back to first tab by clicking it
-            var firstTab = _driver!.FindElement(MobileBy.Name("Untitled"));
+            var firstTab = FindUntitledTabs().First();
             firstTab.Click();
             Thread.Sleep(400);
 
@@ -258,7 +266,7 @@ namespace SmrtPad.UITests.Tests
             AddNewTab();
 
             // Find the tab with "Untitled" in its name
-            var untitledTab = _driver!.FindElement(MobileBy.Name("Untitled"));
+            var untitledTab = FindUntitledTabs().First();
             Assert.NotNull(untitledTab);
 
             // Clean up
@@ -338,7 +346,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
 
-            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            var newBtn = FindQuickAccessNewButton();
             newBtn.Click();
             Thread.Sleep(500);
 
@@ -363,18 +371,16 @@ namespace SmrtPad.UITests.Tests
             Thread.Sleep(200);
 
             // Count tabs before clicking New
-            var tabsBefore = _driver!.FindElements(MobileBy.Name("Untitled"));
-            int countBefore = tabsBefore.Count;
+            int countBefore = FindUntitledTabs().Count;
 
             // Click the New button (quick-access toolbar)
-            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            var newBtn = FindQuickAccessNewButton();
             newBtn.Click();
             Thread.Sleep(500);
 
             // A new Untitled tab should be created
-            var tabsAfter = _driver!.FindElements(MobileBy.Name("Untitled"));
-            Assert.True(tabsAfter.Count > countBefore,
-                "Clicking New should create a new Untitled tab");
+            int countAfter = FindUntitledTabs().Count;
+            Assert.Equal(countBefore + 1, countAfter);
 
             // Clean up: close the new tab
             CloseActiveTab();
@@ -395,7 +401,7 @@ namespace SmrtPad.UITests.Tests
             Thread.Sleep(200);
 
             // Click New — should not block or show a dialog
-            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            var newBtn = FindQuickAccessNewButton();
             newBtn.Click();
             Thread.Sleep(500);
 
@@ -479,7 +485,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
 
             // Click New
-            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            var newBtn = FindQuickAccessNewButton();
             newBtn.Click();
             Thread.Sleep(500);
 

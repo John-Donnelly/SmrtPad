@@ -44,6 +44,17 @@ namespace SmrtPad.UITests.Tests
             _fx.EnsureBackstageClosed();
         }
 
+        private AppiumElement FindBackstageNavItem(string automationId)
+        {
+            return _driver!.FindElement(MobileBy.AccessibilityId(automationId));
+        }
+
+        private void ClickBackstageNavItem(string automationId)
+        {
+            FindBackstageNavItem(automationId).Click();
+            Thread.Sleep(500);
+        }
+
         // ── Backstage opens ──────────────────────────────────────────────────
 
         /// <summary>
@@ -56,7 +67,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var newItem = _driver!.FindElement(MobileBy.Name("New"));
+            var newItem = FindBackstageNavItem("BackstageNewNavItem");
             Assert.NotNull(newItem);
 
             CloseBackstage();
@@ -71,7 +82,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Page setup"));
+            var item = FindBackstageNavItem("BackstagePageSetupNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -88,7 +99,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Templates"));
+            var item = FindBackstageNavItem("BackstageTemplatesNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -103,7 +114,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Open"));
+            var item = FindBackstageNavItem("BackstageOpenNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -118,8 +129,8 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var items = _driver!.FindElements(MobileBy.Name("Save"));
-            Assert.NotEmpty(items);
+            var item = FindBackstageNavItem("BackstageSaveNavItem");
+            Assert.NotNull(item);
 
             CloseBackstage();
         }
@@ -133,7 +144,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Save as"));
+            var item = FindBackstageNavItem("BackstageSaveAsNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -148,7 +159,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Print"));
+            var item = FindBackstageNavItem("BackstagePrintNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -163,7 +174,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Export to PDF"));
+            var item = FindBackstageNavItem("BackstageExportPdfNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -178,7 +189,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Export to DOCX"));
+            var item = FindBackstageNavItem("BackstageExportDocxNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -193,7 +204,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Save to OneDrive"));
+            var item = FindBackstageNavItem("BackstageOneDriveNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -208,7 +219,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Options"));
+            var item = FindBackstageNavItem("BackstageOptionsNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -223,7 +234,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = _driver!.FindElement(MobileBy.Name("Exit"));
+            var item = FindBackstageNavItem("BackstageExitNavItem");
             Assert.NotNull(item);
 
             CloseBackstage();
@@ -240,12 +251,11 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Templates")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageTemplatesNavItem");
 
             // The template picker should contain at least one template card
             // Templates include: "Blank Document", "Business Letter", etc.
-            var templateBtn = _driver!.FindElement(MobileBy.Name("Blank Document"));
+            var templateBtn = _driver!.FindElement(MobileBy.AccessibilityId("Template_blank"));
             Assert.NotNull(templateBtn);
 
             CloseBackstage();
@@ -262,8 +272,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Open")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageOpenNavItem");
 
             // The header should change to reflect the Open section
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
@@ -285,7 +294,7 @@ namespace SmrtPad.UITests.Tests
             OpenBackstage();
 
             // Verify backstage is open
-            var newItem = _driver!.FindElement(MobileBy.Name("New"));
+            var newItem = FindBackstageNavItem("BackstageNewNavItem");
             Assert.NotNull(newItem);
 
             // Press Escape to close
@@ -308,21 +317,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var saveItems = _driver!.FindElements(MobileBy.Name("Save"));
-            // Click the nav item (not the quick-access button)
-            foreach (var item in saveItems)
-            {
-                try
-                {
-                    if (item.Displayed)
-                    {
-                        item.Click();
-                        break;
-                    }
-                }
-                catch { }
-            }
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageSaveNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -341,8 +336,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Save as")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageSaveAsNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -361,8 +355,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Print")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstagePrintNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -381,8 +374,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Export to PDF")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageExportPdfNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -401,8 +393,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Export to DOCX")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageExportDocxNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -421,8 +412,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Save to OneDrive")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageOneDriveNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -441,8 +431,7 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Options")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageOptionsNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(headerText);
@@ -462,11 +451,10 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("Templates")).Click();
-            Thread.Sleep(500);
+            ClickBackstageNavItem("BackstageTemplatesNavItem");
 
             // At minimum, "Blank Document" should be present
-            var blankDoc = _driver!.FindElement(MobileBy.Name("Blank Document"));
+            var blankDoc = _driver!.FindElement(MobileBy.AccessibilityId("Template_blank"));
             Assert.NotNull(blankDoc);
 
             CloseBackstage();
@@ -491,8 +479,8 @@ namespace SmrtPad.UITests.Tests
 
             OpenBackstage();
 
-            _driver!.FindElement(MobileBy.Name("New")).Click();
-            Thread.Sleep(1000);
+            ClickBackstageNavItem("BackstageNewNavItem");
+            Thread.Sleep(500);
 
             // Backstage may still be open after "New" — close if so
             _fx.EnsureBackstageClosed();
@@ -524,20 +512,17 @@ namespace SmrtPad.UITests.Tests
             OpenBackstage();
 
             // Navigate to Open
-            _driver!.FindElement(MobileBy.Name("Open")).Click();
-            Thread.Sleep(400);
+            ClickBackstageNavItem("BackstageOpenNavItem");
             var header1 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(header1);
 
             // Navigate to Print
-            _driver!.FindElement(MobileBy.Name("Print")).Click();
-            Thread.Sleep(400);
+            ClickBackstageNavItem("BackstagePrintNavItem");
             var header2 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(header2);
 
             // Navigate to Options
-            _driver!.FindElement(MobileBy.Name("Options")).Click();
-            Thread.Sleep(400);
+            ClickBackstageNavItem("BackstageOptionsNavItem");
             var header3 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             Assert.NotNull(header3);
 
@@ -558,16 +543,14 @@ namespace SmrtPad.UITests.Tests
             OpenBackstage();
 
             // Navigate to Templates first so we can verify the pane shows
-            _driver!.FindElement(MobileBy.Name("Templates")).Click();
-            Thread.Sleep(400);
+            ClickBackstageNavItem("BackstageTemplatesNavItem");
 
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             string headerValue = headerText.Text;
             Assert.Equal("Templates", headerValue);
 
             // Now navigate to Options
-            _driver!.FindElement(MobileBy.Name("Options")).Click();
-            Thread.Sleep(400);
+            ClickBackstageNavItem("BackstageOptionsNavItem");
 
             headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
             headerValue = headerText.Text;
@@ -587,8 +570,7 @@ namespace SmrtPad.UITests.Tests
             OpenBackstage();
 
             // First navigate to Templates so Exit isn't the initial selection
-            _driver!.FindElement(MobileBy.Name("Templates")).Click();
-            Thread.Sleep(400);
+            ClickBackstageNavItem("BackstageTemplatesNavItem");
 
             // The header should be visible and show Exit info
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
@@ -608,8 +590,7 @@ namespace SmrtPad.UITests.Tests
             OpenBackstage();
 
             // First go to Templates, then to Open
-            _driver!.FindElement(MobileBy.Name("Templates")).Click();
-            Thread.Sleep(300);
+            ClickBackstageNavItem("BackstageTemplatesNavItem");
 
             // The header should reflect Open section
             var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));

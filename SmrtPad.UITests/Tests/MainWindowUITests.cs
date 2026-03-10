@@ -413,13 +413,13 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
 
-            var fileBtn = _driver!.FindElement(MobileBy.Name("File"));
+            var fileBtn = _driver!.FindElement(MobileBy.AccessibilityId("FileMenuButton"));
             fileBtn.Click();
             System.Threading.Thread.Sleep(1000);
 
             // The backstage NavigationView contains a "New" item; its presence
             // confirms the backstage overlay opened successfully.
-            var newItem = _driver!.FindElement(MobileBy.Name("New"));
+            var newItem = _driver!.FindElement(MobileBy.AccessibilityId("BackstageNewNavItem"));
             Assert.NotNull(newItem);
         }
     }

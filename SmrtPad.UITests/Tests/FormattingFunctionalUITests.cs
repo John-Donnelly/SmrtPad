@@ -746,7 +746,7 @@ namespace SmrtPad.UITests.Tests
             Assert.True(_fx.IsToggleChecked("ItalicToggle"));
 
             _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.Name("Clear Formatting")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("ClearFormattingButton")).Click();
             Thread.Sleep(300);
 
             _fx.SelectAllInEditor();
@@ -775,7 +775,7 @@ namespace SmrtPad.UITests.Tests
             Assert.True(_fx.IsToggleChecked("UnderlineToggle"));
 
             _fx.SelectAllInEditor();
-            _driver!.FindElement(MobileBy.Name("Clear Formatting")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("ClearFormattingButton")).Click();
             Thread.Sleep(300);
 
             _fx.SelectAllInEditor();
