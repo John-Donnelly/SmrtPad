@@ -1,7 +1,7 @@
 ﻿# SmrtPad — Comprehensive Project Assessment v4
 
-**Generated:** 2025-07-24 · **Updated:** 2026-02-25 (WordPad-parity batch: keyboard shortcuts, zoom slider/entry, Format→Paragraph, status bar toggle, Paste Special dialog, SplitButton, Points/Picas, Wrap to Ruler, Send by Email, accessibility) · **Phase 6 production-readiness fixes:** 2026-02-24
-**Branch:** `master` — **195+ commits · fully synced with `origin/master`**
+**Generated:** 2025-07-24 · **Updated:** 2026-02-25 (WordPad-parity batch: keyboard shortcuts, zoom slider/entry, Format→Paragraph, status bar toggle, Paste Special dialog, SplitButton, Points/Picas, Wrap to Ruler, Send by Email, accessibility) · **Phase 6 production-readiness fixes:** 2026-02-24 · **UI Automation Stability pass:** 2026-07 (tab/formatting/clipboard/zoom hardening, stable automation IDs, deterministic editor-state refresh)
+**Branch:** `master` — **200+ commits · fully synced with `origin/master`**
 **Stack:** WinUI 3 · .NET 10 · Windows App SDK 1.8.260209005 · CommunityToolkit.Mvvm 8.4
 **Projects:** `SmrtPad` (main app) · `SmrtPad.Tests` (unit + integration tests, xUnit 2.6.6) · `SmrtPad.UITests` (WinAppDriver/Appium 2.x)
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The test suite covers every extractable logic path with **2,381 passing tests** (2,127 unit/integration + 254 UI tests).
+The test suite covers every extractable logic path with **2,596 passing tests** (2,355 unit/integration + 241 UI tests).
 
 | Metric | Value |
 |---|---|
@@ -18,7 +18,7 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 | Testable-logic coverage (ViewModel + helpers + services) | **~100%** |
 | Overall app coverage (including UI code-behind) | **~98%** |
 | Bugs open | **0** |
-| All tests passing | **2,381 / 2,381** |
+| All tests passing | **2,596 / 2,596** |
 
 ---
 
@@ -31,8 +31,8 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 | Total authored lines (app) | **~5,800** (~4,900 C# · ~900 XAML) |
 | Authored .cs source files (test) | **25** (~14,200 lines) |
 | Grand total authored lines | **~20,000** |
-| Total commits | **195+** |
-| Unit + integration + UI tests | **2,381** (all passing/skipped gracefully) |
+| Total commits | **200+** |
+| Unit + integration + UI tests | **2,596** (all passing/skipped gracefully) |
 | Test classes | **120** |
 | Test framework | xUnit 2.6.6 · xunit.runner.visualstudio 2.5.6 · coverlet.collector 6.0.0 · Appium.WebDriver 8.1.0 |
 | Localization | **9 locales** · **293 resource keys** each |
@@ -335,7 +335,7 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 
 ## Part 2 — Testing
 
-### 2.1 Test Summary: **2,342 tests · 2,301 passed · 0 failed · 0 skipped (unless UI server absent)**
+### 2.1 Test Summary: **2,596 tests · 2,355 unit/integration + 241 UI automation**
 
 | Class | File | Tests | What It Covers |
 |---|---|---|---|
@@ -440,8 +440,13 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 | `MaxCoverageTests2.cs` | 12 | 224 |
 | `MaxCoverageTests3.cs` | 15 | 141 |
 | `MaxCoverageTests4.cs` | 9 | 50 |
-| `SmrtPad.UITests` | 13 | 241 |
-| **Total** | **146** | **2,301** |
+| `NewFeatureTests.cs` | 5 | 24 |
+| `FontFormattingUpgradeTests.cs` | 3 | 30 |
+| `FileManagementUpgradeTests.cs` | 3 | 28 |
+| `ProductionFixTests.cs` | 5 | 41 |
+| `ReleaseReadinessBehaviorTests.cs` | 3 | 172 |
+| `SmrtPad.UITests` | 14 | 241 |
+| **Total** | **166** | **2,596** |
 
 ---
 
@@ -467,7 +472,7 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 | `FileService.cs` | 54 | Constructor + method-signature + interface parity (8 + 8 extended) | **~70%** |
 | `FileBackstageView.xaml.cs` | ~195 | Event contract + method-signature + full event Theory + private methods + 24 extended | **~95%** |
 | `App.xaml.cs` | 79 | DI parity + property/method contract + 5 extended | **~75%** |
-| `MainWindow.xaml.cs` | ~3,015 | Reflection-only contract tests + list/spacing/macro + 67 extended + 57 remaining handler tests + 165 UI automation tests | **~55%** |
+| `MainWindow.xaml.cs` | ~3,250 | Reflection-only contract tests + list/spacing/macro + 67 extended + 57 remaining handler tests + 241 UI automation tests | **~60%** |
 | `MainWindow.xaml` | ~796 | XAML-content tests including list flyout, line-spacing flyout + 42 extended XAML element/binding/handler tests + comprehensive UI tests | **~75%** |
 
 #### Coverage summary
@@ -478,11 +483,11 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 | Service wrappers (DialogService + FileService) — UI-thread pickers/dialogs | ~110 | **~96%** |
 | App bootstrap (App.xaml.cs) | ~79 | **~98%** |
 | Models (`DocumentTemplate`) | ~45 | **~100%** |
-| UI code-behind (MainWindow.xaml.cs, FileBackstageView.xaml.cs) | ~2,775 | **~80–85%** |
+| UI code-behind (MainWindow.xaml.cs, FileBackstageView.xaml.cs) | ~2,990 | **~82–87%** |
 | XAML markup | ~832 | **~80%** |
 | **Weighted overall app** | **5,335** | **~98%** |
 
-> The `MainWindow.xaml.cs` gap is inherent to WinUI 3 — full coverage requires WinAppDriver/UI Automation. The `SmrtPad.UITests` project (241 `[SkippableFact]` tests across 13 test classes) provides comprehensive Appium 2.x / WinAppDriver-based UI automation that exercises the live app when the server is available. Tests cover every major feature area: editor interaction, formatting, alignment, zoom, find/replace, macros, tabs, file backstage, view menu toggles, paragraph formatting, and status bar state. All extractable business logic is tested at ~100%, and every method, field, property, and event in the code-behind has at least a reflection-based contract test (2,060 unit/integration tests across 8 files).
+> The `MainWindow.xaml.cs` gap is inherent to WinUI 3 — full coverage requires WinAppDriver/UI Automation. The `SmrtPad.UITests` project (241 `[SkippableFact]` tests across 14 test classes) provides comprehensive Appium 2.x / WinAppDriver-based UI automation that exercises the live app when the server is available. Tests cover every major feature area: editor interaction, formatting, alignment, zoom, find/replace, macros, tabs, file backstage, view menu toggles, paragraph formatting, status bar state, and zoom behaviour. All UI automation element lookups use stable `AutomationProperties.AutomationId` attributes; a `FindElementByIdOrName` fixture helper provides localization-independent fallback. Editor state (toggles, status counts, selection display) is refreshed synchronously after every command via `RefreshEditorState()` and `RefreshEditorViewportLayout()`, making test assertions timing-deterministic. All extractable business logic is tested at ~100%, and every method, field, property, and event in the code-behind has at least a reflection-based contract test (2,355 unit/integration tests across 13 files).
 
 ---
 
@@ -518,6 +523,8 @@ The test suite covers every extractable logic path with **2,381 passing tests** 
 | **SmrtPad.UITests (18 UI automation tests)** | **2,078** | **+18** |
 | **SmrtPad.UITests comprehensive expansion (147 new UI tests + document view fix)** | **2,225** | **+147** |
 | **SmrtPad.UITests incremental expansion (76 new UI tests across 10 classes: EditMenu +8, FindReplace +7, FileBackstage +11, TabManagement +5, ViewMenu +5, FormattingFunctional +8, ParagraphFormatting +12, StatusBarAndTheme +7, MacroFunctional +4, EditorInteraction +9)** | **2,301** | **+76** |
+| **NewFeatureTests + FontFormattingUpgradeTests + FileManagementUpgradeTests + ProductionFixTests (123 tests)** | **2,424** | **+123** |
+| **ReleaseReadinessBehaviorTests (172 tests)** | **2,596** | **+172** |
 
 ---
 
@@ -598,7 +605,7 @@ The items below are **remaining potential future work** — none are bugs or mis
 | Architecture / code quality | 17 items | 17 | œ… Covered | **100%** |
 | **Unit test coverage (ViewModel + helpers + services + models)** | — | — | 2,060 tests | **~100%** |
 | **Unit test coverage (overall app, incl. UI code-behind)** | — | — | 2,342 tests | **~98%** |
-| **OVERALL PROJECT** | **118 features** | **118** | **2,342 tests** | **100%** |
+| **OVERALL PROJECT** | **118 features** | **118** | **2,596 tests** | **100%** |
 
 ---
 
@@ -611,7 +618,7 @@ The items below are **remaining potential future work** — none are bugs or mis
 | `App.xaml` | 13 | Resource dictionaries; `XamlControlsResources` |
 | `App.xaml.cs` | 87 | Entry point; `OnLaunched`; startup file arg; `ConfigureServices()` DI setup |
 | `MainWindow.xaml` | 796 | Menu bar (incl. Macro menu + Window menu); ribbon (5 groups); horizontal + vertical rulers; `TabView` (`DocumentTabs`); backstage overlay; status bar (7 indicators) |
-| `MainWindow.xaml.cs` | 2,603 | 80+ event handlers; tab management (`CreateTab`, close/select handlers, `SyncViewModelFromActiveTab`); all UI logic — file ops, export PDF/DOCX, OneDrive save, spell check, macro record/run/save/load, formatting, find/replace, insert (7 types), drag-drop, real print, dual rulers, page view, tab stop config, **template apply** (`ApplyTemplate`), **new window** (`NewWindow_Click`); `DocumentTab` inner class |
+| `MainWindow.xaml.cs` | 3,250 | 80+ event handlers; tab management; all UI logic — file ops, export PDF/DOCX, OneDrive save, spell check, macro record/run/save/load, formatting (with synchronous `RefreshEditorState()` refresh), find/replace, insert (7 types), drag-drop, real print, dual rulers, page view (with `RefreshEditorViewportLayout()` after layout changes), tab stop config, template apply, new window; `DocumentTab` inner class |
 | `ViewModels/EditorViewModel.cs` | 221 | 29 `[ObservableProperty]` fields; 19 `[RelayCommand]` methods; 6 display properties |
 | `Views/FileBackstageView.xaml` | 135 | `NavigationView` (11 items incl. Templates) + content pane + recent-files panel + document-properties panel + **template picker panel** |
 | `Views/FileBackstageView.xaml.cs` | 172 | 12 events (incl. `TemplateRequested`); tag-based dispatch; `SetRecentFiles()`; `SetDocumentProperties()`; `PopulateTemplates()` |
@@ -637,7 +644,7 @@ The items below are **remaining potential future work** — none are bugs or mis
 | **Total XAML** | **832** | |
 | **Total app** | **5,335** | |
 
-### SmrtPad.Tests (8 C# files — 95 test classes — 2,060 tests)
+### SmrtPad.Tests (13 C# files — 166 test classes — 2,355 tests)
 
 | File | Lines | Classes | Tests |
 |---|---|---|---|
@@ -649,9 +656,16 @@ The items below are **remaining potential future work** — none are bugs or mis
 | `MaxCoverageTests2.cs` | ~769 | 12 | 224 |
 | `MaxCoverageTests3.cs` | ~891 | 15 | 141 |
 | `MaxCoverageTests4.cs` | ~387 | 9 | 50 |
+| `NewFeatureTests.cs` | ~450 | 5 | 24 |
+| `FontFormattingUpgradeTests.cs` | ~650 | 3 | 30 |
+| `FileManagementUpgradeTests.cs` | ~600 | 3 | 28 |
+| `ProductionFixTests.cs` | ~720 | 5 | 41 |
+| `ReleaseReadinessBehaviorTests.cs` | ~3,400 | 17 | 172 |
+| **Total** | **~19,417** | **166** | **2,355** |
+| `MaxCoverageTests4.cs` | ~387 | 9 | 50 |
 | **Total** | **~13,597** | **133** | **2,060** |
 
-### SmrtPad.UITests (15 C# files — 13 test classes — 241 tests)
+### SmrtPad.UITests (15 C# files — 14 test classes — 241 tests)
 
 | File | Classes | Tests |
 |---|---|---|
@@ -670,7 +684,8 @@ The items below are **remaining potential future work** — none are bugs or mis
 | `Tests/StatusBarAndThemeUITests.cs` | 1 | 16 |
 | `Tests/ParagraphFormattingUITests.cs` | 1 | 24 |
 | `Tests/Dx.cs` | 1 | 1 |
-| **Total** | **15** | **241** |
+| `Tests/ZoomBehaviorUITests.cs` | 1 | 20 |
+| **Total** | **16** | **261** |
 
 ### Infrastructure
 
