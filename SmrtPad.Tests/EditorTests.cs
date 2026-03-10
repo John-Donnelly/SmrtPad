@@ -1385,6 +1385,43 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
+        public void Load_NullRecentFiles_UsesEmptyList()
+        {
+            string path = Path.Combine(_testDir, "settings.json");
+            File.WriteAllText(path, """{"RecentFiles":null}""");
+
+            var svc = new SettingsService(path);
+
+            Assert.Empty(svc.RecentFiles);
+        }
+
+        [Fact]
+        public void Load_NullDefaultFontFamily_UsesDefaultValue()
+        {
+            string path = Path.Combine(_testDir, "settings.json");
+            File.WriteAllText(path, """{"DefaultFontFamily":null}""");
+
+            var svc = new SettingsService(path);
+
+            Assert.Equal("Segoe UI", svc.DefaultFontFamily);
+        }
+
+        [Fact]
+        public void Save_NullThemePreference_PersistsDefaultValue()
+        {
+            string path = Path.Combine(_testDir, "settings.json");
+            var svc = new SettingsService(path)
+            {
+                ThemePreference = null!
+            };
+
+            svc.Save();
+
+            var reloaded = new SettingsService(path);
+            Assert.Equal("System", reloaded.ThemePreference);
+        }
+
+        [Fact]
         public void AddRecentFile_AutoSavesImmediately()
         {
             string path = Path.Combine(_testDir, "settings.json");

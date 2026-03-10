@@ -51,6 +51,22 @@ namespace SmrtPad.Tests
         }
 
         [Fact]
+        public void ToPlainText_DivBlocks_PreserveParagraphBreaks()
+        {
+            string text = HtmlConverterHelper.ToPlainText("<div>First</div><div>Second</div>");
+
+            Assert.Contains($"First{Environment.NewLine}{Environment.NewLine}Second", text);
+        }
+
+        [Fact]
+        public void ToPlainText_TableRows_PreserveParagraphBreaks()
+        {
+            string text = HtmlConverterHelper.ToPlainText("<table><tr><td>Row 1</td></tr><tr><td>Row 2</td></tr></table>");
+
+            Assert.Contains($"Row 1{Environment.NewLine}{Environment.NewLine}Row 2", text);
+        }
+
+        [Fact]
         public void ToPlainText_HtmlEntities_AreDecoded()
         {
             string text = HtmlConverterHelper.ToPlainText("<p>&amp; &lt; &gt; &quot;</p>");

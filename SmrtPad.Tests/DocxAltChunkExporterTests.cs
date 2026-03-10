@@ -171,6 +171,30 @@ namespace SmrtPad.Tests
             Assert.Contains("Bold Text", content);
         }
 
+        [Theory]
+        [InlineData(@"{\rtf1\ansi\pard Café\par}", @"Caf\u233?")]
+        [InlineData(@"{\rtf1\ansi\pard 漢字\par}", @"\u28450?\u23383?")]
+        public void ExportToDocx_RawUnicodeRtf_AltChunkPreservesCharacters(string rtf, string expectedFragment)
+        {
+            using var ms = new MemoryStream();
+            DocxAltChunkExporter.ExportToDocx(rtf, ms);
+            ms.Position = 0;
+
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var altChunkEntry = zip.Entries.FirstOrDefault(e =>
+                e.FullName.StartsWith("word/", StringComparison.OrdinalIgnoreCase) &&
+                !e.FullName.EndsWith("document.xml", StringComparison.OrdinalIgnoreCase) &&
+                !e.FullName.Contains("_rels", StringComparison.OrdinalIgnoreCase) &&
+                !e.FullName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(altChunkEntry);
+
+            using var partStream = altChunkEntry.Open();
+            using var reader = new StreamReader(partStream);
+            string content = reader.ReadToEnd();
+
+            Assert.Contains(expectedFragment, content);
+        }
+
         [Fact]
         public void ExportToDocx_ContentTypesIncludesRtfMimeType()
         {
