@@ -70,7 +70,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
    ```
    git clone https://github.com/John-Donnelly/SmrtPad.git
    ```
-2. Open `SmrtPad.slnx` in Visual Studio 2022 or later.
+2. Open `SmrtPad.slnx` in Visual Studio 2022 or later (Visual Studio 2026 also supported).
 3. Set the platform to **x64** (or ARM64).
 4. Build and run the **SmrtPad (Package)** project for a fully packaged experience, or the **SmrtPad** project for unpackaged debug.
 
@@ -80,7 +80,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite has **2,370+ tests** (2,100+ unit/integration + 241 UI automation across 13 classes) covering:
+The test suite has **2,600+ tests** (2,355+ unit/integration + 241 UI automation across 14 classes) covering:
 - ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
 - Alignment, list type, and line spacing for all defined values
@@ -96,7 +96,8 @@ The test suite has **2,370+ tests** (2,100+ unit/integration + 241 UI automation
 - Macro recording and playback
 - Settings persistence, concurrency, recent-files MRU, and page setup round-trip
 - Localization — all 9 locales, all 255 resource keys present and non-empty
-- UI automation (WinAppDriver/Appium 2.x) — editor interaction, formatting, tabs, find/replace, file backstage, macros, view menu, paragraph formatting, status bar
+- UI automation (WinAppDriver/Appium 2.x) — editor interaction, formatting, tabs, find/replace, file backstage, macros, view menu, paragraph formatting, status bar, zoom behaviour
+- Stable automation IDs on all ribbon toggles, menu items, and quick-access buttons for deterministic UI test addressing
 
 ## Project Structure
 
@@ -122,17 +123,22 @@ SmrtPad/
 │   └── App.xaml.cs          # Entry point, DI container, multi-window factory
 ├── SmrtPad (Package)/       # MSIX packaging project
 ├── SmrtPad.Tests/
-│   ├── EditorTests.cs           # ViewModel unit tests
-│   ├── IntegrationTests.cs      # Helper + service integration tests
-│   ├── LocalizationTests.cs     # Locale completeness tests
+│   ├── EditorTests.cs               # ViewModel unit tests
+│   ├── IntegrationTests.cs          # Helper + service integration tests
+│   ├── LocalizationTests.cs         # Locale completeness tests
 │   ├── CoverageCompletionTests.cs
 │   ├── MaxCoverageTests.cs
 │   ├── MaxCoverageTests2.cs
 │   ├── MaxCoverageTests3.cs
-│   └── MaxCoverageTests4.cs
+│   ├── MaxCoverageTests4.cs
+│   ├── NewFeatureTests.cs
+│   ├── FontFormattingUpgradeTests.cs
+│   ├── FileManagementUpgradeTests.cs
+│   ├── ProductionFixTests.cs
+│   └── ReleaseReadinessBehaviorTests.cs
 ├── SmrtPad.UITests/
 │   ├── Infrastructure/          # AppiumSession, SharedAppFixture
-│   └── Tests/                   # 13 WinAppDriver/Appium 2.x test classes (241 tests)
+│   └── Tests/                   # 14 WinAppDriver/Appium 2.x test classes (241 tests)
 ├── README.md
 └── CHANGELOG.md
 ```
