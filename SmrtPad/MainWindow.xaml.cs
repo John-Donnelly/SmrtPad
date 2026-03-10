@@ -1944,21 +1944,25 @@ namespace SmrtPad
         private void Cut_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Selection.Cut();
+            RefreshEditorState();
         }
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Selection.Copy();
+            RefreshEditorState();
         }
 
         private void Paste_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Selection.Paste(0);
+            RefreshEditorState();
         }
 
         private void PasteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
         {
             Editor.Document.Selection.Paste(0);
+            RefreshEditorState();
         }
 
         private async void PastePlain_Click(object sender, RoutedEventArgs e)
@@ -1978,6 +1982,7 @@ namespace SmrtPad
             {
                 string text = await dataView.GetTextAsync();
                 Editor.Document.Selection.Text = text;
+                RefreshEditorState();
             }
             catch (Exception ex)
             {
@@ -1993,6 +1998,7 @@ namespace SmrtPad
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
                 charFormatting.Bold = FormatEffect.Toggle;
                 selectedText.CharacterFormat = charFormatting;
+                RefreshFormattingState();
             }
             _macro.Record(MacroCommandType.Bold);
         }
@@ -2005,6 +2011,7 @@ namespace SmrtPad
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
                 charFormatting.Italic = FormatEffect.Toggle;
                 selectedText.CharacterFormat = charFormatting;
+                RefreshFormattingState();
             }
             _macro.Record(MacroCommandType.Italic);
         }
@@ -2024,6 +2031,7 @@ namespace SmrtPad
                     charFormatting.Underline = UnderlineType.None;
                 }
                 selectedText.CharacterFormat = charFormatting;
+                RefreshFormattingState();
             }
             _macro.Record(MacroCommandType.Underline);
         }
@@ -2043,6 +2051,7 @@ namespace SmrtPad
                     charFormatting.Strikethrough = FormatEffect.On;
                 }
                 selectedText.CharacterFormat = charFormatting;
+                RefreshFormattingState();
             }
             _macro.Record(MacroCommandType.Strikethrough);
         }
@@ -2061,6 +2070,7 @@ namespace SmrtPad
                     SuperscriptToggle.IsChecked = false;
                 }
                 selectedText.CharacterFormat = charFormatting;
+                RefreshFormattingState();
             }
             _macro.Record(MacroCommandType.Subscript);
         }
@@ -2079,8 +2089,22 @@ namespace SmrtPad
                     SubscriptToggle.IsChecked = false;
                 }
                 selectedText.CharacterFormat = charFormatting;
+                RefreshFormattingState();
             }
             _macro.Record(MacroCommandType.Superscript);
+        }
+
+        private void RefreshFormattingState()
+        {
+            RefreshEditorState();
+        }
+
+        private void RefreshEditorState()
+        {
+            Editor.Focus(FocusState.Programmatic);
+            UpdateSelectionLength();
+            UpdateStatusBarCounts();
+            Editor_SelectionChanged(Editor, new RoutedEventArgs());
         }
 
         private void NewWindow_Click(object _sender, RoutedEventArgs _e)
@@ -2098,6 +2122,7 @@ namespace SmrtPad
         private void SelectAll_Click(object sender, RoutedEventArgs e)
         {
             Editor.Document.Selection.Expand(TextRangeUnit.Story);
+            RefreshEditorState();
         }
 
         private void ZoomIn_Click(object sender, RoutedEventArgs e)
@@ -2168,6 +2193,15 @@ namespace SmrtPad
 
             if (_rulersVisible)
                 RedrawRulers();
+
+            if (_pageViewActive)
+            {
+                ApplyPageViewLayout();
+            }
+            else
+            {
+                RefreshEditorViewportLayout();
+            }
         }
 
         private void EditorScrollViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
@@ -2975,6 +3009,17 @@ namespace SmrtPad
                 Editor.MaxWidth = double.PositiveInfinity;
                 Editor.Margin = new Thickness(0);
             }
+
+            RefreshEditorViewportLayout();
+        }
+
+        private void RefreshEditorViewportLayout()
+        {
+            DocumentTabs.UpdateLayout();
+            EditorScrollViewer.UpdateLayout();
+            EditorContainer.UpdateLayout();
+            PageViewBorder.UpdateLayout();
+            Editor.UpdateLayout();
         }
 
         private void GrowFont_Click(object sender, RoutedEventArgs e)
@@ -3194,6 +3239,7 @@ namespace SmrtPad
                     string text = await dataView.GetTextAsync();
                     Editor.Document.Selection.Text = text;
                 }
+                RefreshEditorState();
                 ViewModel.UpdateStatus(Res.GetString("StatusPastedSpecial"));
             }
             catch (Exception ex)
@@ -3229,6 +3275,7 @@ namespace SmrtPad
                 paraFormatting.SpaceAfter = 0;
                 selectedText.ParagraphFormat = paraFormatting;
 
+                RefreshFormattingState();
                 ViewModel.UpdateStatus(Res.GetString("StatusFormattingCleared"));
             }
             _macro.Record(MacroCommandType.ClearFormatting);
