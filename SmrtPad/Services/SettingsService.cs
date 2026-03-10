@@ -165,10 +165,15 @@ namespace SmrtPad.Services
         {
             try
             {
+                _data = Normalize(_data);
                 var json = JsonSerializer.Serialize(_data, s_jsonOpts);
                 File.WriteAllText(_settingsFilePath, json);
             }
-            catch (Exception ex)
+            catch (IOException ex)
+            {
+                Debug.WriteLine($"SettingsService.Save failed: {ex.Message}");
+            }
+            catch (UnauthorizedAccessException ex)
             {
                 Debug.WriteLine($"SettingsService.Save failed: {ex.Message}");
             }
@@ -181,7 +186,7 @@ namespace SmrtPad.Services
                 if (File.Exists(_settingsFilePath))
                 {
                     var json = File.ReadAllText(_settingsFilePath);
-                    _data = JsonSerializer.Deserialize<SettingsData>(json) ?? new SettingsData();
+                    _data = Normalize(JsonSerializer.Deserialize<SettingsData>(json));
 
                     var validPaths = _data.RecentFiles
                         .Where(static path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
@@ -197,11 +202,44 @@ namespace SmrtPad.Services
                     }
                 }
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
                 Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
                 _data = new SettingsData();
             }
+            catch (IOException ex)
+            {
+                Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
+                _data = new SettingsData();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
+                _data = new SettingsData();
+            }
+        }
+
+        private static SettingsData Normalize(SettingsData? data)
+        {
+            var defaults = new SettingsData();
+            var normalized = data ?? new SettingsData();
+
+            normalized.DefaultFontFamily = GetValueOrDefault(normalized.DefaultFontFamily, defaults.DefaultFontFamily);
+            normalized.DefaultSaveFormat = GetValueOrDefault(normalized.DefaultSaveFormat, defaults.DefaultSaveFormat);
+            normalized.ThemePreference = GetValueOrDefault(normalized.ThemePreference, defaults.ThemePreference);
+            normalized.Language = GetValueOrDefault(normalized.Language, defaults.Language);
+            normalized.RulerUnits = GetValueOrDefault(normalized.RulerUnits, defaults.RulerUnits);
+            normalized.PagePaperSize = GetValueOrDefault(normalized.PagePaperSize, defaults.PagePaperSize);
+            normalized.PageOrientation = GetValueOrDefault(normalized.PageOrientation, defaults.PageOrientation);
+            normalized.WordWrapMode = GetValueOrDefault(normalized.WordWrapMode, defaults.WordWrapMode);
+            normalized.RecentFiles ??= [];
+
+            return normalized;
+        }
+
+        private static string GetValueOrDefault(string? value, string defaultValue)
+        {
+            return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
         }
 
         private class SettingsData
