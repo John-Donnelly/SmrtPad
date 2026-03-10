@@ -5,6 +5,29 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **`QuickAccessNewButton` automation ID** — quick-access toolbar New button now carries a stable `AutomationProperties.AutomationId="QuickAccessNewButton"` so UI automation tests can target it without relying on localized text
+- **`ClearFormattingButton` automation ID** — Clear Formatting ribbon button now carries `AutomationProperties.AutomationId="ClearFormattingButton"` replacing the previous ambiguous `Name="Clear Formatting"` lookup
+- **Edit menu stable automation IDs** — all five Edit menu items now carry `AutomationId`: `CutMenuItem`, `CopyMenuItem`, `PasteMenuItem`, `PasteSpecialMenuItem`, `SelectAllMenuItem`; `MenuBarItem` carries `EditMenuBarItem`
+- **View menu stable automation IDs** — `ZoomInMenuItem` and `ZoomOutMenuItem` carry stable `AutomationId`; `MenuBarItem` carries `ViewMenuBarItem`
+- **`RefreshEditorState()`** — new helper in `MainWindow.xaml.cs` that forces the editor focus, updates selection-length display, refreshes status-bar counts, and re-fires `Editor_SelectionChanged`; called by every clipboard command and formatting command so the ribbon and status bar reflect state immediately after programmatic changes
+- **`RefreshEditorViewportLayout()`** — new helper that calls `UpdateLayout()` on the tab strip, scroll viewer, editor container, page-view border, and editor itself; called by `ApplyZoom()` and `ApplyPageViewLayout()` so zoom and page-view transitions settle synchronously rather than deferring to the next async layout pass
+- **`SharedAppFixture.FindElementByIdOrName()`** — new helper that prefers a stable `AutomationId` lookup and falls back to a `Name`-based lookup, reducing test fragility under localization
+- **`SharedAppFixture.GetMenuAutomationId()` / `GetMenuItemAutomationId()`** — static maps from friendly menu/item names to their stable automation IDs; `ClickMenuItem()` now routes through these helpers
+
+### Changed
+- **`ApplyZoom()`** — now calls `RefreshEditorViewportLayout()` after applying the scale transform and ruler redraw to ensure bounds settle before the next UIA query
+- **`ApplyPageViewLayout()`** — now calls `RefreshEditorViewportLayout()` after adjusting the editor and page-view border
+- **`Bold_Click`, `Italic_Click`, `Underline_Click`, `Strikethrough_Click`, `Subscript_Click`, `Superscript_Click`** — each now calls `RefreshFormattingState()` after applying the character format so toggle states and status-bar counts are deterministic
+- **`ClearFormatting_Click`** — now calls `RefreshFormattingState()` before `UpdateStatus` so cleared-format toggle states are reflected immediately
+- **`Cut_Click`, `Copy_Click`, `Paste_Click`, `PasteSplitButton_Click`, `PasteAsPlainTextAsync`, `PasteSpecial_Click`, `SelectAll_Click`** — each now calls `RefreshEditorState()` after its operation
+- **`TabManagementUITests.CloseActiveTab()`** — switched from a generic `Close` element name search to keyboard `Ctrl+W` against the active editor, removing dependency on a non-unique element name
+- **`TabManagementUITests.FindQuickAccessNewButton()`** — new helper replaces inline `FindElement(MobileBy.Name("New"))` calls with `AccessibilityId("QuickAccessNewButton")`
+- **`TabManagementUITests.FindUntitledTabs()`** — new helper scopes `Name("Untitled")` searches inside the `DocumentTabs` container, preventing false matches outside the tab strip
+- **`TabManagementUITests.NewButton_CreatesNewTab_PreviousTabStillExists`** — replaced `Assert.True(tabsAfter.Count > countBefore)` with a deterministic count assertion
+- **`FormattingFunctionalUITests` Clear Formatting tests** — three tests switched from `MobileBy.Name("Clear Formatting")` to `MobileBy.AccessibilityId("ClearFormattingButton")`
+- **`SharedAppFixture.ClickMenuItem()`** — now calls `FindElementByIdOrName()` for both the menu bar item and the flyout item, falling back gracefully to name-based search when the ID is not mapped
+
+### Added
 - **Keyboard shortcuts** — `Ctrl+F` programmatically opens the Find flyout (`OpenFind_Invoked`); `Ctrl+H` opens the Replace flyout (`OpenReplace_Invoked`); `F3` triggers Find Next; `Ctrl+D` duplicates the current line or selection (`DuplicateLineOrSelection`) with status feedback
 - **Zoom slider** — `Slider` control (Minimum=10, Maximum=500, StepFrequency=10) added to the status bar, two-way bound to `ViewModel.ZoomLevel`; `ZoomSlider_ValueChanged` snaps to nearest 10% step and calls `ApplyZoom()`
 - **Zoom text-entry box** — `ZoomPercentBox` `TextBox` in status bar accepts a typed percentage; validated on `Enter` (KeyDown) and LostFocus via `ApplyZoomFromPercentBox`; clamped to 10–500%
