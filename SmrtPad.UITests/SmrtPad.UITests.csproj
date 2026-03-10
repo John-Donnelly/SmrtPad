@@ -6,8 +6,6 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!--
@@ -21,13 +19,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk"       Version="17.8.0" />
-    <PackageReference Include="xunit"                        Version="2.6.6"  />
-    <PackageReference Include="xunit.runner.visualstudio"    Version="2.5.6"  />
-    <PackageReference Include="xunit.skippablefact"          Version="1.5.61" />
-    <PackageReference Include="Appium.WebDriver"             Version="8.1.0"  />
-    <PackageReference Include="coverlet.collector"           Version="6.0.0"  />
-    <PackageReference Include="System.Drawing.Common"        Version="9.0.5"  />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.skippablefact" />
+    <PackageReference Include="Appium.WebDriver" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using SmrtPad.Services;
+using SmrtPad.Services.Licensing;
 using SmrtPad.ViewModels;
 using System;
 using Windows.Globalization;
@@ -67,6 +68,9 @@ namespace SmrtPad
             services.AddSingleton<EditorViewModel>();
             services.AddTransient<IDialogService, DialogService>();
             services.AddTransient<IFileService, FileService>();
+            services.AddSingleton<IStoreContextAdapter, StubStoreContextAdapter>();
+            services.AddSingleton<LocalKeyValidator>();
+            services.AddSingleton<LicenseOrchestrator>();
 
             return services.BuildServiceProvider();
         }
@@ -83,6 +87,20 @@ namespace SmrtPad
             Windows.Add(mainWindow);
             mainWindow.Closed += (_, _) => Windows.Remove(mainWindow);
             _window.Activate();
+
+            // Initialize licence orchestrator — enables Pro features if licensed.
+            try
+            {
+                var orchestrator = Services.GetService<LicenseOrchestrator>();
+                if (orchestrator is not null)
+                {
+                    await orchestrator.InitializeAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Licence check failed: {ex.Message}");
+            }
 
             // Handle startup file argument — check command-line args first (exe launch),
             // then fall back to activation arguments (AUMID / package activation).

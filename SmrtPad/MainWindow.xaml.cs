@@ -3607,7 +3607,7 @@ namespace SmrtPad
                 return;
 
             ITextParagraphFormat newPf = sel.ParagraphFormat;
-            newPf.Alignment = alignCombo.SelectedItem as string switch
+            newPf.Alignment = (alignCombo.SelectedItem as string) switch
             {
                 "Center"  => ParagraphAlignment.Center,
                 "Right"   => ParagraphAlignment.Right,

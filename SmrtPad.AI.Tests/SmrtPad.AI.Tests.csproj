@@ -1,13 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
-    <Platforms>x64</Platforms>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RootNamespace>SmrtPad.AI.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
-    <UseWinUI>true</UseWinUI>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);IDISP001;IDISP016</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,15 +17,10 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SmrtPad\SmrtPad.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
+    <ProjectReference Include="..\SmrtPad.AI\SmrtPad.AI.csproj" />
   </ItemGroup>
 
 </Project>
