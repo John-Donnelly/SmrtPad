@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using DocumentFormat.OpenXml;
@@ -28,6 +29,8 @@ namespace SmrtPad.Helpers
             if (string.IsNullOrWhiteSpace(rtfContent))
                 throw new ArgumentException("RTF content cannot be empty.", nameof(rtfContent));
             ArgumentNullException.ThrowIfNull(outputStream);
+            if (!outputStream.CanWrite)
+                throw new ArgumentException("Output stream must be writable.", nameof(outputStream));
 
             using var doc = WordprocessingDocument.Create(outputStream, WordprocessingDocumentType.Document);
 
@@ -40,7 +43,7 @@ namespace SmrtPad.Helpers
                 mainPart.AddAlternativeFormatImportPart(
                     AlternativeFormatImportPartType.Rtf, altChunkId);
 
-            byte[] rtfBytes = Encoding.ASCII.GetBytes(rtfContent);
+            byte[] rtfBytes = Encoding.ASCII.GetBytes(EscapeNonAsciiCharacters(rtfContent));
             using (var rtfStream = new MemoryStream(rtfBytes))
             {
                 altChunkPart.FeedData(rtfStream);
@@ -51,6 +54,26 @@ namespace SmrtPad.Helpers
             mainPart.Document.Body.Append(new Paragraph());
 
             mainPart.Document.Save();
+        }
+
+        private static string EscapeNonAsciiCharacters(string rtfContent)
+        {
+            var builder = new StringBuilder(rtfContent.Length);
+
+            foreach (char character in rtfContent)
+            {
+                if (character <= sbyte.MaxValue)
+                {
+                    builder.Append(character);
+                    continue;
+                }
+
+                builder.Append("\\u");
+                builder.Append(((short)character).ToString(CultureInfo.InvariantCulture));
+                builder.Append('?');
+            }
+
+            return builder.ToString();
         }
     }
 }
