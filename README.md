@@ -99,6 +99,15 @@ The test suite has **2,600+ tests** (2,355+ unit/integration + 241 UI automation
 - UI automation (WinAppDriver/Appium 2.x) — editor interaction, formatting, tabs, find/replace, file backstage, macros, view menu, paragraph formatting, status bar, zoom behaviour
 - Stable automation IDs on all ribbon toggles, menu items, and quick-access buttons for deterministic UI test addressing
 
+## Performance Notes
+
+Cold-start profiling for `Task 8.2` was captured with Visual Studio 2026 CPU Usage on release-style startup traces.
+
+- **Baseline trace:** startup was dominated by WinUI app initialization (`Microsoft.UI.Xaml.Application.Start` at 52.74% total CPU / 42.38% self CPU), while the app cold path still performed settings construction, license initialization, window setup, and session-restore checks before or during first use.
+- **Current trace after deferrals:** WinUI/XAML startup remains the dominant cost (`Microsoft.UI.Xaml.Application.Start` at 54.67% total CPU / 34.06% self CPU; `Application.LoadComponent` at 7.12%), with app-visible costs reduced to smaller items such as `SettingsService.Load()` (~1.04% total CPU) and title-bar theming (`MainWindow.UpdateTitleBarTheme()` ~1.67% total CPU).
+- **Implemented changes:** `MainWindow` now activates before post-launch license/session/file-open work completes, recent-file validation in `SettingsService` is deferred until the MRU list is needed, and non-critical `MainWindow` setup such as font enumeration and print registration is queued after initial startup.
+- **Status:** the CPU traces confirm the launch-blocking app work was reduced, but an exact `<= 800 ms` first-interactive-frame confirmation still requires a dedicated Timeline pass on the target reference hardware.
+
 ## Project Structure
 
 ```
