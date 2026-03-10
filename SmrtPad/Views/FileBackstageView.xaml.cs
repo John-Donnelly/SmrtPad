@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using SmrtPad.Helpers;
@@ -46,6 +47,7 @@ public sealed partial class FileBackstageView : UserControl
                 Padding      = new Thickness(12),
                 CornerRadius = new CornerRadius(8),
             };
+            AutomationProperties.SetAutomationId(card, $"Template_{template.Key}");
             var panel = new StackPanel { Spacing = 4 };
             panel.Children.Add(new TextBlock
             {
