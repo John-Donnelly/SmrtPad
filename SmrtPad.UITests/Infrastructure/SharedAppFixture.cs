@@ -142,15 +142,54 @@ namespace SmrtPad.UITests.Infrastructure
         }
 
         /// <summary>
-        /// Opens <paramref name="menuName"/> (by UIA Name) and clicks the item
-        /// whose UIA Name matches <paramref name="itemName"/>.
+        /// Opens <paramref name="menuName"/> and clicks <paramref name="itemName"/>,
+        /// preferring stable automation IDs when available and falling back to UIA names.
         /// </summary>
         public void ClickMenuItem(string menuName, string itemName)
         {
-            Driver!.FindElement(MobileBy.Name(menuName)).Click();
+            FindElementByIdOrName(GetMenuAutomationId(menuName), menuName).Click();
             Thread.Sleep(450);
-            Driver!.FindElement(MobileBy.Name(itemName)).Click();
+            FindElementByIdOrName(GetMenuItemAutomationId(itemName), itemName).Click();
             Thread.Sleep(300);
+        }
+
+        private AppiumElement FindElementByIdOrName(string? automationId, string fallbackName)
+        {
+            if (!string.IsNullOrWhiteSpace(automationId))
+            {
+                var byId = Driver!.FindElements(MobileBy.AccessibilityId(automationId));
+                if (byId.Count > 0)
+                {
+                    return byId[0];
+                }
+            }
+
+            return Driver!.FindElement(MobileBy.Name(fallbackName));
+        }
+
+        private static string? GetMenuAutomationId(string menuName)
+        {
+            return menuName switch
+            {
+                "Edit" => "EditMenuBarItem",
+                "View" => "ViewMenuBarItem",
+                _ => null
+            };
+        }
+
+        private static string? GetMenuItemAutomationId(string itemName)
+        {
+            return itemName switch
+            {
+                "Cut" => "CutMenuItem",
+                "Copy" => "CopyMenuItem",
+                "Paste" => "PasteMenuItem",
+                "Paste Special" => "PasteSpecialMenuItem",
+                "Select All" => "SelectAllMenuItem",
+                "Zoom In" => "ZoomInMenuItem",
+                "Zoom Out" => "ZoomOutMenuItem",
+                _ => null
+            };
         }
 
         /// <summary>
@@ -197,7 +236,7 @@ namespace SmrtPad.UITests.Infrastructure
             if (!IsBackstageOpen()) return;
             try
             {
-                Driver!.FindElement(MobileBy.Name("File")).Click();
+                Driver!.FindElement(MobileBy.AccessibilityId("FileMenuButton")).Click();
                 Thread.Sleep(400);
             }
             catch { }
@@ -210,7 +249,7 @@ namespace SmrtPad.UITests.Infrastructure
         public void EnsureBackstageOpen()
         {
             if (IsBackstageOpen()) return;
-            Driver!.FindElement(MobileBy.Name("File")).Click();
+            Driver!.FindElement(MobileBy.AccessibilityId("FileMenuButton")).Click();
             Thread.Sleep(800);
         }
     }
