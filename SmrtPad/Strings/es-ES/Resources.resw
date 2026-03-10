@@ -40,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-
   <!-- ═══ BARRA DE MENÚ ═══ -->
   <data name="FileMenuButton.Content" xml:space="preserve">
     <value>Archivo</value>
@@ -84,7 +83,6 @@
   <data name="PageViewToggle.Text" xml:space="preserve">
     <value>Vista de página</value>
   </data>
-
   <!-- ═══ CINTA — PORTAPAPELES ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
     <value>Pegar</value>
@@ -98,7 +96,6 @@
   <data name="ClipboardGroupLabel.Text" xml:space="preserve">
     <value>Portapapeles</value>
   </data>
-
   <!-- ═══ CINTA — FUENTE ═══ -->
   <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
     <value>Fuente</value>
@@ -109,7 +106,6 @@
   <data name="FontGroupLabel.Text" xml:space="preserve">
     <value>Fuente</value>
   </data>
-
   <!-- ═══ CINTA — PÁRRAFO ═══ -->
   <data name="ListTypeNoneItem.Text" xml:space="preserve">
     <value>Ninguno</value>
@@ -150,7 +146,6 @@
   <data name="ParagraphGroupLabel.Text" xml:space="preserve">
     <value>Párrafo</value>
   </data>
-
   <!-- ═══ CINTA — INSERTAR ═══ -->
   <data name="PictureRibbonLabel.Text" xml:space="preserve">
     <value>Imagen</value>
@@ -176,7 +171,6 @@
   <data name="InsertGroupLabel.Text" xml:space="preserve">
     <value>Insertar</value>
   </data>
-
   <!-- ═══ CINTA — EDICIÓN ═══ -->
   <data name="FindFlyoutHeader.Text" xml:space="preserve">
     <value>Buscar</value>
@@ -232,7 +226,6 @@
   <data name="EditingGroupLabel.Text" xml:space="preserve">
     <value>Edición</value>
   </data>
-
   <!-- ═══ BACKSTAGE ═══ -->
   <data name="NewNavItem.Content" xml:space="preserve">
     <value>Nuevo</value>
@@ -261,12 +254,10 @@
   <data name="BackstageBodyDefault.Text" xml:space="preserve">
     <value>Elija una opción a la izquierda.</value>
   </data>
-
   <!-- ═══ BARRA DE ESTADO ═══ -->
   <data name="StatusText.Text" xml:space="preserve">
     <value>Listo</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: General ═══ -->
   <data name="AppTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -298,7 +289,6 @@
   <data name="ButtonPrint" xml:space="preserve">
     <value>Imprimir</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Operaciones de archivo ═══ -->
   <data name="StatusOpened" xml:space="preserve">
     <value>{0} abierto</value>
@@ -327,7 +317,6 @@
   <data name="FileDefaultName" xml:space="preserve">
     <value>Documento</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Imprimir ═══ -->
   <data name="PrintTitle" xml:space="preserve">
     <value>Imprimir</value>
@@ -356,7 +345,6 @@
   <data name="ErrorPrint" xml:space="preserve">
     <value>Error de impresión</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Opciones ═══ -->
   <data name="OptionsTitle" xml:space="preserve">
     <value>Opciones</value>
@@ -427,7 +415,6 @@
   <data name="StatusDisabled" xml:space="preserve">
     <value>desactivada</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Buscar / Reemplazar ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">
     <value>No se encontró coincidencia.</value>
@@ -450,7 +437,6 @@
   <data name="FindRegexCheckBox.Content" xml:space="preserve">
     <value>Usar expresiones regulares</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Modo enfoque ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">
     <value>Modo enfoque activado.</value>
@@ -458,7 +444,6 @@
   <data name="StatusFocusModeDisabled" xml:space="preserve">
     <value>Modo enfoque desactivado.</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Insertar ═══ -->
   <data name="DateTimeTitle" xml:space="preserve">
     <value>Fecha y hora</value>
@@ -535,7 +520,6 @@
   <data name="StatusTheme" xml:space="preserve">
     <value>Tema: {0}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Impresión (real) ═══ -->
   <data name="PrintJobTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -555,7 +539,6 @@
   <data name="StatusPrintCancelled" xml:space="preserve">
     <value>Impresión cancelada.</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Importar formatos ═══ -->
   <data name="FileTypeDocx" xml:space="preserve">
     <value>Documento de Word</value>
@@ -566,7 +549,6 @@
   <data name="FileTypeOdt" xml:space="preserve">
     <value>Texto de OpenDocument</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Pegar / Error ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>Error al pegar</value>
@@ -577,7 +559,6 @@
   <data name="DragDropCaption" xml:space="preserve">
     <value>Abrir archivo</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Barra de estado ═══ -->
   <data name="StatusBarWords" xml:space="preserve">
     <value>Palabras: {0}</value>
@@ -591,7 +572,6 @@
   <data name="StatusBarLineCol" xml:space="preserve">
     <value>Lín {0}, Col {1}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Servicio de diálogos ═══ -->
   <data name="DlgUnsavedChanges" xml:space="preserve">
     <value>Cambios sin guardar</value>
@@ -611,7 +591,6 @@
   <data name="DlgOK" xml:space="preserve">
     <value>Aceptar</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Backstage ═══ -->
   <data name="BackstageFile" xml:space="preserve">
     <value>Archivo</value>
@@ -637,7 +616,6 @@
   <data name="BackstageNoRecentFiles" xml:space="preserve">
     <value>No hay archivos recientes.</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: Tabulaciones ═══ -->
   <data name="TabStopTitle" xml:space="preserve">
     <value>Tabulaciones</value>
@@ -750,7 +728,6 @@
   <data name="DrawingStrokeWidth" xml:space="preserve">
     <value>Ancho del trazo</value>
   </data>
-
   <data name="StatusMacroRecording" xml:space="preserve">
     <value>Grabando macro...</value>
   </data>
@@ -895,7 +872,6 @@
   <data name="MacroFilter" xml:space="preserve">
     <value>Archivos de macro</value>
   </data>
-
   <!-- Multi-window -->
   <data name="WindowMenu.Title" xml:space="preserve">
     <value>Ventana</value>
@@ -903,7 +879,6 @@
   <data name="NewWindowMenuItem.Text" xml:space="preserve">
     <value>Nueva ventana</value>
   </data>
-
   <!-- Templates -->
   <data name="TemplatesNavItem.Content" xml:space="preserve">
     <value>Plantillas</value>
@@ -917,7 +892,6 @@
   <data name="BackstageExitDesc" xml:space="preserve">
     <value>Cerrar la aplicación.</value>
   </data>
-
   <!-- ═══ Font formatting upgrades ═══ -->
   <data name="NoHighlightButton.Content" xml:space="preserve">
     <value>Sin resaltado</value>
@@ -949,8 +923,6 @@
   <data name="StatusFontApplied" xml:space="preserve">
     <value>Formato de fuente aplicado.</value>
   </data>
-
-
   <!-- ═══ New features (batch) ═══ -->
   <data name="StatusDuplicatedLine" xml:space="preserve">
     <value>Line duplicated.</value>
@@ -1066,5 +1038,66 @@
   <data name="HighlightColorIndicatorName" xml:space="preserve">
     <value>Highlight color: {0}</value>
   </data>
+  <!-- Pro-tier strings (Phase 4) -->
+  <data name="ProUpsellTitle" xml:space="preserve">
+    <value>Actualiza a SmrtPad Pro</value>
+  </data>
+  <data name="ProUpsellContent" xml:space="preserve">
+    <value>Desbloquea funciones de IA: Smart Sidebar, resumen, cambio de tono y busqueda semantica.</value>
+  </data>
+  <data name="ProUpsellUpgrade" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="ProUpsellDismiss" xml:space="preserve">
+    <value>Ahora no</value>
+  </data>
+  <data name="SmartSidebarToggle.Text" xml:space="preserve">
+    <value>Smart Sidebar</value>
+  </data>
+  <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
+    <value>Rewrite for clarity</value>
+  </data>
+  <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
+    <value>Drop an image to extract text</value>
+  </data>
+  <data name="SmartSidebarOcrDropHint" xml:space="preserve">
+    <value>PNG, JPG, BMP, GIF, and TIFF files are supported.</value>
+  </data>
+  <data name="SmartSidebarOcrInsert" xml:space="preserve">
+    <value>Insert into document</value>
+  </data>
+  <data name="SmartSidebarOcrNoText" xml:space="preserve">
+    <value>No text was detected in the image.</value>
+  </data>
+  <data name="SmartSidebarOcrUnavailable" xml:space="preserve">
+    <value>OCR is unavailable on this device.</value>
+  </data>
+  <data name="SmartSidebarExecutionDetailsTitle" xml:space="preserve">
+    <value>AI execution details</value>
+  </data>
+  <data name="SmartSidebarExecutionModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTokensPerSecond" xml:space="preserve">
+    <value>Tokens/sec</value>
+  </data>
+  <data name="SmartSidebarExecutionPending" xml:space="preserve">
+    <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarErrorFormat" xml:space="preserve">
+    <value>Error: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="SessionRestoreTitle" xml:space="preserve">
+    <value>Restore previous session</value>
+  </data>
+  <data name="SessionRestoreContent" xml:space="preserve">
+    <value>SmrtPad found a recovery session from the last run. Do you want to restore your open tabs?</value>
+  </data>
+  <data name="SessionRestoreRestore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="SessionRestoreDiscard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
 </root>
-

@@ -40,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-
   <!-- ═══ مینو بار ═══ -->
   <data name="FileMenuButton.Content" xml:space="preserve">
     <value>فائل</value>
@@ -84,7 +83,6 @@
   <data name="PageViewToggle.Text" xml:space="preserve">
     <value>صفحہ منظر</value>
   </data>
-
   <!-- ═══ ربن — کلپ بورڈ ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
     <value>چسپاں کریں</value>
@@ -98,7 +96,6 @@
   <data name="ClipboardGroupLabel.Text" xml:space="preserve">
     <value>کلپ بورڈ</value>
   </data>
-
   <!-- ═══ ربن — فونٹ ═══ -->
   <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
     <value>فونٹ</value>
@@ -109,7 +106,6 @@
   <data name="FontGroupLabel.Text" xml:space="preserve">
     <value>فونٹ</value>
   </data>
-
   <!-- ═══ ربن — پیراگراف ═══ -->
   <data name="ListTypeNoneItem.Text" xml:space="preserve">
     <value>کوئی نہیں</value>
@@ -150,7 +146,6 @@
   <data name="ParagraphGroupLabel.Text" xml:space="preserve">
     <value>پیراگراف</value>
   </data>
-
   <!-- ═══ ربن — داخل کریں ═══ -->
   <data name="PictureRibbonLabel.Text" xml:space="preserve">
     <value>تصویر</value>
@@ -176,7 +171,6 @@
   <data name="InsertGroupLabel.Text" xml:space="preserve">
     <value>داخل کریں</value>
   </data>
-
   <!-- ═══ ربن — ترمیم ═══ -->
   <data name="FindFlyoutHeader.Text" xml:space="preserve">
     <value>تلاش کریں</value>
@@ -232,7 +226,6 @@
   <data name="EditingGroupLabel.Text" xml:space="preserve">
     <value>ترمیم</value>
   </data>
-
   <!-- ═══ بیک اسٹیج ═══ -->
   <data name="NewNavItem.Content" xml:space="preserve">
     <value>نیا</value>
@@ -261,12 +254,10 @@
   <data name="BackstageBodyDefault.Text" xml:space="preserve">
     <value>بائیں طرف سے ایک آپشن منتخب کریں۔</value>
   </data>
-
   <!-- ═══ اسٹیٹس بار ═══ -->
   <data name="StatusText.Text" xml:space="preserve">
     <value>تیار</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: عمومی ═══ -->
   <data name="AppTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -298,7 +289,6 @@
   <data name="ButtonPrint" xml:space="preserve">
     <value>پرنٹ</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: فائل آپریشنز ═══ -->
   <data name="StatusOpened" xml:space="preserve">
     <value>{0} کھولا گیا</value>
@@ -327,7 +317,6 @@
   <data name="FileDefaultName" xml:space="preserve">
     <value>دستاویز</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: پرنٹ ═══ -->
   <data name="PrintTitle" xml:space="preserve">
     <value>پرنٹ</value>
@@ -356,7 +345,6 @@
   <data name="ErrorPrint" xml:space="preserve">
     <value>پرنٹ میں خرابی</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ترتیبات ═══ -->
   <data name="OptionsTitle" xml:space="preserve">
     <value>ترتیبات</value>
@@ -427,7 +415,6 @@
   <data name="StatusDisabled" xml:space="preserve">
     <value>غیر فعال</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: تلاش / تبدیل ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">
     <value>کوئی مماثلت نہیں ملی۔</value>
@@ -450,7 +437,6 @@
   <data name="FindRegexCheckBox.Content" xml:space="preserve">
     <value>ریگولر ایکسپریشنز استعمال کریں</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: توجہ موڈ ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">
     <value>توجہ موڈ فعال ہو گیا۔</value>
@@ -458,7 +444,6 @@
   <data name="StatusFocusModeDisabled" xml:space="preserve">
     <value>توجہ موڈ غیر فعال ہو گیا۔</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: داخل کرنا ═══ -->
   <data name="DateTimeTitle" xml:space="preserve">
     <value>تاریخ اور وقت</value>
@@ -535,7 +520,6 @@
   <data name="StatusTheme" xml:space="preserve">
     <value>تھیم: {0}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: پرنٹ (حقیقی) ═══ -->
   <data name="PrintJobTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -555,7 +539,6 @@
   <data name="StatusPrintCancelled" xml:space="preserve">
     <value>پرنٹ منسوخ ہو گیا۔</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: فائل فارمیٹ درآمد ═══ -->
   <data name="FileTypeDocx" xml:space="preserve">
     <value>ورڈ دستاویز</value>
@@ -566,7 +549,6 @@
   <data name="FileTypeOdt" xml:space="preserve">
     <value>اوپن ڈاکومنٹ ٹیکسٹ</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: چسپاں / خرابی ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>چسپاں میں خرابی</value>
@@ -577,7 +559,6 @@
   <data name="DragDropCaption" xml:space="preserve">
     <value>فائل کھولیں</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: اسٹیٹس بار ═══ -->
   <data name="StatusBarWords" xml:space="preserve">
     <value>الفاظ: {0}</value>
@@ -591,7 +572,6 @@
   <data name="StatusBarLineCol" xml:space="preserve">
     <value>سطر {0}، کالم {1}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ڈائیلاگ سروس ═══ -->
   <data name="DlgUnsavedChanges" xml:space="preserve">
     <value>غیر محفوظ تبدیلیاں</value>
@@ -611,7 +591,6 @@
   <data name="DlgOK" xml:space="preserve">
     <value>ٹھیک ہے</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: بیک اسٹیج ═══ -->
   <data name="BackstageFile" xml:space="preserve">
     <value>فائل</value>
@@ -682,7 +661,6 @@
   <data name="BackstageNoRecentFiles" xml:space="preserve">
     <value>کوئی حالیہ فائلیں نہیں ہیں۔</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ٹیب اسٹاپز ═══ -->
   <data name="TabStopTitle" xml:space="preserve">
     <value>ٹیب اسٹاپز</value>
@@ -795,7 +773,6 @@
   <data name="DrawingStrokeWidth" xml:space="preserve">
     <value>لکیر کی چوڑائی</value>
   </data>
-
   <data name="StatusMacroRecording" xml:space="preserve">
     <value>میکرو ریکارڈ ہو رہا ہے...</value>
   </data>
@@ -895,7 +872,6 @@
   <data name="MacroFilter" xml:space="preserve">
     <value>میکرو فائلیں</value>
   </data>
-
   <!-- Multi-window -->
   <data name="WindowMenu.Title" xml:space="preserve">
     <value>ونڈو</value>
@@ -903,7 +879,6 @@
   <data name="NewWindowMenuItem.Text" xml:space="preserve">
     <value>نئی ونڈو</value>
   </data>
-
   <!-- Templates -->
   <data name="TemplatesNavItem.Content" xml:space="preserve">
     <value>ٹیمپلیٹس</value>
@@ -914,11 +889,9 @@
   <data name="StatusTemplateApplied" xml:space="preserve">
     <value>ٹیمپلیٹ لاگو کیا: {0}</value>
   </data>
-
   <data name="BackstageExitDesc" xml:space="preserve">
     <value>ایپلیکیشن بند کریں۔</value>
   </data>
-
   <!-- ═══ Font formatting upgrades ═══ -->
   <data name="NoHighlightButton.Content" xml:space="preserve">
     <value>کوئی ہائی لائٹ نہیں</value>
@@ -950,8 +923,6 @@
   <data name="StatusFontApplied" xml:space="preserve">
     <value>فونٹ فارمیٹنگ لاگو ہوگئی۔</value>
   </data>
-
-
   <!-- ═══ New features (batch) ═══ -->
   <data name="StatusDuplicatedLine" xml:space="preserve">
     <value>Line duplicated.</value>
@@ -1066,5 +1037,67 @@
   </data>
   <data name="HighlightColorIndicatorName" xml:space="preserve">
     <value>Highlight color: {0}</value>
+  </data>
+  <!-- Pro-tier strings (Phase 4) -->
+  <data name="ProUpsellTitle" xml:space="preserve">
+    <value>SmrtPad Pro میں اپ گریڈ کریں</value>
+  </data>
+  <data name="ProUpsellContent" xml:space="preserve">
+    <value>AI خصوصیات: اسمارٹ سائیڈبار، خلاصہ، لہجے کی تحریر، معنوی تلاش۔</value>
+  </data>
+  <data name="ProUpsellUpgrade" xml:space="preserve">
+    <value>اپ گریڈ</value>
+  </data>
+  <data name="ProUpsellDismiss" xml:space="preserve">
+    <value>ابھی نہیں</value>
+  </data>
+  <data name="SmartSidebarToggle.Text" xml:space="preserve">
+    <value>اسمارٹ سائیڈبار</value>
+  </data>
+  <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
+    <value>Rewrite for clarity</value>
+  </data>
+  <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
+    <value>Drop an image to extract text</value>
+  </data>
+  <data name="SmartSidebarOcrDropHint" xml:space="preserve">
+    <value>PNG, JPG, BMP, GIF, and TIFF files are supported.</value>
+  </data>
+  <data name="SmartSidebarOcrInsert" xml:space="preserve">
+    <value>Insert into document</value>
+  </data>
+  <data name="SmartSidebarOcrNoText" xml:space="preserve">
+    <value>No text was detected in the image.</value>
+  </data>
+  <data name="SmartSidebarOcrUnavailable" xml:space="preserve">
+    <value>OCR is unavailable on this device.</value>
+  </data>
+  <data name="SmartSidebarExecutionDetailsTitle" xml:space="preserve">
+    <value>AI execution details</value>
+  </data>
+  <data name="SmartSidebarExecutionModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTokensPerSecond" xml:space="preserve">
+    <value>Tokens/sec</value>
+  </data>
+  <data name="SmartSidebarExecutionPending" xml:space="preserve">
+    <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarErrorFormat" xml:space="preserve">
+    <value>Error: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="SessionRestoreTitle" xml:space="preserve">
+    <value>Restore previous session</value>
+  </data>
+  <data name="SessionRestoreContent" xml:space="preserve">
+    <value>SmrtPad found a recovery session from the last run. Do you want to restore your open tabs?</value>
+  </data>
+  <data name="SessionRestoreRestore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="SessionRestoreDiscard" xml:space="preserve">
+    <value>Discard</value>
   </data>
 </root>

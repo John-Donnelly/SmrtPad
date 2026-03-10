@@ -1133,4 +1133,67 @@
     <comment>{0} = color name or hex</comment>
   </data>
 
+  <!-- ═══ Pro-tier strings (Phase 4) ═══ -->
+  <data name="ProUpsellTitle" xml:space="preserve">
+    <value>Upgrade to SmrtPad Pro</value>
+  </data>
+  <data name="ProUpsellContent" xml:space="preserve">
+    <value>Unlock AI-powered features including Smart Sidebar, summarization, tone rewriting, and semantic search.</value>
+  </data>
+  <data name="ProUpsellUpgrade" xml:space="preserve">
+    <value>Upgrade</value>
+  </data>
+  <data name="ProUpsellDismiss" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="SmartSidebarToggle.Text" xml:space="preserve">
+    <value>✨ Smart Sidebar</value>
+  </data>
+
+  <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
+    <value>Rewrite for clarity</value>
+  </data>
+  <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
+    <value>Drop an image to extract text</value>
+  </data>
+  <data name="SmartSidebarOcrDropHint" xml:space="preserve">
+    <value>PNG, JPG, BMP, GIF, and TIFF files are supported.</value>
+  </data>
+  <data name="SmartSidebarOcrInsert" xml:space="preserve">
+    <value>Insert into document</value>
+  </data>
+  <data name="SmartSidebarOcrNoText" xml:space="preserve">
+    <value>No text was detected in the image.</value>
+  </data>
+  <data name="SmartSidebarOcrUnavailable" xml:space="preserve">
+    <value>OCR is unavailable on this device.</value>
+  </data>
+  <data name="SmartSidebarExecutionDetailsTitle" xml:space="preserve">
+    <value>AI execution details</value>
+  </data>
+  <data name="SmartSidebarExecutionModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTokensPerSecond" xml:space="preserve">
+    <value>Tokens/sec</value>
+  </data>
+  <data name="SmartSidebarExecutionPending" xml:space="preserve">
+    <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarErrorFormat" xml:space="preserve">
+    <value>Error: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="SessionRestoreTitle" xml:space="preserve">
+    <value>Restore previous session</value>
+  </data>
+  <data name="SessionRestoreContent" xml:space="preserve">
+    <value>SmrtPad found a recovery session from the last run. Do you want to restore your open tabs?</value>
+  </data>
+  <data name="SessionRestoreRestore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="SessionRestoreDiscard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
 </root>

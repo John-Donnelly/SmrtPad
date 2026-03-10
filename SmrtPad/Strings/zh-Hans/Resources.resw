@@ -40,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-
   <!-- ═══ 菜单栏 ═══ -->
   <data name="FileMenuButton.Content" xml:space="preserve">
     <value>文件</value>
@@ -84,7 +83,6 @@
   <data name="PageViewToggle.Text" xml:space="preserve">
     <value>页面视图</value>
   </data>
-
   <!-- ═══ 功能区 — 剪贴板 ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
     <value>粘贴</value>
@@ -98,7 +96,6 @@
   <data name="ClipboardGroupLabel.Text" xml:space="preserve">
     <value>剪贴板</value>
   </data>
-
   <!-- ═══ 功能区 — 字体 ═══ -->
   <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
     <value>字体</value>
@@ -109,7 +106,6 @@
   <data name="FontGroupLabel.Text" xml:space="preserve">
     <value>字体</value>
   </data>
-
   <!-- ═══ 功能区 — 段落 ═══ -->
   <data name="ListTypeNoneItem.Text" xml:space="preserve">
     <value>无</value>
@@ -150,7 +146,6 @@
   <data name="ParagraphGroupLabel.Text" xml:space="preserve">
     <value>段落</value>
   </data>
-
   <!-- ═══ 功能区 — 插入 ═══ -->
   <data name="PictureRibbonLabel.Text" xml:space="preserve">
     <value>图片</value>
@@ -176,7 +171,6 @@
   <data name="InsertGroupLabel.Text" xml:space="preserve">
     <value>插入</value>
   </data>
-
   <!-- ═══ 功能区 — 编辑 ═══ -->
   <data name="FindFlyoutHeader.Text" xml:space="preserve">
     <value>查找</value>
@@ -232,7 +226,6 @@
   <data name="EditingGroupLabel.Text" xml:space="preserve">
     <value>编辑</value>
   </data>
-
   <!-- ═══ 后台视图 ═══ -->
   <data name="NewNavItem.Content" xml:space="preserve">
     <value>新建</value>
@@ -261,12 +254,10 @@
   <data name="BackstageBodyDefault.Text" xml:space="preserve">
     <value>请从左侧选择一个选项。</value>
   </data>
-
   <!-- ═══ 状态栏 ═══ -->
   <data name="StatusText.Text" xml:space="preserve">
     <value>就绪</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 常规 ═══ -->
   <data name="AppTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -298,7 +289,6 @@
   <data name="ButtonPrint" xml:space="preserve">
     <value>打印</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 文件操作 ═══ -->
   <data name="StatusOpened" xml:space="preserve">
     <value>已打开 {0}</value>
@@ -327,7 +317,6 @@
   <data name="FileDefaultName" xml:space="preserve">
     <value>文档</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 打印 ═══ -->
   <data name="PrintTitle" xml:space="preserve">
     <value>打印</value>
@@ -356,7 +345,6 @@
   <data name="ErrorPrint" xml:space="preserve">
     <value>打印错误</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 选项 ═══ -->
   <data name="OptionsTitle" xml:space="preserve">
     <value>选项</value>
@@ -427,7 +415,6 @@
   <data name="StatusDisabled" xml:space="preserve">
     <value>禁用</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 查找 / 替换 ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">
     <value>未找到匹配项。</value>
@@ -450,7 +437,6 @@
   <data name="FindRegexCheckBox.Content" xml:space="preserve">
     <value>使用正则表达式</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 专注模式 ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">
     <value>已启用专注模式。</value>
@@ -458,7 +444,6 @@
   <data name="StatusFocusModeDisabled" xml:space="preserve">
     <value>已禁用专注模式。</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 插入功能 ═══ -->
   <data name="DateTimeTitle" xml:space="preserve">
     <value>日期和时间</value>
@@ -535,7 +520,6 @@
   <data name="StatusTheme" xml:space="preserve">
     <value>主题: {0}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 打印 (实际) ═══ -->
   <data name="PrintJobTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -555,7 +539,6 @@
   <data name="StatusPrintCancelled" xml:space="preserve">
     <value>打印已取消。</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 文件格式导入 ═══ -->
   <data name="FileTypeDocx" xml:space="preserve">
     <value>Word 文档</value>
@@ -566,7 +549,6 @@
   <data name="FileTypeOdt" xml:space="preserve">
     <value>OpenDocument 文本</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 粘贴 / 错误 ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>粘贴错误</value>
@@ -577,7 +559,6 @@
   <data name="DragDropCaption" xml:space="preserve">
     <value>打开文件</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 状态栏 ═══ -->
   <data name="StatusBarWords" xml:space="preserve">
     <value>字数: {0}</value>
@@ -591,7 +572,6 @@
   <data name="StatusBarLineCol" xml:space="preserve">
     <value>行 {0}，列 {1}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 对话框服务 ═══ -->
   <data name="DlgUnsavedChanges" xml:space="preserve">
     <value>未保存的更改</value>
@@ -611,7 +591,6 @@
   <data name="DlgOK" xml:space="preserve">
     <value>确定</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 后台视图 ═══ -->
   <data name="BackstageFile" xml:space="preserve">
     <value>文件</value>
@@ -682,7 +661,6 @@
   <data name="BackstageNoRecentFiles" xml:space="preserve">
     <value>没有最近的文件。</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 制表位 ═══ -->
   <data name="TabStopTitle" xml:space="preserve">
     <value>制表位</value>
@@ -795,7 +773,6 @@
   <data name="DrawingStrokeWidth" xml:space="preserve">
     <value>笔触宽度</value>
   </data>
-
   <data name="StatusMacroRecording" xml:space="preserve">
     <value>正在录制宏...</value>
   </data>
@@ -895,7 +872,6 @@
   <data name="MacroFilter" xml:space="preserve">
     <value>宏文件</value>
   </data>
-
   <!-- Multi-window -->
   <data name="WindowMenu.Title" xml:space="preserve">
     <value>窗口</value>
@@ -903,7 +879,6 @@
   <data name="NewWindowMenuItem.Text" xml:space="preserve">
     <value>新建窗口</value>
   </data>
-
   <!-- Templates -->
   <data name="TemplatesNavItem.Content" xml:space="preserve">
     <value>模板</value>
@@ -914,11 +889,9 @@
   <data name="StatusTemplateApplied" xml:space="preserve">
     <value>已应用模板：{0}</value>
   </data>
-
   <data name="BackstageExitDesc" xml:space="preserve">
     <value>关闭应用程序。</value>
   </data>
-
   <!-- ═══ Font formatting upgrades ═══ -->
   <data name="NoHighlightButton.Content" xml:space="preserve">
     <value>无突出显示</value>
@@ -950,8 +923,6 @@
   <data name="StatusFontApplied" xml:space="preserve">
     <value>字体格式已应用。</value>
   </data>
-
-
   <!-- ═══ New features (batch) ═══ -->
   <data name="StatusDuplicatedLine" xml:space="preserve">
     <value>Line duplicated.</value>
@@ -1066,5 +1037,67 @@
   </data>
   <data name="HighlightColorIndicatorName" xml:space="preserve">
     <value>Highlight color: {0}</value>
+  </data>
+  <!-- Pro-tier strings (Phase 4) -->
+  <data name="ProUpsellTitle" xml:space="preserve">
+    <value>升级到 SmrtPad Pro</value>
+  </data>
+  <data name="ProUpsellContent" xml:space="preserve">
+    <value>解锁 AI 驱动的功能：智能侧边栏、摘要、语气改写和语义搜索。</value>
+  </data>
+  <data name="ProUpsellUpgrade" xml:space="preserve">
+    <value>升级</value>
+  </data>
+  <data name="ProUpsellDismiss" xml:space="preserve">
+    <value>以后再说</value>
+  </data>
+  <data name="SmartSidebarToggle.Text" xml:space="preserve">
+    <value>智能侧边栏</value>
+  </data>
+  <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
+    <value>Rewrite for clarity</value>
+  </data>
+  <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
+    <value>Drop an image to extract text</value>
+  </data>
+  <data name="SmartSidebarOcrDropHint" xml:space="preserve">
+    <value>PNG, JPG, BMP, GIF, and TIFF files are supported.</value>
+  </data>
+  <data name="SmartSidebarOcrInsert" xml:space="preserve">
+    <value>Insert into document</value>
+  </data>
+  <data name="SmartSidebarOcrNoText" xml:space="preserve">
+    <value>No text was detected in the image.</value>
+  </data>
+  <data name="SmartSidebarOcrUnavailable" xml:space="preserve">
+    <value>OCR is unavailable on this device.</value>
+  </data>
+  <data name="SmartSidebarExecutionDetailsTitle" xml:space="preserve">
+    <value>AI execution details</value>
+  </data>
+  <data name="SmartSidebarExecutionModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTokensPerSecond" xml:space="preserve">
+    <value>Tokens/sec</value>
+  </data>
+  <data name="SmartSidebarExecutionPending" xml:space="preserve">
+    <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarErrorFormat" xml:space="preserve">
+    <value>Error: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="SessionRestoreTitle" xml:space="preserve">
+    <value>Restore previous session</value>
+  </data>
+  <data name="SessionRestoreContent" xml:space="preserve">
+    <value>SmrtPad found a recovery session from the last run. Do you want to restore your open tabs?</value>
+  </data>
+  <data name="SessionRestoreRestore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="SessionRestoreDiscard" xml:space="preserve">
+    <value>Discard</value>
   </data>
 </root>

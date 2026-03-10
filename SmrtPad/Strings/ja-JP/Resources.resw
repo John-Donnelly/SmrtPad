@@ -40,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-
   <!-- ═══ メニューバー ═══ -->
   <data name="FileMenuButton.Content" xml:space="preserve">
     <value>ファイル</value>
@@ -84,7 +83,6 @@
   <data name="PageViewToggle.Text" xml:space="preserve">
     <value>ページビュー</value>
   </data>
-
   <!-- ═══ リボン — クリップボード ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
     <value>貼り付け</value>
@@ -98,7 +96,6 @@
   <data name="ClipboardGroupLabel.Text" xml:space="preserve">
     <value>クリップボード</value>
   </data>
-
   <!-- ═══ リボン — フォント ═══ -->
   <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
     <value>フォント</value>
@@ -109,7 +106,6 @@
   <data name="FontGroupLabel.Text" xml:space="preserve">
     <value>フォント</value>
   </data>
-
   <!-- ═══ リボン — 段落 ═══ -->
   <data name="ListTypeNoneItem.Text" xml:space="preserve">
     <value>なし</value>
@@ -150,7 +146,6 @@
   <data name="ParagraphGroupLabel.Text" xml:space="preserve">
     <value>段落</value>
   </data>
-
   <!-- ═══ リボン — 挿入 ═══ -->
   <data name="PictureRibbonLabel.Text" xml:space="preserve">
     <value>画像</value>
@@ -176,7 +171,6 @@
   <data name="InsertGroupLabel.Text" xml:space="preserve">
     <value>挿入</value>
   </data>
-
   <!-- ═══ リボン — 編集 ═══ -->
   <data name="FindFlyoutHeader.Text" xml:space="preserve">
     <value>検索</value>
@@ -232,7 +226,6 @@
   <data name="EditingGroupLabel.Text" xml:space="preserve">
     <value>編集</value>
   </data>
-
   <!-- ═══ バックステージ ═══ -->
   <data name="NewNavItem.Content" xml:space="preserve">
     <value>新規</value>
@@ -261,12 +254,10 @@
   <data name="BackstageBodyDefault.Text" xml:space="preserve">
     <value>左側からオプションを選択してください。</value>
   </data>
-
   <!-- ═══ ステータスバー ═══ -->
   <data name="StatusText.Text" xml:space="preserve">
     <value>準備完了</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 一般 ═══ -->
   <data name="AppTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -298,7 +289,6 @@
   <data name="ButtonPrint" xml:space="preserve">
     <value>印刷</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ファイル操作 ═══ -->
   <data name="StatusOpened" xml:space="preserve">
     <value>{0} を開きました</value>
@@ -327,7 +317,6 @@
   <data name="FileDefaultName" xml:space="preserve">
     <value>ドキュメント</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 印刷 ═══ -->
   <data name="PrintTitle" xml:space="preserve">
     <value>印刷</value>
@@ -356,7 +345,6 @@
   <data name="ErrorPrint" xml:space="preserve">
     <value>印刷エラー</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: オプション ═══ -->
   <data name="OptionsTitle" xml:space="preserve">
     <value>オプション</value>
@@ -427,7 +415,6 @@
   <data name="StatusDisabled" xml:space="preserve">
     <value>無効</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 検索 / 置換 ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">
     <value>一致するものが見つかりません。</value>
@@ -450,7 +437,6 @@
   <data name="FindRegexCheckBox.Content" xml:space="preserve">
     <value>正規表現を使用</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 集中モード ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">
     <value>集中モードを有効にしました。</value>
@@ -458,7 +444,6 @@
   <data name="StatusFocusModeDisabled" xml:space="preserve">
     <value>集中モードを無効にしました。</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 挿入機能 ═══ -->
   <data name="DateTimeTitle" xml:space="preserve">
     <value>日付と時刻</value>
@@ -535,7 +520,6 @@
   <data name="StatusTheme" xml:space="preserve">
     <value>テーマ: {0}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 印刷 (実装) ═══ -->
   <data name="PrintJobTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -555,7 +539,6 @@
   <data name="StatusPrintCancelled" xml:space="preserve">
     <value>印刷がキャンセルされました。</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ファイル形式インポート ═══ -->
   <data name="FileTypeDocx" xml:space="preserve">
     <value>Word 文書</value>
@@ -566,7 +549,6 @@
   <data name="FileTypeOdt" xml:space="preserve">
     <value>OpenDocument テキスト</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: 貼り付け / エラー ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>貼り付けエラー</value>
@@ -577,7 +559,6 @@
   <data name="DragDropCaption" xml:space="preserve">
     <value>ファイルを開く</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ステータスバー ═══ -->
   <data name="StatusBarWords" xml:space="preserve">
     <value>単語数: {0}</value>
@@ -591,7 +572,6 @@
   <data name="StatusBarLineCol" xml:space="preserve">
     <value>{0} 行、{1} 列</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ダイアログサービス ═══ -->
   <data name="DlgUnsavedChanges" xml:space="preserve">
     <value>未保存の変更</value>
@@ -611,7 +591,6 @@
   <data name="DlgOK" xml:space="preserve">
     <value>OK</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: バックステージ ═══ -->
   <data name="BackstageFile" xml:space="preserve">
     <value>ファイル</value>
@@ -682,7 +661,6 @@
   <data name="BackstageNoRecentFiles" xml:space="preserve">
     <value>最近使ったファイルはありません。</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: タブ位置 ═══ -->
   <data name="TabStopTitle" xml:space="preserve">
     <value>タブ位置</value>
@@ -795,7 +773,6 @@
   <data name="DrawingStrokeWidth" xml:space="preserve">
     <value>線の太さ</value>
   </data>
-
   <data name="StatusMacroRecording" xml:space="preserve">
     <value>マクロを記録中...</value>
   </data>
@@ -895,7 +872,6 @@
   <data name="MacroFilter" xml:space="preserve">
     <value>マクロファイル</value>
   </data>
-
   <!-- Multi-window -->
   <data name="WindowMenu.Title" xml:space="preserve">
     <value>ウィンドウ</value>
@@ -903,7 +879,6 @@
   <data name="NewWindowMenuItem.Text" xml:space="preserve">
     <value>新しいウィンドウ</value>
   </data>
-
   <!-- Templates -->
   <data name="TemplatesNavItem.Content" xml:space="preserve">
     <value>テンプレート</value>
@@ -914,11 +889,9 @@
   <data name="StatusTemplateApplied" xml:space="preserve">
     <value>テンプレートを適用しました：{0}</value>
   </data>
-
   <data name="BackstageExitDesc" xml:space="preserve">
     <value>アプリケーションを閉じます。</value>
   </data>
-
   <!-- ═══ Font formatting upgrades ═══ -->
   <data name="NoHighlightButton.Content" xml:space="preserve">
     <value>蛍光ペンなし</value>
@@ -950,8 +923,6 @@
   <data name="StatusFontApplied" xml:space="preserve">
     <value>フォント書式が適用されました。</value>
   </data>
-
-
   <!-- ═══ New features (batch) ═══ -->
   <data name="StatusDuplicatedLine" xml:space="preserve">
     <value>Line duplicated.</value>
@@ -1066,5 +1037,67 @@
   </data>
   <data name="HighlightColorIndicatorName" xml:space="preserve">
     <value>Highlight color: {0}</value>
+  </data>
+  <!-- Pro-tier strings (Phase 4) -->
+  <data name="ProUpsellTitle" xml:space="preserve">
+    <value>SmrtPad Pro にアップグレード</value>
+  </data>
+  <data name="ProUpsellContent" xml:space="preserve">
+    <value>AI 機能をロック解除: スマートサイドバー、要約、トーン書き換え、セマンティック検索。</value>
+  </data>
+  <data name="ProUpsellUpgrade" xml:space="preserve">
+    <value>アップグレード</value>
+  </data>
+  <data name="ProUpsellDismiss" xml:space="preserve">
+    <value>後で</value>
+  </data>
+  <data name="SmartSidebarToggle.Text" xml:space="preserve">
+    <value>スマートサイドバー</value>
+  </data>
+  <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
+    <value>Rewrite for clarity</value>
+  </data>
+  <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
+    <value>Drop an image to extract text</value>
+  </data>
+  <data name="SmartSidebarOcrDropHint" xml:space="preserve">
+    <value>PNG, JPG, BMP, GIF, and TIFF files are supported.</value>
+  </data>
+  <data name="SmartSidebarOcrInsert" xml:space="preserve">
+    <value>Insert into document</value>
+  </data>
+  <data name="SmartSidebarOcrNoText" xml:space="preserve">
+    <value>No text was detected in the image.</value>
+  </data>
+  <data name="SmartSidebarOcrUnavailable" xml:space="preserve">
+    <value>OCR is unavailable on this device.</value>
+  </data>
+  <data name="SmartSidebarExecutionDetailsTitle" xml:space="preserve">
+    <value>AI execution details</value>
+  </data>
+  <data name="SmartSidebarExecutionModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTokensPerSecond" xml:space="preserve">
+    <value>Tokens/sec</value>
+  </data>
+  <data name="SmartSidebarExecutionPending" xml:space="preserve">
+    <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarErrorFormat" xml:space="preserve">
+    <value>Error: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="SessionRestoreTitle" xml:space="preserve">
+    <value>Restore previous session</value>
+  </data>
+  <data name="SessionRestoreContent" xml:space="preserve">
+    <value>SmrtPad found a recovery session from the last run. Do you want to restore your open tabs?</value>
+  </data>
+  <data name="SessionRestoreRestore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="SessionRestoreDiscard" xml:space="preserve">
+    <value>Discard</value>
   </data>
 </root>

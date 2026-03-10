@@ -40,7 +40,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-
   <!-- ═══ شريط القوائم ═══ -->
   <data name="FileMenuButton.Content" xml:space="preserve">
     <value>ملف</value>
@@ -84,7 +83,6 @@
   <data name="PageViewToggle.Text" xml:space="preserve">
     <value>عرض الصفحة</value>
   </data>
-
   <!-- ═══ الشريط — الحافظة ═══ -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
     <value>لصق</value>
@@ -98,7 +96,6 @@
   <data name="ClipboardGroupLabel.Text" xml:space="preserve">
     <value>الحافظة</value>
   </data>
-
   <!-- ═══ الشريط — الخط ═══ -->
   <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
     <value>الخط</value>
@@ -109,7 +106,6 @@
   <data name="FontGroupLabel.Text" xml:space="preserve">
     <value>الخط</value>
   </data>
-
   <!-- ═══ الشريط — الفقرة ═══ -->
   <data name="ListTypeNoneItem.Text" xml:space="preserve">
     <value>بلا</value>
@@ -150,7 +146,6 @@
   <data name="ParagraphGroupLabel.Text" xml:space="preserve">
     <value>فقرة</value>
   </data>
-
   <!-- ═══ الشريط — إدراج ═══ -->
   <data name="PictureRibbonLabel.Text" xml:space="preserve">
     <value>صورة</value>
@@ -176,7 +171,6 @@
   <data name="InsertGroupLabel.Text" xml:space="preserve">
     <value>إدراج</value>
   </data>
-
   <!-- ═══ الشريط — التحرير ═══ -->
   <data name="FindFlyoutHeader.Text" xml:space="preserve">
     <value>بحث</value>
@@ -232,7 +226,6 @@
   <data name="EditingGroupLabel.Text" xml:space="preserve">
     <value>تحرير</value>
   </data>
-
   <!-- ═══ الكواليس ═══ -->
   <data name="NewNavItem.Content" xml:space="preserve">
     <value>جديد</value>
@@ -261,12 +254,10 @@
   <data name="BackstageBodyDefault.Text" xml:space="preserve">
     <value>اختر خيارًا من القائمة.</value>
   </data>
-
   <!-- ═══ شريط الحالة ═══ -->
   <data name="StatusText.Text" xml:space="preserve">
     <value>جاهز</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: عام ═══ -->
   <data name="AppTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -298,7 +289,6 @@
   <data name="ButtonPrint" xml:space="preserve">
     <value>طباعة</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: عمليات الملفات ═══ -->
   <data name="StatusOpened" xml:space="preserve">
     <value>تم فتح {0}</value>
@@ -327,7 +317,6 @@
   <data name="FileDefaultName" xml:space="preserve">
     <value>مستند</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: الطباعة ═══ -->
   <data name="PrintTitle" xml:space="preserve">
     <value>طباعة</value>
@@ -356,7 +345,6 @@
   <data name="ErrorPrint" xml:space="preserve">
     <value>خطأ في الطباعة</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: الخيارات ═══ -->
   <data name="OptionsTitle" xml:space="preserve">
     <value>خيارات</value>
@@ -427,7 +415,6 @@
   <data name="StatusDisabled" xml:space="preserve">
     <value>مُعطّلة</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: البحث / الاستبدال ═══ -->
   <data name="StatusNoMatch" xml:space="preserve">
     <value>لم يتم العثور على تطابق.</value>
@@ -450,7 +437,6 @@
   <data name="FindRegexCheckBox.Content" xml:space="preserve">
     <value>استخدام التعبيرات العادية</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: وضع التركيز ═══ -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">
     <value>تم تمكين وضع التركيز.</value>
@@ -458,7 +444,6 @@
   <data name="StatusFocusModeDisabled" xml:space="preserve">
     <value>تم تعطيل وضع التركيز.</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: ميزات الإدراج ═══ -->
   <data name="DateTimeTitle" xml:space="preserve">
     <value>التاريخ والوقت</value>
@@ -535,7 +520,6 @@
   <data name="StatusTheme" xml:space="preserve">
     <value>النسق: {0}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: الطباعة (حقيقية) ═══ -->
   <data name="PrintJobTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
@@ -555,7 +539,6 @@
   <data name="StatusPrintCancelled" xml:space="preserve">
     <value>تم إلغاء الطباعة.</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: استيراد تنسيقات الملفات ═══ -->
   <data name="FileTypeDocx" xml:space="preserve">
     <value>مستند Word</value>
@@ -566,7 +549,6 @@
   <data name="FileTypeOdt" xml:space="preserve">
     <value>نص OpenDocument</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: اللصق / الأخطاء ═══ -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>خطأ في اللصق</value>
@@ -577,7 +559,6 @@
   <data name="DragDropCaption" xml:space="preserve">
     <value>فتح ملف</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: شريط الحالة ═══ -->
   <data name="StatusBarWords" xml:space="preserve">
     <value>الكلمات: {0}</value>
@@ -591,7 +572,6 @@
   <data name="StatusBarLineCol" xml:space="preserve">
     <value>سطر {0}، عمود {1}</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: خدمة الحوار ═══ -->
   <data name="DlgUnsavedChanges" xml:space="preserve">
     <value>تغييرات غير محفوظة</value>
@@ -611,7 +591,6 @@
   <data name="DlgOK" xml:space="preserve">
     <value>موافق</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: أوصاف الكواليس ═══ -->
   <data name="BackstageFile" xml:space="preserve">
     <value>ملف</value>
@@ -637,7 +616,6 @@
   <data name="BackstageNoRecentFiles" xml:space="preserve">
     <value>لا توجد ملفات حديثة.</value>
   </data>
-
   <!-- ═══ CODE-BEHIND: علامات الجدولة ═══ -->
   <data name="TabStopTitle" xml:space="preserve">
     <value>علامات الجدولة</value>
@@ -750,7 +728,6 @@
   <data name="DrawingStrokeWidth" xml:space="preserve">
     <value>عرض الخط</value>
   </data>
-
   <data name="StatusMacroRecording" xml:space="preserve">
     <value>جارٍ تسجيل الماكرو...</value>
   </data>
@@ -895,7 +872,6 @@
   <data name="MacroFilter" xml:space="preserve">
     <value>ملفات الماكرو</value>
   </data>
-
   <!-- Multi-window -->
   <data name="WindowMenu.Title" xml:space="preserve">
     <value>نافذة</value>
@@ -903,7 +879,6 @@
   <data name="NewWindowMenuItem.Text" xml:space="preserve">
     <value>نافذة جديدة</value>
   </data>
-
   <!-- Templates -->
   <data name="TemplatesNavItem.Content" xml:space="preserve">
     <value>القوالب</value>
@@ -917,7 +892,6 @@
   <data name="BackstageExitDesc" xml:space="preserve">
     <value>أغلق التطبيق.</value>
   </data>
-
   <!-- ═══ Font formatting upgrades ═══ -->
   <data name="NoHighlightButton.Content" xml:space="preserve">
     <value>بدون تمييز</value>
@@ -949,8 +923,6 @@
   <data name="StatusFontApplied" xml:space="preserve">
     <value>تم تطبيق تنسيق الخط.</value>
   </data>
-
-
   <!-- ═══ New features (batch) ═══ -->
   <data name="StatusDuplicatedLine" xml:space="preserve">
     <value>Line duplicated.</value>
@@ -1066,5 +1038,66 @@
   <data name="HighlightColorIndicatorName" xml:space="preserve">
     <value>Highlight color: {0}</value>
   </data>
+  <!-- Pro-tier strings (Phase 4) -->
+  <data name="ProUpsellTitle" xml:space="preserve">
+    <value>الترقية إلى SmrtPad Pro</value>
+  </data>
+  <data name="ProUpsellContent" xml:space="preserve">
+    <value>افتح ميزات الذكاء الاصطناعي: الشريط الجانبي الذكي والتلخيص وإعادة كتابة النغمة والبحث الدلالي.</value>
+  </data>
+  <data name="ProUpsellUpgrade" xml:space="preserve">
+    <value>ترقية</value>
+  </data>
+  <data name="ProUpsellDismiss" xml:space="preserve">
+    <value>ليس الآن</value>
+  </data>
+  <data name="SmartSidebarToggle.Text" xml:space="preserve">
+    <value>الشريط الجانبي الذكي</value>
+  </data>
+  <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
+    <value>Rewrite for clarity</value>
+  </data>
+  <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
+    <value>Drop an image to extract text</value>
+  </data>
+  <data name="SmartSidebarOcrDropHint" xml:space="preserve">
+    <value>PNG, JPG, BMP, GIF, and TIFF files are supported.</value>
+  </data>
+  <data name="SmartSidebarOcrInsert" xml:space="preserve">
+    <value>Insert into document</value>
+  </data>
+  <data name="SmartSidebarOcrNoText" xml:space="preserve">
+    <value>No text was detected in the image.</value>
+  </data>
+  <data name="SmartSidebarOcrUnavailable" xml:space="preserve">
+    <value>OCR is unavailable on this device.</value>
+  </data>
+  <data name="SmartSidebarExecutionDetailsTitle" xml:space="preserve">
+    <value>AI execution details</value>
+  </data>
+  <data name="SmartSidebarExecutionModel" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTokensPerSecond" xml:space="preserve">
+    <value>Tokens/sec</value>
+  </data>
+  <data name="SmartSidebarExecutionPending" xml:space="preserve">
+    <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarErrorFormat" xml:space="preserve">
+    <value>Error: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="SessionRestoreTitle" xml:space="preserve">
+    <value>Restore previous session</value>
+  </data>
+  <data name="SessionRestoreContent" xml:space="preserve">
+    <value>SmrtPad found a recovery session from the last run. Do you want to restore your open tabs?</value>
+  </data>
+  <data name="SessionRestoreRestore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="SessionRestoreDiscard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
 </root>
-
