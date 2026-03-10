@@ -28,6 +28,10 @@ namespace SmrtPad.Helpers
         public static byte[] GeneratePdf(string text, double fontSize = DefaultFontSize)
         {
             ArgumentNullException.ThrowIfNull(text);
+            if (!double.IsFinite(fontSize) || fontSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fontSize), "Font size must be a positive finite value.");
+            }
 
             double lineHeight = fontSize * LineHeightFactor;
             int linesPerPage = Math.Max(1, (int)(ContentHeight / lineHeight));

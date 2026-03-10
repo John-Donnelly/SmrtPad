@@ -10,9 +10,11 @@ namespace SmrtPad.Helpers
     /// </summary>
     public static class HtmlConverterHelper
     {
+        private static readonly Regex s_scriptStyleRegex = new("<\\s*(script|style)\\b[^>]*>.*?<\\s*/\\s*\\1\\s*>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
         private static readonly Regex s_brRegex = new("<\\s*br\\s*/?\\s*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_paragraphCloseRegex = new("<\\s*/\\s*p\\s*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_paragraphOpenRegex = new("<\\s*p(?:\\s+[^>]*)?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex s_blockCloseRegex = new("<\\s*/\\s*(div|h[1-6]|tr|section|article|blockquote)\\s*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_listItemOpenRegex = new("<\\s*li(?:\\s+[^>]*)?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_listItemCloseRegex = new("<\\s*/\\s*li\\s*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex s_tagRegex = new("<[^>]+>", RegexOptions.Compiled);
@@ -28,9 +30,11 @@ namespace SmrtPad.Helpers
                 return string.Empty;
             }
 
-            string normalized = s_brRegex.Replace(html, "\n");
+            string normalized = s_scriptStyleRegex.Replace(html, string.Empty);
+            normalized = s_brRegex.Replace(normalized, "\n");
             normalized = s_paragraphCloseRegex.Replace(normalized, "\n\n");
             normalized = s_paragraphOpenRegex.Replace(normalized, string.Empty);
+            normalized = s_blockCloseRegex.Replace(normalized, "\n\n");
             normalized = s_listItemOpenRegex.Replace(normalized, "• ");
             normalized = s_listItemCloseRegex.Replace(normalized, "\n");
             normalized = s_tagRegex.Replace(normalized, string.Empty);

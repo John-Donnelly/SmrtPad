@@ -33,9 +33,16 @@ namespace SmrtPad.Helpers
         /// <returns>Extracted text content, or <see cref="string.Empty"/> if the entry is missing.</returns>
         public static string ExtractText(Stream archiveStream, string extension)
         {
+            ArgumentNullException.ThrowIfNull(archiveStream);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                throw new ArgumentException("File extension must be provided.", nameof(extension));
+            }
+
             using var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read);
 
-            string entryPath = extension == ".docx" ? "word/document.xml" : "content.xml";
+            bool isDocx = string.Equals(extension, ".docx", StringComparison.OrdinalIgnoreCase);
+            string entryPath = isDocx ? "word/document.xml" : "content.xml";
             var entry = archive.GetEntry(entryPath);
             if (entry == null)
                 return string.Empty;
@@ -44,10 +51,10 @@ namespace SmrtPad.Helpers
             var doc = XDocument.Load(entryStream);
 
             var texts = doc.Descendants()
-                .Where(el => el.Name.LocalName == (extension == ".docx" ? "t" : "p"))
+                .Where(el => el.Name.LocalName == (isDocx ? "t" : "p"))
                 .Select(el => el.Value);
 
-            return extension == ".docx"
+            return isDocx
                 ? string.Join("", texts).Replace("\n", Environment.NewLine)
                 : string.Join(Environment.NewLine, texts);
         }
