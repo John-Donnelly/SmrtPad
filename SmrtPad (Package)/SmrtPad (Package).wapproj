@@ -33,6 +33,12 @@
     <WapProjPath Condition="'$(WapProjPath)'==''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
     <PathToXAMLWinRTImplementations>SmrtPad\</PathToXAMLWinRTImplementations>
     <WinUISDKReferences>false</WinUISDKReferences>
+    <AITargetFramework>net10.0-windows10.0.26100.0</AITargetFramework>
+    <AIProjectPath>$(MSBuildThisFileDirectory)..\SmrtPad.AI\SmrtPad.AI.csproj</AIProjectPath>
+    <AIPackageOutputDir>$(MSBuildProjectDirectory)\bin\$(Platform)\$(Configuration)\AppX\SmrtPad\</AIPackageOutputDir>
+    <AIPlatform Condition="'$(Platform)' == 'x86'">x64</AIPlatform>
+    <AIPlatform Condition="'$(AIPlatform)' == ''">$(Platform)</AIPlatform>
+    <AIOutputDir>$(MSBuildThisFileDirectory)..\SmrtPad.AI\bin\$(AIPlatform)\$(Configuration)\$(AITargetFramework)\</AIOutputDir>
   </PropertyGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
   <PropertyGroup>
@@ -65,8 +71,20 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
+  <Target Name="CopySmrtPadAiOutputs" AfterTargets="Build">
+    <MSBuild Projects="$(AIProjectPath)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);Platform=$(AIPlatform)" />
+    <ItemGroup>
+      <SmrtPadAiOutputs Include="$(AIOutputDir)*" />
+    </ItemGroup>
+    <MakeDir Directories="$(AIPackageOutputDir)" />
+    <Copy SourceFiles="@(SmrtPadAiOutputs)"
+          DestinationFiles="@(SmrtPadAiOutputs->'$(AIPackageOutputDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
