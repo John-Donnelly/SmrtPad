@@ -12,6 +12,7 @@ namespace SmrtPad.Services
         private const int MaxRecentFiles = 10;
         private readonly string _settingsFilePath;
         private SettingsData _data;
+        private bool _recentFilesValidated;
 
         public SettingsService()
         {
@@ -141,11 +142,19 @@ namespace SmrtPad.Services
             set => _data.WordWrapMode = value;
         }
 
-        public List<string> RecentFiles => _data.RecentFiles;
+        public List<string> RecentFiles
+        {
+            get
+            {
+                EnsureRecentFilesValidated();
+                return _data.RecentFiles;
+            }
+        }
 
         public void AddRecentFile(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return;
+            EnsureRecentFilesValidated();
             _data.RecentFiles.Remove(path);
             _data.RecentFiles.Insert(0, path);
             if (_data.RecentFiles.Count > MaxRecentFiles)
@@ -155,6 +164,7 @@ namespace SmrtPad.Services
 
         public void ClearRecentFiles()
         {
+            _recentFilesValidated = true;
             _data.RecentFiles.Clear();
             Save();
         }
@@ -187,35 +197,47 @@ namespace SmrtPad.Services
                 {
                     var json = File.ReadAllText(_settingsFilePath);
                     _data = Normalize(JsonSerializer.Deserialize<SettingsData>(json));
-
-                    var validPaths = _data.RecentFiles
-                        .Where(static path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .Take(MaxRecentFiles)
-                        .ToList();
-
-                    if (validPaths.Count != _data.RecentFiles.Count ||
-                        !_data.RecentFiles.SequenceEqual(validPaths, StringComparer.OrdinalIgnoreCase))
-                    {
-                        _data.RecentFiles = validPaths;
-                        Save();
-                    }
+                    _recentFilesValidated = false;
                 }
             }
             catch (JsonException ex)
             {
                 Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
                 _data = new SettingsData();
+                _recentFilesValidated = true;
             }
             catch (IOException ex)
             {
                 Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
                 _data = new SettingsData();
+                _recentFilesValidated = true;
             }
             catch (UnauthorizedAccessException ex)
             {
                 Debug.WriteLine($"SettingsService.Load failed: {ex.Message}");
                 _data = new SettingsData();
+                _recentFilesValidated = true;
+            }
+        }
+
+        private void EnsureRecentFilesValidated()
+        {
+            if (_recentFilesValidated)
+                return;
+
+            _recentFilesValidated = true;
+
+            var validPaths = _data.RecentFiles
+                .Where(static path => !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxRecentFiles)
+                .ToList();
+
+            if (validPaths.Count != _data.RecentFiles.Count ||
+                !_data.RecentFiles.SequenceEqual(validPaths, StringComparer.OrdinalIgnoreCase))
+            {
+                _data.RecentFiles = validPaths;
+                Save();
             }
         }
 

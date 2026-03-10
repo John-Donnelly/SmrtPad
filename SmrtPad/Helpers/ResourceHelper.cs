@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Xml.Linq;
 using Microsoft.Windows.ApplicationModel.Resources;
 
@@ -8,8 +9,10 @@ namespace SmrtPad.Helpers
 {
     public static class ResourceHelper
     {
+        private const int NamedResourceNotFoundHResult = unchecked((int)0x80073B17);
+
         private static readonly ResourceLoader? _loader;
-        private static readonly Dictionary<string, string>? _fallback;
+        private static Dictionary<string, string>? _fallback;
 
         static ResourceHelper()
         {
@@ -31,9 +34,20 @@ namespace SmrtPad.Helpers
         public static string GetString(string key)
         {
             if (_loader is not null)
-                return _loader.GetString(key);
+            {
+                try
+                {
+                    var resourceValue = _loader.GetString(key);
+                    if (!string.IsNullOrEmpty(resourceValue))
+                        return resourceValue;
+                }
+                catch (COMException ex) when (ex.HResult == NamedResourceNotFoundHResult)
+                {
+                }
+            }
 
-            if (_fallback is not null && _fallback.TryGetValue(key, out var value))
+            var fallback = _fallback ??= LoadFallbackStrings();
+            if (fallback.TryGetValue(key, out var value))
                 return value;
 
             return key;

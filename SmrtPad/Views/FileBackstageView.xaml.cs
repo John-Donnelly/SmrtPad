@@ -30,9 +30,28 @@ public sealed partial class FileBackstageView : UserControl
     public FileBackstageView()
     {
         InitializeComponent();
-        Nav.SelectedItem = Nav.MenuItems[0];
-        _suppressSelectionEvent = false;
         PopulateTemplates();
+        Loaded += FileBackstageView_Loaded;
+    }
+
+    private void FileBackstageView_Loaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= FileBackstageView_Loaded;
+
+        if (Nav.MenuItems.Count == 0)
+        {
+            _suppressSelectionEvent = false;
+            return;
+        }
+
+        _suppressSelectionEvent = true;
+        if (Nav.MenuItems[0] is NavigationViewItem item)
+        {
+            Nav.SelectedItem = item;
+            ShowPaneForTag(item.Tag as string);
+        }
+
+        _suppressSelectionEvent = false;
     }
 
     private void PopulateTemplates()
@@ -196,7 +215,7 @@ public sealed partial class FileBackstageView : UserControl
                 BodyText.Text = Res.GetString("BackstageOptionsDesc");
                 break;
             case "PageSetup":
-                HeaderText.Text = Res.GetString("PageSetupNavItem.Content");
+                HeaderText.Text = Res.GetString("PageSetupTitle");
                 BodyText.Text = Res.GetString("BackstagePageSetupDesc");
                 DocPropertiesPanel.Visibility = Visibility.Visible;
                 break;
