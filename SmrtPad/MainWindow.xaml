@@ -115,7 +115,7 @@
                         <ToggleMenuFlyoutItem x:Name="SmartSidebarToggle" x:Uid="SmartSidebarToggle" Text="✨ Smart Sidebar" Click="SmartSidebarToggle_Click"
                                              AutomationProperties.AutomationId="SmartSidebarToggle" />
                     </MenuBarItem>
-                    <MenuBarItem x:Uid="FormatMenu" Title="Format">
+                    <MenuBarItem x:Uid="FormatMenu" Title="Format" AutomationProperties.AutomationId="FormatMenuBarItem">
                         <MenuFlyoutItem x:Uid="FormatFontMenuItem" Text="Font..." Click="FormatFont_Click"
                                         AutomationProperties.AutomationId="FormatFontMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8D2;"/></MenuFlyoutItem.Icon>
@@ -125,7 +125,7 @@
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE1D0;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                     </MenuBarItem>
-                    <MenuBarItem x:Uid="MacroMenuBar" Title="Macro">
+                    <MenuBarItem x:Uid="MacroMenuBar" Title="Macro" AutomationProperties.AutomationId="MacroMenuBar">
                         <MenuFlyoutItem x:Name="MacroRecordItem" Text="Record Macro" Click="MacroRecord_Click"
                                         AutomationProperties.AutomationId="MacroRecordItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7C8;"/></MenuFlyoutItem.Icon>
@@ -357,7 +357,8 @@
                                             <Button Click="TextColorSwatchButton_Click" Tag="#9b00d3" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Ellipse Fill="#9b00d3" Width="20" Height="20" Stroke="#B7B7B7" StrokeThickness="1"/></Button>
                                             <Button Click="TextColorSwatchButton_Click" Tag="#c0504d" Padding="0" MinWidth="0" MinHeight="0" Width="25" Height="25" Margin="1" CornerRadius="12" Background="Transparent" BorderThickness="0"><Ellipse Fill="#c0504d" Width="20" Height="20" Stroke="#B7B7B7" StrokeThickness="1"/></Button>
                                         </VariableSizedWrapGrid>
-                                        <Button x:Uid="MoreColorsButton" Content="More colors..." Click="TextColorMoreColors_Click" HorizontalAlignment="Stretch"/>
+                                        <Button x:Uid="MoreColorsButton" Content="More colors..." Click="TextColorMoreColors_Click" HorizontalAlignment="Stretch"
+                                                AutomationProperties.AutomationId="MoreColorsButton"/>
                                         <ColorPicker x:Name="TextColorPicker" ColorChanged="TextColorPicker_ColorChanged" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </Flyout>
@@ -435,11 +436,13 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="0" Margin="0,0,0,3">
                         <Button x:Name="DecreaseIndentButton" Click="DecreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Decrease Indent"
+                                AutomationProperties.AutomationId="DecreaseIndentButton"
                                 AutomationProperties.Name="Decrease Indent">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E7;" FontSize="14"/>
                         </Button>
                         <Button x:Name="IncreaseIndentButton" Click="IncreaseIndent_Click" Width="32" Height="28" Padding="0" CornerRadius="4"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Increase Indent"
+                                AutomationProperties.AutomationId="IncreaseIndentButton"
                                 AutomationProperties.Name="Increase Indent">
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8E8;" FontSize="14"/>
                         </Button>
@@ -523,7 +526,8 @@
                         <!-- Paragraph Styles -->
                         <Button x:Name="StylesButton" Padding="4,3" CornerRadius="4" Height="28"
                                 Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Styles"
-                                AutomationProperties.Name="Styles">
+                                AutomationProperties.Name="Styles"
+                                AutomationProperties.AutomationId="StylesButton">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Bottom">
                                     <MenuFlyoutItem x:Uid="StyleNormalItem" Text="Normal" Click="StyleNormal_Click"/>

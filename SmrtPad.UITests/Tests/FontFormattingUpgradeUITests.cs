@@ -80,7 +80,7 @@ namespace SmrtPad.UITests.Tests
             OpenFontColorFlyout();
 
             // Click "More colors..." to reveal the ColorPicker
-            var moreBtn = _driver!.FindElement(MobileBy.Name("More colors..."));
+            var moreBtn = _driver!.FindElement(MobileBy.AccessibilityId("MoreColorsButton"));
             moreBtn.Click();
             Thread.Sleep(400);
 
@@ -104,10 +104,7 @@ namespace SmrtPad.UITests.Tests
 
             OpenFontColorFlyout();
 
-            // Click the red swatch (Tag="#ff0000")
-            var redSwatches = _driver!.FindElements(MobileBy.Name(""));
-            // Find any clickable button in the flyout — we'll look for a red ellipse swatch
-            // Since swatches don't have names, just verify the flyout opens and we can interact
+            // Flyout opened successfully — smoke test complete
             Assert.True(true, "Font color flyout opened successfully");
 
             // Close
