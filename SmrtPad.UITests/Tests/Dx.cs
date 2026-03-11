@@ -1,6 +1,7 @@
 using Xunit; using SmrtPad.UITests.Infrastructure; using System;
 namespace SmrtPad.UITests.Tests {
-  public class Dx {
+  [Collection("UITests")]
+    public class Dx {
     [SkippableFact] public void Check() {
       Skip.If(!AppiumSession.IsAvailable(), "WinAppDriver / Appium not available.");
       var exe = AppiumSession.FindSmrtPadExe();

@@ -15,6 +15,7 @@ namespace SmrtPad.UITests.Tests
     ///
     /// Tests share one Appium session via <see cref="SharedAppFixture"/>.
     /// </summary>
+    [Collection("UITests")]
     public sealed class FileBackstageUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;
@@ -492,14 +493,9 @@ namespace SmrtPad.UITests.Tests
             // The editor should now show a new/empty tab
             Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
 
-            // Clean up: close the extra tab
-            try
-            {
-                var closeBtn = _driver!.FindElement(MobileBy.Name("Close"));
-                closeBtn.Click();
-                Thread.Sleep(400);
-            }
-            catch { }
+            // Clean up: close the extra tab created by "New" using Ctrl+W, NOT
+            // MobileBy.Name("Close") which resolves to the title-bar close button (N-2).
+            _fx.CloseActiveTab();
         }
 
         // ── Backstage navigation switches content ─────────────────────────────

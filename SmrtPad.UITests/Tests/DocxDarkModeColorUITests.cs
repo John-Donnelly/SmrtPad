@@ -195,6 +195,7 @@ namespace SmrtPad.UITests.Tests
     /// with the CelestiPets Business Plan DOCX open. Tests skip gracefully when
     /// Appium, the executable, or the DOCX file is unavailable.
     /// </summary>
+    [Collection("UITests")]
     public sealed class DocxDarkModeColorUITests
         : IClassFixture<DocxDarkModeFixture>, IDisposable
     {

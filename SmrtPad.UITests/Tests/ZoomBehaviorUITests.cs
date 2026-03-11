@@ -26,6 +26,7 @@ namespace SmrtPad.UITests.Tests
     ///     below 100% (screenshot pixel test — verifies the fix for the "panel shrinks"
     ///     regression).
     /// </summary>
+    [Collection("UITests")]
     public sealed class ZoomBehaviorUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;

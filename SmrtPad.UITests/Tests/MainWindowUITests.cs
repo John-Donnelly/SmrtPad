@@ -19,6 +19,7 @@ namespace SmrtPad.UITests.Tests
     /// above prerequisites are absent so that the standard unit-test CI run is
     /// not broken.
     /// </summary>
+    [Collection("UITests")]
     public class MainWindowUITests : IDisposable
     {
         private readonly AppiumSession? _session;

@@ -18,6 +18,7 @@ namespace SmrtPad.UITests.Tests
     /// to avoid per-test launch overhead.  Each test calls <see cref="RequireDriver"/>
     /// and clears the editor so tests are independent of execution order.
     /// </summary>
+    [Collection("UITests")]
     public sealed class EditorInteractionUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;

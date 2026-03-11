@@ -16,6 +16,7 @@ namespace SmrtPad.UITests.Tests
     ///
     /// Tests share one Appium session via <see cref="SharedAppFixture"/>.
     /// </summary>
+    [Collection("UITests")]
     public sealed class FindReplaceUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;

@@ -13,6 +13,7 @@ namespace SmrtPad.UITests.Tests
     /// keyboard shortcuts, zoom slider, paragraph dialog, status bar toggle,
     /// paste special dialog, paste split-button, and send by email menu item.
     /// </summary>
+    [Collection("UITests")]
     public sealed class NewFeatureUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;

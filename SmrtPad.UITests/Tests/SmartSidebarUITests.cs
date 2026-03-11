@@ -15,6 +15,7 @@ namespace SmrtPad.UITests.Tests
     /// Requires a free-tier session (app launched with --free-tier) so that
     /// the Pro feature gate is active even in DEBUG builds.
     /// </summary>
+    [Collection("UITests")]
     public sealed class SmartSidebarUITests : IClassFixture<FreeTierAppFixture>, IDisposable
     {
         private readonly FreeTierAppFixture _fx;

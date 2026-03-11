@@ -30,6 +30,7 @@ namespace SmrtPad.UITests.Tests
     /// All tests share one Appium session (via <see cref="SharedAppFixture"/>)
     /// and skip gracefully when Appium / WinAppDriver is unavailable.
     /// </summary>
+    [Collection("UITests")]
     public sealed class MacroFunctionalUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;

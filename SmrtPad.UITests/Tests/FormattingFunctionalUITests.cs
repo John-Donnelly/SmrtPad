@@ -23,6 +23,7 @@ namespace SmrtPad.UITests.Tests
     /// Each test clears the editor and resets formatting to a known state
     /// before proceeding, so tests are order-independent.
     /// </summary>
+    [Collection("UITests")]
     public sealed class FormattingFunctionalUITests : IClassFixture<SharedAppFixture>, IDisposable
     {
         private readonly SharedAppFixture _fx;
