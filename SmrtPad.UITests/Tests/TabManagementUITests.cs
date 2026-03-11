@@ -111,10 +111,12 @@ namespace SmrtPad.UITests.Tests
         }
 
         /// <summary>
-        /// Using Ctrl+N should create a new document tab.
+        /// Ctrl+N fires the "New Document" command which replaces the active tab's
+        /// content and reports "New document created." in the status bar.
+        /// It does NOT create a new tab — use Ctrl+T for that (UI-15).
         /// </summary>
         [SkippableFact]
-        public void AddTab_ViaCtrlN_CreatesNewTab()
+        public void NewDocument_ViaCtrlN_ShowsNewDocumentStatus()
         {
             RequireDriver();
 
@@ -122,9 +124,7 @@ namespace SmrtPad.UITests.Tests
             editor.SendKeys(Keys.Control + "n");
             Thread.Sleep(500);
 
-            Assert.Equal("New tab created.", StatusText);
-
-            CloseActiveTab();
+            Assert.Equal("New document created.", StatusText);
         }
 
         // ── Close tab ────────────────────────────────────────────────────────
