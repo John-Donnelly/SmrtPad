@@ -1,6 +1,8 @@
 # SmrtPad
 
-A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, and a full suite of export options.
+> **Version:** 1.0.0-rc.1 · [Microsoft Store](#) *(submission pending)*
+
+A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, AI-powered Pro features, and a full suite of export options.
 
 ## Features
 

@@ -4,6 +4,32 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+## [1.0.0-rc.1] — 2026-03-10
+
+### Added
+- **Smart Sidebar (Pro)** — `SmartSidebar` UserControl with Summarize, Tone-shift, Rewrite, Semantic Search, and OCR drop-zone sections; loaded at runtime via `AssemblyLoadContext` for Pro tier only
+- **IAIDispatcher / AIDispatcherProxy** — ALC boundary interface and proxy for safe Pro-only AI assembly loading
+- **AssemblyLoadContext guard** — `SmrtPad.AI.dll` loaded only when `FeatureFlags.IsEnabled(SmartSidebar)` is true; nil-safe in Free tier
+- **Pro upsell dialog** — `ContentDialog` shown when any Pro-gated feature is accessed in Free tier; opens Store page on primary button
+- **AI skills** — `SummarizerSkill`, `ToneShifterSkill`, `AIRewriteSkill`, `ImageOcrSkill` in `SmrtPad.AI/Skills/`; all stream tokens via `AIDispatcher`
+- **TextChunker** — paragraph-and-sentence-boundary chunking with configurable `maxTokens`
+- **SemanticSearchService** — HNSW cosine-similarity embedding index with persistence to `%LOCALAPPDATA%\SmrtPad\semantic_index.bin`
+- **Session restore** — `SessionRestoreService` auto-saves open tabs every 30 s to `%LOCALAPPDATA%\SmrtPad\session.json`; crash-recovery dialog on next launch
+- **MarkdownToRtfConverter** — converts H1–H3, bold, italic, inline code, lists, blockquotes, fenced code, and horizontal rules to RTF
+- **Opt-in crash telemetry** — first-launch consent dialog; writes structured JSON to `%LOCALAPPDATA%\SmrtPad\crashes\`; notifies WER via `WerReportFault`
+- **Empty-state placeholder** — shown when no tabs are open; New document and Open file quick-action buttons
+- **Find/Replace accessibility** — `AutomationProperties.Name` labels added to all Find/Replace text boxes for Narrator
+- **`CrashTelemetryEnabled` / `CrashTelemetryConsentAsked`** — new settings persisted in `settings.json`
+- **Package.appxmanifest** — configured for Store submission: `JohnDonnelly.SmrtPad` identity, `Windows.Desktop` min `10.0.22000.0`, file-type associations (`.rtf`, `.txt`, `.md`), `smrtpad.exe` execution alias
+- **Localization** — Phase 8 crash-telemetry, Pro/AI badge, and UI-polish strings added to all 9 locale `resw` files
+
+### Removed
+- **x86 platform** — removed from `SmrtPad.csproj` and WAP project; AI NuGet packages do not ship x86 binaries
+
+### Performance
+- Deferred post-launch work (license init, session restore, file open) to a background task to reduce UI-thread blocking on cold-start
+- Lazy validation of recent-files MRU list (deferred until first access)
+
 ### Added
 - **`QuickAccessNewButton` automation ID** — quick-access toolbar New button now carries a stable `AutomationProperties.AutomationId="QuickAccessNewButton"` so UI automation tests can target it without relying on localized text
 - **`ClearFormattingButton` automation ID** — Clear Formatting ribbon button now carries `AutomationProperties.AutomationId="ClearFormattingButton"` replacing the previous ambiguous `Name="Clear Formatting"` lookup
