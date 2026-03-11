@@ -336,6 +336,32 @@ namespace SmrtPad.UITests.Infrastructure
         }
 
         /// <summary>
+        /// Opens a new tab via the TabView "+" button and waits for it to be active.
+        /// The new tab has an empty undo/redo stack, making it ideal for undo-isolation tests (UI-8).
+        /// </summary>
+        public void AddFreshTab()
+        {
+            EnsureBackstageClosed();
+            Driver!.FindElement(MobileBy.AccessibilityId("AddButton")).Click();
+            Thread.Sleep(500);
+        }
+
+        /// <summary>
+        /// Closes the active tab by sending Ctrl+W and dismisses any unsaved-changes dialog.
+        /// </summary>
+        public void CloseActiveTab()
+        {
+            try
+            {
+                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                editor.SendKeys(Keys.Control + "w");
+                Thread.Sleep(500);
+                DismissSaveDialogIfPresent();
+            }
+            catch { }
+        }
+
+        /// <summary>
         /// Closes all tabs except one by pressing Ctrl+W repeatedly until only a
         /// single tab remains, dismissing any unsaved-changes dialogs along the way.
         /// Call this at the start of tests that assert a specific tab count so that

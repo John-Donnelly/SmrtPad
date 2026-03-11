@@ -120,26 +120,33 @@ namespace SmrtPad.UITests.Tests
         public void UndoThenRedo_RestoresContent()
         {
             RequireDriver();
-            _fx.ClearEditor();
-            _fx.TypeInEditor("redo test");
+            _fx.AddFreshTab();
+            try
+            {
+                _fx.TypeInEditor("redo test");
 
-            string beforeUndo = _fx.GetStatusBarText("WordCountText");
-            Assert.Equal("Words: 2", beforeUndo);
+                string beforeUndo = _fx.GetStatusBarText("WordCountText");
+                Assert.Equal("Words: 2", beforeUndo);
 
-            // Undo
-            _fx.UndoInEditor();
-            Thread.Sleep(300);
+                // Undo
+                _fx.UndoInEditor();
+                Thread.Sleep(300);
 
-            string afterUndo = _fx.GetStatusBarText("WordCountText");
-            Assert.Equal("Words: 0", afterUndo);
+                string afterUndo = _fx.GetStatusBarText("WordCountText");
+                Assert.Equal("Words: 0", afterUndo);
 
-            // Redo via Ctrl+Y
-            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-            editor.SendKeys(Keys.Control + "y");
-            Thread.Sleep(300);
+                // Redo via Ctrl+Y
+                var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                editor.SendKeys(Keys.Control + "y");
+                Thread.Sleep(300);
 
-            string afterRedo = _fx.GetStatusBarText("WordCountText");
-            Assert.Equal("Words: 2", afterRedo);
+                string afterRedo = _fx.GetStatusBarText("WordCountText");
+                Assert.Equal("Words: 2", afterRedo);
+            }
+            finally
+            {
+                _fx.CloseActiveTab();
+            }
         }
 
         // ── Cut then Paste ───────────────────────────────────────────────────
@@ -152,22 +159,29 @@ namespace SmrtPad.UITests.Tests
         public void CutThenPaste_RestoresContent()
         {
             RequireDriver();
-            _fx.ClearEditor();
-            _fx.TypeInEditor("clipboard round trip");
-            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+            _fx.AddFreshTab();
+            try
+            {
+                _fx.TypeInEditor("clipboard round trip");
+                Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
 
-            // Cut all
-            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-            editor.SendKeys(Keys.Control + "a");
-            Thread.Sleep(200);
-            editor.SendKeys(Keys.Control + "x");
-            Thread.Sleep(300);
-            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+                // Cut all
+                var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                editor.SendKeys(Keys.Control + "a");
+                Thread.Sleep(200);
+                editor.SendKeys(Keys.Control + "x");
+                Thread.Sleep(300);
+                Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
 
-            // Paste back
-            editor.SendKeys(Keys.Control + "v");
-            Thread.Sleep(400);
-            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+                // Paste back
+                editor.SendKeys(Keys.Control + "v");
+                Thread.Sleep(400);
+                Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+            }
+            finally
+            {
+                _fx.CloseActiveTab();
+            }
         }
 
         // ── Multiple Undo ────────────────────────────────────────────────────
@@ -364,29 +378,35 @@ namespace SmrtPad.UITests.Tests
         public void MultipleRedo_RestoresAllContent()
         {
             RequireDriver();
-            _fx.ClearEditor();
-
-            _fx.TypeInEditor("redo multi test");
-            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
-
-            // Undo until empty
-            for (int i = 0; i < 5; i++)
+            _fx.AddFreshTab();
+            try
             {
-                _fx.UndoInEditor();
-                Thread.Sleep(200);
-                if (_fx.GetStatusBarText("WordCountText") == "Words: 0") break;
-            }
-            Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+                _fx.TypeInEditor("redo multi test");
+                Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
 
-            // Redo until content restored
-            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-            for (int i = 0; i < 5; i++)
-            {
-                editor.SendKeys(Keys.Control + "y");
-                Thread.Sleep(200);
-                if (_fx.GetStatusBarText("WordCountText") == "Words: 3") break;
+                // Undo until empty
+                for (int i = 0; i < 5; i++)
+                {
+                    _fx.UndoInEditor();
+                    Thread.Sleep(200);
+                    if (_fx.GetStatusBarText("WordCountText") == "Words: 0") break;
+                }
+                Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
+
+                // Redo until content restored
+                var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                for (int i = 0; i < 5; i++)
+                {
+                    editor.SendKeys(Keys.Control + "y");
+                    Thread.Sleep(200);
+                    if (_fx.GetStatusBarText("WordCountText") == "Words: 3") break;
+                }
+                Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
             }
-            Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+            finally
+            {
+                _fx.CloseActiveTab();
+            }
         }
 
         // ── Copy without selection ───────────────────────────────────────────

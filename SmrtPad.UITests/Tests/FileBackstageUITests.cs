@@ -471,9 +471,12 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
 
-            // Type some content first
-            _fx.EnsureBackstageClosed();
+            // Start with a single known-clean tab to eliminate undo-stack contamination
+            // from prior tests (UI-8).
+            _fx.ResetToSingleTab();
             _fx.ClearEditor();
+
+            // Type some content first
             _fx.TypeInEditor("existing content");
             Assert.Equal("Words: 2", _fx.GetStatusBarText("WordCountText"));
 
