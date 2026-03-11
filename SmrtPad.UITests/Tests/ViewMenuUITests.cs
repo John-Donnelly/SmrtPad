@@ -424,11 +424,20 @@ namespace SmrtPad.UITests.Tests
             }
             Assert.True(statusBarHidden, "StatusBar should be hidden in focus mode");
 
-            // Toggle focus mode off
-            _driver!.FindElement(MobileBy.Name("View")).Click();
-            Thread.Sleep(450);
-            _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
-            Thread.Sleep(800);
+            // Toggle focus mode off — use the stable AutomationId path (matches
+            // FocusMode_ToggleOn_HidesRibbonAndStatusBar) so the View menu is reliably
+            // found even on slower machines (UI-11b).
+            try
+            {
+                _driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                Thread.Sleep(450);
+                _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
+                Thread.Sleep(800);
+            }
+            catch
+            {
+                _fx.EnsureFocusModeOff();
+            }
 
             // Status bar should be restored
             var restoredBar = _driver!.FindElement(MobileBy.AccessibilityId("StatusBar"));

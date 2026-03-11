@@ -343,45 +343,56 @@ namespace SmrtPad.UITests.Infrastructure
 
         /// <summary>
         /// Ensures Page View mode is OFF before running zoom-bounds tests.
-        /// When Page View is active the page scales with zoom level, shrinking the
-        /// editor's UIA layout rect.  Toggling it off before zoom tests ensures the
-        /// ScaleTransform is render-only and layout bounds stay stable (UI-10).
+        /// Opens the View menu so <c>PageViewToggle</c> is in the UIA tree (it is a
+        /// <c>ToggleMenuFlyoutItem</c> and is absent when the flyout is closed), reads
+        /// its toggle state, clicks it only if it is currently checked, then closes the
+        /// menu if nothing was clicked (UI-10b).
         /// </summary>
         public void EnsurePageViewOff()
         {
             try
             {
-                var toggle = Driver!.FindElements(MobileBy.AccessibilityId("PageViewToggle"));
+                // Open the View menu so flyout items enter the UIA tree.
+                Driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                Thread.Sleep(350);
+
+                var toggle = Driver.FindElements(MobileBy.AccessibilityId("PageViewToggle"));
                 if (toggle.Count > 0 && toggle[0].GetAttribute("Toggle.ToggleState") == "1")
                 {
-                    // Page View is on — open the View menu and click the toggle to turn it off
-                    Driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
-                    Thread.Sleep(350);
-                    Driver.FindElement(MobileBy.AccessibilityId("PageViewToggle")).Click();
+                    // Page View is ON — click the toggle to turn it OFF.
+                    toggle[0].Click();
                     Thread.Sleep(400);
+                }
+                else
+                {
+                    // Page View is OFF — dismiss the menu without changing anything.
+                    Driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                    Thread.Sleep(200);
                 }
             }
             catch { }
         }
 
         /// <summary>
-        /// Ensures Focus Mode is OFF. When a prior test leaves Focus Mode active the ribbon
-        /// and status bar are hidden, causing subsequent tests to throw NoSuchElementException
-        /// when they try to interact with menu items (UI-11).
+        /// Ensures Focus Mode is OFF. Detects the mode by checking whether
+        /// <c>RibbonBar</c> is displayed — when Focus Mode is ON the ribbon is
+        /// collapsed. If hidden, opens the View menu via <c>ViewMenuBarItem</c>
+        /// AutomationId and clicks <c>FocusModeToggle</c> to restore normal view (UI-11b).
         /// </summary>
         public void EnsureFocusModeOff()
         {
             try
             {
-                var toggle = Driver!.FindElements(MobileBy.AccessibilityId("FocusModeToggle"));
-                if (toggle.Count > 0 && toggle[0].GetAttribute("Toggle.ToggleState") == "1")
-                {
-                    // FocusMode hides RibbonBar but NOT the MenuBar row — View menu is still reachable.
-                    Driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
-                    Thread.Sleep(350);
-                    Driver.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
-                    Thread.Sleep(500);
-                }
+                // Check RibbonBar visibility — collapsed when FocusMode is ON.
+                var ribbon = Driver!.FindElements(MobileBy.AccessibilityId("RibbonBar"));
+                bool focusModeOn = ribbon.Count > 0 && !ribbon[0].Displayed;
+                if (!focusModeOn) return;
+
+                // Open the View menu (in Grid.Row=0, always visible) then click the toggle.
+                Driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                Thread.Sleep(350);
+                Driver.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
+                Thread.Sleep(500);
             }
             catch { }
         }
