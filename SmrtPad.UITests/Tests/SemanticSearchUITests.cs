@@ -11,13 +11,15 @@ namespace SmrtPad.UITests.Tests;
 /// <summary>
 /// UI tests for semantic-search gating in the Smart Sidebar.
 /// In a free-tier build, the Smart Sidebar gate should prevent semantic search from becoming visible.
+/// Requires a free-tier session (app launched with --free-tier) so that
+/// the Pro feature gate is active even in DEBUG builds.
 /// </summary>
-public sealed class SemanticSearchUITests : IClassFixture<SharedAppFixture>, IDisposable
+public sealed class SemanticSearchUITests : IClassFixture<FreeTierAppFixture>, IDisposable
 {
-    private readonly SharedAppFixture _fixture;
+    private readonly FreeTierAppFixture _fixture;
     private readonly WindowsDriver? _driver;
 
-    public SemanticSearchUITests(SharedAppFixture fixture)
+    public SemanticSearchUITests(FreeTierAppFixture fixture)
     {
         _fixture = fixture;
         _driver = fixture.Driver;
@@ -29,7 +31,7 @@ public sealed class SemanticSearchUITests : IClassFixture<SharedAppFixture>, IDi
 
     private void RequireDriver() =>
         Skip.If(!_fixture.IsAvailable,
-            "WinAppDriver / Appium not available or SmrtPad.exe not built.");
+            "WinAppDriver / Appium not available, SmrtPad.exe not built, or free-tier session unavailable.");
 
     [SkippableFact]
     public void SemanticSearch_FreeTier_SectionNotVisible()

@@ -12,13 +12,15 @@ namespace SmrtPad.UITests.Tests
     /// UI tests for the Smart Sidebar feature gate.
     /// In a free-tier (unlicensed) build the sidebar toggle should show
     /// the Pro upsell dialog rather than opening the sidebar.
+    /// Requires a free-tier session (app launched with --free-tier) so that
+    /// the Pro feature gate is active even in DEBUG builds.
     /// </summary>
-    public sealed class SmartSidebarUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class SmartSidebarUITests : IClassFixture<FreeTierAppFixture>, IDisposable
     {
-        private readonly SharedAppFixture _fx;
+        private readonly FreeTierAppFixture _fx;
         private readonly WindowsDriver? _driver;
 
-        public SmartSidebarUITests(SharedAppFixture fx)
+        public SmartSidebarUITests(FreeTierAppFixture fx)
         {
             _fx = fx;
             _driver = fx.Driver;
@@ -28,7 +30,7 @@ namespace SmrtPad.UITests.Tests
 
         private void RequireDriver() =>
             Skip.If(!_fx.IsAvailable,
-                "WinAppDriver / Appium not available or SmrtPad.exe not built.");
+                "WinAppDriver / Appium not available, SmrtPad.exe not built, or free-tier session unavailable.");
 
         /// <summary>
         /// The View menu should contain the Smart Sidebar toggle item.
