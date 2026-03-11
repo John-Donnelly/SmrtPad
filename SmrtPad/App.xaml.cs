@@ -104,7 +104,11 @@ namespace SmrtPad
             // interaction, without waiting for the async licence check to complete.
             // Pass --free-tier on the command line (e.g. from UI tests) to suppress this so that
             // free-tier gate logic can be exercised in the same binary.
-            if (!Environment.GetCommandLineArgs().Contains("--free-tier"))
+            // Check both GetCommandLineArgs() (unpackaged/direct launch) and args.Arguments
+            // (AUMID/packaged launch) because the activation path determines which is populated.
+            bool isFreeTier = Environment.GetCommandLineArgs().Contains("--free-tier")
+                           || (args.Arguments ?? string.Empty).Contains("--free-tier");
+            if (!isFreeTier)
             {
                 FeatureFlags.SetProFlags();
                 _aiDispatcher = TryLoadAIDispatcher();
