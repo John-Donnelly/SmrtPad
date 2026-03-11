@@ -334,5 +334,75 @@ namespace SmrtPad.UITests.Infrastructure
             }
             catch { }
         }
+
+        /// <summary>
+        /// Closes all tabs except one by pressing Ctrl+W repeatedly until only a
+        /// single tab remains, dismissing any unsaved-changes dialogs along the way.
+        /// Call this at the start of tests that assert a specific tab count so that
+        /// tabs leaked by prior tests do not skew the result (UI-7).
+        /// </summary>
+        public void ResetToSingleTab()
+        {
+            EnsureBackstageClosed();
+            for (int i = 0; i < 20; i++)
+            {
+                try
+                {
+                    var tabs = Driver!.FindElement(MobileBy.AccessibilityId("DocumentTabs"));
+                    var allTabs = tabs.FindElements(MobileBy.Name("Untitled"));
+                    if (allTabs.Count <= 1) break;
+                }
+                catch { break; }
+
+                try
+                {
+                    var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                    editor.SendKeys(Keys.Control + "w");
+                    Thread.Sleep(400);
+                    DismissSaveDialogIfPresent();
+                }
+                catch { break; }
+            }
+            Thread.Sleep(200);
+        }
+
+        /// <summary>
+        /// Polls <paramref name="automationId"/> up to <paramref name="timeoutMs"/> milliseconds
+        /// (checking every <paramref name="intervalMs"/> ms) and returns the element once it
+        /// is found and displayed.  Throws <see cref="OpenQA.Selenium.WebDriverException"/> if
+        /// the element is not found within the timeout.  Used instead of fixed sleeps where the
+        /// UI update time is variable (e.g. status-bar animations) (UI-7, UI-12).
+        /// </summary>
+        public AppiumElement WaitForElement(string automationId, int timeoutMs = 3000, int intervalMs = 100)
+        {
+            var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+            while (DateTime.UtcNow < deadline)
+            {
+                var els = Driver!.FindElements(MobileBy.AccessibilityId(automationId));
+                if (els.Count > 0 && els[0].Displayed)
+                    return els[0];
+                Thread.Sleep(intervalMs);
+            }
+            return Driver!.FindElement(MobileBy.AccessibilityId(automationId));
+        }
+
+        /// <summary>
+        /// Polls the status-bar <paramref name="automationId"/> element until its text equals
+        /// <paramref name="expected"/> or the <paramref name="timeoutMs"/> elapses.
+        /// Returns the last observed text regardless (caller can assert).
+        /// Avoids brittle fixed sleeps for messages that reset on a timer (UI-7).
+        /// </summary>
+        public string WaitForStatusText(string automationId, string expected, int timeoutMs = 3000, int intervalMs = 100)
+        {
+            var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+            string text = string.Empty;
+            while (DateTime.UtcNow < deadline)
+            {
+                try { text = GetStatusBarText(automationId); } catch { }
+                if (text == expected) return text;
+                Thread.Sleep(intervalMs);
+            }
+            return text;
+        }
     }
 }

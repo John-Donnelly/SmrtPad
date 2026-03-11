@@ -60,13 +60,17 @@ namespace SmrtPad.UITests.Tests
         }
 
         /// <summary>
-        /// Closes the currently active tab by clicking its Close button.
+        /// Closes the currently active tab by sending Ctrl+W.
+        /// If the tab has unsaved changes the "Unsaved Changes" dialog is
+        /// automatically dismissed by clicking "Don't Save", so tests that
+        /// type content and then close the tab do not block.
         /// </summary>
         private void CloseActiveTab()
         {
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             editor.SendKeys(Keys.Control + "w");
             Thread.Sleep(500);
+            _fx.DismissSaveDialogIfPresent();
         }
 
         // ── Create tab ───────────────────────────────────────────────────────
@@ -176,6 +180,7 @@ namespace SmrtPad.UITests.Tests
         public void SwitchTabs_PreservesIndependentContent()
         {
             RequireDriver();
+            _fx.ResetToSingleTab();
 
             // Type in the first tab
             _fx.ClearEditor();
@@ -364,6 +369,7 @@ namespace SmrtPad.UITests.Tests
         public void NewButton_CreatesNewTab_PreviousTabStillExists()
         {
             RequireDriver();
+            _fx.ResetToSingleTab();
 
             // Type in the first tab so it has content
             _fx.ClearEditor();

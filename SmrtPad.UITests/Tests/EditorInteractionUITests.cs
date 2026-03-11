@@ -256,9 +256,10 @@ namespace SmrtPad.UITests.Tests
             // Click the TabView's add-tab button.
             var addTabBtn = _driver!.FindElement(MobileBy.AccessibilityId("AddButton"));
             addTabBtn.Click();
-            Thread.Sleep(500);
 
-            string status = _fx.GetStatusBarText("StatusText");
+            // Poll instead of a fixed sleep — the status message resets on a timer so we
+            // must read it before the reset fires (UI-7).
+            string status = _fx.WaitForStatusText("StatusText", "New tab created.", timeoutMs: 2000);
             Assert.Equal("New tab created.", status);
 
             // Clean up: close the extra tab so subsequent tests start with 1 tab
