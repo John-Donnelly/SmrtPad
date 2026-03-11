@@ -1098,6 +1098,60 @@
     <value>Restore</value>
   </data>
   <data name="SessionRestoreDiscard" xml:space="preserve">
-    <value>Discard</value>
+    <value>Verwerfen</value>
+  </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>SmrtPad verbessern helfen</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>Anonyme Absturzberichte automatisch senden, um Fehler schneller zu beheben. Es werden keine persönlichen Daten erfasst.</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>Ja, Berichte senden</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>Nein danke</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ Intelligente Seitenleiste</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 ZUSAMMENFASSUNG</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 TON</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 SEMANTISCH</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ NPU</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ Tinte</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 Dokumentgliederung</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>Neues Dokument beginnen oder Datei öffnen</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>Neues Dokument</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>Datei öffnen…</value>
   </data>
 </root>

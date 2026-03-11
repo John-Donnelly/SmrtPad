@@ -1196,4 +1196,58 @@
   <data name="SessionRestoreDiscard" xml:space="preserve">
     <value>Discard</value>
   </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>Help improve SmrtPad</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>Automatically send anonymous crash reports to help us fix bugs faster. No personal data is collected.</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>Yes, send reports</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>No thanks</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ Smart Sidebar</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 SUMMARIZE</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 TONE</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 SEMANTIC</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ NPU</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ Ink</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 Document Outline</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>Start a new document or open a file</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>New document</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>Open file…</value>
+  </data>
 </root>

@@ -1098,6 +1098,60 @@
     <value>Restore</value>
   </data>
   <data name="SessionRestoreDiscard" xml:space="preserve">
-    <value>Discard</value>
+    <value>破棄</value>
+  </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>SmrtPad の改善にご協力ください</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>匿名のクラッシュレポートを自動送信して、バグの修正を迅速化します。個人データは収集されません。</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>はい、レポートを送信</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>いいえ、結構です</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ スマートサイドバー</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 要約</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 トーン</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 セマンティック</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ NPU</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ インク</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 ドキュメントアウトライン</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>新しいドキュメントを作成するか、ファイルを開く</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>新規ドキュメント</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>ファイルを開く…</value>
   </data>
 </root>

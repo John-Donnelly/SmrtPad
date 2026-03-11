@@ -1098,6 +1098,60 @@
     <value>Restore</value>
   </data>
   <data name="SessionRestoreDiscard" xml:space="preserve">
-    <value>Discard</value>
+    <value>Отменить</value>
+  </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>Помогите улучшить SmrtPad</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>Автоматически отправляйте анонимные отчёты об ошибках, чтобы помочь нам быстрее устранять баги. Личные данные не собираются.</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>Да, отправлять отчёты</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>Нет, спасибо</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ Умная боковая панель</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 РЕЗЮМЕ</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 ТОН</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 СЕМАНТИКА</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ НПБ</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ ГПУ</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 ЦПУ</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ Рукопись</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 Структура документа</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>Создайте новый документ или откройте файл</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>Новый документ</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>Открыть файл…</value>
   </data>
 </root>

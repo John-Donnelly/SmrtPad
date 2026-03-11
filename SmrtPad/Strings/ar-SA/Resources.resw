@@ -1098,6 +1098,60 @@
     <value>Restore</value>
   </data>
   <data name="SessionRestoreDiscard" xml:space="preserve">
-    <value>Discard</value>
+    <value>تجاهل</value>
+  </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>ساعد في تحسين SmrtPad</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>أرسل تقارير الأعطال المجهولة تلقائيًا لمساعدتنا في إصلاح الأخطاء بشكل أسرع. لا يتم جمع أي بيانات شخصية.</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>نعم، أرسل التقارير</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>لا شكرًا</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ الشريط الجانبي الذكي</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 تلخيص</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 النبرة</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 البحث الدلالي</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ NPU</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ الحبر</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 مخطط المستند</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>ابدأ مستندًا جديدًا أو افتح ملفًا</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>مستند جديد</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>فتح ملف…</value>
   </data>
 </root>

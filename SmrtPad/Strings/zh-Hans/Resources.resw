@@ -1098,6 +1098,60 @@
     <value>Restore</value>
   </data>
   <data name="SessionRestoreDiscard" xml:space="preserve">
-    <value>Discard</value>
+    <value>放弃</value>
+  </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>帮助改进 SmrtPad</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>自动发送匿名崩溃报告，帮助我们更快修复错误。不会收集任何个人数据。</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>是的，发送报告</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>不用了</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ 智能侧边栏</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 摘要</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 语气</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 语义</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ NPU</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ 墨迹</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 文档大纲</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>新建文档或打开文件</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>新建文档</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>打开文件…</value>
   </data>
 </root>

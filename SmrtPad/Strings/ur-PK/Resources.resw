@@ -1098,6 +1098,60 @@
     <value>Restore</value>
   </data>
   <data name="SessionRestoreDiscard" xml:space="preserve">
-    <value>Discard</value>
+    <value>ردّ کریں</value>
+  </data>
+
+  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <data name="CrashTelemetryTitle" xml:space="preserve">
+    <value>SmrtPad کو بہتر بنانے میں مدد کریں</value>
+  </data>
+  <data name="CrashTelemetryContent" xml:space="preserve">
+    <value>گمنام کریش رپورٹس خودکار طریقے سے بھیجیں تاکہ ہم تیزی سے بگ ٹھیک کر سکیں۔ کوئی ذاتی ڈیٹا اکٹھا نہیں کیا جاتا۔</value>
+  </data>
+  <data name="CrashTelemetryAccept" xml:space="preserve">
+    <value>ہاں، رپورٹس بھیجیں</value>
+  </data>
+  <data name="CrashTelemetryDecline" xml:space="preserve">
+    <value>نہیں شکریہ</value>
+  </data>
+
+  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <data name="SmartSidebarTitle" xml:space="preserve">
+    <value>✨ سمارٹ سائڈبار</value>
+  </data>
+  <data name="SummarizeSectionHeading" xml:space="preserve">
+    <value>📝 خلاصہ</value>
+  </data>
+  <data name="ToneSectionHeading" xml:space="preserve">
+    <value>🎨 لہجہ</value>
+  </data>
+  <data name="SemanticSectionHeading" xml:space="preserve">
+    <value>🔎 معنوی تلاش</value>
+  </data>
+  <data name="HardwareBadgeNpu" xml:space="preserve">
+    <value>⚡ NPU</value>
+  </data>
+  <data name="HardwareBadgeGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="HardwareBadgeCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
+  <data name="InkModeMenuItem" xml:space="preserve">
+    <value>✏️ روشنائی</value>
+  </data>
+  <data name="DocumentOutlineMenuItem" xml:space="preserve">
+    <value>📋 دستاویز کا خاکہ</value>
+  </data>
+
+  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <data name="EmptyStateMessage" xml:space="preserve">
+    <value>نیا دستاویز بنائیں یا کوئی فائل کھولیں</value>
+  </data>
+  <data name="EmptyStateNewButton.Content" xml:space="preserve">
+    <value>نیا دستاویز</value>
+  </data>
+  <data name="EmptyStateOpenButton.Content" xml:space="preserve">
+    <value>فائل کھولیں…</value>
   </data>
 </root>
