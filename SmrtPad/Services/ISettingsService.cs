@@ -21,6 +21,8 @@ namespace SmrtPad.Services
         double PageMarginLeftInches { get; set; }
         double PageMarginRightInches { get; set; }
         bool ShowStatusBar { get; set; }
+        bool CrashTelemetryEnabled { get; set; }
+        bool CrashTelemetryConsentAsked { get; set; }
         string WordWrapMode { get; set; }
         List<string> RecentFiles { get; }
         void AddRecentFile(string path);

@@ -703,7 +703,8 @@
                                     <StackPanel Spacing="6" Width="300">
                                         <TextBlock x:Uid="FindFlyoutHeader" Text="Find" FontSize="14" FontWeight="SemiBold"/>
                                         <TextBox x:Name="FindTextBox" x:Uid="FindTextBox" PlaceholderText="Text to look for"
-                                                 AutomationProperties.AutomationId="FindTextBox"/>
+                                                 AutomationProperties.AutomationId="FindTextBox"
+                                                 AutomationProperties.Name="Find what"/>
                                         <CheckBox x:Name="FindMatchCaseCheckBox" x:Uid="FindMatchCaseCheckBox" Content="Match case" IsChecked="False"
                                                   AutomationProperties.AutomationId="FindMatchCaseCheckBox"/>
                                         <CheckBox x:Name="FindWholeWordCheckBox" x:Uid="FindWholeWordCheckBox" Content="Whole word" IsChecked="False"
@@ -738,10 +739,12 @@
                                     <StackPanel Spacing="6" Width="300">
                                         <TextBlock x:Uid="ReplaceFlyoutHeader" Text="Find &amp; Replace" FontSize="14" FontWeight="SemiBold"/>
                                         <TextBox x:Name="ReplaceFindTextBox" x:Uid="ReplaceFindTextBox" PlaceholderText="Text to look for"
-                                                 AutomationProperties.AutomationId="ReplaceFindTextBox"/>
+                                                 AutomationProperties.AutomationId="ReplaceFindTextBox"
+                                                 AutomationProperties.Name="Find what"/>
                                         <TextBlock x:Uid="ReplaceFlyoutLabel" Text="Replace" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0"/>
                                         <TextBox x:Name="ReplaceWithTextBox" x:Uid="ReplaceWithTextBox" PlaceholderText="New text"
-                                                 AutomationProperties.AutomationId="ReplaceWithTextBox"/>
+                                                 AutomationProperties.AutomationId="ReplaceWithTextBox"
+                                                 AutomationProperties.Name="Replace with"/>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
                                             <Button x:Uid="ReplaceButton" Content="Replace" Click="Replace_Click"/>
                                             <Button x:Uid="ReplaceAllButton" Content="Replace All" Click="ReplaceAll_Click"/>
@@ -817,6 +820,29 @@
                      VerticalAlignment="Stretch"
                      Background="Transparent">
             </TabView>
+
+            <!-- Empty-state placeholder (shown when no tabs are open) -->
+            <Grid x:Name="EmptyStatePanel" Grid.Row="1" Grid.Column="1"
+                  Visibility="Collapsed"
+                  HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <FontIcon Glyph="&#xE8A5;" FontSize="48"
+                              Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <TextBlock x:Uid="EmptyStateMessage"
+                               Text="Start a new document or open a file"
+                               FontSize="16"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Button x:Uid="EmptyStateNewButton" Content="New document"
+                                AutomationProperties.AutomationId="EmptyStateNewButton"
+                                Click="New_Click" />
+                        <Button x:Uid="EmptyStateOpenButton" Content="Open file..."
+                                AutomationProperties.AutomationId="EmptyStateOpenButton"
+                                Click="Open_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
 
             <!-- Backstage overlay -->
             <views:FileBackstageView x:Name="FileBackstage" Grid.Row="0" Grid.RowSpan="2"

@@ -136,6 +136,18 @@ namespace SmrtPad.Services
             set => _data.ShowStatusBar = value;
         }
 
+        public bool CrashTelemetryEnabled
+        {
+            get => _data.CrashTelemetryEnabled;
+            set => _data.CrashTelemetryEnabled = value;
+        }
+
+        public bool CrashTelemetryConsentAsked
+        {
+            get => _data.CrashTelemetryConsentAsked;
+            set => _data.CrashTelemetryConsentAsked = value;
+        }
+
         public string WordWrapMode
         {
             get => _data.WordWrapMode;
@@ -283,6 +295,8 @@ namespace SmrtPad.Services
             public double PageMarginLeftInches { get; set; } = 1.0;
             public double PageMarginRightInches { get; set; } = 1.0;
             public bool ShowStatusBar { get; set; } = true;
+            public bool CrashTelemetryEnabled { get; set; } = false;
+            public bool CrashTelemetryConsentAsked { get; set; } = false;
             public string WordWrapMode { get; set; } = "Wrap";
             public List<string> RecentFiles { get; set; } = [];
         }
