@@ -1,17 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0'">
     <VisualStudioVersion>15.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|x86">
-      <Configuration>Debug</Configuration>
-      <Platform>x86</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x86">
-      <Configuration>Release</Configuration>
-      <Platform>x86</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -36,7 +28,6 @@
     <AITargetFramework>net10.0-windows10.0.26100.0</AITargetFramework>
     <AIProjectPath>$(MSBuildThisFileDirectory)..\SmrtPad.AI\SmrtPad.AI.csproj</AIProjectPath>
     <AIPackageOutputDir>$(MSBuildProjectDirectory)\bin\$(Platform)\$(Configuration)\AppX\SmrtPad\</AIPackageOutputDir>
-    <AIPlatform Condition="'$(Platform)' == 'x86'">x64</AIPlatform>
     <AIPlatform Condition="'$(AIPlatform)' == ''">$(Platform)</AIPlatform>
     <AIOutputDir>$(MSBuildThisFileDirectory)..\SmrtPad.AI\bin\$(AIPlatform)\$(Configuration)\$(AITargetFramework)\</AIOutputDir>
   </PropertyGroup>
