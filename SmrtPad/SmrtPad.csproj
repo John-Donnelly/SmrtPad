@@ -63,9 +63,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Controls\SmartSidebar.xaml">
+    <Page Update="Controls\SmartSidebar.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </None>
+    </Page>
   </ItemGroup>
 
 

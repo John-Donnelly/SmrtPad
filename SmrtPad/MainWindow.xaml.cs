@@ -316,6 +316,7 @@ namespace SmrtPad
             _tabs.Add(tab);
             DocumentTabs.SelectedIndex = _tabs.Count - 1;
             _activeTabIndex = _tabs.Count - 1;
+            RefreshEmptyState();
             return tab;
         }
 
@@ -504,6 +505,7 @@ namespace SmrtPad
             App.Current.AIDispatcher?.RemoveIndexedTab(_tabs[idx].Id);
             DocumentTabs.TabItems.Remove(tabItem);
             _tabs.RemoveAt(idx);
+            RefreshEmptyState();
 
             if (_tabs.Count == 0)
             {
@@ -573,6 +575,12 @@ namespace SmrtPad
             if (newIdx < 0 || newIdx >= _tabs.Count) return;
             _activeTabIndex = newIdx;
             SyncViewModelFromActiveTab();
+        }
+
+        private void RefreshEmptyState()
+        {
+            EmptyStatePanel.Visibility = _tabs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            DocumentTabs.Visibility = _tabs.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void SyncViewModelFromActiveTab()

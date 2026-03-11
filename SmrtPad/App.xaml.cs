@@ -5,7 +5,10 @@ using SmrtPad.Services;
 using SmrtPad.Services.Licensing;
 using SmrtPad.ViewModels;
 using System;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using Windows.Globalization;
 using Res = SmrtPad.Helpers.ResourceHelper;
 
@@ -107,6 +110,15 @@ namespace SmrtPad
             await Task.Yield();
 
             _ = InitializeLicenseAfterLaunchAsync(mainWindow);
+
+            try
+            {
+                await PromptForCrashTelemetryConsentAsync(mainWindow);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Crash telemetry consent failed: {ex.Message}");
+            }
 
             try
             {
@@ -240,6 +252,74 @@ namespace SmrtPad
                 await sessionRestoreService.ClearSessionAsync();
             }
         }
+
+        private async Task PromptForCrashTelemetryConsentAsync(MainWindow mainWindow)
+        {
+            var settings = Services.GetRequiredService<ISettingsService>();
+            if (settings.CrashTelemetryConsentAsked)
+            {
+                if (settings.CrashTelemetryEnabled)
+                    AttachCrashHandler();
+                return;
+            }
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("CrashTelemetryTitle"),
+                Content = Res.GetString("CrashTelemetryContent"),
+                PrimaryButtonText = Res.GetString("CrashTelemetryAccept"),
+                CloseButtonText = Res.GetString("CrashTelemetryDecline"),
+                XamlRoot = mainWindow.Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            settings.CrashTelemetryConsentAsked = true;
+            settings.CrashTelemetryEnabled = result == ContentDialogResult.Primary;
+            settings.Save();
+
+            if (settings.CrashTelemetryEnabled)
+                AttachCrashHandler();
+        }
+
+        private void AttachCrashHandler()
+        {
+            UnhandledException += App_UnhandledException;
+        }
+
+        private static void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            try
+            {
+                var crashDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SmrtPad", "crashes");
+                Directory.CreateDirectory(crashDir);
+
+                var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss-fff");
+                var crashFilePath = Path.Combine(crashDir, $"crash_{timestamp}.json");
+
+                var crashReport = new
+                {
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Message = e.Message,
+                    StackTrace = e.Exception?.StackTrace,
+                    ExceptionType = e.Exception?.GetType().FullName,
+                    AppVersion = typeof(App).Assembly.GetName().Version?.ToString()
+                };
+
+                File.WriteAllText(crashFilePath, JsonSerializer.Serialize(crashReport, new JsonSerializerOptions { WriteIndented = true }));
+
+                // Notify Windows Error Reporting.
+                WerReportFault(nint.Zero, 1 /* STATUS_ILLEGAL_INSTRUCTION */, 0);
+            }
+            catch
+            {
+                // Best-effort crash recording — never rethrow inside an exception handler.
+            }
+        }
+
+        [DllImport("wer.dll", SetLastError = false, ExactSpelling = true)]
+        private static extern uint WerReportFault(nint hwnd, uint dwFaultType, uint dwFlags);
 
         /// <summary>
         /// Attempts to load <c>SmrtPad.AI.dll</c> via a dedicated <see cref="System.Runtime.Loader.AssemblyLoadContext"/>
