@@ -302,6 +302,13 @@ namespace SmrtPad
                 if (_activeTabIndex >= 0 && tab == ActiveTab)
                     Editor_SelectionChanged(s, e);
             };
+            // Refresh formatting toggles after keyboard shortcuts (e.g. Ctrl+B/I/U)
+            // because the Win32 RichEdit handles these natively without firing SelectionChanged.
+            tab.Editor.KeyUp += (s, e) =>
+            {
+                if (_activeTabIndex >= 0 && tab == ActiveTab)
+                    Editor_SelectionChanged(s, new RoutedEventArgs());
+            };
             tab.Editor.DragOver += Editor_DragOver;
             tab.Editor.Drop += Editor_Drop;
             tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
@@ -1165,13 +1172,16 @@ namespace SmrtPad
 
             ITextCharacterFormat charFormat = selection.CharacterFormat;
 
-            // Update ViewModel properties — toggle buttons sync via {x:Bind} TwoWay
-            ViewModel.IsBold = charFormat.Bold == FormatEffect.On;
-            ViewModel.IsItalic = charFormat.Italic == FormatEffect.On;
+            // Update ViewModel properties — toggle buttons sync via {x:Bind} TwoWay.
+            // Treat FormatEffect.Undefined (mixed selection) as "on" so that toggles
+            // correctly reflect partial formatting on selections that include paragraph
+            // marks or other non-formatted characters at the selection boundary.
+            ViewModel.IsBold = charFormat.Bold != FormatEffect.Off;
+            ViewModel.IsItalic = charFormat.Italic != FormatEffect.Off;
             ViewModel.IsUnderline = charFormat.Underline != UnderlineType.None;
-            ViewModel.IsStrikethrough = charFormat.Strikethrough == FormatEffect.On;
-            ViewModel.IsSubscript = charFormat.Subscript == FormatEffect.On;
-            ViewModel.IsSuperscript = charFormat.Superscript == FormatEffect.On;
+            ViewModel.IsStrikethrough = charFormat.Strikethrough != FormatEffect.Off;
+            ViewModel.IsSubscript = charFormat.Subscript != FormatEffect.Off;
+            ViewModel.IsSuperscript = charFormat.Superscript != FormatEffect.Off;
 
             if (!string.IsNullOrEmpty(charFormat.Name))
             {
@@ -1350,6 +1360,7 @@ namespace SmrtPad
             ActiveTab.Encoding = "UTF-8";
             ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
             UpdateEncoding("UTF-8");
+            ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
             DeferResetTabModified();
         }
 
@@ -2217,6 +2228,8 @@ namespace SmrtPad
 
         /// <summary>
         /// Pastes the current clipboard content as plain (unformatted) text into the active editor.
+        /// After insertion, the character format of the pasted range is reset to defaults so that
+        /// formatting inherited from the surrounding text (e.g. bold) is stripped (UI-14).
         /// </summary>
         private async Task PasteAsPlainTextAsync()
         {
@@ -2226,7 +2239,24 @@ namespace SmrtPad
             try
             {
                 string text = await dataView.GetTextAsync();
+                int start = Editor.Document.Selection.StartPosition;
                 Editor.Document.Selection.Text = text;
+
+                // Select the just-pasted range and clear its character format so that
+                // formatting inherited from the caret/surrounding text is removed.
+                int end = start + text.Length;
+                Editor.Document.Selection.SetRange(start, end);
+                var fmt = Editor.Document.Selection.CharacterFormat;
+                fmt.Bold       = FormatEffect.Off;
+                fmt.Italic     = FormatEffect.Off;
+                fmt.Underline  = UnderlineType.None;
+                fmt.Strikethrough = FormatEffect.Off;
+                fmt.Subscript  = FormatEffect.Off;
+                fmt.Superscript = FormatEffect.Off;
+                Editor.Document.Selection.CharacterFormat = fmt;
+
+                // Collapse selection to end of pasted text
+                Editor.Document.Selection.SetRange(end, end);
                 RefreshEditorState();
             }
             catch (Exception ex)
