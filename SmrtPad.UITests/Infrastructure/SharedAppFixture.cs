@@ -43,6 +43,12 @@ namespace SmrtPad.UITests.Infrastructure
             {
                 _session = new AppiumSession(exe);
                 Driver   = _session.Driver;
+
+                // Allow the app's async startup sequence (session-restore check,
+                // crash-telemetry consent) time to render any dialogs, then
+                // dismiss them so they do not block the first test.
+                Thread.Sleep(1500);
+                DismissSessionRestoreDialogIfPresent();
             }
             catch
             {
@@ -56,8 +62,8 @@ namespace SmrtPad.UITests.Infrastructure
         // ── Shared helpers ────────────────────────────────────────────────────
 
         /// <summary>
-        /// Clears all text in the editor via Ctrl+A → Delete.
-        /// Waits briefly for the UI to settle after each step.
+        /// Clears all text in the editor via Ctrl+A → Delete, then resets
+        /// character formatting so the next test starts with a neutral caret.
         /// Ensures backstage is closed first so editor is accessible.
         /// </summary>
         public void ClearEditor()
@@ -77,6 +83,32 @@ namespace SmrtPad.UITests.Infrastructure
                 editor.SendKeys(Keys.Control + "x");
                 Thread.Sleep(300);
             }
+
+            // Reset character formatting at the caret so no italic/bold/super/subscript
+            // leaks from a previous test into the next one (UI-6).
+            ResetCharacterFormatting();
+        }
+
+        /// <summary>
+        /// Selects all text in the editor and clicks the Clear Formatting ribbon button,
+        /// resetting bold/italic/underline/super/subscript state at the caret.
+        /// Safe to call on an empty editor.
+        /// </summary>
+        public void ResetCharacterFormatting()
+        {
+            try
+            {
+                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                editor.Click();
+                Thread.Sleep(80);
+                var clearBtn = Driver.FindElements(MobileBy.AccessibilityId("ClearFormattingButton"));
+                if (clearBtn.Count > 0)
+                {
+                    clearBtn[0].Click();
+                    Thread.Sleep(150);
+                }
+            }
+            catch { }
         }
 
         /// <summary>
@@ -173,6 +205,8 @@ namespace SmrtPad.UITests.Infrastructure
             {
                 "Edit" => "EditMenuBarItem",
                 "View" => "ViewMenuBarItem",
+                "Format" => "FormatMenuBarItem",
+                "Macro" => "MacroMenuBar",
                 _ => null
             };
         }
@@ -188,6 +222,14 @@ namespace SmrtPad.UITests.Infrastructure
                 "Select All" => "SelectAllMenuItem",
                 "Zoom In" => "ZoomInMenuItem",
                 "Zoom Out" => "ZoomOutMenuItem",
+                "Font..." => "FormatFontMenuItem",
+                "Paragraph..." => "FormatParagraphMenuItem",
+                "✨ Smart Sidebar" => "SmartSidebarToggle",
+                "Status Bar" => "StatusBarToggle",
+                "Spell Check" => "SpellCheckToggle",
+                "Ruler" => "RulerToggle",
+                "Page View" => "PageViewToggle",
+                "Focus Mode" => "FocusModeToggle",
                 _ => null
             };
         }
@@ -251,6 +293,46 @@ namespace SmrtPad.UITests.Infrastructure
             if (IsBackstageOpen()) return;
             Driver!.FindElement(MobileBy.AccessibilityId("FileMenuButton")).Click();
             Thread.Sleep(800);
+        }
+
+        /// <summary>
+        /// Dismisses the "Unsaved Changes" save-prompt dialog by clicking
+        /// "Don't Save" if it is currently visible.  Does nothing if the dialog
+        /// is not present.  Call this after any operation that may close a
+        /// modified tab (e.g. Ctrl+W) to prevent dialogs from blocking tests.
+        /// </summary>
+        public void DismissSaveDialogIfPresent()
+        {
+            try
+            {
+                var dontSave = Driver!.FindElements(MobileBy.Name("Don't Save"));
+                if (dontSave.Count > 0)
+                {
+                    dontSave[0].Click();
+                    Thread.Sleep(300);
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Dismisses the "Restore previous session" startup dialog by clicking
+        /// "Discard" if it is currently visible.  Does nothing if the dialog is
+        /// not present.  Call this after connecting the driver to handle dialogs
+        /// caused by a leftover session from a previous test run.
+        /// </summary>
+        public void DismissSessionRestoreDialogIfPresent()
+        {
+            try
+            {
+                var discard = Driver!.FindElements(MobileBy.Name("Discard"));
+                if (discard.Count > 0)
+                {
+                    discard[0].Click();
+                    Thread.Sleep(300);
+                }
+            }
+            catch { }
         }
     }
 }
