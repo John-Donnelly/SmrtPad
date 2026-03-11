@@ -25,6 +25,9 @@ namespace SmrtPad.UITests.Tests
         {
             _fx = fx;
             _driver = fx.Driver;
+            // Guard: if a prior test left Focus Mode on the ribbon and status bar are
+            // hidden, which breaks every test in this class that needs menu access (UI-11).
+            _fx.EnsureFocusModeOff();
         }
 
         public void Dispose() { /* session owned by fixture */ }
@@ -163,7 +166,6 @@ namespace SmrtPad.UITests.Tests
             Thread.Sleep(500);
 
             // The ribbon (RibbonBar) should be hidden, so StatusBar is also hidden.
-            // We confirm by trying to find StatusBar — it should not be displayed
             bool ribbonHidden = false;
             try
             {
@@ -176,14 +178,21 @@ namespace SmrtPad.UITests.Tests
             }
             Assert.True(ribbonHidden, "Ribbon should be hidden in focus mode");
 
-            // Toggle focus mode off to restore UI
-            // Need to use keyboard shortcut or find the menu differently
-            // Focus mode hides the menu bar, so we need another way to exit
-            // The View menu should still be accessible in the menu bar
-            _driver!.FindElement(MobileBy.Name("View")).Click();
-            Thread.Sleep(450);
-            _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
-            Thread.Sleep(500);
+            // Always restore Focus Mode so subsequent tests see the ribbon and menu bar.
+            // FocusMode only hides RibbonBar/StatusBar — the MenuBar row stays visible,
+            // so the View menu is still reachable (UI-11).
+            try
+            {
+                _driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                Thread.Sleep(450);
+                _driver!.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
+                Thread.Sleep(500);
+            }
+            catch
+            {
+                // Last-resort recovery via the shared helper
+                _fx.EnsureFocusModeOff();
+            }
         }
 
         // ── Zoom via keyboard shortcut ───────────────────────────────────────
