@@ -230,7 +230,7 @@ namespace SmrtPad
                 Content = Res.GetString("SessionRestoreContent"),
                 PrimaryButtonText = Res.GetString("SessionRestoreRestore"),
                 CloseButtonText = Res.GetString("SessionRestoreDiscard"),
-                XamlRoot = mainWindow.Content.XamlRoot
+                XamlRoot = await WaitForXamlRootAsync(mainWindow)
             };
 
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
@@ -253,6 +253,20 @@ namespace SmrtPad
             }
         }
 
+        private static async Task<XamlRoot> WaitForXamlRootAsync(
+            MainWindow mainWindow, CancellationToken ct = default)
+        {
+            // XamlRoot is null until the window's content has been added to the
+            // visual tree and rendered at least one frame. Poll briefly.
+            for (int i = 0; i < 80; i++)
+            {
+                var root = mainWindow.Content?.XamlRoot;
+                if (root is not null) return root;
+                await Task.Delay(25, ct);
+            }
+            throw new InvalidOperationException("XamlRoot was not available within the expected window.");
+        }
+
         private async Task PromptForCrashTelemetryConsentAsync(MainWindow mainWindow)
         {
             var settings = Services.GetRequiredService<ISettingsService>();
@@ -269,7 +283,7 @@ namespace SmrtPad
                 Content = Res.GetString("CrashTelemetryContent"),
                 PrimaryButtonText = Res.GetString("CrashTelemetryAccept"),
                 CloseButtonText = Res.GetString("CrashTelemetryDecline"),
-                XamlRoot = mainWindow.Content.XamlRoot
+                XamlRoot = await WaitForXamlRootAsync(mainWindow)
             };
 
             var result = await dialog.ShowAsync();
