@@ -336,6 +336,51 @@ namespace SmrtPad.UITests.Infrastructure
         }
 
         /// <summary>
+        /// Ensures Page View mode is OFF before running zoom-bounds tests.
+        /// When Page View is active the page scales with zoom level, shrinking the
+        /// editor's UIA layout rect.  Toggling it off before zoom tests ensures the
+        /// ScaleTransform is render-only and layout bounds stay stable (UI-10).
+        /// </summary>
+        public void EnsurePageViewOff()
+        {
+            try
+            {
+                var toggle = Driver!.FindElements(MobileBy.AccessibilityId("PageViewToggle"));
+                if (toggle.Count > 0 && toggle[0].GetAttribute("Toggle.ToggleState") == "1")
+                {
+                    // Page View is on — open the View menu and click the toggle to turn it off
+                    Driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                    Thread.Sleep(350);
+                    Driver.FindElement(MobileBy.AccessibilityId("PageViewToggle")).Click();
+                    Thread.Sleep(400);
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Ensures Focus Mode is OFF. When a prior test leaves Focus Mode active the ribbon
+        /// and status bar are hidden, causing subsequent tests to throw NoSuchElementException
+        /// when they try to interact with menu items (UI-11).
+        /// </summary>
+        public void EnsureFocusModeOff()
+        {
+            try
+            {
+                var toggle = Driver!.FindElements(MobileBy.AccessibilityId("FocusModeToggle"));
+                if (toggle.Count > 0 && toggle[0].GetAttribute("Toggle.ToggleState") == "1")
+                {
+                    // FocusMode hides RibbonBar but NOT the MenuBar row — View menu is still reachable.
+                    Driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+                    Thread.Sleep(350);
+                    Driver.FindElement(MobileBy.AccessibilityId("FocusModeToggle")).Click();
+                    Thread.Sleep(500);
+                }
+            }
+            catch { }
+        }
+
+        /// <summary>
         /// Opens a new tab via the TabView "+" button and waits for it to be active.
         /// The new tab has an empty undo/redo stack, making it ideal for undo-isolation tests (UI-8).
         /// </summary>

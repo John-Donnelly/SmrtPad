@@ -181,6 +181,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
             _fx.EnsureBackstageClosed();
+            _fx.EnsurePageViewOff();
             ResetZoomTo100();
             Thread.Sleep(200);
 
@@ -361,6 +362,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
             _fx.EnsureBackstageClosed();
+            _fx.EnsurePageViewOff();
             ResetZoomTo100();
             Thread.Sleep(200);
 
@@ -389,6 +391,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
             _fx.EnsureBackstageClosed();
+            _fx.EnsurePageViewOff();
             ResetZoomTo100();
             Thread.Sleep(200);
 
@@ -417,6 +420,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
             _fx.EnsureBackstageClosed();
+            _fx.EnsurePageViewOff();
             ResetZoomTo100();
             Thread.Sleep(200);
 
@@ -460,6 +464,7 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
             _fx.ClearEditor();
+            _fx.EnsurePageViewOff();
             Thread.Sleep(200);
 
             // ── Baseline at 100 % ─────────────────────────────────────────────
