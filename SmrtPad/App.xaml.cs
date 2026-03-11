@@ -99,6 +99,17 @@ namespace SmrtPad
             Windows.Add(mainWindow);
             mainWindow.Closed += async (_, _) => await HandleWindowClosedAsync(mainWindow);
 
+            #if DEBUG
+            // In debug builds grant pro immediately so AI features are available from the first
+            // interaction, without waiting for the async licence check to complete.
+            // Pass --free-tier on the command line (e.g. from UI tests) to suppress this so that
+            // free-tier gate logic can be exercised in the same binary.
+            if (!Environment.GetCommandLineArgs().Contains("--free-tier"))
+            {
+                FeatureFlags.SetProFlags();
+                _aiDispatcher = TryLoadAIDispatcher();
+            }
+#endif
             mainWindow.RefreshProGatedUi();
             _window.Activate();
 
@@ -343,7 +354,7 @@ namespace SmrtPad
         {
             try
             {
-                var aiDllPath = Path.Combine(AppContext.BaseDirectory, "SmrtPad.AI.dll");
+                var aiDllPath = Path.Combine(AppContext.BaseDirectory, "AI", "SmrtPad.AI.dll");
                 if (!File.Exists(aiDllPath))
                     return null;
 
