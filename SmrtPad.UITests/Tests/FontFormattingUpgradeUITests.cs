@@ -108,7 +108,7 @@ namespace SmrtPad.UITests.Tests
             Assert.True(true, "Font color flyout opened successfully");
 
             // Close
-            _driver.FindElement(MobileBy.ClassName("Popup")).SendKeys(Keys.Escape);
+            _driver!.FindElement(MobileBy.ClassName("Popup")).SendKeys(Keys.Escape);
             Thread.Sleep(200);
         }
 

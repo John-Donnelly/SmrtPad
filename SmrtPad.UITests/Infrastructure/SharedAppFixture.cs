@@ -24,7 +24,7 @@ namespace SmrtPad.UITests.Infrastructure
     /// Call <see cref="RequireDriver"/> at the start of every test — it skips the
     /// test gracefully when Appium / WinAppDriver is unavailable.
     /// </summary>
-    public sealed class SharedAppFixture : IDisposable
+    public class SharedAppFixture : IDisposable
     {
         private readonly AppiumSession? _session;
 
@@ -33,7 +33,13 @@ namespace SmrtPad.UITests.Infrastructure
         /// <summary>True when a live WinAppDriver session was established.</summary>
         public bool IsAvailable => Driver is not null;
 
-        public SharedAppFixture()
+        public SharedAppFixture() : this(launchArgument: null) { }
+
+        /// <summary>
+        /// Initialises the session, passing <paramref name="launchArgument"/> to the app
+        /// process (e.g. <c>--free-tier</c>).  Intended for use by subclasses.
+        /// </summary>
+        protected SharedAppFixture(string? launchArgument)
         {
             if (!AppiumSession.IsAvailable()) return;
             string? exe = AppiumSession.FindSmrtPadExe();
@@ -41,7 +47,7 @@ namespace SmrtPad.UITests.Infrastructure
 
             try
             {
-                _session = new AppiumSession(exe);
+                _session = new AppiumSession(exe, launchArgument: launchArgument);
                 Driver   = _session.Driver;
 
                 // Allow the app's async startup sequence (session-restore check,
