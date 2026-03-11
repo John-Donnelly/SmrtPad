@@ -8,6 +8,9 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Enforce single-process sequential execution so ClearStartupBlockers() does not
+         kill a SmrtPad.exe instance owned by a concurrently-running test class. -->
+    <RunSettingsFilePath>$(SolutionDir)SmrtPad.UITests.runsettings</RunSettingsFilePath>
     <!--
       UI automation tests require:
         1. Appium 2.x server running  (npm install -g appium && appium)

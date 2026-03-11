@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SmrtPad.UITests.runsettings
+  Placed in the solution root so Visual Studio Test Explorer picks it up
+  automatically via the "Auto-detect runsettings" feature.
+
+  MaxCpuCount=1 forces VS to use a SINGLE test-host process, which ensures
+  that AppiumSession.ClearStartupBlockers() cannot kill a SmrtPad.exe that
+  belongs to a concurrently-running fixture in another host process.
+
+  The xunit.runner.json in SmrtPad.UITests adds maxParallelThreads:1 and
+  parallelizeTestCollections:false to ensure xUnit itself also runs
+  sequentially within that single host.
+-->
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>1</MaxCpuCount>
+    <ResultsDirectory>.\TestResults</ResultsDirectory>
+  </RunConfiguration>
+</RunSettings>

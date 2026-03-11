@@ -53,6 +53,9 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public AppiumSession(string appPath, string? launchArgument = null, bool forceUnpackaged = false)
         {
+            // Clear startup-blocking state before launching so dialogs don't appear during tests.
+            ClearStartupBlockers();
+
             Process process;
             bool usedAumid = false;
             string? aumid = forceUnpackaged ? null : FindWapAumid(appPath);
@@ -179,6 +182,87 @@ namespace SmrtPad.UITests.Infrastructure
                     p.Kill(entireProcessTree: true);
             }
             catch { }
+        }
+
+        /// <summary>
+        /// Removes state that causes startup dialogs to appear during UI tests:
+        /// deletes the session-restore file (prevents the "Restore previous session?" dialog)
+        /// and writes a minimal settings file that marks crash-telemetry consent as already
+        /// answered (prevents the telemetry consent dialog on first launch).
+        /// </summary>
+        private static void ClearStartupBlockers()
+        {
+            // Kill any SmrtPad processes left over from a previous test run before
+            // touching the data files.  This prevents a lingering instance from
+            // writing a fresh session.json after we delete the old one, which would
+            // cause the "Restore previous session" dialog to appear on the next launch.
+            var stale = Process.GetProcessesByName("SmrtPad");
+            foreach (var p in stale)
+            {
+                try { p.Kill(entireProcessTree: true); } catch { }
+            }
+            if (stale.Length > 0)
+                Thread.Sleep(600); // let killed processes fully release file handles
+
+            try
+            {
+                string appDataDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "SmrtPad");
+
+                // Remove session restore file so the restore-prompt dialog is never shown.
+                string sessionFile = Path.Combine(appDataDir, "session.json");
+                if (File.Exists(sessionFile))
+                    File.Delete(sessionFile);
+
+                // Write a minimal settings file so the crash-telemetry consent dialog
+                // is skipped.  We only override the consent flag; everything else keeps
+                // its default.
+                Directory.CreateDirectory(appDataDir);
+                string settingsFile = Path.Combine(appDataDir, "settings.json");
+                if (!File.Exists(settingsFile))
+                {
+                    File.WriteAllText(settingsFile,
+                        """{"CrashTelemetryConsentAsked":true,"CrashTelemetryEnabled":false}""");
+                }
+                else
+                {
+                    // Patch existing settings to mark consent as already asked.
+                    string json = File.ReadAllText(settingsFile);
+                    if (!json.Contains("\"CrashTelemetryConsentAsked\":true"))
+                    {
+                        using var doc = JsonDocument.Parse(json);
+                        var patched = new System.Text.StringBuilder("{");
+                        bool first = true;
+                        bool foundConsent = false;
+                        foreach (var prop in doc.RootElement.EnumerateObject())
+                        {
+                            if (!first) patched.Append(',');
+                            first = false;
+                            if (prop.Name == "CrashTelemetryConsentAsked")
+                            {
+                                patched.Append("\"CrashTelemetryConsentAsked\":true");
+                                foundConsent = true;
+                            }
+                            else
+                            {
+                                patched.Append($"\"{prop.Name}\":{prop.Value.GetRawText()}");
+                            }
+                        }
+                        if (!foundConsent)
+                        {
+                            if (!first) patched.Append(',');
+                            patched.Append("\"CrashTelemetryConsentAsked\":true");
+                        }
+                        patched.Append('}');
+                        File.WriteAllText(settingsFile, patched.ToString());
+                    }
+                }
+            }
+            catch
+            {
+                // Best-effort; if this fails the tests will still run.
+            }
         }
 
         // ── WAP package AUMID resolution ─────────────────────────────────────────
