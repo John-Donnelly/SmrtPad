@@ -27,7 +27,7 @@ namespace SmrtPad.UITests.Tests
     ///     regression).
     /// </summary>
     [Collection("UITests")]
-    public sealed class ZoomBehaviorUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class ZoomBehaviorUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
         private readonly WindowsDriver? _driver;

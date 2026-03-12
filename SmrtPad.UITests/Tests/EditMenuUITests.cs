@@ -17,7 +17,7 @@ namespace SmrtPad.UITests.Tests
     /// Tests share one Appium session via <see cref="SharedAppFixture"/>.
     /// </summary>
     [Collection("UITests")]
-    public sealed class EditMenuUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class EditMenuUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
         private readonly WindowsDriver? _driver;

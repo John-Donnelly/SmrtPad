@@ -22,20 +22,16 @@ namespace SmrtPad.UITests.Tests
     [Collection("UITests")]
     public class MainWindowUITests : IDisposable
     {
-        private readonly AppiumSession? _session;
-        private readonly WindowsDriver?  _driver;
+        private readonly SharedAppFixture _fx;
+        private readonly WindowsDriver?   _driver;
 
-        public MainWindowUITests()
+        public MainWindowUITests(SharedAppFixture fx)
         {
-            if (!AppiumSession.IsAvailable()) return;
-            string? exe = AppiumSession.FindSmrtPadExe();
-            if (exe is null) return;
-
-            try { _session = new AppiumSession(exe); _driver = _session.Driver; }
-            catch { _session = null; _driver = null; }
+            _fx     = fx;
+            _driver = fx.Driver;
         }
 
-        public void Dispose() => _session?.Dispose();
+        public void Dispose() { /* session owned by UITests collection fixture */ }
 
         // ── helpers ──────────────────────────────────────────────────────────
 

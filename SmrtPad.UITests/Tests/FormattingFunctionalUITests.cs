@@ -24,7 +24,7 @@ namespace SmrtPad.UITests.Tests
     /// before proceeding, so tests are order-independent.
     /// </summary>
     [Collection("UITests")]
-    public sealed class FormattingFunctionalUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class FormattingFunctionalUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
         private readonly WindowsDriver?   _driver;

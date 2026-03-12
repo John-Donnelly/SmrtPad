@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -13,7 +13,7 @@ using SmrtPad.UITests.Infrastructure;
 namespace SmrtPad.UITests.Tests
 {
     /// <summary>
-    /// Verifies that a .docx file loaded in dark mode displays light-coloured text â€”
+    /// Verifies that a .docx file loaded in dark mode displays light-coloured text —
     /// i.e. that <c>DocxImportHelper</c> emits <c>\cf0</c> (RTF auto colour) for
     /// default-coloured text so the WinUI 3 dark-mode foreground brush renders it
     /// in white/light, and that <c>NormalizeDocumentColorsForTheme</c> serves as a
@@ -32,13 +32,13 @@ namespace SmrtPad.UITests.Tests
     /// </summary>
     public sealed class DocxDarkModeFixture : IDisposable
     {
-        // â”€â”€ Settings file path (same location as SettingsService uses) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Settings file path (same location as SettingsService uses) ─────────
 
         private static readonly string SettingsPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "SmrtPad", "settings.json");
 
-        // â”€â”€ DOCX search locations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── DOCX search locations ──────────────────────────────────────────────
 
         private static string? FindDocx()
         {
@@ -59,7 +59,7 @@ namespace SmrtPad.UITests.Tests
             return null;
         }
 
-        // â”€â”€ Fixture state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Fixture state ──────────────────────────────────────────────────────
 
         private readonly AppiumSession? _session;
         private readonly string?        _originalSettings;
@@ -84,7 +84,7 @@ namespace SmrtPad.UITests.Tests
 
             try
             {
-                // Backup and patch settings â†’ Dark theme
+                // Backup and patch settings → Dark theme
                 _originalSettings = File.Exists(SettingsPath)
                     ? File.ReadAllText(SettingsPath)
                     : null;
@@ -110,7 +110,7 @@ namespace SmrtPad.UITests.Tests
             RestoreSettings();
         }
 
-        // â”€â”€ Settings helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Settings helpers ───────────────────────────────────────────────────
 
         /// <summary>
         /// Opens the DOCX file via the File > Open backstage button and the
@@ -195,9 +195,9 @@ namespace SmrtPad.UITests.Tests
     /// with the CelestiPets Business Plan DOCX open. Tests skip gracefully when
     /// Appium, the executable, or the DOCX file is unavailable.
     /// </summary>
-    [Collection("UITests")]
+    [Collection("DocxDarkModeUITests")]
     public sealed class DocxDarkModeColorUITests
-        : IClassFixture<DocxDarkModeFixture>, IDisposable
+        : IDisposable
     {
         private readonly DocxDarkModeFixture _fx;
         private readonly WindowsDriver?      _driver;
@@ -216,7 +216,7 @@ namespace SmrtPad.UITests.Tests
                     ? "Fixture unavailable."
                     : _fx.SkipReason);
 
-        // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Helpers ───────────────────────────────────────────────────────────
 
         /// <summary>
         /// Polls StatusText until it contains <paramref name="fragment"/> or the
@@ -234,7 +234,7 @@ namespace SmrtPad.UITests.Tests
                     if (text.Contains(fragment, StringComparison.OrdinalIgnoreCase))
                         return text;
                 }
-                catch { /* element not yet rendered â€” keep polling */ }
+                catch { /* element not yet rendered — keep polling */ }
                 Thread.Sleep(200);
             }
             // Return whatever is showing even if it doesn't match
@@ -249,9 +249,9 @@ namespace SmrtPad.UITests.Tests
         }
 
         /// <summary>
-        /// Scans the central 60 % (width) Ã— 80 % (height) of the editor element
+        /// Scans the central 60 % (width) × 80 % (height) of the editor element
         /// and returns the maximum per-pixel brightness found.
-        /// In dark mode: light/white text â†’ brightness ~200+; black text â†’ ~0â€“50.
+        /// In dark mode: light/white text → brightness ~200+; black text → ~0–50.
         /// </summary>
         private int MaxEditorBrightness()
         {
@@ -349,7 +349,7 @@ namespace SmrtPad.UITests.Tests
             int yPos  = Math.Clamp((int)((rect.Y + rect.Height * fraction) * dpiY), 0, bmp.Height - 1);
 
             int maxBrightness = 0;
-            // Scan a thin strip (Â±2 rows) to account for sub-pixel alignment
+            // Scan a thin strip (±2 rows) to account for sub-pixel alignment
             for (int dy = -2; dy <= 2; dy++)
             {
                 int y = Math.Clamp(yPos + dy, 0, bmp.Height - 1);
@@ -401,7 +401,7 @@ namespace SmrtPad.UITests.Tests
             catch { }
         }
 
-        // â”€â”€ Tests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Tests ─────────────────────────────────────────────────────────────
 
         /// <summary>
         /// After opening the DOCX in dark mode the status bar must confirm the
@@ -439,9 +439,9 @@ namespace SmrtPad.UITests.Tests
         /// when displayed in dark mode.  The test takes a screenshot of the editor
         /// region and asserts that at least one pixel has brightness > 150/255.
         ///
-        /// Dark background â‰ˆ 35 brightness.
-        /// Correct white/light text â‰ˆ 200-230 brightness  â†’ max well above 150 âœ“
-        /// Stuck-black text         â‰ˆ  0-30  brightness   â†’ max stays below  80 âœ—
+        /// Dark background ≈ 35 brightness.
+        /// Correct white/light text ≈ 200-230 brightness  → max well above 150 ✓
+        /// Stuck-black text         ≈  0-30  brightness   → max stays below  80 ✗
         /// </summary>
         [SkippableFact]
         public void DocxOpenInDarkMode_EditorText_IsLightColoured()
@@ -463,7 +463,7 @@ namespace SmrtPad.UITests.Tests
 
         /// <summary>
         /// Confirms that light-coloured text is not just a single bright pixel but
-        /// spans a meaningful number of sampled pixels â€” indicating readable text
+        /// spans a meaningful number of sampled pixels — indicating readable text
         /// rather than an artifact (caret blink, border, etc.).
         /// </summary>
         [SkippableFact]
@@ -583,7 +583,7 @@ namespace SmrtPad.UITests.Tests
 
         /// <summary>
         /// After scrolling down, text in the newly visible area should still be
-        /// light-coloured â€” confirming the auto-colour fix applies to the entire
+        /// light-coloured — confirming the auto-colour fix applies to the entire
         /// document, not just the first viewport.
         /// </summary>
         [SkippableFact]

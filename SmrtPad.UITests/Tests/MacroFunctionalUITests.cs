@@ -31,7 +31,7 @@ namespace SmrtPad.UITests.Tests
     /// and skip gracefully when Appium / WinAppDriver is unavailable.
     /// </summary>
     [Collection("UITests")]
-    public sealed class MacroFunctionalUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class MacroFunctionalUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
         private readonly WindowsDriver?   _driver;

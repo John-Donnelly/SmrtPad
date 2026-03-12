@@ -19,7 +19,7 @@ namespace SmrtPad.UITests.Tests
     /// and clears the editor so tests are independent of execution order.
     /// </summary>
     [Collection("UITests")]
-    public sealed class EditorInteractionUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class EditorInteractionUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
         private readonly WindowsDriver?   _driver;

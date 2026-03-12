@@ -14,7 +14,7 @@ namespace SmrtPad.UITests.Tests
     /// paste special dialog, paste split-button, and send by email menu item.
     /// </summary>
     [Collection("UITests")]
-    public sealed class NewFeatureUITests : IClassFixture<SharedAppFixture>, IDisposable
+    public sealed class NewFeatureUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
         private readonly WindowsDriver? _driver;
