@@ -168,17 +168,21 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             _fx.EnsureBackstageClosed();
 
-            // Hide status bar
-            _fx.ClickMenuItem("View", "Status Bar");
+            // Hide status bar — open View menu explicitly so StatusBarToggle is in the
+            // UIA tree (ToggleMenuFlyoutItem is absent when the flyout is closed, F-9).
+            _driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+            Thread.Sleep(350);
+            _driver.FindElement(MobileBy.AccessibilityId("StatusBarToggle")).Click();
             Thread.Sleep(400);
 
             var statusBarElements = _driver!.FindElements(MobileBy.AccessibilityId("StatusBar"));
             bool isHidden = statusBarElements.Count == 0 || !statusBarElements[0].Displayed;
             Assert.True(isHidden, "Status bar should be hidden after toggle.");
 
-            // Show status bar again — poll instead of a fixed sleep because the
-            // re-show animation and accessibility tree update take variable time (UI-12).
-            _fx.ClickMenuItem("View", "Status Bar");
+            // Show status bar again — same explicit-open pattern (F-9).
+            _driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+            Thread.Sleep(350);
+            _driver.FindElement(MobileBy.AccessibilityId("StatusBarToggle")).Click();
 
             var statusBarAfter = _driver.FindElements(MobileBy.AccessibilityId("StatusBar"));
             bool found = statusBarAfter.Count > 0 && statusBarAfter[0].Displayed;
