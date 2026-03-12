@@ -232,7 +232,6 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void ClickMenuItem(string menuName, string itemName)
         {
-            SkipIfSessionDead();
             FindElementByIdOrName(GetMenuAutomationId(menuName), menuName).Click();
             Thread.Sleep(450);
             FindElementByIdOrName(GetMenuItemAutomationId(itemName), itemName).Click();
@@ -305,7 +304,6 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public string GetStatusBarText(string automationId)
         {
-            SkipIfSessionDead();
             return Driver!.FindElement(MobileBy.AccessibilityId(automationId)).Text;
         }
 

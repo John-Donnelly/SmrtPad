@@ -2357,11 +2357,17 @@ namespace SmrtPad
             {
                 bool isChecked = SuperscriptToggle.IsChecked == true;
                 ITextCharacterFormat charFormatting = selectedText.CharacterFormat;
-                charFormatting.Superscript = isChecked ? FormatEffect.On : FormatEffect.Off;
                 if (isChecked)
                 {
+                    // Clear subscript before setting superscript — ITextCharacterFormat
+                    // rejects Superscript=On while Subscript is still On on the same object.
                     charFormatting.Subscript = FormatEffect.Off;
                     SubscriptToggle.IsChecked = false;
+                    charFormatting.Superscript = FormatEffect.On;
+                }
+                else
+                {
+                    charFormatting.Superscript = FormatEffect.Off;
                 }
                 selectedText.CharacterFormat = charFormatting;
                 RefreshFormattingState();
