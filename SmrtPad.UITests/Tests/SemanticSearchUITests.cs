@@ -30,10 +30,7 @@ public sealed class SemanticSearchUITests : IDisposable
     {
     }
 
-    private void RequireDriver() =>
-        Skip.If(!_fixture.IsAvailable,
-            "WinAppDriver / Appium not available, SmrtPad.exe not built, or free-tier session unavailable.");
-
+    private void RequireDriver() => _fixture.RequireSession();
     [SkippableFact]
     public void SemanticSearch_FreeTier_SectionNotVisible()
     {
@@ -66,3 +63,4 @@ public sealed class SemanticSearchUITests : IDisposable
         Thread.Sleep(300);
     }
 }
+

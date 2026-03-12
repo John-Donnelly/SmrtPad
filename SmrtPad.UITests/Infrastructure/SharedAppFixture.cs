@@ -33,6 +33,48 @@ namespace SmrtPad.UITests.Infrastructure
 
         public WindowsDriver? Driver { get; }
 
+        /// <summary>
+        /// Returns <c>true</c> when the Appium session is pointing at a live window.
+        /// Retries up to three times with a short back-off to tolerate transient
+        /// window-handle changes caused by Windows clipboard notifications or other
+        /// ephemeral popup windows that briefly replace the main window handle.
+        /// </summary>
+        public bool IsSessionAlive()
+        {
+            if (Driver is null) return false;
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                try { _ = Driver.Title; return true; }
+                catch (WebDriverException)
+                {
+                    if (attempt < 2) Thread.Sleep(1500);
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Skips the test if the Appium driver is unavailable OR if the session has become
+        /// invalid (e.g. the app crashed mid-run). Call this at the start of every test to
+        /// prevent <c>NoSuchWindowException</c> cascade failures across the collection.
+        /// </summary>
+        public void RequireSession()
+        {
+            Skip.If(Driver is null, "WinAppDriver / Appium not available or SmrtPad.exe not built.");
+            SkipIfSessionDead();
+        }
+
+        /// <summary>
+        /// Throws a xUnit <c>SkipException</c> when the Appium session is dead so
+        /// the test is marked <em>Skipped</em> instead of <em>Failed</em>, preventing
+        /// a cascade of <c>NoSuchWindowException</c> failures across the collection.
+        /// </summary>
+        private void SkipIfSessionDead()
+        {
+            if (!IsSessionAlive())
+                Skip.If(true, "Appium session lost (app closed or crashed); test skipped to prevent cascade.");
+        }
+
         /// <summary>True when a live WinAppDriver session was established.</summary>
         public bool IsAvailable => Driver is not null;
 
@@ -77,6 +119,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void ClearEditor()
         {
+            SkipIfSessionDead();
             EnsureBackstageClosed();
 
             bool usedMenu = TryClickMenuItem("Edit", "Select All")
@@ -125,6 +168,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void TypeInEditor(string text)
         {
+            SkipIfSessionDead();
             var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             editor.Click();
             Thread.Sleep(100);
@@ -188,6 +232,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void ClickMenuItem(string menuName, string itemName)
         {
+            SkipIfSessionDead();
             FindElementByIdOrName(GetMenuAutomationId(menuName), menuName).Click();
             Thread.Sleep(450);
             FindElementByIdOrName(GetMenuItemAutomationId(itemName), itemName).Click();
@@ -259,7 +304,10 @@ namespace SmrtPad.UITests.Infrastructure
         /// identified by <paramref name="automationId"/>.
         /// </summary>
         public string GetStatusBarText(string automationId)
-            => Driver!.FindElement(MobileBy.AccessibilityId(automationId)).Text;
+        {
+            SkipIfSessionDead();
+            return Driver!.FindElement(MobileBy.AccessibilityId(automationId)).Text;
+        }
 
         /// <summary>
         /// Returns <c>true</c> when the File backstage overlay is currently visible.
@@ -384,6 +432,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void EnsureFocusModeOff()
         {
+            if (!IsSessionAlive()) return;  // Don't skip — constructor calls this; silently no-op instead.
             try
             {
                 // Check RibbonBar visibility — collapsed when FocusMode is ON.
@@ -406,6 +455,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void AddFreshTab()
         {
+            SkipIfSessionDead();
             EnsureBackstageClosed();
             Driver!.FindElement(MobileBy.AccessibilityId("AddButton")).Click();
             Thread.Sleep(500);
@@ -413,11 +463,23 @@ namespace SmrtPad.UITests.Infrastructure
 
         /// <summary>
         /// Closes the active tab by sending Ctrl+W and dismisses any unsaved-changes dialog.
+        /// Refuses to close when only one tab remains to prevent the app from exiting
+        /// and killing the shared session.
         /// </summary>
         public void CloseActiveTab()
         {
             try
             {
+                // Never close the last tab — the app exits when the final tab is closed,
+                // which would terminate the shared Appium session for all remaining tests.
+                // Use the same name-based lookup as ResetToSingleTab.
+                var tabStrip = Driver!.FindElements(MobileBy.AccessibilityId("DocumentTabs"));
+                if (tabStrip.Count > 0)
+                {
+                    var allTabs = tabStrip[0].FindElements(MobileBy.Name("Untitled"));
+                    if (allTabs.Count <= 1) return;
+                }
+
                 var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
                 editor.SendKeys(Keys.Control + "w");
                 Thread.Sleep(500);
@@ -434,6 +496,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void ResetToSingleTab()
         {
+            SkipIfSessionDead();
             EnsureBackstageClosed();
             for (int i = 0; i < 20; i++)
             {

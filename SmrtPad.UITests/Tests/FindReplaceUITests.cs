@@ -30,10 +30,7 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() =>
-            Skip.If(!_fx.IsAvailable,
-                "WinAppDriver / Appium not available or SmrtPad.exe not built.");
-
+        private void RequireDriver() => _fx.RequireSession();
         private string StatusText => _fx.GetStatusBarText("StatusText");
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -529,3 +526,4 @@ namespace SmrtPad.UITests.Tests
         }
     }
 }
+

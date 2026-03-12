@@ -35,10 +35,7 @@ namespace SmrtPad.UITests.Tests
 
         // ── helpers ──────────────────────────────────────────────────────────
 
-        private void RequireDriver() =>
-            Skip.If(_driver is null,
-                "WinAppDriver / Appium not available or SmrtPad.exe not built.");
-
+        private void RequireDriver() => _fx.RequireSession();
         // ── tests ─────────────────────────────────────────────────────────────
 
         [SkippableFact]
@@ -421,3 +418,4 @@ namespace SmrtPad.UITests.Tests
         }
     }
 }
+

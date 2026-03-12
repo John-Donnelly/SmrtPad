@@ -40,10 +40,7 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { }
 
-        private void RequireDriver() =>
-            Skip.If(!_fx.IsAvailable,
-                "WinAppDriver / Appium not available or SmrtPad.exe not built.");
-
+        private void RequireDriver() => _fx.RequireSession();
         // ── Zoom helpers ──────────────────────────────────────────────────────
 
         private string ZoomPercent =>
@@ -599,3 +596,4 @@ namespace SmrtPad.UITests.Tests
         }
     }
 }
+

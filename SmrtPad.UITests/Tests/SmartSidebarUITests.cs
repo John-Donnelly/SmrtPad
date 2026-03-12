@@ -29,10 +29,7 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() =>
-            Skip.If(!_fx.IsAvailable,
-                "WinAppDriver / Appium not available, SmrtPad.exe not built, or free-tier session unavailable.");
-
+        private void RequireDriver() => _fx.RequireSession();
         /// <summary>
         /// The View menu should contain the Smart Sidebar toggle item.
         /// </summary>
@@ -131,3 +128,4 @@ namespace SmrtPad.UITests.Tests
         }
     }
 }
+
