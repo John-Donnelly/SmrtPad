@@ -34,7 +34,7 @@
                     <NavigationViewItem x:Name="NavExportDocx" x:Uid="ExportDocxNavItem" Content="Export to DOCX"  Tag="ExportDocx" Icon="Document" PointerEntered="NavItem_PointerEntered" AutomationProperties.AutomationId="BackstageExportDocxNavItem" />
                     <NavigationViewItem x:Name="NavOneDrive"   x:Uid="OneDriveNavItem"  Content="Save to OneDrive" Tag="OneDrive"  Icon="Upload"    PointerEntered="NavItem_PointerEntered" AutomationProperties.AutomationId="BackstageOneDriveNavItem" />
                     <NavigationViewItem x:Name="NavSendEmail"  Content="Send by Email..." Tag="SendEmail" Icon="Mail"     PointerEntered="NavItem_PointerEntered"
-                                        AutomationProperties.AutomationId="BackstageSendEmailNavItem"/>
+                                        AutomationProperties.AutomationId="NavSendEmail"/>
                     <NavigationViewItem x:Name="NavPageSetup"  x:Uid="PageSetupNavItem" Content="Page setup"      Tag="PageSetup" Icon="Print"     PointerEntered="NavItem_PointerEntered" AutomationProperties.AutomationId="BackstagePageSetupNavItem" />
                     <NavigationViewItem x:Name="NavOptions"    x:Uid="OptionsNavItem"   Content="Options"          Tag="Options"   Icon="Setting"   PointerEntered="NavItem_PointerEntered" AutomationProperties.AutomationId="BackstageOptionsNavItem" />
                     <NavigationViewItem x:Name="NavExit"       x:Uid="ExitNavItem"      Content="Exit"             Tag="Exit"      Icon="LeaveChat" PointerEntered="NavItem_PointerEntered" AutomationProperties.AutomationId="BackstageExitNavItem" />
