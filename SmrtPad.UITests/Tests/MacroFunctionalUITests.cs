@@ -441,6 +441,13 @@ namespace SmrtPad.UITests.Tests
         public void MacroRun_ItalicCommand_AppliesItalic_ToSelectedPlainText()
         {
             RequireDriver();
+
+            // Ensure italic is off at the caret before the test: type a space so
+            // ClearFormattingButton has a selection to act on, then clear (F-5).
+            _fx.TypeInEditor(" ");
+            _fx.SelectAllInEditor();
+            _fx.ResetCharacterFormatting();
+            Thread.Sleep(150);
             _fx.ClearEditor();
 
             // Type plain text, select it; confirm not italic
