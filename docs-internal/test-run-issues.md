@@ -1,5 +1,6 @@
 ﻿# Test Run Issues — SmrtPad
 _Updated: 2026-03-13 (third live Appium run — all first-pass commits applied, 79 failures persist)_
+_Code fixes applied 2026-03-14 (all F-series issues addressed in code; UI-1/UI-8/UI-10b/UI-11b require WAP rebuild + re-register)_
 
 ---
 
@@ -271,23 +272,26 @@ find the item — same flyout-closed pattern as UI-10b/11b.
 
 ## Quick-reference table
 
-| ID     | Category                                                          | Tests | Severity |
-|--------|-------------------------------------------------------------------|-------|----------|
-| N-1    | IClassFixture race — ClearStartupBlockers kills sessions          | 42    | Critical |
-| N-2    | Backstage cleanup closes app window (within N-1 count)           | (24)  | Critical |
-| UI-1   | `--free-tier` not received via AUMID (needs rebuild)              | 6     | High     |
-| UI-10b | EnsurePageViewOff no-ops — toggle in closed flyout (needs rebuild)| 4     | Medium   |
-| UI-11b | EnsureFocusModeOff no-ops — same pattern (needs rebuild)         | 3     | Medium   |
-| F-1    | `FormatFontMenuItem` AutomationId absent from XAML               | 10    | High     |
-| F-2    | `NoHighlightButton` / `MoreColorsButton` absent from live UIA    | 5     | High     |
-| F-3    | Subscript/Superscript missing re-select before toggle check      | 3     | Medium   |
-| F-4    | `Italic_ViaCtrlI` missing re-select before toggle check          | 1     | Medium   |
-| F-5    | MacroRun_ItalicCommand residual italic state                     | 1     | Medium   |
-| F-6    | `SelectAllMenuItem` AutomationId absent from XAML                | 1     | Medium   |
-| F-7    | MultipleRedo word count off by one (undo granularity)            | 1     | Low      |
-| F-8    | PasteSpecial retains bold (needs WAP rebuild)                    | 1     | Medium   |
-| F-9    | StatusBarToggle second toggle — View flyout closed race          | 1     | Medium   |
-|        | **Total**                                                        | **79**|          |
+| ID     | Category                                                          | Tests | Severity | Status |
+|--------|-------------------------------------------------------------------|-------|----------|--------|
+| N-1    | IClassFixture race — ClearStartupBlockers kills sessions          | 42    | Critical | ✅ Fixed (9c9f3ad) |
+| N-2    | Backstage cleanup closes app window (within N-1 count)           | (24)  | Critical | ✅ Masked by N-1 fix |
+| UI-1   | `--free-tier` not received via AUMID (needs rebuild)              | 6     | High     | ✅ Code fixed; needs WAP rebuild |
+| UI-10b | EnsurePageViewOff no-ops — toggle in closed flyout (needs rebuild)| 4     | Medium   | ✅ Code fixed (commit e2698ec); needs WAP rebuild |
+| UI-11b | EnsureFocusModeOff no-ops — same pattern (needs rebuild)         | 3     | Medium   | ✅ Code fixed (177b241 + e2698ec); needs WAP rebuild |
+| F-1    | `FormatFontMenuItem` AutomationId absent from XAML               | 10    | High     | ✅ Already in XAML; needs WAP rebuild |
+| F-2    | `NoHighlightButton` / `MoreColorsButton` absent from live UIA    | 5     | High     | ✅ XAML OK; test fixed (57e6a32); needs WAP rebuild |
+| F-3    | Subscript/Superscript missing re-select before toggle check      | 3     | Medium   | ✅ Fixed (67c8dec) |
+| F-4    | `Italic_ViaCtrlI` missing re-select before toggle check          | 1     | Medium   | ✅ Fixed (67c8dec) |
+| F-5    | MacroRun_ItalicCommand residual italic state                     | 1     | Medium   | ✅ Fixed (5f61da2) |
+| F-6    | `SelectAllMenuItem` AutomationId absent from XAML                | 1     | Medium   | ✅ Already in XAML; needs WAP rebuild |
+| F-7    | MultipleRedo word count off by one (undo granularity)            | 1     | Low      | ✅ Fixed (0a3deca) |
+| F-8    | PasteSpecial retains bold (needs WAP rebuild)                    | 1     | Medium   | ✅ Code fixed; needs WAP rebuild |
+| F-9    | StatusBarToggle second toggle — View flyout closed race          | 1     | Medium   | ✅ Fixed (21088c9) |
+|        | **Total**                                                        | **79**|          | |
+
+> **Action required:** Rebuild the SmrtPad WAP package (`SmrtPad (Package)` → Debug\|x64 → Build) and
+> re-register it (`Deploy`) to pick up the XAML/app-code fixes for UI-1, UI-10b, UI-11b, F-1, F-2, F-6, F-8.
 
 ---
 
