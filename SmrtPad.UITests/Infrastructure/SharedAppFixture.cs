@@ -8,21 +8,24 @@ using OpenQA.Selenium.Appium.Windows;
 namespace SmrtPad.UITests.Infrastructure
 {
     /// <summary>
-    /// xUnit class-fixture that creates a single <see cref="AppiumSession"/> shared
-    /// across every test method in a test class.  Using one session per class
-    /// eliminates per-test launch overhead while keeping each test class isolated.
+    /// xUnit collection fixture that creates a single <see cref="AppiumSession"/> shared
+    /// across all test classes in the "UITests" collection.  Using one session for the
+    /// entire collection ensures <c>ClearStartupBlockers()</c> is called exactly once and
+    /// all classes share the same live window handle, eliminating the per-class fixture
+    /// constructor race that caused cascaded <c>NoSuchWindowException</c> failures (N-1).
     ///
     /// Usage:
     /// <code>
-    ///   public class MyTests : IClassFixture&lt;SharedAppFixture&gt;
+    ///   [Collection("UITests")]
+    ///   public class MyTests
     ///   {
     ///       private readonly SharedAppFixture _fx;
     ///       public MyTests(SharedAppFixture fx) => _fx = fx;
     ///   }
     /// </code>
     ///
-    /// Call <see cref="RequireDriver"/> at the start of every test — it skips the
-    /// test gracefully when Appium / WinAppDriver is unavailable.
+    /// The fixture lifetime is managed by <see cref="UITestsCollection"/>; test classes
+    /// must NOT implement <c>IDisposable</c> teardown that touches the session.
     /// </summary>
     public class SharedAppFixture : IDisposable
     {
