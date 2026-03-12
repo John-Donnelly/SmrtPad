@@ -108,8 +108,9 @@ namespace SmrtPad.UITests.Tests
             // Flyout opened successfully — smoke test complete
             Assert.True(true, "Font color flyout opened successfully");
 
-            // Close
-            _driver!.FindElement(MobileBy.ClassName("Popup")).SendKeys(Keys.Escape);
+            // Close the flyout safely by sending Escape to the editor
+            // (MobileBy.ClassName("Popup") is not interactable — F-2).
+            _driver!.FindElement(MobileBy.AccessibilityId("Editor")).SendKeys(Keys.Escape);
             Thread.Sleep(200);
         }
 
