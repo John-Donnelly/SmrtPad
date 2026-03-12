@@ -274,6 +274,9 @@ namespace SmrtPad.UITests.Tests
 
             _driver!.FindElement(MobileBy.AccessibilityId("SubscriptToggle")).Click();
             Thread.Sleep(300);
+            // Re-select: clicking the toggle drops the selection (F-3)
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
 
             Assert.True(_fx.IsToggleChecked("SubscriptToggle"));
             Assert.False(_fx.IsToggleChecked("SuperscriptToggle"));
@@ -297,6 +300,9 @@ namespace SmrtPad.UITests.Tests
 
             _driver!.FindElement(MobileBy.AccessibilityId("SuperscriptToggle")).Click();
             Thread.Sleep(300);
+            // Re-select: clicking the toggle drops the selection (F-3)
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
 
             Assert.True(_fx.IsToggleChecked("SuperscriptToggle"));
             Assert.False(_fx.IsToggleChecked("SubscriptToggle"));
@@ -330,6 +336,9 @@ namespace SmrtPad.UITests.Tests
             // Apply superscript — should turn off subscript
             _driver.FindElement(MobileBy.AccessibilityId("SuperscriptToggle")).Click();
             Thread.Sleep(300);
+            // Re-select: clicking the toggle drops the selection (F-3)
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
 
             Assert.True(_fx.IsToggleChecked("SuperscriptToggle"));
             Assert.False(_fx.IsToggleChecked("SubscriptToggle"));
@@ -656,6 +665,9 @@ namespace SmrtPad.UITests.Tests
             var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
             editor.SendKeys(Keys.Control + "i");
             Thread.Sleep(300);
+            // Re-select: Ctrl+I drops the selection; read toggle at selection (F-4)
+            _fx.SelectAllInEditor();
+            Thread.Sleep(200);
 
             Assert.True(_fx.IsToggleChecked("ItalicToggle"));
 
