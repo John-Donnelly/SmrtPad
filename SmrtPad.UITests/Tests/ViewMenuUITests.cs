@@ -41,7 +41,7 @@ namespace SmrtPad.UITests.Tests
 
         private void OpenViewMenu()
         {
-            _driver!.FindElement(MobileBy.Name("View")).Click();
+            _driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
             Thread.Sleep(450);
         }
 
