@@ -9,9 +9,22 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <NoWarn>$(NoWarn);NU1603</NoWarn>
+    <!--
+      Library projects do not copy NuGet package assemblies to their output by default.
+      This plugin is loaded at runtime via AssemblyLoadContext, so all managed and native
+      dependencies must be physically present alongside SmrtPad.AI.dll in the AppX directory.
+    -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AI.Foundry.Local" />
+    <!--
+      Direct reference required so the package's build/ MSBuild targets activate and copy
+      runtimes/win-x64(arm64)/native/Microsoft.AI.Foundry.Local.Core.dll to the output dir.
+      The buildTransitive/ variant that propagates from the parent package does not include
+      the native-copy target.
+    -->
+    <PackageReference Include="Microsoft.AI.Foundry.Local.Core" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
 </Project>
