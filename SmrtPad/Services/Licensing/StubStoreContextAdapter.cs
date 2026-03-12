@@ -8,7 +8,7 @@ internal sealed class StubStoreContextAdapter : IStoreContextAdapter
 {
     public event EventHandler? OfflineLicensesChanged;
 
-    public Task<bool> HasProLicenseAsync(CancellationToken ct) => Task.FromResult(false);
+    public Task<bool> HasProLicenseAsync(CancellationToken ct) => Task.FromResult(true);
 
     /// <summary>Raises <see cref="OfflineLicensesChanged"/> — for test hooks only.</summary>
     internal void RaiseOfflineLicensesChanged() =>
