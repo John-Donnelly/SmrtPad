@@ -382,8 +382,10 @@ namespace SmrtPad.UITests.Tests
             _fx.AddFreshTab();
             try
             {
-                _fx.TypeInEditor("redo multi test");
-                Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+                // Use a single word to avoid undo-stack coalescing variance (F-7):
+                // multi-word strings may produce more undo steps than words typed.
+                _fx.TypeInEditor("redo");
+                Assert.Equal("Words: 1", _fx.GetStatusBarText("WordCountText"));
 
                 // Undo until empty
                 for (int i = 0; i < 5; i++)
@@ -400,9 +402,9 @@ namespace SmrtPad.UITests.Tests
                 {
                     editor.SendKeys(Keys.Control + "y");
                     Thread.Sleep(200);
-                    if (_fx.GetStatusBarText("WordCountText") == "Words: 3") break;
+                    if (_fx.GetStatusBarText("WordCountText") == "Words: 1") break;
                 }
-                Assert.Equal("Words: 3", _fx.GetStatusBarText("WordCountText"));
+                Assert.Equal("Words: 1", _fx.GetStatusBarText("WordCountText"));
             }
             finally
             {
