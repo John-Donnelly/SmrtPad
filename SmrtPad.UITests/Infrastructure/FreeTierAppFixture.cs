@@ -13,6 +13,9 @@ namespace SmrtPad.UITests.Infrastructure
     /// </summary>
     public sealed class FreeTierAppFixture : SharedAppFixture
     {
+        // Launch via AUMID. The --free-tier sentinel file is written by AppiumSession
+        // before activation so the app detects it in OnLaunched regardless of whether
+        // LaunchActivatedEventArgs.Arguments is populated (AUMID vs exe activation).
         public FreeTierAppFixture() : base(launchArgument: "--free-tier") { }
     }
 }

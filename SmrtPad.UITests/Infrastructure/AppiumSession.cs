@@ -51,10 +51,22 @@ namespace SmrtPad.UITests.Infrastructure
         /// entirely and the freshly-built exe is launched directly — useful for testing changes
         /// that have not yet been deployed as a package.
         /// </summary>
+        /// <summary>Path of the sentinel file written when launching with <c>--free-tier</c>.</summary>
+        internal static string FreeTierFlagFile =>
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "SmrtPad_FreeTier.flag");
+
         public AppiumSession(string appPath, string? launchArgument = null, bool forceUnpackaged = false)
         {
             // Clear startup-blocking state before launching so dialogs don't appear during tests.
             ClearStartupBlockers();
+
+            // Write a sentinel file when the free-tier flag is requested.  The app reads this
+            // in OnLaunched regardless of the activation path (AUMID vs direct exe), which is
+            // more reliable than LaunchActivatedEventArgs.Arguments for WinUI 3 packaged apps.
+            if (launchArgument == "--free-tier")
+                File.WriteAllText(FreeTierFlagFile, "1");
 
             Process process;
             bool usedAumid = false;

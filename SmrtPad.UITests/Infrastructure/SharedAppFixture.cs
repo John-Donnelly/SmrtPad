@@ -29,9 +29,12 @@ namespace SmrtPad.UITests.Infrastructure
     /// </summary>
     public class SharedAppFixture : IDisposable
     {
-        private readonly AppiumSession? _session;
+        private AppiumSession? _session;
+        private readonly string? _launchArgument;
+        private readonly bool _forceUnpackaged;
+        private string? _mainWindowHandle;
 
-        public WindowsDriver? Driver { get; }
+        public WindowsDriver? Driver { get; private set; }
 
         /// <summary>
         /// Returns <c>true</c> when the Appium session is pointing at a live window.
@@ -55,13 +58,89 @@ namespace SmrtPad.UITests.Infrastructure
 
         /// <summary>
         /// Skips the test if the Appium driver is unavailable OR if the session has become
-        /// invalid (e.g. the app crashed mid-run). Call this at the start of every test to
-        /// prevent <c>NoSuchWindowException</c> cascade failures across the collection.
+        /// invalid (e.g. the app crashed mid-run).  When the session is detected as dead,
+        /// attempts to restart it before skipping so subsequent tests can continue.
+        /// Call this at the start of every test to prevent cascade failures across the collection.
         /// </summary>
         public void RequireSession()
         {
             Skip.If(Driver is null, "WinAppDriver / Appium not available or SmrtPad.exe not built.");
-            SkipIfSessionDead();
+            if (!IsSessionAlive())
+            {
+                if (!TryRestartSession())
+                    Skip.If(true, "Appium session lost and restart failed; test skipped.");
+            }
+            // Secondary health check: NotImplementedException from WinAppDriver indicates a
+            // stale HWND (e.g. after a dialog closed and changed the session window context).
+            // An empty result from FindElements also indicates the session is on the wrong HWND
+            // (the main Editor should always be present in a live app window).
+            try
+            {
+                var editors = Driver!.FindElements(MobileBy.AccessibilityId("Editor"));
+                if (editors.Count == 0)
+                {
+                    // No Editor found — session is on the wrong HWND; try to restart.
+                    if (!TryRestartSession())
+                        Skip.If(true, "Appium session HWND wrong (Editor not found) and restart failed; test skipped.");
+                }
+            }
+            catch (NotImplementedException)
+            {
+                // Stale session detected — try to restart; skip the test if restart fails.
+                if (!TryRestartSession())
+                    Skip.If(true, "Appium session HWND stale (NotImplementedException) and restart failed; test skipped.");
+            }
+            catch { /* ignore other transient errors from the health ping */ }
+        }
+
+        /// <summary>
+        /// Disposes the current session and starts a fresh one with the same launch arguments.
+        /// Returns <c>true</c> when the new session is alive and ready.
+        /// </summary>
+        private bool TryRestartSession()
+        {
+            try
+            {
+                _session?.Dispose();
+                _session = null;
+                Driver = null;
+
+                if (!AppiumSession.IsAvailable()) return false;
+                string? exe = AppiumSession.FindSmrtPadExe();
+                if (exe is null) return false;
+
+                _session = new AppiumSession(exe, launchArgument: _launchArgument, forceUnpackaged: _forceUnpackaged);
+                Driver = _session.Driver;
+                Thread.Sleep(2000);
+                DismissSessionRestoreDialogIfPresent();
+
+                // Stabilise the session: WinAppDriver returns HTTP 501 briefly after restart,
+                // causing NotImplementedException in tests that use FindElement (singular).
+                // Poll until it succeeds so subsequent tests don't cascade-fail.
+                var pingDeadline = DateTime.UtcNow.AddSeconds(10);
+                while (DateTime.UtcNow < pingDeadline)
+                {
+                    try
+                    {
+                        _ = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                        break;
+                    }
+                    catch (NotImplementedException)
+                    {
+                        Thread.Sleep(500);
+                    }
+                    catch { break; }
+                }
+
+                _mainWindowHandle = Driver?.CurrentWindowHandle;
+                return IsSessionAlive();
+            }
+            catch
+            {
+                _session = null;
+                Driver = null;
+                return false;
+            }
         }
 
         /// <summary>
@@ -84,15 +163,18 @@ namespace SmrtPad.UITests.Infrastructure
         /// Initialises the session, passing <paramref name="launchArgument"/> to the app
         /// process (e.g. <c>--free-tier</c>).  Intended for use by subclasses.
         /// </summary>
-        protected SharedAppFixture(string? launchArgument)
+        protected SharedAppFixture(string? launchArgument, bool forceUnpackaged = false)
         {
+            _launchArgument = launchArgument;
+            _forceUnpackaged = forceUnpackaged;
+
             if (!AppiumSession.IsAvailable()) return;
             string? exe = AppiumSession.FindSmrtPadExe();
             if (exe is null) return;
 
             try
             {
-                _session = new AppiumSession(exe, launchArgument: launchArgument);
+                _session = new AppiumSession(exe, launchArgument: launchArgument, forceUnpackaged: forceUnpackaged);
                 Driver   = _session.Driver;
 
                 // Allow the app's async startup sequence (session-restore check,
@@ -100,6 +182,7 @@ namespace SmrtPad.UITests.Infrastructure
                 // dismiss them so they do not block the first test.
                 Thread.Sleep(1500);
                 DismissSessionRestoreDialogIfPresent();
+                _mainWindowHandle = Driver?.CurrentWindowHandle;
             }
             catch
             {
@@ -108,7 +191,12 @@ namespace SmrtPad.UITests.Infrastructure
             }
         }
 
-        public void Dispose() => _session?.Dispose();
+        public void Dispose()
+        {
+            _session?.Dispose();
+            _session = null;
+            Driver = null;
+        }
 
         // ── Shared helpers ────────────────────────────────────────────────────
 
@@ -122,12 +210,13 @@ namespace SmrtPad.UITests.Infrastructure
             SkipIfSessionDead();
             EnsureBackstageClosed();
 
-            bool usedMenu = TryClickMenuItem("Edit", "Select All")
-                && TryClickMenuItem("Edit", "Cut");
-
-            if (!usedMenu)
+            // Use keyboard shortcuts directly — opening the Edit-menu flyout causes
+            // WinAppDriver HWND drift that makes FindElement calls in subsequent test
+            // code return HTTP 501 NotImplementedException (EditMenu-501 regression).
+            var editors = Driver!.FindElements(MobileBy.AccessibilityId("Editor"));
+            if (editors.Count > 0)
             {
-                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                var editor = editors[0];
                 editor.Click();
                 Thread.Sleep(100);
                 editor.SendKeys(Keys.Control + "a");
@@ -150,14 +239,25 @@ namespace SmrtPad.UITests.Infrastructure
         {
             try
             {
-                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+                var editorEls = Driver!.FindElements(MobileBy.AccessibilityId("Editor"));
+                if (editorEls.Count == 0) return;
+                var editor = editorEls[0];
                 editor.Click();
                 Thread.Sleep(80);
                 var clearBtn = Driver.FindElements(MobileBy.AccessibilityId("ClearFormattingButton"));
                 if (clearBtn.Count > 0)
                 {
                     clearBtn[0].Click();
-                    Thread.Sleep(150);
+                    // 500 ms: ensure the ClearFormatting_Click handler runs to completion
+                    // on the app UI thread before this method returns.  A shorter sleep
+                    // allows the WinUI dispatcher to deliver the status-bar update
+                    // ("Formatting cleared.") into the NEXT test's time-slice, causing
+                    // the AddTab status assertion to see a stale value.
+                    Thread.Sleep(500);
+                    // Re-anchor HWND context to the editor after ribbon button click
+                    // to prevent WinAppDriver 501 errors in subsequent element searches.
+                    editor.Click();
+                    Thread.Sleep(100);
                 }
             }
             catch { }
@@ -179,14 +279,15 @@ namespace SmrtPad.UITests.Infrastructure
         /// <summary>Sends Ctrl+A to the editor, selecting all content.</summary>
         public void SelectAllInEditor()
         {
-            if (!TryClickMenuItem("Edit", "Select All"))
-            {
-                var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
-                editor.Click();
-                Thread.Sleep(100);
-                editor.SendKeys(Keys.Control + "a");
-                Thread.Sleep(200);
-            }
+            // Use keyboard shortcut only — the Edit-menu flyout path causes HWND drift
+            // and the subsequent ReanchorMainWindow() call in ClickMenuItem may not
+            // preserve the RichEditBox selection, making formatting operations that follow
+            // a no-op (bold/italic applied to an empty caret rather than the full text).
+            var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.Click();
+            Thread.Sleep(100);
+            editor.SendKeys(Keys.Control + "a");
+            Thread.Sleep(200);
         }
 
         private bool TryClickMenuItem(string menuName, string itemName)
@@ -236,6 +337,22 @@ namespace SmrtPad.UITests.Infrastructure
             Thread.Sleep(450);
             FindElementByIdOrName(GetMenuItemAutomationId(itemName), itemName).Click();
             Thread.Sleep(300);
+            // Menu flyout popup closes here; re-anchor element context to the main window
+            // so that subsequent FindElement/FindElements calls do not return HTTP 501.
+            ReanchorMainWindow();
+        }
+
+        /// <summary>
+        /// Switches the WinAppDriver session context back to the main application window
+        /// after a menu-flyout popup has opened and closed.  WinAppDriver shifts its
+        /// internal HWND context to the flyout popup; when the popup closes the context
+        /// becomes stale and all subsequent element searches return HTTP 501.
+        /// </summary>
+        private void ReanchorMainWindow()
+        {
+            if (Driver is null || _mainWindowHandle is null) return;
+            try { Driver.SwitchTo().Window(_mainWindowHandle); }
+            catch { }
         }
 
         private AppiumElement FindElementByIdOrName(string? automationId, string fallbackName)
@@ -271,13 +388,14 @@ namespace SmrtPad.UITests.Infrastructure
                 "Cut" => "CutMenuItem",
                 "Copy" => "CopyMenuItem",
                 "Paste" => "PasteMenuItem",
+                "Paste Plain" => "PastePlainEditMenuItem",
                 "Paste Special" => "PasteSpecialMenuItem",
                 "Select All" => "SelectAllMenuItem",
                 "Zoom In" => "ZoomInMenuItem",
                 "Zoom Out" => "ZoomOutMenuItem",
                 "Font..." => "FormatFontMenuItem",
                 "Paragraph..." => "FormatParagraphMenuItem",
-                "✨ Smart Sidebar" => "SmartSidebarToggle",
+                "✨ Smrt Sidebar" => "SmartSidebarToggle",
                 "Status Bar" => "StatusBarToggle",
                 "Spell Check" => "SpellCheckToggle",
                 "Ruler" => "RulerToggle",
@@ -304,7 +422,10 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public string GetStatusBarText(string automationId)
         {
-            return Driver!.FindElement(MobileBy.AccessibilityId(automationId)).Text;
+            // Use FindElements (plural) — more resilient to transient HWND drift than
+            // singular FindElement, which can return HTTP 501 after UIA tree updates.
+            var els = Driver!.FindElements(MobileBy.AccessibilityId(automationId));
+            return els.Count > 0 ? els[0].Text : string.Empty;
         }
 
         /// <summary>
@@ -330,11 +451,18 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void EnsureBackstageClosed()
         {
+            // Reanchor to the main window before checking backstage state.
+            // If a menu-flyout or line-spacing popup was left open by a prior
+            // test the driver HWND context is drifted; IsBackstageOpen() would
+            // find HeaderText in the stale popup context and return a false-positive.
+            ReanchorMainWindow();
             if (!IsBackstageOpen()) return;
             try
             {
                 Driver!.FindElement(MobileBy.AccessibilityId("FileMenuButton")).Click();
-                Thread.Sleep(400);
+                var deadline = DateTime.UtcNow.AddMilliseconds(1500);
+                while (DateTime.UtcNow < deadline && IsBackstageOpen())
+                    Thread.Sleep(100);
             }
             catch { }
         }
@@ -345,9 +473,15 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void EnsureBackstageOpen()
         {
+            // Reanchor before the IsBackstageOpen fast-path — a drifted HWND from
+            // a prior test's flyout popup can cause a false-positive "already open"
+            // result, returning immediately without actually opening the backstage.
+            ReanchorMainWindow();
             if (IsBackstageOpen()) return;
             Driver!.FindElement(MobileBy.AccessibilityId("FileMenuButton")).Click();
-            Thread.Sleep(800);
+            var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+            while (DateTime.UtcNow < deadline && !IsBackstageOpen())
+                Thread.Sleep(100);
         }
 
         /// <summary>
@@ -358,16 +492,23 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void DismissSaveDialogIfPresent()
         {
-            try
+            // Retry for up to 1 s — the dialog may appear slightly after Ctrl+W is sent.
+            var deadline = DateTime.UtcNow.AddSeconds(1);
+            while (DateTime.UtcNow < deadline)
             {
-                var dontSave = Driver!.FindElements(MobileBy.Name("Don't Save"));
-                if (dontSave.Count > 0)
+                try
                 {
-                    dontSave[0].Click();
-                    Thread.Sleep(300);
+                    var dontSave = Driver!.FindElements(MobileBy.Name("Don't Save"));
+                    if (dontSave.Count > 0)
+                    {
+                        dontSave[0].Click();
+                        Thread.Sleep(300);
+                        return;
+                    }
                 }
+                catch { }
+                Thread.Sleep(100);
             }
-            catch { }
         }
 
         /// <summary>
@@ -455,6 +596,11 @@ namespace SmrtPad.UITests.Infrastructure
         {
             SkipIfSessionDead();
             EnsureBackstageClosed();
+            // Re-anchor to the main window before searching for AddButton.
+            // After ribbon button clicks (e.g. ClearFormattingButton in ResetCharacterFormatting)
+            // in prior tests the WinAppDriver session context can drift, causing FindElement
+            // to operate on a stale sub-tree instead of the main window.
+            ReanchorMainWindow();
             Driver!.FindElement(MobileBy.AccessibilityId("AddButton")).Click();
             Thread.Sleep(500);
         }
@@ -550,7 +696,14 @@ namespace SmrtPad.UITests.Infrastructure
             string text = string.Empty;
             while (DateTime.UtcNow < deadline)
             {
-                try { text = GetStatusBarText(automationId); } catch { }
+                // Use FindElements (plural) — resilient to UIA tree updates that make
+                // singular FindElement return HTTP 501 or NoSuchElement transiently.
+                try
+                {
+                    var els = Driver!.FindElements(MobileBy.AccessibilityId(automationId));
+                    if (els.Count > 0) text = els[0].Text;
+                }
+                catch { }
                 if (text == expected) return text;
                 Thread.Sleep(intervalMs);
             }
