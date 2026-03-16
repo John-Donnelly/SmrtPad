@@ -47,6 +47,7 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="deploy.ps1" />
     <Content Include="Images\SplashScreen.scale-200.png" />
     <Content Include="Images\LockScreenLogo.scale-200.png" />
     <Content Include="Images\Square150x150Logo.scale-200.png" />
@@ -66,16 +67,12 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
   <Target Name="CopySmrtPadAiOutputs" AfterTargets="Build">
-    <MSBuild Projects="$(AIProjectPath)"
-             Targets="Build"
-             Properties="Configuration=$(Configuration);Platform=$(AIPlatform)" />
+    <MSBuild Projects="$(AIProjectPath)" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(AIPlatform)" />
     <ItemGroup>
       <SmrtPadAiOutputs Include="$(AIOutputDir)*" />
     </ItemGroup>
     <MakeDir Directories="$(AIPackageOutputDir)" />
-    <Copy SourceFiles="@(SmrtPadAiOutputs)"
-          DestinationFiles="@(SmrtPadAiOutputs->'$(AIPackageOutputDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SmrtPadAiOutputs)" DestinationFiles="@(SmrtPadAiOutputs->'$(AIPackageOutputDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
