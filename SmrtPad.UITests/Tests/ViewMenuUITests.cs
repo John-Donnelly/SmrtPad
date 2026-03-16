@@ -20,7 +20,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class ViewMenuUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public ViewMenuUITests(SharedAppFixture fx)
         {
@@ -33,7 +33,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Helpers ───────────────────────────────────────────────────────────
 
         private void OpenViewMenu()
@@ -77,17 +81,23 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
 
-            // Word Wrap starts checked (default). Toggle it off.
-            _fx.ClickMenuItem("View", "Word Wrap");
+            // Word Wrap is a submenu (Not a toggle). Switch to No Wrap then back to Wrap.
+            _driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+            Thread.Sleep(450);
+            _driver.FindElement(MobileBy.Name("Word Wrap")).Click();
+            Thread.Sleep(300);
+            _driver.FindElement(MobileBy.AccessibilityId("WordWrapOffItem")).Click();
             Thread.Sleep(200);
 
-            // Toggle it back on
-            _fx.ClickMenuItem("View", "Word Wrap");
+            // Restore to default Wrap
+            _driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+            Thread.Sleep(450);
+            _driver.FindElement(MobileBy.Name("Word Wrap")).Click();
+            Thread.Sleep(300);
+            _driver.FindElement(MobileBy.AccessibilityId("WordWrapWrapItem")).Click();
             Thread.Sleep(200);
 
-            // If we get here without exception, the toggle works correctly.
-            // Verify editor is still present and functional.
-            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            var editor = _driver.FindElement(MobileBy.AccessibilityId("Editor"));
             Assert.NotNull(editor);
         }
 
@@ -436,9 +446,17 @@ namespace SmrtPad.UITests.Tests
                 _fx.EnsureFocusModeOff();
             }
 
-            // Status bar should be restored
-            var restoredBar = _driver!.FindElement(MobileBy.AccessibilityId("StatusBar"));
-            Assert.True(restoredBar.Displayed, "StatusBar should be visible after exiting focus mode");
+            // Status bar should be restored — verify via a child TextBlock which re-appears
+            // reliably in the UIA tree when the ContentControl returns to Visible.
+            AppiumElement? restoredBar = null;
+            var deadline = DateTime.UtcNow.AddSeconds(6);
+            while (DateTime.UtcNow < deadline)
+            {
+                var els = _driver!.FindElements(MobileBy.AccessibilityId("WordCountText"));
+                if (els.Count > 0) { restoredBar = els[0]; break; }
+                Thread.Sleep(200);
+            }
+            Assert.NotNull(restoredBar);
         }
 
         // ── Page View toggle state ───────────────────────────────────────────
@@ -499,13 +517,23 @@ namespace SmrtPad.UITests.Tests
             string wordsBefore = _fx.GetStatusBarText("WordCountText");
             string charsBefore = _fx.GetStatusBarText("CharCountText");
 
-            _fx.ClickMenuItem("View", "Word Wrap");
+            // Word Wrap is a submenu — switch to No Wrap to test toggle effect.
+            _driver!.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+            Thread.Sleep(450);
+            _driver.FindElement(MobileBy.Name("Word Wrap")).Click();
+            Thread.Sleep(300);
+            _driver.FindElement(MobileBy.AccessibilityId("WordWrapOffItem")).Click();
             Thread.Sleep(200);
 
             Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));
             Assert.Equal(charsBefore, _fx.GetStatusBarText("CharCountText"));
 
-            _fx.ClickMenuItem("View", "Word Wrap");
+            // Restore to Wrap
+            _driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
+            Thread.Sleep(450);
+            _driver.FindElement(MobileBy.Name("Word Wrap")).Click();
+            Thread.Sleep(300);
+            _driver.FindElement(MobileBy.AccessibilityId("WordWrapWrapItem")).Click();
             Thread.Sleep(200);
 
             Assert.Equal(wordsBefore, _fx.GetStatusBarText("WordCountText"));

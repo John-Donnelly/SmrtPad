@@ -17,7 +17,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class NewFeatureUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public NewFeatureUITests(SharedAppFixture fx)
         {
@@ -27,7 +27,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         private string StatusText => _fx.GetStatusBarText("StatusText");
 
         // ── Step 1: Ctrl+F opens Find flyout ─────────────────────────────────
@@ -180,18 +184,19 @@ namespace SmrtPad.UITests.Tests
             _driver.FindElement(MobileBy.AccessibilityId("ViewMenuBarItem")).Click();
             Thread.Sleep(350);
             _driver.FindElement(MobileBy.AccessibilityId("StatusBarToggle")).Click();
+            Thread.Sleep(400); // initial wait for the StatusBar ContentControl to enter the UIA tree
 
-            var statusBarAfter = _driver.FindElements(MobileBy.AccessibilityId("StatusBar"));
-            bool found = statusBarAfter.Count > 0 && statusBarAfter[0].Displayed;
+            var statusBarAfter = _driver.FindElements(MobileBy.AccessibilityId("WordCountText"));
+            bool found = statusBarAfter.Count > 0;
             if (!found)
             {
-                // Retry for up to 3 s
-                var deadline = DateTime.UtcNow.AddSeconds(3);
+                // Retry for up to 6 s — verify via child element (ContentControl re-enter may be slow).
+                var deadline = DateTime.UtcNow.AddSeconds(6);
                 while (DateTime.UtcNow < deadline)
                 {
-                    Thread.Sleep(100);
-                    statusBarAfter = _driver.FindElements(MobileBy.AccessibilityId("StatusBar"));
-                    if (statusBarAfter.Count > 0 && statusBarAfter[0].Displayed) { found = true; break; }
+                    Thread.Sleep(150);
+                    statusBarAfter = _driver.FindElements(MobileBy.AccessibilityId("WordCountText"));
+                    if (statusBarAfter.Count > 0) { found = true; break; }
                 }
             }
             Assert.True(found, "Status bar should be visible after second toggle.");

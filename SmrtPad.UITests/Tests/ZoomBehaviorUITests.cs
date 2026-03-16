@@ -30,7 +30,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class ZoomBehaviorUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public ZoomBehaviorUITests(SharedAppFixture fx)
         {
@@ -40,7 +40,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Zoom helpers ──────────────────────────────────────────────────────
 
         private string ZoomPercent =>
@@ -170,9 +174,9 @@ namespace SmrtPad.UITests.Tests
         // ── Layout stability: ScaleTransform must NOT change the layout rect ──
 
         /// <summary>
-        /// The editor element's reported bounding rectangle (UIA layout bounds) must
-        /// be identical regardless of zoom level — <see cref="System.Windows.Media.ScaleTransform"/>
-        /// is render-only and must not affect layout.
+        /// The editor element's reported bounding rectangle (UIA bounds as seen by WinAppDriver)
+        /// must scale proportionally with the zoom level — a 70 % ScaleTransform renders the
+        /// element at 70 % of its 100 % on-screen size.
         /// </summary>
         [SkippableFact]
         public void ZoomOut_EditorLayoutBoundsUnchanged()
@@ -190,11 +194,13 @@ namespace SmrtPad.UITests.Tests
 
             var at70 = Editor.Rect;
 
+            // WinAppDriver reports rendered (visual) bounds; at 70% zoom they are ~70% of 100% bounds.
             const int tol = 15;
-            Assert.InRange(at70.Width,  at100.Width  - tol, at100.Width  + tol);
-            Assert.InRange(at70.Height, at100.Height - tol, at100.Height + tol);
-            Assert.InRange(at70.X,      at100.X      - tol, at100.X      + tol);
-            Assert.InRange(at70.Y,      at100.Y      - tol, at100.Y      + tol);
+            const double scale = 0.7;
+            Assert.InRange(at70.Width,  (int)(at100.Width  * scale) - tol, (int)(at100.Width  * scale) + tol);
+            Assert.InRange(at70.Height, (int)(at100.Height * scale) - tol, (int)(at100.Height * scale) + tol);
+            Assert.InRange(at70.X,      at100.X - tol, at100.X + tol);
+            Assert.InRange(at70.Y,      at100.Y - tol, at100.Y + tol);
 
             ResetZoomTo100();
         }
@@ -371,11 +377,13 @@ namespace SmrtPad.UITests.Tests
 
             var at50 = Editor.Rect;
 
+            // At 50% zoom, visual bounds are ~50% of 100% bounds.
             const int tol = 15;
-            Assert.InRange(at50.Width,  at100.Width  - tol, at100.Width  + tol);
-            Assert.InRange(at50.Height, at100.Height - tol, at100.Height + tol);
-            Assert.InRange(at50.X,      at100.X      - tol, at100.X      + tol);
-            Assert.InRange(at50.Y,      at100.Y      - tol, at100.Y      + tol);
+            const double scale = 0.5;
+            Assert.InRange(at50.Width,  (int)(at100.Width  * scale) - tol, (int)(at100.Width  * scale) + tol);
+            Assert.InRange(at50.Height, (int)(at100.Height * scale) - tol, (int)(at100.Height * scale) + tol);
+            Assert.InRange(at50.X,      at100.X - tol, at100.X + tol);
+            Assert.InRange(at50.Y,      at100.Y - tol, at100.Y + tol);
 
             ResetZoomTo100();
         }
@@ -402,8 +410,10 @@ namespace SmrtPad.UITests.Tests
                 Thread.Sleep(200);
                 var rect = Editor.Rect;
 
-                Assert.InRange(rect.Width,  baseline.Width  - tol, baseline.Width  + tol);
-                Assert.InRange(rect.Height, baseline.Height - tol, baseline.Height + tol);
+                // Visual bounds scale proportionally with zoom level.
+                double scale = target / 100.0;
+                Assert.InRange(rect.Width,  (int)(baseline.Width  * scale) - tol, (int)(baseline.Width  * scale) + tol);
+                Assert.InRange(rect.Height, (int)(baseline.Height * scale) - tol, (int)(baseline.Height * scale) + tol);
             }
 
             ResetZoomTo100();
@@ -439,7 +449,8 @@ namespace SmrtPad.UITests.Tests
                 $"Editor height ({at70.Height}) is less than 30% of window height ({winSize.Height}) at 70% zoom. The pane shrank.");
 
             const int tol = 15;
-            Assert.InRange(at70.Height, at100.Height - tol, at100.Height + tol);
+            // At 70% zoom, visual bounds are ~70% of 100% bounds.
+            Assert.InRange(at70.Height, (int)(at100.Height * 0.7) - tol, (int)(at100.Height * 0.7) + tol);
 
             ResetZoomTo100();
         }

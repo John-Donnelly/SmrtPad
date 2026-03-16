@@ -19,7 +19,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class RibbonInsertAndEditingUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public RibbonInsertAndEditingUITests(SharedAppFixture fx)
         {
@@ -29,7 +29,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Insert group buttons ─────────────────────────────────────────────
 
         /// <summary>
@@ -221,7 +225,7 @@ namespace SmrtPad.UITests.Tests
         public void QuickAccess_NewButton_IsPresent()
         {
             RequireDriver();
-            var btn = _driver!.FindElement(MobileBy.AccessibilityId("NewButton"));
+            var btn = _driver!.FindElement(MobileBy.AccessibilityId("QuickAccessNewButton"));
             Assert.NotNull(btn);
         }
 

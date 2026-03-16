@@ -19,7 +19,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class FileBackstageUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public FileBackstageUITests(SharedAppFixture fx)
         {
@@ -29,11 +29,17 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Helpers ───────────────────────────────────────────────────────────
 
         private void OpenBackstage()
         {
+            // Always close first to ensure a clean state regardless of prior test failures.
+            _fx.EnsureBackstageClosed();
             _fx.EnsureBackstageOpen();
         }
 
@@ -157,10 +163,15 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = FindBackstageNavItem("BackstagePrintNavItem");
-            Assert.NotNull(item);
-
-            CloseBackstage();
+            try
+            {
+                var item = FindBackstageNavItem("BackstagePrintNavItem");
+                Assert.NotNull(item);
+            }
+            finally
+            {
+                CloseBackstage();
+            }
         }
 
         /// <summary>
@@ -172,10 +183,22 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            var item = FindBackstageNavItem("BackstageExportPdfNavItem");
-            Assert.NotNull(item);
-
-            CloseBackstage();
+            try
+            {
+                // NotImplementedException can occur after session restarts; retry once.
+                AppiumElement? item = null;
+                try { item = FindBackstageNavItem("BackstageExportPdfNavItem"); }
+                catch (NotImplementedException)
+                {
+                    Thread.Sleep(1000);
+                    item = FindBackstageNavItem("BackstageExportPdfNavItem");
+                }
+                Assert.NotNull(item);
+            }
+            finally
+            {
+                CloseBackstage();
+            }
         }
 
         /// <summary>
@@ -429,12 +452,17 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            ClickBackstageNavItem("BackstageOptionsNavItem");
+            try
+            {
+                ClickBackstageNavItem("BackstageOptionsNavItem");
 
-            var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
-            Assert.NotNull(headerText);
-
-            CloseBackstage();
+                var headerText = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+                Assert.NotNull(headerText);
+            }
+            finally
+            {
+                CloseBackstage();
+            }
         }
 
         // ── Template picker shows multiple templates ──────────────────────────
@@ -507,22 +535,26 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             OpenBackstage();
 
-            // Navigate to Open
-            ClickBackstageNavItem("BackstageOpenNavItem");
-            var header1 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
-            Assert.NotNull(header1);
+            try
+            {
+                // Use nav items that show a static content panel without replacing the left nav
+                // (BackstageOpenNavItem causes sub-panel navigation that removes other nav items).
+                ClickBackstageNavItem("BackstageTemplatesNavItem");
+                var header1 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+                Assert.NotNull(header1);
 
-            // Navigate to Print
-            ClickBackstageNavItem("BackstagePrintNavItem");
-            var header2 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
-            Assert.NotNull(header2);
+                ClickBackstageNavItem("BackstageOptionsNavItem");
+                var header2 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+                Assert.NotNull(header2);
 
-            // Navigate to Options
-            ClickBackstageNavItem("BackstageOptionsNavItem");
-            var header3 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
-            Assert.NotNull(header3);
-
-            CloseBackstage();
+                ClickBackstageNavItem("BackstageSaveNavItem");
+                var header3 = _driver!.FindElement(MobileBy.AccessibilityId("HeaderText"));
+                Assert.NotNull(header3);
+            }
+            finally
+            {
+                CloseBackstage();
+            }
         }
 
         // ── Backstage hover behavior ──────────────────────────────────────────

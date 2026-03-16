@@ -23,7 +23,7 @@ namespace SmrtPad.UITests.Tests
     public class MainWindowUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver?   _driver;
+        private WindowsDriver?   _driver;
 
         public MainWindowUITests(SharedAppFixture fx)
         {
@@ -35,7 +35,11 @@ namespace SmrtPad.UITests.Tests
 
         // ── helpers ──────────────────────────────────────────────────────────
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── tests ─────────────────────────────────────────────────────────────
 
         [SkippableFact]

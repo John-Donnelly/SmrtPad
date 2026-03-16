@@ -22,7 +22,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class EditorInteractionUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver?   _driver;
+        private WindowsDriver?   _driver;
 
         public EditorInteractionUITests(SharedAppFixture fx)
         {
@@ -32,7 +32,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Word count ────────────────────────────────────────────────────────
 
         /// <summary>
@@ -249,25 +253,28 @@ namespace SmrtPad.UITests.Tests
         {
             RequireDriver();
 
-            _fx.EnsureBackstageClosed();
+            // Brief pause to allow any deferred WinUI dispatcher work (e.g. ClearFormattingButton
+            // click callbacks queued in prior tests) to settle before we trigger tab creation.
+            // Without this, "Formatting cleared." can briefly overwrite "New tab created."
+            // when the test runs after several ClearEditor() calls (AddTab-race / UI-7).
+            Thread.Sleep(500);
 
-            // Click the TabView's add-tab button.
-            var addTabBtn = _driver!.FindElement(MobileBy.AccessibilityId("AddButton"));
-            addTabBtn.Click();
+            // Use Ctrl+T keyboard shortcut rather than a WinAppDriver element click on AddButton.
+            // After many preceding tests, clicking AddButton via WinAppDriver can trigger stale
+            // click-event delivery, causing the status to be overwritten.  Ctrl+T reaches the
+            // same DocumentTabs_AddTabButtonClick handler via the KeyboardAccelerator path.
+            var editorEls = _driver!.FindElements(MobileBy.AccessibilityId("Editor"));
+            Assert.NotEmpty(editorEls);
+            editorEls[0].SendKeys(OpenQA.Selenium.Keys.Control + "t");
 
-            // Poll instead of a fixed sleep — the status message resets on a timer so we
-            // must read it before the reset fires (UI-7).
-            string status = _fx.WaitForStatusText("StatusText", "New tab created.", timeoutMs: 2000);
+            // Poll for "New tab created." to tolerate any brief dispatcher race.
+            string status = _fx.WaitForStatusText("StatusText", "New tab created.", timeoutMs: 3000);
             Assert.Equal("New tab created.", status);
 
-            // Clean up: close the extra tab so subsequent tests start with 1 tab
-            try
-            {
-                var closeBtn = _driver!.FindElement(MobileBy.Name("Close"));
-                closeBtn.Click();
-                Thread.Sleep(400);
-            }
-            catch { /* best-effort cleanup */ }
+            // Clean up: close the extra tab so subsequent tests start with 1 tab.
+            // Use CloseActiveTab() — FindElement(Name("Close")) risks closing the app
+            // title-bar button instead of the tab close button (N-2 regression).
+            _fx.CloseActiveTab();
         }
 
         /// <summary>

@@ -18,7 +18,7 @@ namespace SmrtPad.UITests.Tests;
 public sealed class SemanticSearchUITests : IDisposable
 {
     private readonly FreeTierAppFixture _fixture;
-    private readonly WindowsDriver? _driver;
+    private WindowsDriver? _driver;
 
     public SemanticSearchUITests(FreeTierAppFixture fixture)
     {
@@ -30,13 +30,17 @@ public sealed class SemanticSearchUITests : IDisposable
     {
     }
 
-    private void RequireDriver() => _fixture.RequireSession();
+    private void RequireDriver()
+        {
+            _fixture.RequireSession();
+            _driver = _fixture.Driver;
+        }
     [SkippableFact]
     public void SemanticSearch_FreeTier_SectionNotVisible()
     {
         RequireDriver();
 
-        _fixture.ClickMenuItem("View", "✨ Smart Sidebar");
+        _fixture.ClickMenuItem("View", "✨ Smrt Sidebar");
         Thread.Sleep(600);
 
         var searchBoxes = _driver!.FindElements(MobileBy.AccessibilityId("SemanticSearchBox"));
@@ -52,7 +56,7 @@ public sealed class SemanticSearchUITests : IDisposable
     {
         RequireDriver();
 
-        _fixture.ClickMenuItem("View", "✨ Smart Sidebar");
+        _fixture.ClickMenuItem("View", "✨ Smrt Sidebar");
         Thread.Sleep(600);
 
         var dialog = _driver!.FindElement(MobileBy.Name("Upgrade to SmrtPad Pro"));

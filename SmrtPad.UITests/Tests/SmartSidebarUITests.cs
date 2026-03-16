@@ -19,7 +19,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class SmartSidebarUITests : IDisposable
     {
         private readonly FreeTierAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public SmartSidebarUITests(FreeTierAppFixture fx)
         {
@@ -29,9 +29,13 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         /// <summary>
-        /// The View menu should contain the Smart Sidebar toggle item.
+        /// The View menu should contain the Smrt Sidebar toggle item.
         /// </summary>
         [SkippableFact]
         public void ViewMenu_ContainsSmartSidebarToggle()
@@ -116,7 +120,7 @@ namespace SmrtPad.UITests.Tests
 
         private void OpenUpsellDialog()
         {
-            _fx.ClickMenuItem("View", "✨ Smart Sidebar");
+            _fx.ClickMenuItem("View", "✨ Smrt Sidebar");
             Thread.Sleep(600);
         }
 

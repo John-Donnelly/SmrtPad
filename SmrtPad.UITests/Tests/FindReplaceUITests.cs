@@ -20,7 +20,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class FindReplaceUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public FindReplaceUITests(SharedAppFixture fx)
         {
@@ -30,7 +30,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         private string StatusText => _fx.GetStatusBarText("StatusText");
 
         // ── Helpers ───────────────────────────────────────────────────────────

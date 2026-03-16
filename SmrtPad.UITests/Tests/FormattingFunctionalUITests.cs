@@ -27,7 +27,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class FormattingFunctionalUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver?   _driver;
+        private WindowsDriver?   _driver;
 
         public FormattingFunctionalUITests(SharedAppFixture fx)
         {
@@ -37,7 +37,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Helpers ───────────────────────────────────────────────────────────
 
         /// <summary>
@@ -269,13 +273,20 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             TypeAndSelectAll("H2O");
 
-            _driver!.FindElement(MobileBy.AccessibilityId("SubscriptToggle")).Click();
+            var editorEl = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editorEl.Click();
+            Thread.Sleep(200);
+            editorEl.SendKeys(Keys.Control + "a");
             Thread.Sleep(300);
-            // Re-select: clicking the toggle drops the selection (F-3)
-            _fx.SelectAllInEditor();
-            Thread.Sleep(500);  // Allow UIA toggle-state to refresh after re-selection
+            _driver.FindElement(MobileBy.AccessibilityId("SubscriptToggle")).Click();
+            Thread.Sleep(500);
 
-            // Clean up
+            Assert.True(_fx.IsToggleChecked("SubscriptToggle"), "Subscript should be checked after applying to selection");
+            Assert.False(_fx.IsToggleChecked("SuperscriptToggle"), "Superscript should not be checked when subscript is active");
+
+            // Clean up — re-select first so the toggle acts on the text, not just the caret
+            editorEl.SendKeys(Keys.Control + "a");
+            Thread.Sleep(150);
             _driver.FindElement(MobileBy.AccessibilityId("SubscriptToggle")).Click();
             Thread.Sleep(200);
         }
@@ -292,13 +303,21 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             TypeAndSelectAll("x2");
 
-            _driver!.FindElement(MobileBy.AccessibilityId("SuperscriptToggle")).Click();
+            var editorEl = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            _driver.FindElement(MobileBy.AccessibilityId("SuperscriptToggle")).Click();
             Thread.Sleep(300);
-            // Re-select: clicking the toggle drops the selection (F-3)
-            _fx.SelectAllInEditor();
-            Thread.Sleep(500);  // Allow UIA toggle-state to refresh after re-selection
+            // Re-focus editor and re-select text-only (F-3)
+            editorEl.Click();
+            Thread.Sleep(150);
+            editorEl.SendKeys(Keys.Control + "a");
+            Thread.Sleep(600);
 
-            // Clean up
+            Assert.True(_fx.IsToggleChecked("SuperscriptToggle"), "Superscript should be checked after applying to selection");
+            Assert.False(_fx.IsToggleChecked("SubscriptToggle"), "Subscript should not be checked when superscript is active");
+
+            // Clean up — re-select first so the toggle acts on the text, not just the caret
+            editorEl.SendKeys(Keys.Control + "a");
+            Thread.Sleep(150);
             _driver.FindElement(MobileBy.AccessibilityId("SuperscriptToggle")).Click();
             Thread.Sleep(200);
         }
@@ -315,30 +334,24 @@ namespace SmrtPad.UITests.Tests
             RequireDriver();
             TypeAndSelectAll("test");
 
-            // Apply subscript — the toggle is clicked on the selected text
-            _driver!.FindElement(MobileBy.AccessibilityId("SubscriptToggle")).Click();
-            Thread.Sleep(350);
-            // Caret-level check: caret inside "test" now has subscript active
-            Assert.True(_fx.IsToggleChecked("SubscriptToggle"));
-
-            // Re-select "test" WITHOUT the trailing paragraph marker using Home+Shift+End.
-            // Ctrl+A includes the paragraph marker (default format) causing a mixed selection
-            // where IsToggleChecked returns false even though the text has subscript.
-            var editorEl = _driver.FindElement(MobileBy.AccessibilityId("Editor"));
-            editorEl.SendKeys(Keys.Control + Keys.Home);
-            Thread.Sleep(100);
-            editorEl.SendKeys(Keys.Shift + Keys.End);
-            Thread.Sleep(400);
-            Assert.True(_fx.IsToggleChecked("SubscriptToggle"), "Subscript should still be active after text-only re-selection");
+            // Apply subscript, then re-select text-only (Home+Shift+End) before
+            // asserting. Clicking a toolbar toggle button can briefly collapse the
+            // editor selection, so an immediate post-click check is unreliable.
+            var editorEl = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            // Explicit re-focus + select before toggle click (matches pattern in Subscript_Applied test).
+            editorEl.Click();
+            Thread.Sleep(150);
+            editorEl.SendKeys(Keys.Control + "a");
+            Thread.Sleep(200);
+            _driver.FindElement(MobileBy.AccessibilityId("SubscriptToggle")).Click();
+            Thread.Sleep(500);
+            Assert.True(_fx.IsToggleChecked("SubscriptToggle"), "Subscript should be active after text-only re-selection");
 
             // Apply superscript on the selected text — should turn off subscript
+            // Re-select first so the toggle applies to the text (same pattern as Subscript_Applied).
+            editorEl.SendKeys(Keys.Control + "a");
+            Thread.Sleep(200);
             _driver.FindElement(MobileBy.AccessibilityId("SuperscriptToggle")).Click();
-            Thread.Sleep(400);
-
-            // Re-select text-only and verify
-            editorEl.SendKeys(Keys.Control + Keys.Home);
-            Thread.Sleep(100);
-            editorEl.SendKeys(Keys.Shift + Keys.End);
             Thread.Sleep(500);
 
             Assert.True(_fx.IsToggleChecked("SuperscriptToggle"));

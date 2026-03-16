@@ -20,7 +20,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class TabManagementUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver? _driver;
+        private WindowsDriver? _driver;
 
         public TabManagementUITests(SharedAppFixture fx)
         {
@@ -30,7 +30,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver; // re-sync in case TryRestartSession replaced the Driver
+        }
         private string StatusText => _fx.GetStatusBarText("StatusText");
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -42,7 +46,9 @@ namespace SmrtPad.UITests.Tests
         private void AddNewTab()
         {
             _fx.EnsureBackstageClosed();
-            _driver!.FindElement(MobileBy.AccessibilityId("AddButton")).Click();
+            // FindElements (plural) is immune to the HTTP 501 HWND-drift that
+            // singular FindElement can return immediately after a session restart.
+            _driver!.FindElements(MobileBy.AccessibilityId("AddButton"))[0].Click();
             Thread.Sleep(500);
         }
 
@@ -435,21 +441,18 @@ namespace SmrtPad.UITests.Tests
             _fx.TypeInEditor("unsaved changes");
             Thread.Sleep(300);
 
-            // Close the tab — this should trigger the save dialog
-            CloseActiveTab();
-            Thread.Sleep(500);
+            // Send Ctrl+W directly — do NOT use CloseActiveTab() because that helper
+            // auto-dismisses the save dialog before the test can assert it appeared.
+            var editor = _driver!.FindElement(MobileBy.AccessibilityId("Editor"));
+            editor.SendKeys(Keys.Control + "w");
+            Thread.Sleep(800);
 
-            // Try to dismiss the save dialog by clicking "Don't Save"
-            try
-            {
-                var dontSaveBtn = _driver!.FindElement(MobileBy.Name("Don't Save"));
-                dontSaveBtn.Click();
-                Thread.Sleep(400);
-            }
-            catch (NoSuchElementException)
-            {
-                // If no dialog appeared, the tab was already closed (unmodified)
-            }
+            // The save dialog must be visible — use FindElements (plural) to avoid
+            // NoSuchWindowException when the element is absent.
+            var dontSaveButtons = _driver!.FindElements(MobileBy.Name("Don't Save"));
+            Assert.NotEmpty(dontSaveButtons);
+            dontSaveButtons[0].Click();
+            Thread.Sleep(400);
 
             // The tab should be closed — verify status
             Assert.Equal("Tab closed.", StatusText);
@@ -542,8 +545,8 @@ namespace SmrtPad.UITests.Tests
             AddNewTab();
             Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));
 
-            // Use the New button
-            var newBtn = _driver!.FindElement(MobileBy.Name("New"));
+            // Use the New button (AccessibilityId-based lookup is more reliable than Name)
+            var newBtn = FindQuickAccessNewButton();
             newBtn.Click();
             Thread.Sleep(500);
             Assert.Equal("Words: 0", _fx.GetStatusBarText("WordCountText"));

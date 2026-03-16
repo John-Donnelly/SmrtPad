@@ -34,7 +34,7 @@ namespace SmrtPad.UITests.Tests
     public sealed class MacroFunctionalUITests : IDisposable
     {
         private readonly SharedAppFixture _fx;
-        private readonly WindowsDriver?   _driver;
+        private WindowsDriver?   _driver;
 
         public MacroFunctionalUITests(SharedAppFixture fx)
         {
@@ -44,7 +44,11 @@ namespace SmrtPad.UITests.Tests
 
         public void Dispose() { /* session owned by fixture */ }
 
-        private void RequireDriver() => _fx.RequireSession();
+        private void RequireDriver()
+        {
+            _fx.RequireSession();
+            _driver = _fx.Driver;
+        }
         // ── Helpers ───────────────────────────────────────────────────────────
 
         private void OpenMacroMenu()
@@ -465,9 +469,15 @@ namespace SmrtPad.UITests.Tests
             OpenMacroMenu();
             ClickMacroItem("MacroStopItem");
 
-            // Undo italic
-            _fx.UndoInEditor();
-            Thread.Sleep(200);
+            // Undo italic — may need several undos (SelectAll and macro-stop each create steps).
+            for (int i = 0; i < 3; i++)
+            {
+                _fx.UndoInEditor();
+                Thread.Sleep(150);
+                _fx.SelectAllInEditor();
+                Thread.Sleep(100);
+                if (!_fx.IsToggleChecked("ItalicToggle")) break;
+            }
 
             // Re-select and confirm plain
             _fx.SelectAllInEditor();
@@ -483,8 +493,9 @@ namespace SmrtPad.UITests.Tests
             Assert.True(_fx.IsToggleChecked("ItalicToggle"),
                 "macro playback should have applied italic to the selection");
 
-            // Clean up
-            _fx.UndoInEditor();
+            // Clean up — toggle italic off directly
+            _driver!.FindElement(MobileBy.AccessibilityId("ItalicToggle")).Click();
+            Thread.Sleep(150);
         }
 
         // ── Stop without recording ───────────────────────────────────────────
