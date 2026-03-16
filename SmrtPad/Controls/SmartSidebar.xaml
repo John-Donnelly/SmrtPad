@@ -33,7 +33,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Text="✨ Smart Sidebar" FontSize="16" FontWeight="SemiBold"
+            <TextBlock Text="✨ Smrt Sidebar" FontSize="16" FontWeight="SemiBold"
                        VerticalAlignment="Center" />
             <Button x:Name="CloseButton" Grid.Column="1" Click="CloseButton_Click"
                     AutomationProperties.Name="Close sidebar"

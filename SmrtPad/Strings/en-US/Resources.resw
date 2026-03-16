@@ -1138,7 +1138,7 @@
     <value>Upgrade to SmrtPad Pro</value>
   </data>
   <data name="ProUpsellContent" xml:space="preserve">
-    <value>Unlock AI-powered features including Smart Sidebar, summarization, tone rewriting, and semantic search.</value>
+    <value>Unlock AI-powered features including Smrt Sidebar, summarization, tone rewriting, and semantic search.</value>
   </data>
   <data name="ProUpsellUpgrade" xml:space="preserve">
     <value>Upgrade</value>
@@ -1147,7 +1147,7 @@
     <value>Not now</value>
   </data>
   <data name="SmartSidebarToggle.Text" xml:space="preserve">
-    <value>✨ Smart Sidebar</value>
+    <value>✨ Smrt Sidebar</value>
   </data>
 
   <data name="SmartSidebarRewriteForClarity" xml:space="preserve">

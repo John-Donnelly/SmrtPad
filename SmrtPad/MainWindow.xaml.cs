@@ -309,6 +309,23 @@ namespace SmrtPad
                 if (_activeTabIndex >= 0 && tab == ActiveTab)
                     Editor_SelectionChanged(s, new RoutedEventArgs());
             };
+            // Ctrl+Alt+V = Paste as plain text (strips rich formatting).
+            // Handled via KeyDown because KeyboardAccelerator does not support the Menu (Alt)
+            // modifier combination on WinUI 3.
+            tab.Editor.KeyDown += async (s, e) =>
+            {
+                if (e.Key == Windows.System.VirtualKey.V && tab == ActiveTab)
+                {
+                    var ctrlState = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+                    var altState  = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu);
+                    if ((ctrlState & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0 &&
+                        (altState  & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0)
+                    {
+                        e.Handled = true;
+                        await PasteAsPlainTextAsync();
+                    }
+                }
+            };
             tab.Editor.DragOver += Editor_DragOver;
             tab.Editor.Drop += Editor_Drop;
             tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
@@ -1354,14 +1371,22 @@ namespace SmrtPad
         private void New_Click(object sender, RoutedEventArgs e)
         {
             _suppressTabModified = true;
-            CreateTab(Res.GetString("DocumentUntitled"));
+            Editor.Document.SetText(TextSetOptions.None, string.Empty);
             ViewModel.NewDocument();
-            ActiveTab.IsModified = false;
-            ActiveTab.Encoding = "UTF-8";
-            ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
+            if (ActiveTab != null)
+            {
+                ActiveTab.CurrentFile = null;
+                ActiveTab.IsModified = false;
+                ActiveTab.Encoding = "UTF-8";
+                ActiveTab.TabViewItem.Header = ViewModel.DocumentTitle;
+            }
             UpdateEncoding("UTF-8");
-            ViewModel.UpdateStatus(Res.GetString("StatusNewTab"));
             DeferResetTabModified();
+        }
+
+        private void NewTab_Click(object sender, RoutedEventArgs e)
+        {
+            DocumentTabs_AddTabButtonClick(DocumentTabs, null!);
         }
 
         private void FileMenu_Tapped(object sender, RoutedEventArgs e)
@@ -2238,14 +2263,15 @@ namespace SmrtPad
                 return;
             try
             {
-                string text = await dataView.GetTextAsync();
+                string text = (await dataView.GetTextAsync()).TrimEnd('\r', '\n');
                 int start = Editor.Document.Selection.StartPosition;
                 Editor.Document.Selection.Text = text;
 
-                // Select the just-pasted range and clear its character format so that
-                // formatting inherited from the caret/surrounding text is removed.
-                int end = start + text.Length;
-                Editor.Document.Selection.SetRange(start, end);
+                // Expand the selection to cover the entire document (which at this point is
+                // just the pasted text) and strip all character formatting. Using Expand
+                // instead of SetRange(start, end) avoids an off-by-one in the position
+                // calculation and ensures the stripping covers every pasted character.
+                Editor.Document.Selection.Expand(TextRangeUnit.Story);
                 var fmt = Editor.Document.Selection.CharacterFormat;
                 fmt.Bold       = FormatEffect.Off;
                 fmt.Italic     = FormatEffect.Off;
@@ -2256,6 +2282,7 @@ namespace SmrtPad
                 Editor.Document.Selection.CharacterFormat = fmt;
 
                 // Collapse selection to end of pasted text
+                int end = start + text.Length;
                 Editor.Document.Selection.SetRange(end, end);
                 RefreshEditorState();
             }
@@ -2343,9 +2370,15 @@ namespace SmrtPad
                 {
                     charFormatting.Superscript = FormatEffect.Off;
                     SuperscriptToggle.IsChecked = false;
+                    ViewModel.IsSuperscript = false;
                 }
                 selectedText.CharacterFormat = charFormatting;
+                // RefreshFormattingState calls Editor_SelectionChanged which may read a stale
+                // selection state for Subscript (e.g. because the paragraph mark is excluded).
+                // Explicitly set ViewModel.IsSubscript after the call to ensure the ribbon
+                // toggle correctly reflects the format that was just applied.
                 RefreshFormattingState();
+                ViewModel.IsSubscript = isChecked;
             }
             _macro.Record(MacroCommandType.Subscript);
         }
@@ -3164,11 +3197,25 @@ namespace SmrtPad
             if (sender is not ToggleMenuFlyoutItem toggle)
                 return;
 
-            if (toggle.IsChecked)
+            SmrtSidebarToolbarButton.IsChecked = toggle.IsChecked;
+            await ToggleSmrtSidebarAsync(toggle.IsChecked);
+        }
+
+        private async void SmrtSidebarToolbarButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool open = SmrtSidebarToolbarButton.IsChecked == true;
+            SmartSidebarToggle.IsChecked = open;
+            await ToggleSmrtSidebarAsync(open);
+        }
+
+        private async Task ToggleSmrtSidebarAsync(bool open)
+        {
+            if (open)
             {
                 if (!Services.Licensing.FeatureFlags.IsEnabled(Services.Licensing.SmrtPadFeature.SmartSidebar))
                 {
-                    toggle.IsChecked = false;
+                    SmartSidebarToggle.IsChecked = false;
+                    SmrtSidebarToolbarButton.IsChecked = false;
                     await ShowProUpsellAsync();
                     return;
                 }
@@ -3176,7 +3223,8 @@ namespace SmrtPad
                 var aiDispatcher = App.Current.AIDispatcher;
                 if (aiDispatcher is null)
                 {
-                    toggle.IsChecked = false;
+                    SmartSidebarToggle.IsChecked = false;
+                    SmrtSidebarToolbarButton.IsChecked = false;
                     await ShowProUpsellAsync();
                     return;
                 }
@@ -3215,6 +3263,7 @@ namespace SmrtPad
             SidebarHost.Content = null;
             SidebarHost.Visibility = Visibility.Collapsed;
             SmartSidebarToggle.IsChecked = false;
+            SmrtSidebarToolbarButton.IsChecked = false;
         }
 
         private string GetSelectionOrDocumentText()

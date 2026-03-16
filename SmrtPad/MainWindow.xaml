@@ -64,6 +64,9 @@
                                 <KeyboardAccelerator Key="V" Modifiers="Control"/>
                             </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
+                        <MenuFlyoutItem x:Uid="PastePlainEditMenuItem" Text="Paste Plain" Click="PastePlain_Click" AutomationProperties.AutomationId="PastePlainEditMenuItem">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                         <MenuFlyoutItem x:Uid="PasteSpecialMenuItem" Text="Paste Special" Click="PasteSpecial_Click" AutomationProperties.AutomationId="PasteSpecialMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
                             <MenuFlyoutItem.KeyboardAccelerators>
@@ -168,7 +171,7 @@
                     </Button.KeyboardAccelerators>
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE74E;" FontSize="14"/>
                 </Button>
-                <Button x:Name="NewButton" Click="New_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New"
+                <Button x:Name="NewButton" Click="NewTab_Click"   Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4" ToolTipService.ToolTip="New"
                         AutomationProperties.AutomationId="QuickAccessNewButton"
                         AutomationProperties.Name="New">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE8A5;" FontSize="14"/>
@@ -185,6 +188,14 @@
                         AutomationProperties.AutomationId="ThemeToggleButton">
                     <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE793;" FontSize="14"/>
                 </Button>
+                <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
+                <ToggleButton x:Name="SmrtSidebarToolbarButton" Click="SmrtSidebarToolbarButton_Click"
+                              Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4"
+                              ToolTipService.ToolTip="Smrt Sidebar"
+                              AutomationProperties.AutomationId="SmrtSidebarToolbarButton"
+                              AutomationProperties.Name="Smrt Sidebar">
+                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70B;" FontSize="14"/>
+                </ToggleButton>
             </StackPanel>
         </Grid>
 

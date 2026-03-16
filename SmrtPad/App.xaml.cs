@@ -27,6 +27,13 @@ namespace SmrtPad
         /// <summary>The AI dispatcher loaded via ALC when Pro is licensed; null for Free tier.</summary>
         public IAIDispatcher? AIDispatcher => _aiDispatcher;
 
+#if DEBUG
+        // True when the app was launched with --free-tier (e.g. from UI tests).
+        // Stored so that async post-launch tasks can skip the real licence check
+        // which would otherwise override the free-tier feature-flag state.
+        private bool _isFreeTierSession;
+#endif
+
         /// <summary>All currently open <see cref="MainWindow"/> instances.</summary>
         public static System.Collections.Generic.List<MainWindow> Windows { get; } = [];
 
@@ -106,8 +113,22 @@ namespace SmrtPad
             // free-tier gate logic can be exercised in the same binary.
             // Check both GetCommandLineArgs() (unpackaged/direct launch) and args.Arguments
             // (AUMID/packaged launch) because the activation path determines which is populated.
+            // Also check a sentinel file written by AppiumSession; the file-based approach is
+            // needed because GetTempPath2W in Windows 11 returns a package-specific temp dir for
+            // MSIX apps (not the same path the test process writes to).
             bool isFreeTier = Environment.GetCommandLineArgs().Contains("--free-tier")
-                           || (args.Arguments ?? string.Empty).Contains("--free-tier");
+                           || (args.Arguments ?? string.Empty).Contains("--free-tier")
+                           || System.IO.File.Exists(System.IO.Path.Combine(
+                               System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
+                               "SmrtPad_FreeTier.flag"));
+            // Consume the sentinel file immediately so it doesn't affect later launches.
+            if (isFreeTier)
+            {
+                try { System.IO.File.Delete(System.IO.Path.Combine(
+                    System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
+                    "SmrtPad_FreeTier.flag")); } catch { }
+            }
+            _isFreeTierSession = isFreeTier;
             if (!isFreeTier)
             {
                 FeatureFlags.SetProFlags();
@@ -160,6 +181,12 @@ namespace SmrtPad
 
         private async Task InitializeLicenseAfterLaunchAsync(MainWindow mainWindow)
         {
+#if DEBUG
+            // Skip the real licence check in free-tier test mode so that
+            // LicenseOrchestrator.ApplyProState() cannot override the free-tier
+            // feature-flag state that OnLaunched established.
+            if (_isFreeTierSession) return;
+#endif
             try
             {
                 await InitializeLicenseOrchestratorAsync();
