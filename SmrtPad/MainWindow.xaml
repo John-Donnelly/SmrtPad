@@ -46,23 +46,20 @@
                 <!-- Edit / View menus -->
                 <MenuBar VerticalAlignment="Center" Background="Transparent" Padding="0">
                     <MenuBarItem x:Uid="EditMenu" Title="Edit" AutomationProperties.AutomationId="EditMenuBarItem">
-                        <MenuFlyoutItem x:Uid="CutMenuItem" Text="Cut" Click="Cut_Click" AutomationProperties.AutomationId="CutMenuItem">
+                        <MenuFlyoutItem x:Uid="CutMenuItem" Text="Cut" Click="Cut_Click"
+                                        AutomationProperties.AutomationId="CutMenuItem"
+                                        KeyboardAcceleratorTextOverride="Ctrl+X">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C6;"/></MenuFlyoutItem.Icon>
-                            <MenuFlyoutItem.KeyboardAccelerators>
-                                <KeyboardAccelerator Key="X" Modifiers="Control"/>
-                            </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="CopyMenuItem" Text="Copy" Click="Copy_Click" AutomationProperties.AutomationId="CopyMenuItem">
+                        <MenuFlyoutItem x:Uid="CopyMenuItem" Text="Copy" Click="Copy_Click"
+                                        AutomationProperties.AutomationId="CopyMenuItem"
+                                        KeyboardAcceleratorTextOverride="Ctrl+C">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C8;"/></MenuFlyoutItem.Icon>
-                            <MenuFlyoutItem.KeyboardAccelerators>
-                                <KeyboardAccelerator Key="C" Modifiers="Control"/>
-                            </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="PasteMenuItem" Text="Paste" Click="Paste_Click" AutomationProperties.AutomationId="PasteMenuItem">
+                        <MenuFlyoutItem x:Uid="PasteMenuItem" Text="Paste" Click="Paste_Click"
+                                        AutomationProperties.AutomationId="PasteMenuItem"
+                                        KeyboardAcceleratorTextOverride="Ctrl+V">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
-                            <MenuFlyoutItem.KeyboardAccelerators>
-                                <KeyboardAccelerator Key="V" Modifiers="Control"/>
-                            </MenuFlyoutItem.KeyboardAccelerators>
                         </MenuFlyoutItem>
                         <MenuFlyoutItem x:Uid="PastePlainEditMenuItem" Text="Paste Plain" Click="PastePlain_Click" AutomationProperties.AutomationId="PastePlainEditMenuItem">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE77F;"/></MenuFlyoutItem.Icon>
@@ -191,10 +188,13 @@
                 <Rectangle Width="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="6,6" VerticalAlignment="Stretch"/>
                 <ToggleButton x:Name="SmrtSidebarToolbarButton" Click="SmrtSidebarToolbarButton_Click"
                               Padding="7,5" Background="Transparent" BorderThickness="0" CornerRadius="4"
-                              ToolTipService.ToolTip="Smrt Sidebar"
+                              ToolTipService.ToolTip="Smrt Sidebar (Pro)"
                               AutomationProperties.AutomationId="SmrtSidebarToolbarButton"
                               AutomationProperties.Name="Smrt Sidebar">
-                    <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xE70B;" FontSize="14"/>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xED28;" FontSize="14" VerticalAlignment="Center"/>
+                        <TextBlock Text="Smrt Sidebar" VerticalAlignment="Center" FontSize="12"/>
+                    </StackPanel>
                 </ToggleButton>
             </StackPanel>
         </Grid>

@@ -3896,7 +3896,11 @@ namespace SmrtPad
                 charFormatting.Superscript = FormatEffect.Off;
                 charFormatting.Name = _settings.DefaultFontFamily;
                 charFormatting.Size = (float)_settings.DefaultFontSize;
-                charFormatting.ForegroundColor = Color.FromArgb(255, 0, 0, 0);
+                // Use the theme-appropriate foreground: hardcoding black would make
+                // cleared text invisible in dark mode.
+                charFormatting.ForegroundColor = IsCurrentThemeDark()
+                    ? Windows.UI.Color.FromArgb(255, 255, 255, 255)
+                    : Windows.UI.Color.FromArgb(255, 0, 0, 0);
                 charFormatting.BackgroundColor = Color.FromArgb(0, 255, 255, 255);
                 selectedText.CharacterFormat = charFormatting;
 
@@ -4709,6 +4713,15 @@ namespace SmrtPad
 
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(Editor, "Editor");
             Editor.RenderTransform = EditorScaleTransform;
+
+            // Keep the selection highlight visible when the editor loses focus (e.g. the user
+            // clicks a ribbon button to apply formatting). Without this the selection disappears
+            // as soon as focus leaves the RichEditBox, making it impossible to see what text
+            // will be affected by the ribbon action.
+            Editor.Loaded += (_, _) =>
+            {
+                Editor.SelectionHighlightColorWhenNotFocused = Editor.SelectionHighlightColor;
+            };
 
             PageViewBorder = new Border
             {
