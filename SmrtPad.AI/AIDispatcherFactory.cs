@@ -11,33 +11,33 @@ namespace SmrtPad.AI;
 internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProviderCatalogAdapter
 {
     /// <inheritdoc/>
-    public async Task<bool> IsNpuAvailableAsync(CancellationToken ct)
+    public Task<bool> IsNpuAvailableAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         try
         {
             var readyState = Microsoft.Windows.AI.Text.LanguageModel.GetReadyState();
-            return readyState is AIFeatureReadyState.Ready or AIFeatureReadyState.NotReady;
+            return Task.FromResult(readyState is AIFeatureReadyState.Ready or AIFeatureReadyState.NotReady);
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 
     /// <inheritdoc/>
-    public async Task<bool> IsGpuAvailableAsync(CancellationToken ct)
+    public Task<bool> IsGpuAvailableAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         try
         {
             var catalog = ExecutionProviderCatalog.GetDefault();
             var providers = catalog.FindAllProviders();
-            return providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready);
+            return Task.FromResult(providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready));
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 }
