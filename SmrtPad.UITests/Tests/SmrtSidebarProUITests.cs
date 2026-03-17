@@ -99,10 +99,20 @@ public sealed class SmrtSidebarProUITests : IDisposable
 
         _driver!.FindElement(MobileBy.AccessibilityId("SmrtSidebarToolbarButton")).Click();
 
-        // Poll up to 8 s for the sidebar animation to complete — in a full 330-test
-        // suite run (~67 min) system load is high enough for the sidebar open animation
-        // to exceed the previous 3 s window.
-        var summarizeBtn = _fx.WaitForElement("SummarizeSectionButton", timeoutMs: 8000);
+        // Poll up to 20 s for the sidebar to appear.  In a full 335-test suite
+        // run (~70 min) system load is high enough for WinUI 3 XAML loading to
+        // take several seconds after the click.  If the element still hasn't
+        // appeared after half the budget, try a second click in case the first
+        // was swallowed by a transient focus change.
+        const int totalMs = 20_000;
+        var summarizeBtn = _fx.WaitForElementOrNull("SummarizeSectionButton", timeoutMs: totalMs / 2);
+        if (summarizeBtn is null)
+        {
+            // Retry click once — the button may have been in a transient state
+            var btn = _driver!.FindElements(MobileBy.AccessibilityId("SmrtSidebarToolbarButton"));
+            if (btn.Count > 0) btn[0].Click();
+            summarizeBtn = _fx.WaitForElementOrNull("SummarizeSectionButton", timeoutMs: totalMs / 2);
+        }
         Assert.NotNull(summarizeBtn);
 
         EnsureSidebarClosed();

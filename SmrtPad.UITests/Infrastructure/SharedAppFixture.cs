@@ -685,6 +685,24 @@ namespace SmrtPad.UITests.Infrastructure
         }
 
         /// <summary>
+        /// Non-throwing variant of <see cref="WaitForElement"/>: returns <c>null</c> if the
+        /// element does not appear within <paramref name="timeoutMs"/> milliseconds instead of
+        /// throwing.  Use when the caller needs to take a retry action on timeout.
+        /// </summary>
+        public AppiumElement? WaitForElementOrNull(string automationId, int timeoutMs = 3000, int intervalMs = 100)
+        {
+            var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+            while (DateTime.UtcNow < deadline)
+            {
+                var els = Driver!.FindElements(MobileBy.AccessibilityId(automationId));
+                if (els.Count > 0 && els[0].Displayed)
+                    return els[0];
+                Thread.Sleep(intervalMs);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Polls the status-bar <paramref name="automationId"/> element until its text equals
         /// <paramref name="expected"/> or the <paramref name="timeoutMs"/> elapses.
         /// Returns the last observed text regardless (caller can assert).
