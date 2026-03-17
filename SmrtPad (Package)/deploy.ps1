@@ -26,6 +26,16 @@
 
 $ErrorActionPreference = 'Stop'
 
+# Stop any running SmrtPad instance before touching the AppX layout or calling
+# Add-AppxPackage -Register; the cmdlet fails with E_ACCESSDENIED while the
+# process holds locks on the package binaries.
+$running = Get-Process -Name 'SmrtPad' -ErrorAction SilentlyContinue
+if ($running) {
+    Write-Host '==> Stopping running SmrtPad process (required for package re-registration)...' -ForegroundColor Yellow
+    $running | Stop-Process -Force
+    Start-Sleep -Milliseconds 1000
+}
+
 $root    = Split-Path -Parent $PSScriptRoot
 $msBuild = "A:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Current\Bin\amd64\MSBuild.exe"
 $wap     = Join-Path $PSScriptRoot "SmrtPad (Package).wapproj"
@@ -49,8 +59,14 @@ Get-ChildItem -Path "$tfm" -Filter "*.xbf" | ForEach-Object {
     Copy-Item -Path $_.FullName -Destination $appxRoot -Force
 }
 
-Write-Host "==> Syncing publish output (runtime dependencies) to AppX layout folder..." -ForegroundColor Cyan
-Copy-Item -Path "$publish*" -Destination $appx -Recurse -Force
+if (Test-Path $publish) {
+    Write-Host "==> Syncing publish output (runtime dependencies) to AppX layout folder..." -ForegroundColor Cyan
+    Copy-Item -Path "$publish*" -Destination $appx -Recurse -Force
+} else {
+    Write-Warning "Publish directory not found at '$publish'. Runtime dependency sync skipped."
+    Write-Warning "Run:  dotnet publish SmrtPad\SmrtPad.csproj -c Debug -r win-x64 --no-self-contained"
+    Write-Warning "Then re-run deploy.ps1 to get a complete AppX layout."
+}
 
 Write-Host "==> Registering loose package..." -ForegroundColor Cyan
 Add-AppxPackage -Register $manifest -ForceUpdateFromAnyVersion

@@ -17,14 +17,12 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AI.Foundry.Local" />
     <!--
-      Direct reference required so the package's build/ MSBuild targets activate and copy
-      runtimes/win-x64(arm64)/native/Microsoft.AI.Foundry.Local.Core.dll to the output dir.
-      The buildTransitive/ variant that propagates from the parent package does not include
-      the native-copy target.
+      WinML variant is required for Windows apps: it acquires ONNX Runtime execution
+      providers (CUDA, DirectML, QNN, OpenVINO) at runtime via Windows Machine Learning
+      instead of bundling large EP binaries.  Same API surface as the cross-platform package.
     -->
-    <PackageReference Include="Microsoft.AI.Foundry.Local.Core" />
+    <PackageReference Include="Microsoft.AI.Foundry.Local.WinML" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
 </Project>

@@ -22,7 +22,22 @@ internal sealed class ConcretePhiSilicaModelAdapter : ILanguageModelAdapter
     {
         ct.ThrowIfCancellationRequested();
 
-        if (LanguageModel.GetReadyState() == AIFeatureReadyState.NotReady)
+        AIFeatureReadyState state;
+        try
+        {
+            state = LanguageModel.GetReadyState();
+        }
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490))
+        {
+            // 0x80070490 = ERROR_NOT_FOUND: package not registered in the Windows package store.
+            // Fix: stop the app, run  SmrtPad (Package)\deploy.ps1  to register the loose MSIX,
+            // then restart the debug session.
+            throw new InvalidOperationException(
+                "Phi Silica model unavailable: app package is not registered. " +
+                "Run SmrtPad (Package)\\deploy.ps1 and restart.", ex);
+        }
+
+        if (state == AIFeatureReadyState.NotReady)
         {
             var ensureResult = await LanguageModel.EnsureReadyAsync();
             if (ensureResult.Status != AIFeatureReadyResultState.Success)

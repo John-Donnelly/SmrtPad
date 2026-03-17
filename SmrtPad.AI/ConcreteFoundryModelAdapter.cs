@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.AI.Foundry.Local;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace SmrtPad.AI;
 
@@ -24,8 +25,8 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
     {
         string alias = target switch
         {
-            AIExecutionTarget.FoundryLocalGpu => "phi-3.5-mini-instruct",
-            AIExecutionTarget.FoundryLocalCpu => "phi-3.5-mini-instruct",
+            AIExecutionTarget.FoundryLocalGpu => "phi-3.5-mini",
+            AIExecutionTarget.FoundryLocalCpu => "phi-3.5-mini",
             _ => throw new ArgumentOutOfRangeException(nameof(target), target,
                 "ConcreteFoundryModelAdapter only supports GPU and CPU targets.")
         };
@@ -38,8 +39,9 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
 
         ct.ThrowIfCancellationRequested();
 
-        await FoundryLocalManager.CreateAsync(config, logger: null!).ConfigureAwait(false);
-        var manager = FoundryLocalManager.Instance;
+        if (FoundryLocalManager.Instance is null)
+            await FoundryLocalManager.CreateAsync(config, NullLogger.Instance).ConfigureAwait(false);
+        var manager = FoundryLocalManager.Instance!;
 
         var catalog = await manager.GetCatalogAsync().ConfigureAwait(false);
         var model = await catalog.GetModelAsync(alias).ConfigureAwait(false)

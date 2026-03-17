@@ -19,6 +19,15 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
             var readyState = Microsoft.Windows.AI.Text.LanguageModel.GetReadyState();
             return Task.FromResult(readyState is AIFeatureReadyState.Ready or AIFeatureReadyState.NotReady);
         }
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490))
+        {
+            // 0x80070490 = ERROR_NOT_FOUND: Microsoft.Windows.Workloads.dll cannot resolve
+            // the app's package installation path because the package is not registered in
+            // the Windows package store.  This is a deployment gap, not an NPU absence.
+            // Fix: stop the app, run  SmrtPad (Package)\deploy.ps1  to register the loose
+            // MSIX, then restart the debug session.
+            return Task.FromResult(false);
+        }
         catch
         {
             return Task.FromResult(false);
