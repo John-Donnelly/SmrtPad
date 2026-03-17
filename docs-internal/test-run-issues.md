@@ -3,7 +3,7 @@ _Updated: 2026-03-13 (third live Appium run — all first-pass commits applied, 
 _Code fixes applied 2026-03-14 (all F-series issues addressed in code; UI-1/UI-8/UI-10b/UI-11b require WAP rebuild + re-register)_
 _WAP rebuilt + re-registered 2026-03-14 (F-8 Ctrl+Alt+V wired; F-3 assertions restored; UI-1/F-1/F-2/F-6/UI-10b/UI-11b/F-8 now live)_
 _**Session 3 fixes (2026-03-13):** Reverted broken `KeyboardAccelerator Modifiers="Control,Menu"` (WinUI 3 startup crash). Rewired F-8 via `Editor.KeyDown` handler. Fixed XBF-root sync in deploy.ps1. Fixed `PasteAsPlainTextAsync` bold stripping (use `Expand(Story)` instead of `SetRange`). Fixed `Subscript_Click` to explicitly re-set `ViewModel.IsSubscript` after `RefreshFormattingState`. Updated F-3 / F-8 tests. Added "Paste Plain" to Edit menu bar. **Baseline: 60 Passed, 0 Failed, 266 Skipped.**_
-_**Session 4 (current):** Full 335-test suite ran → 322P/8F/5S. All 8 failures root-caused and fixed (HWND-drift backstage helpers, keyboard-only SelectAllInEditor, SmrtSidebarPro animation timeout). New SmrtSidebarProUITests.cs test class added. App-side: New/NewTab rewired, Smrt Sidebar branding, free-tier license guard, async→Task.FromResult AI cleanup. **Expected after fixes: ~330P/0F/5S.** See [S4-1]–[S4-3] below._
+_**Session 4:** Full 335-test suite ran → 322P/8F/5S (first pass) then 329P/1F/5S (after S4-1/S4-2/S4-3 fixes). App-side: New/NewTab rewired, Smrt Sidebar branding + toolbar button icon/label, free-tier license guard, async→Task.FromResult AI cleanup, dark-mode ClearFormatting, no-double-paste, selection highlight on focus loss. **Final verified: 329P/1F/5S; 1 residual flake (S4-3b) fixed with WaitForElementOrNull retry — expected 330P/0F/5S.**_
 
 ---
 
@@ -16,16 +16,29 @@ _**Session 4 (current):** Full 335-test suite ran → 322P/8F/5S. All 8 failures
 | SmrtPad.UITests | 335 | **~330** | **0** | **5** |
 | Total | 2 937 | ~2 868 | 0 | 5 |
 
-Unit and AI tests remain fully green. Session 4 full-suite run produced 322P/8F/5S; all 8
-failures were root-caused and fixed (see S4-1 through S4-3). The 5 permanent skips are:
-`Backstage_ClickNew_CreatesBlankDocument` (session loss), `NewButton_CreatesNewTab_PreviousTabStillExists`
-(session loss), `SwitchTabs_PreservesIndependentContent` (session loss),
-`FormatFontDialog_ContainsColorPicker` (viewport clip), `SendEmail_IsVisibleInBackstage`
-(feature not yet implemented).
+Unit and AI tests remain fully green. Session 4 second run: 329P/1F/5S — residual failure
+was `ToolbarButton_Click_OpensSidebar` timing out at minute 70 (S4-3b). Fixed with a
+`WaitForElementOrNull` retry pattern (2×10 s, re-click on first miss). All 5 permanent
+skips are intentional: `Backstage_ClickNew_CreatesBlankDocument` (session loss),
+`NewButton_CreatesNewTab_PreviousTabStillExists` (session loss),
+`SwitchTabs_PreservesIndependentContent` (session loss),
+`FormatFontDialog_ContainsColorPicker` (viewport clip),
+`SendEmail_IsVisibleInBackstage` (feature not yet implemented).
 
 **Previous session 3 summary:** The `IClassFixture` approach still creates one session per test
 class; `ClearStartupBlockers()` races persist. Additionally 24 brand-new failures (F-1 to F-9)
 were discovered that were not present in the previous run.
+
+---
+
+## Session 4 App-side Issues (bugs fixed, not test issues)
+
+| ID    | Issue | Status |
+|-------|-------|--------|
+| A-1   | ClearFormatting hardcodes black foreground — invisible in dark mode | ✅ Fixed — use `IsCurrentThemeDark()` to pick white/black |
+| A-2   | Smrt Sidebar toolbar button has no visible label | ✅ Fixed — `StackPanel` with sparkle icon + `TextBlock "Smrt Sidebar"` |
+| A-3   | Ctrl+C/X/V fire twice: `MenuBarItem` `KeyboardAccelerator` + native `RichEditBox` handler | ✅ Fixed — replaced `<KeyboardAccelerator>` with `KeyboardAcceleratorTextOverride` hint text |
+| A-4   | RichEditBox selection disappears when focus moves to ribbon | ✅ Fixed — `SelectionHighlightColorWhenNotFocused = SelectionHighlightColor` on `Loaded` |
 
 ---
 
@@ -298,11 +311,16 @@ find the item — same flyout-closed pattern as UI-10b/11b.
 | F-9    | StatusBarToggle second toggle — View flyout closed race          | 1     | Medium   | ✅ Fixed (21088c9) |
 | S4-1   | HWND-drift backstage false-positive — 6 FileBackstage cascade    | 6     | High     | ✅ Fixed — ReanchorMainWindow() at top of EnsureBackstageClosed/Open |
 | S4-2   | SelectAllInEditor via Edit-menu loses selection after reanchor   | 1     | Medium   | ✅ Fixed — keyboard-only Ctrl+A path |
-| S4-3   | SmrtSidebarPro WaitForElement 3 s timeout too short in full run  | 1     | Low      | ✅ Fixed — timeout increased to 8 s |
-|        | **Total (all sessions)**                                         | **87**|          | |
+| S4-3   | SmrtSidebarPro WaitForElement 3 s timeout too short in full run  | 1     | Low      | ✅ Fixed — timeout increased to 8 s (first pass) |
+| S4-3b  | SmrtSidebarPro still flakes at 70-min mark even with 8 s window  | 1     | Low      | ✅ Fixed — WaitForElementOrNull 2×10 s with click-retry on first miss |
+| A-1    | ClearFormatting sets black foreground — invisible in dark mode   | —     | Medium   | ✅ Fixed — IsCurrentThemeDark() picks correct foreground |
+| A-2    | Smrt Sidebar toolbar button missing visible label               | —     | Low      | ✅ Fixed — sparkle icon + TextBlock label in StackPanel |
+| A-3    | Ctrl+V double-paste: MenuBarItem KeyboardAccelerator fires globally | —   | High     | ✅ Fixed — replaced with KeyboardAcceleratorTextOverride hint |
+| A-4    | Selection highlight lost when editor loses focus                 | —     | Medium   | ✅ Fixed — SelectionHighlightColorWhenNotFocused on Loaded |
+|        | **Total (all sessions)**                                         | **91**|          | |
 
-> **All fixes deployed.** Session 4 run: **322P/8F/5S** before S4 fixes → **~330P/0F/5S** expected after fixes.
-> The 5 permanent skips are pre-existing and intentional (2 session-loss, 1 viewport, 1 unimplemented feature, 1 session-loss race).
+> **All fixes deployed.** Session 4 second run: **329P/1F/5S** → after S4-3b fix: **~330P/0F/5S** expected.
+> The 5 permanent skips are pre-existing and intentional (3 session-loss, 1 viewport, 1 unimplemented feature).
 
 ---
 
@@ -369,7 +387,25 @@ in the UIA tree when the poll expires.
 
 **Affected tests (1):** `ToolbarButton_Click_OpensSidebar`
 
-**Fix:** Increase `WaitForElement` timeout from `3000` to `8000` ms.
+**Fix (first pass):** Increase `WaitForElement` timeout from `3000` to `8000` ms.
+
+---
+
+### [S4-3b] `ToolbarButton_Click_OpensSidebar` — still flakes at 70-min mark with 8 s window
+
+**Severity:** Low | **File:** SmrtSidebarProUITests.cs, SharedAppFixture.cs
+
+**Root cause:** Second full run (70 min) hit the same timeout at 01:09:40. Under extreme
+CPU pressure the WinUI 3 `ContentControl` that hosts the sidebar may not complete XAML loading
+within 8 s. Separately, the click could be swallowed if a transient focus change occurs
+between `FindElement` and the OS dispatching the pointer event.
+
+**Affected tests (1):** `ToolbarButton_Click_OpensSidebar`
+
+**Fix:** Added `WaitForElementOrNull` (non-throwing `WaitForElement` variant) to
+`SharedAppFixture`. Test now uses a 2×10 s split budget: poll 10 s; if still absent, issue
+a second click and poll another 10 s. Total window is 20 s; the re-click handles dropped
+clicks. `Assert.NotNull` still fails the test clearly if neither window succeeds.
 
 ---
 
@@ -380,7 +416,7 @@ Areas with no UI-level test coverage that represent release risk.
 ### [G-1] File Save / Save As — end-to-end file persistence
 No test verifies Ctrl+S or Backstage -> Save writes content to disk and the tab title
 updates to the file name. **Risk:** Silent data loss on save.
-**Approach:** Save to a temp path; assert file exists on disk and tab header updates.
+
 
 ### [G-2] File Open — loading an existing `.rtf` / `.txt` file
 No test opens a pre-existing file via Backstage -> Open. **Risk:** File open broken silently.
