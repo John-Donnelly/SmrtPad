@@ -1154,4 +1154,26 @@
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
     <value>打开文件…</value>
   </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>正在检查本地 AI 可用性...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>已在 {0} 上准备就绪</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>AI 需要部署已打包的 SmrtPad 应用。</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>此设备上不支持 AI。</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>AI 当前不可用。</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>AI 建议可能不准确。在文档中使用前，请先查看生成的文本。</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>应用到文档</value>
+  </data>
 </root>

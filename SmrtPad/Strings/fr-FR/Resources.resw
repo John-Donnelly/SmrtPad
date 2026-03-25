@@ -1154,4 +1154,26 @@
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
     <value>Ouvrir un fichier…</value>
   </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>Vérification de la disponibilité de l'IA locale...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>Prêt sur {0}</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>L'IA nécessite le déploiement de l'application SmrtPad packagée.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>L'IA n'est pas disponible sur cet appareil.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>L'IA est actuellement indisponible.</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>Les suggestions de l'IA peuvent être inexactes. Vérifiez le texte généré avant de l'utiliser.</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>Appliquer au document</value>
+  </data>
 </root>

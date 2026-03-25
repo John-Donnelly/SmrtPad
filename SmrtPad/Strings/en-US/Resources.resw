@@ -1153,6 +1153,30 @@
   <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
     <value>Rewrite for clarity</value>
   </data>
+  <data name="SmartSidebarGrammarSectionTitle" xml:space="preserve">
+    <value>✍️ GRAMMAR</value>
+  </data>
+  <data name="SmartSidebarShortenSectionTitle" xml:space="preserve">
+    <value>📏 SHORTEN</value>
+  </data>
+  <data name="SmartSidebarAutoCompleteSectionTitle" xml:space="preserve">
+    <value>⚡ AUTOCOMPLETE</value>
+  </data>
+  <data name="SmartSidebarGrammarFix" xml:space="preserve">
+    <value>Fix grammar</value>
+  </data>
+  <data name="SmartSidebarShorten" xml:space="preserve">
+    <value>Shorten selection</value>
+  </data>
+  <data name="SmartSidebarAutoComplete" xml:space="preserve">
+    <value>Complete at cursor</value>
+  </data>
+  <data name="SmartSidebarCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SmartSidebarSelectionRequired" xml:space="preserve">
+    <value>Select text or place the caret in text first.</value>
+  </data>
   <data name="SmartSidebarOcrDropPrompt" xml:space="preserve">
     <value>Drop an image to extract text</value>
   </data>
@@ -1179,6 +1203,31 @@
   </data>
   <data name="SmartSidebarExecutionPending" xml:space="preserve">
     <value>Available after first response</value>
+  </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>Checking local AI availability...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>Ready on {0}</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>AI requires the packaged SmrtPad app to be deployed before it can run.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>AI is unavailable on this device. Phi Silica requires a supported Copilot+ PC and Foundry Local GPU acceleration was not available.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>AI is currently unavailable. Try reopening the sidebar after deployment and model setup complete.</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>AI suggestions can be inaccurate or incomplete. Review generated text before using it in your document.</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>Apply to document</value>
+  </data>
+  <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
+    <value>Insert into document</value>
   </data>
   <data name="SmartSidebarErrorFormat" xml:space="preserve">
     <value>Error: {0}</value>

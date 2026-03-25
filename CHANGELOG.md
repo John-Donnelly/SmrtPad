@@ -4,6 +4,45 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **GrammarFixSkill** — new AI skill in `SmrtPad.AI/Skills/GrammarFixSkill.cs` that streams grammar-corrected text for the current editor selection via `AIDispatcher`
+- **ShortenSkill** — new AI skill in `SmrtPad.AI/Skills/ShortenSkill.cs` that streams a condensed rewrite of the selection
+- **AutoCompleteSkill** — new AI skill in `SmrtPad.AI/Skills/AutoCompleteSkill.cs` that streams an inline continuation from the text before the caret; `MainWindow.GetCurrentParagraphTextBeforeCaret()` extracts the paragraph text up to the caret position for the prompt
+- **Grammar Fix section** in `SmartSidebar` — `GrammarFixButton` / `StopGrammarFixButton` / `ApplyGrammarFixButton`; connected via `ApplyGrammarFix` callback delegate; all labels localised
+- **Shorten section** in `SmartSidebar` — `ShortenButton` / `StopShortenButton` / `ApplyShortenButton`; connected via `ApplyShortenRewrite` callback delegate; all labels localised
+- **Auto-Complete section** in `SmartSidebar` — `AutoCompleteButton` / `StopAutoCompleteButton` / `ApplyAutoCompleteButton`; reads text before caret via `GetTextBeforeCaret` callback; "Insert into document" apply button; all labels localised
+- **`AIDispatcherAvailability` / `AIBackendAvailability` / `AIBackendAvailabilityStatus`** — new types in `SmrtPad/Services/AIDispatcherAvailability.cs` that capture the structured backend-probe result; `AIBackendAvailability.IsUsable` indicates whether a backend can still be initialised; exposed on `IAIDispatcher` as `Availability` property and implemented in `AIDispatcherProxy`
+- **Initialization status banner** in `SmartSidebar` — `InitializationStatusText` block shows localised "Checking…", "Ready on {0}", package-identity-required, unsupported, and error states based on `AIDispatcherAvailability`; `SmartSidebar_Loaded` kicks off `InitializeDispatcherAsync` on first load
+- **Responsible AI notice** — persistent `SmartSidebarResponsibleAiNotice` string displayed below AI output text blocks in all sections
+- **`AIBackendCapability`** — new result type returned by `IHardwareProbeService.ProbePhiSilicaAsync` and `ProbeFoundryGpuAsync`; carries `BackendName`, `AIBackendAvailabilityStatus`, `DiagnosticCode`, and `DiagnosticMessage`; `IsUsable` convenience property
+- **`HardwareProbeResult`** — new record returned by `HardwareProbeService.DetectAsync`; contains `PhiSilica: AIBackendCapability`, `FoundryGpu: AIBackendCapability`, `SelectedTarget: AIExecutionTarget`, and a static `Uninitialized` sentinel; replaces the previous `AIExecutionTarget` return type
+- **Token-frequency semantic search** — `SemanticSearchService` replaced embedding-based cosine similarity with a local TF-weighted cosine similarity over token frequency vectors, eliminating the dependency on `GenerateEmbeddingAsync`; index entries now store `Dictionary<string, int>` token frequencies instead of `float[]` embeddings; persistence format updated accordingly; new `internal static Tokenize(string)` helper (Unicode letter/digit/apostrophe regex)
+- **`Microsoft.AI.Foundry.Local`** / **`Microsoft.AI.Foundry.Local.Core`** NuGet packages — replaced `Microsoft.AI.Foundry.Local.WinML` in `SmrtPad.AI.csproj` and `Directory.Packages.props`; `Core` package added as a direct reference so its MSBuild targets copy `Microsoft.AI.Foundry.Local.Core.dll` to the output directory
+- **`ProbePhiSilicaAsync` / `ProbeFoundryGpuAsync`** — `IHardwareProbeService` interface and `ConcretePhiSilicaModelAdapter` / `ConcreteFoundryModelAdapter` now return `Task<AIBackendCapability>` instead of `Task<bool>`; fine-grained status codes (`Available`, `InstallRequired`, `RequiresPackageIdentity`, `Unsupported`, `Unavailable`, `Error`) replace the binary boolean; `0x80070490` COMException distinguished as `RequiresPackageIdentity`
+- **deploy.ps1 — full remote MSIX pipeline** — script rewritten from a loose `Add-AppxPackage -Register` (local AppX folder) to a complete WinRM-based pipeline: MSBuild Release|x64 build → `Get-OrCreateSigningCertificate` (self-signed PFX in `TestCerts\`) → `signtool sign` → copy `.msix` + cert to remote staging directory via `Copy-Item -ToSession` → `Install-RemoteTrustCertificate` (adds cert to `TrustedPeople`+`Root` stores) → `Install-RemoteMsix` (scheduled task with `LogonType Interactive / RunLevel Highest` bypasses WinRM token restriction for `Add-AppxPackage`) → polls `install.exitcode.txt` → outputs `AUMID=…` to stdout; `-RemoteHost`, `-RemoteUser`, `-RemotePassword`, `-RemoteUserName` parameters added; `New-OptionalCredential` helper handles passwordless sessions; `[System.Security.SecureString]::new()` used for empty PFX password
+- **`FlattenWinUiPageXbfOutputs` MSBuild target** — post-build target in `SmrtPad.csproj` copies `Controls\SmartSidebar.xbf` and `Views\FileBackstageView.xbf` to the output directory root so WinUI 3 `XamlControlsResources` can locate compiled XAML at runtime
+- **20 new Smart Sidebar Pro UI tests** (`SmrtSidebarProUITests`) — `ToneRewrite_Run_ProducesOutput`, `GrammarFix_Run_ProducesOutput`, `Shorten_Run_ProducesOutput`, `AutoComplete_Run_ProducesOutput`, `GrammarFix_NoSelection_ShowsValidationMessage`, `AutoComplete_Cancel_HidesAcceptButton`, `AutoComplete_Accept_IncreasesCharacterCount`; plus `EnsureSidebarOpen`, `SeedSelectedText`, `WaitForNonEmptyText` helpers
+- **`SmartSidebarUITests`** — new test class with `ViewMenu_ContainsSmartSidebarToggle`, `SidebarToggle_FreeTier_ShowsUpsellDialog`, and related tests for toolbar-button toggle
+- **`DotEnvLoader`** — new helper class (`SmrtPad.UITests/Infrastructure/DotEnvLoader.cs`) that walks up from `AppContext.BaseDirectory` to find a `.env` file at the repository root and populates `Environment` variables; called from `AppiumSession`, `SharedAppFixture`, and `DocxDarkModeFixture`
+- **19 new en-US resource strings**: `SmartSidebarGrammarSectionTitle`, `SmartSidebarShortenSectionTitle`, `SmartSidebarAutoCompleteSectionTitle`, `SmartSidebarGrammarFix`, `SmartSidebarShorten`, `SmartSidebarAutoComplete`, `SmartSidebarCancel`, `SmartSidebarSelectionRequired`, `SmartSidebarInitializationPending`, `SmartSidebarExecutionReady`, `SmartSidebarExecutionPackageIdentityRequired`, `SmartSidebarExecutionUnsupported`, `SmartSidebarExecutionUnavailable`, `SmartSidebarResponsibleAiNotice`, `SmartSidebarApplyGeneratedText`, `SmartSidebarInsertGeneratedText`; mirrored to all 8 additional locale files
+
+### Changed
+- **`SmartSidebar_Loaded` / `SmartSidebar_Unloaded`** — lifecycle events added; `_initializationTask` is started on first load and cancelled/cleared on unload
+- **`AppiumSession.App` capability** — `AddAdditionalAppiumOption("app", …)` replaced with `remoteOptions.App = appPath` to comply with Appium .NET client v6 which rejects the `"app"` capability key via the additional-options path
+- **`SharedAppFixture.DeployPackageAndGetAppId()`** — path corrected from 4× `..` to 5× `..` relative to `AppContext.BaseDirectory` so `deploy.ps1` is correctly located from `bin\x64\Debug\net10.0-windows10.0.19041.0\`; visibility changed from `private static` to `internal static` for reuse by `DocxDarkModeFixture`
+- **`DocxDarkModeFixture`** — rewritten to call `SharedAppFixture.DeployPackageAndGetAppId()` and launch via `launchViaAppId: true` with the DOCX as the activation argument; remote machine settings (theme preference) are now patched and restored via WinRM PowerShell; local `File.WriteAllText` on the settings path removed
+- **`HardwareProbeService.DetectAsync`** — return type changed from `AIExecutionTarget` to `HardwareProbeResult`; delegates to `ProbePhiSilicaAsync` and `ProbeFoundryGpuAsync`; target selection logic updated to use `IsUsable`
+- **`AIDispatcher.ProbeResult`** — now typed as `HardwareProbeResult` (was anonymous/dynamic)
+- **`AIDispatcherFactory`** — `IsNpuAvailableAsync` renamed to `ProbePhiSilicaAsync`; `IsGpuAvailableAsync` renamed to `ProbeFoundryGpuAsync`; both return `Task<AIBackendCapability>`
+- **`Package.appxmanifest`** — `MaxVersionTested` updated to `10.0.26226.0`; `systemai` added to `IgnorableNamespaces`; description shortened to "Windows 11"
+- **`WindowsAppSDK`** updated from `1.8.260209005` to `1.8.260317003`
+
+### Fixed
+- **`ConvertTo-SecureString ''` in PowerShell 5** — replaced with `[System.Security.SecureString]::new()` to avoid `ParameterBindingValidationException`
+- **signtool "Missing filename"** — removed `/p7ce DetachedSignedData` and `/p ''` from the signtool command; passwordless PFX does not require `/p`
+- **`Add-AppxPackage` `0x80070005` Access Denied over WinRM** — `Install-RemoteMsix` rewrote install logic using `Register-ScheduledTask` with `LogonType Interactive / RunLevel Highest` principal so `Add-AppxPackage` runs under a full interactive user token
+- **UI tests all skipping** — two root causes fixed: (1) `DeployPackageAndGetAppId` path off-by-one (`4×` → `5× ..`), (2) `AddAdditionalAppiumOption("app", …)` rejected by Appium client v6 (`System.ArgumentException: already an option for appium:app`)
+
 ## [1.0.0-rc.1] — 2026-03-10
 
 ### Added

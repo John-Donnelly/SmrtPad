@@ -1154,4 +1154,26 @@
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
     <value>فائل کھولیں…</value>
   </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>مقامی AI دستیابی جانچ رہے ہیں...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>{0} پر تیار</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>AI کے لیے پیکیج کردہ SmrtPad ایپ کی تعیناتی ضروری ہے۔</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>AI اس ڈیوائس پر دستیاب نہیں ہے۔</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>AI ابھی دستیاب نہیں ہے۔</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>AI کی تجاویز غلط ہو سکتی ہیں۔ دستاویز میں استعمال کرنے سے پہلے تیار کردہ متن کا جائزہ لیں۔</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>دستاویز پر لاگو کریں</value>
+  </data>
 </root>

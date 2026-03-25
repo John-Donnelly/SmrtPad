@@ -1154,4 +1154,26 @@
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
     <value>ファイルを開く…</value>
   </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>ローカル AI の可用性を確認中...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>{0} で準備完了</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>AI にはパッケージ済みの SmrtPad アプリの展開が必要です。</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>このデバイスでは AI を使用できません。</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>AI は現在利用できません。</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>AI の提案は不正確な場合があります。ドキュメントで使用する前に生成されたテキストを確認してください。</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>ドキュメントに適用</value>
+  </data>
 </root>

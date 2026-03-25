@@ -1154,4 +1154,26 @@
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
     <value>Datei öffnen…</value>
   </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>Lokale KI-Verfügbarkeit wird geprüft...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>Bereit auf {0}</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>KI erfordert die Bereitstellung der gepackten SmrtPad-App.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>KI ist auf diesem Gerät nicht verfügbar.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>KI ist derzeit nicht verfügbar.</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>KI-Vorschläge können ungenau sein. Bitte prüfen Sie den generierten Text vor der Verwendung.</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>In Dokument übernehmen</value>
+  </data>
 </root>

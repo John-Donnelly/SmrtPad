@@ -1154,4 +1154,26 @@
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
     <value>فتح ملف…</value>
   </data>
+  <data name="SmartSidebarInitializationPending" xml:space="preserve">
+    <value>جارٍ التحقق من توفر الذكاء الاصطناعي المحلي...</value>
+  </data>
+  <data name="SmartSidebarExecutionReady" xml:space="preserve">
+    <value>جاهز على {0}</value>
+    <comment>{0} = execution target display name</comment>
+  </data>
+  <data name="SmartSidebarExecutionPackageIdentityRequired" xml:space="preserve">
+    <value>يتطلب الذكاء الاصطناعي نشر تطبيق SmrtPad المعبأ.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnsupported" xml:space="preserve">
+    <value>الذكاء الاصطناعي غير متاح على هذا الجهاز.</value>
+  </data>
+  <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
+    <value>الذكاء الاصطناعي غير متاح حالياً.</value>
+  </data>
+  <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
+    <value>قد تكون اقتراحات الذكاء الاصطناعي غير دقيقة. يُرجى مراجعة النص المُنشأ قبل استخدامه.</value>
+  </data>
+  <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
+    <value>تطبيق على المستند</value>
+  </data>
 </root>
