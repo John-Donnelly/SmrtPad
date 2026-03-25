@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Windows.AI;
 using Microsoft.Windows.AI.Text;
+using System.Runtime.InteropServices;
+using Windows.ApplicationModel;
 
 namespace SmrtPad.AI;
 
@@ -22,29 +24,35 @@ internal sealed class ConcretePhiSilicaModelAdapter : ILanguageModelAdapter
     {
         ct.ThrowIfCancellationRequested();
 
-        AIFeatureReadyState state;
-        try
-        {
-            state = LanguageModel.GetReadyState();
-        }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490))
-        {
-            // 0x80070490 = ERROR_NOT_FOUND: package not registered in the Windows package store.
-            // Fix: stop the app, run  SmrtPad (Package)\deploy.ps1  to register the loose MSIX,
-            // then restart the debug session.
-            throw new InvalidOperationException(
-                "Phi Silica model unavailable: app package is not registered. " +
-                "Run SmrtPad (Package)\\deploy.ps1 and restart.", ex);
-        }
+        EnsurePackageIdentity();
 
-        if (state == AIFeatureReadyState.NotReady)
+        var readyState = LanguageModel.GetReadyState();
+        switch (readyState)
         {
-            var ensureResult = await LanguageModel.EnsureReadyAsync();
-            if (ensureResult.Status != AIFeatureReadyResultState.Success)
-            {
-                throw new InvalidOperationException(
-                    $"Phi Silica model could not be prepared: {ensureResult.Status}");
-            }
+            case AIFeatureReadyState.Ready:
+                break;
+
+            case AIFeatureReadyState.NotReady:
+                var ensureResult = await LanguageModel.EnsureReadyAsync();
+                ct.ThrowIfCancellationRequested();
+
+                if (ensureResult.ExtendedError is not null)
+                {
+                    throw new InvalidOperationException(
+                        $"Phi Silica model preparation failed: {ensureResult.ExtendedError.Message}",
+                        ensureResult.ExtendedError);
+                }
+
+                if (ensureResult.Status != AIFeatureReadyResultState.Success)
+                {
+                    throw new InvalidOperationException(
+                        $"Phi Silica model could not be prepared: {ensureResult.Status}");
+                }
+
+                break;
+
+            default:
+                throw new InvalidOperationException(GetUnsupportedReadyStateMessage(readyState));
         }
 
         ct.ThrowIfCancellationRequested();
@@ -66,6 +74,7 @@ internal sealed class ConcretePhiSilicaModelAdapter : ILanguageModelAdapter
         var tokenChannel = System.Threading.Channels.Channel.CreateUnbounded<string>();
 
         var operation = _languageModel.GenerateResponseAsync(prompt);
+        Exception? operationException = null;
         operation.Progress = (_, partialResult) =>
         {
             if (!string.IsNullOrEmpty(partialResult))
@@ -73,20 +82,26 @@ internal sealed class ConcretePhiSilicaModelAdapter : ILanguageModelAdapter
         };
 
         // Register cancellation
-        ct.Register(() =>
+        using var cancellationRegistration = ct.Register(() =>
         {
             operation.Cancel();
             tokenChannel.Writer.TryComplete();
         });
 
         // Await the full result and close the channel
-        _ = Task.Run(async () =>
+        var completionTask = Task.Run(async () =>
         {
             try
             {
                 await operation;
             }
-            catch { /* cancelled or failed — channel will be completed */ }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                operationException = ex;
+            }
             finally
             {
                 tokenChannel.Writer.TryComplete();
@@ -97,6 +112,10 @@ internal sealed class ConcretePhiSilicaModelAdapter : ILanguageModelAdapter
         {
             yield return token;
         }
+
+        await completionTask.ConfigureAwait(false);
+        if (operationException is not null)
+            throw new InvalidOperationException("Phi Silica text generation failed.", operationException);
     }
 
     /// <inheritdoc/>
@@ -110,6 +129,33 @@ internal sealed class ConcretePhiSilicaModelAdapter : ILanguageModelAdapter
         // Use GenerateEmbeddingVectors when available on WinAppSDK 1.8.1+
         // For now return empty — full embedding support depends on device capabilities
         return Task.FromResult(Array.Empty<float>());
+    }
+
+    private static void EnsurePackageIdentity()
+    {
+        try
+        {
+            _ = Package.Current.Id.FullName;
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new InvalidOperationException(
+                "Phi Silica requires the app to be running with registered package identity.",
+                ex);
+        }
+        catch (COMException ex) when (ex.HResult == unchecked((int)0x80070490))
+        {
+            throw new InvalidOperationException(
+                "Phi Silica could not resolve the app's package registration. Re-run the packaged deployment before using AI.",
+                ex);
+        }
+    }
+
+    private static string GetUnsupportedReadyStateMessage(AIFeatureReadyState readyState)
+    {
+        return string.Equals(readyState.ToString(), "NotSupportedOnCurrentSystem", StringComparison.Ordinal)
+            ? "Phi Silica is not supported on this device. A Copilot+ PC with the required Windows AI components is required."
+            : $"Phi Silica is unavailable. Reported readiness state: {readyState}.";
     }
 
     /// <inheritdoc/>

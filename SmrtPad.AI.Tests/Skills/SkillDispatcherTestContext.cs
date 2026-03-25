@@ -11,8 +11,10 @@ internal sealed class SkillDispatcherTestContext : IAsyncDisposable
     public SkillDispatcherTestContext(params string[] tokens)
     {
         _tokens = tokens;
-        _catalog.Setup(c => c.IsNpuAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _catalog.Setup(c => c.IsGpuAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _catalog.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
+        _catalog.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
 
         Model = new Mock<ILanguageModelAdapter>();
         Model.Setup(m => m.StreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -23,7 +25,7 @@ internal sealed class SkillDispatcherTestContext : IAsyncDisposable
 
         Dispatcher = new AIDispatcher(
             new HardwareProbeService(_catalog.Object),
-            _ => Task.FromResult(Model.Object));
+            (_, _) => Task.FromResult(Model.Object));
     }
 
     public AIDispatcher Dispatcher { get; }

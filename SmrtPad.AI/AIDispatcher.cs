@@ -19,7 +19,7 @@ public interface ILanguageModelAdapter : IAsyncDisposable
 public sealed class AIDispatcher : IAsyncDisposable
 {
     private readonly HardwareProbeService _hardwareProbe;
-    private readonly Func<AIExecutionTarget, Task<ILanguageModelAdapter>> _modelFactory;
+    private readonly Func<AIExecutionTarget, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private ILanguageModelAdapter? _model;
     private SemanticSearchService? _semanticSearchService;
@@ -27,12 +27,15 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// <summary>The execution target selected after initialization.</summary>
     public AIExecutionTarget ExecutionTarget { get; private set; }
 
+    /// <summary>The latest hardware probe result captured by the dispatcher.</summary>
+    public HardwareProbeResult ProbeResult { get; private set; } = HardwareProbeResult.Uninitialized;
+
     /// <summary>Whether <see cref="InitializeAsync"/> has completed successfully.</summary>
     public bool IsInitialized { get; private set; }
 
     public AIDispatcher(
         HardwareProbeService hardwareProbe,
-        Func<AIExecutionTarget, Task<ILanguageModelAdapter>> modelFactory)
+        Func<AIExecutionTarget, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
     {
         ArgumentNullException.ThrowIfNull(hardwareProbe);
         ArgumentNullException.ThrowIfNull(modelFactory);
@@ -55,8 +58,9 @@ public sealed class AIDispatcher : IAsyncDisposable
                 return;
 
             ct.ThrowIfCancellationRequested();
-            ExecutionTarget = await _hardwareProbe.DetectAsync(ct).ConfigureAwait(false);
-            _model = await _modelFactory(ExecutionTarget).ConfigureAwait(false);
+            ProbeResult = await _hardwareProbe.DetectAsync(ct).ConfigureAwait(false);
+            ExecutionTarget = ProbeResult.SelectedTarget;
+            _model = await _modelFactory(ExecutionTarget, ct).ConfigureAwait(false);
             IsInitialized = true;
         }
         finally
@@ -157,6 +161,7 @@ public sealed class AIDispatcher : IAsyncDisposable
             _model = null;
         }
         IsInitialized = false;
+        ProbeResult = HardwareProbeResult.Uninitialized;
         _initLock.Dispose();
     }
 }

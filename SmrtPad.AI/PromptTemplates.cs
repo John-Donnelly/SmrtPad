@@ -31,6 +31,27 @@ public static class PromptTemplates
         return $"Rewrite the following text to improve clarity and readability:\n\n{text}";
     }
 
+    /// <summary>Builds a prompt that corrects grammar, spelling, and punctuation without changing meaning.</summary>
+    public static string GrammarFix(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return $"Correct grammar, punctuation, and spelling in the following text without changing its meaning or tone. Return only the corrected text:\n\n{text}";
+    }
+
+    /// <summary>Builds a prompt that shortens <paramref name="text"/> while preserving meaning.</summary>
+    public static string Shorten(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return $"Shorten the following text while preserving its meaning and key details. Return only the revised text:\n\n{text}";
+    }
+
+    /// <summary>Builds a prompt that completes the current sentence from the existing context.</summary>
+    public static string AutoComplete(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return $"Continue the current sentence based on the existing context. Return only the completion text, keep it concise, and do not start a new paragraph:\n\n{text}";
+    }
+
     /// <summary>Returns the trimmed <paramref name="query"/> for semantic search.</summary>
     public static string SemanticQuery(string query)
     {

@@ -5,22 +5,24 @@ namespace SmrtPad.AI.Tests;
 public class HardwareProbeServiceTests
 {
     private static Mock<IExecutionProviderCatalogAdapter> CreateCatalog(
-        bool? npuAvailable = null,
-        bool? gpuAvailable = null,
-        Exception? npuException = null,
-        Exception? gpuException = null)
+        AIBackendCapability? phiSilica = null,
+        AIBackendCapability? foundryGpu = null,
+        Exception? phiSilicaException = null,
+        Exception? foundryGpuException = null)
     {
         var mock = new Mock<IExecutionProviderCatalogAdapter>();
 
-        if (npuException is not null)
-            mock.Setup(c => c.IsNpuAvailableAsync(It.IsAny<CancellationToken>())).ThrowsAsync(npuException);
+        if (phiSilicaException is not null)
+            mock.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>())).ThrowsAsync(phiSilicaException);
         else
-            mock.Setup(c => c.IsNpuAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(npuAvailable ?? false);
+            mock.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(phiSilica ?? new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
 
-        if (gpuException is not null)
-            mock.Setup(c => c.IsGpuAvailableAsync(It.IsAny<CancellationToken>())).ThrowsAsync(gpuException);
+        if (foundryGpuException is not null)
+            mock.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>())).ThrowsAsync(foundryGpuException);
         else
-            mock.Setup(c => c.IsGpuAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(gpuAvailable ?? false);
+            mock.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(foundryGpu ?? new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
 
         return mock;
     }
@@ -28,86 +30,101 @@ public class HardwareProbeServiceTests
     [Fact]
     public async Task DetectAsync_NpuAvailable_ReturnsPhiSilicaNpu()
     {
-        var catalog = CreateCatalog(npuAvailable: true, gpuAvailable: true);
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Available),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.PhiSilicaNpu, result);
+        Assert.Equal(AIExecutionTarget.PhiSilicaNpu, result.SelectedTarget);
+        Assert.Equal(AIBackendAvailabilityStatus.Available, result.PhiSilica.Status);
     }
 
     [Fact]
     public async Task DetectAsync_NpuUnavailable_GpuAvailable_ReturnsFoundryLocalGpu()
     {
-        var catalog = CreateCatalog(npuAvailable: false, gpuAvailable: true);
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, result);
+        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, result.SelectedTarget);
     }
 
     [Fact]
     public async Task DetectAsync_NpuUnavailable_GpuUnavailable_ReturnsFoundryLocalCpu()
     {
-        var catalog = CreateCatalog(npuAvailable: false, gpuAvailable: false);
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, result);
+        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, result.SelectedTarget);
     }
 
     [Fact]
-    public async Task DetectAsync_NpuProbeThrows_FallsBackToGpuProbe()
-    {
-        var catalog = CreateCatalog(npuException: new InvalidOperationException("NPU error"), gpuAvailable: true);
-        var service = new HardwareProbeService(catalog.Object);
-
-        var result = await service.DetectAsync();
-
-        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, result);
-    }
-
-    [Fact]
-    public async Task DetectAsync_NpuProbeThrows_GpuUnavailable_ReturnsFoundryLocalCpu()
-    {
-        var catalog = CreateCatalog(npuException: new InvalidOperationException("NPU error"), gpuAvailable: false);
-        var service = new HardwareProbeService(catalog.Object);
-
-        var result = await service.DetectAsync();
-
-        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, result);
-    }
-
-    [Fact]
-    public async Task DetectAsync_NpuProbeThrows_GpuProbeThrows_ReturnsFoundryLocalCpu()
+    public async Task DetectAsync_PhiSilicaInstallRequired_ReturnsPhiSilicaNpu()
     {
         var catalog = CreateCatalog(
-            npuException: new InvalidOperationException("NPU error"),
-            gpuException: new InvalidOperationException("GPU error"));
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.InstallRequired),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, result);
+        Assert.Equal(AIExecutionTarget.PhiSilicaNpu, result.SelectedTarget);
     }
 
     [Fact]
-    public async Task DetectAsync_GpuProbeThrows_ReturnsFoundryLocalCpu()
+    public async Task DetectAsync_PhiSilicaRequiresPackageIdentity_FallsBackToGpuProbe()
     {
-        var catalog = CreateCatalog(npuAvailable: false, gpuException: new InvalidOperationException("GPU error"));
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability(
+                "Phi Silica",
+                AIBackendAvailabilityStatus.RequiresPackageIdentity,
+                DiagnosticCode: "PACKAGE_IDENTITY_REQUIRED"),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, result);
+        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, result.SelectedTarget);
+        Assert.Equal(AIBackendAvailabilityStatus.RequiresPackageIdentity, result.PhiSilica.Status);
+    }
+
+    [Fact]
+    public async Task DetectAsync_PhiSilicaProbeThrows_BubblesException()
+    {
+        var catalog = CreateCatalog(phiSilicaException: new InvalidOperationException("NPU error"));
+        var service = new HardwareProbeService(catalog.Object);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DetectAsync());
+        Assert.Equal("NPU error", exception.Message);
+    }
+
+    [Fact]
+    public async Task DetectAsync_GpuProbeThrows_BubblesException()
+    {
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
+            foundryGpuException: new InvalidOperationException("GPU error"));
+        var service = new HardwareProbeService(catalog.Object);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DetectAsync());
+        Assert.Equal("GPU error", exception.Message);
     }
 
     [Fact]
     public async Task DetectAsync_CanceledBeforeNpuProbe_ThrowsOperationCanceledException()
     {
-        var catalog = CreateCatalog(npuAvailable: true, gpuAvailable: true);
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Available),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -120,13 +137,14 @@ public class HardwareProbeServiceTests
     {
         var cts = new CancellationTokenSource();
         var catalog = new Mock<IExecutionProviderCatalogAdapter>();
-        catalog.Setup(c => c.IsNpuAvailableAsync(It.IsAny<CancellationToken>()))
+        catalog.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
-                cts.Cancel(); // Cancel after NPU probe returns false
-                return false;
+                cts.Cancel();
+                return new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported);
             });
-        catalog.Setup(c => c.IsGpuAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        catalog.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
 
         var service = new HardwareProbeService(catalog.Object);
 
@@ -136,12 +154,15 @@ public class HardwareProbeServiceTests
     [Fact]
     public async Task DetectAsync_CalledTwice_ReturnsSameResult()
     {
-        var catalog = CreateCatalog(npuAvailable: false, gpuAvailable: true);
+        var catalog = CreateCatalog(
+            phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
+            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result1 = await service.DetectAsync();
         var result2 = await service.DetectAsync();
 
-        Assert.Equal(result1, result2);
+        Assert.Equal(result1.SelectedTarget, result2.SelectedTarget);
+        Assert.Equal(result1.FoundryGpu.Status, result2.FoundryGpu.Status);
     }
 }

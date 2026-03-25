@@ -122,6 +122,72 @@ public class PromptTemplatesTests
         Assert.Throws<ArgumentNullException>(() => PromptTemplates.Rewrite(null!));
     }
 
+    // --- GrammarFix ---
+
+    [Fact]
+    public void GrammarFix_ContainsInputText()
+    {
+        var result = PromptTemplates.GrammarFix("teh sentence");
+        Assert.Contains("teh sentence", result);
+    }
+
+    [Fact]
+    public void GrammarFix_EmptyText_ReturnsValidPrompt()
+    {
+        var result = PromptTemplates.GrammarFix(string.Empty);
+        Assert.False(string.IsNullOrWhiteSpace(result));
+    }
+
+    [Fact]
+    public void GrammarFix_NullText_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PromptTemplates.GrammarFix(null!));
+    }
+
+    // --- Shorten ---
+
+    [Fact]
+    public void Shorten_ContainsInputText()
+    {
+        var result = PromptTemplates.Shorten("A much longer sentence than needed.");
+        Assert.Contains("A much longer sentence than needed.", result);
+    }
+
+    [Fact]
+    public void Shorten_EmptyText_ReturnsValidPrompt()
+    {
+        var result = PromptTemplates.Shorten(string.Empty);
+        Assert.False(string.IsNullOrWhiteSpace(result));
+    }
+
+    [Fact]
+    public void Shorten_NullText_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PromptTemplates.Shorten(null!));
+    }
+
+    // --- AutoComplete ---
+
+    [Fact]
+    public void AutoComplete_ContainsInputText()
+    {
+        var result = PromptTemplates.AutoComplete("Hello there");
+        Assert.Contains("Hello there", result);
+    }
+
+    [Fact]
+    public void AutoComplete_EmptyText_ReturnsValidPrompt()
+    {
+        var result = PromptTemplates.AutoComplete(string.Empty);
+        Assert.False(string.IsNullOrWhiteSpace(result));
+    }
+
+    [Fact]
+    public void AutoComplete_NullText_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PromptTemplates.AutoComplete(null!));
+    }
+
     // --- SemanticQuery ---
 
     [Fact]
@@ -190,5 +256,14 @@ public class PromptTemplatesTests
         var professional = PromptTemplates.ToneProfessional(text);
         var casual = PromptTemplates.ToneCasual(text);
         Assert.NotEqual(professional, casual);
+    }
+
+    [Fact]
+    public void GrammarFix_AndShorten_UseDistinctPrompts()
+    {
+        const string text = "Same input";
+        var grammarFix = PromptTemplates.GrammarFix(text);
+        var shorten = PromptTemplates.Shorten(text);
+        Assert.NotEqual(grammarFix, shorten);
     }
 }

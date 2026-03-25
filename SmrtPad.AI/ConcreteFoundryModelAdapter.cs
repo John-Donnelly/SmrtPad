@@ -10,6 +10,10 @@ namespace SmrtPad.AI;
 /// </summary>
 internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
 {
+    private const string DefaultModelAlias = "phi-3.5-mini-instruct";
+    private static readonly SemaphoreSlim ManagerInitializationLock = new(1, 1);
+    private static bool s_managerInitialized;
+
     private readonly Model _model;
     private readonly OpenAIChatClient _chatClient;
 
@@ -23,46 +27,18 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
     public static async Task<ConcreteFoundryModelAdapter> CreateAsync(
         AIExecutionTarget target, CancellationToken ct = default)
     {
-        string alias = target switch
-        {
-            AIExecutionTarget.FoundryLocalGpu => "phi-3.5-mini",
-            AIExecutionTarget.FoundryLocalCpu => "phi-3.5-mini",
-            _ => throw new ArgumentOutOfRangeException(nameof(target), target,
-                "ConcreteFoundryModelAdapter only supports GPU and CPU targets.")
-        };
-
-        var config = new Configuration
-        {
-            AppName = "SmrtPad",
-            LogLevel = Microsoft.AI.Foundry.Local.LogLevel.Warning,
-        };
-
         ct.ThrowIfCancellationRequested();
 
-        if (FoundryLocalManager.Instance is null)
-            await FoundryLocalManager.CreateAsync(config, NullLogger.Instance).ConfigureAwait(false);
-        var manager = FoundryLocalManager.Instance!;
+        var manager = await EnsureManagerAsync(ct).ConfigureAwait(false);
+        var model = await GetModelAsync(manager, target, ct).ConfigureAwait(false);
 
-        var catalog = await manager.GetCatalogAsync().ConfigureAwait(false);
-        var model = await catalog.GetModelAsync(alias).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Model '{alias}' not found in local catalog.");
-
-        // Select CPU variant explicitly when target is CPU
-        if (target == AIExecutionTarget.FoundryLocalCpu)
-        {
-            var cpuVariant = model.Variants.FirstOrDefault(v =>
-                v.Info.Runtime?.DeviceType == DeviceType.CPU);
-
-            if (cpuVariant is not null)
-                model.SelectVariant(cpuVariant);
-        }
-
+        await model.DownloadAsync().WaitAsync(ct).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
 
-        await model.DownloadAsync().ConfigureAwait(false);
-        await model.LoadAsync().ConfigureAwait(false);
+        await model.LoadAsync().WaitAsync(ct).ConfigureAwait(false);
+        ct.ThrowIfCancellationRequested();
 
-        var chatClient = await model.GetChatClientAsync().ConfigureAwait(false);
+        var chatClient = await model.GetChatClientAsync().WaitAsync(ct).ConfigureAwait(false);
 
         return new ConcreteFoundryModelAdapter(model, chatClient);
     }
@@ -72,6 +48,8 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
         string prompt,
         [EnumeratorCancellation] CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(prompt);
+
         var messages = new List<ChatMessage>
         {
             new() { Role = "user", Content = prompt }
@@ -92,15 +70,87 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
     /// <inheritdoc/>
     public Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(text);
+        ct.ThrowIfCancellationRequested();
+
         // Foundry Local chat models do not natively support embeddings.
         // Return an empty array; callers should use a dedicated embedding model.
         return Task.FromResult(Array.Empty<float>());
     }
 
     /// <inheritdoc/>
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        try { await _model.UnloadAsync().ConfigureAwait(false); }
-        catch { /* best-effort cleanup */ }
+        return new ValueTask(_model.UnloadAsync());
+    }
+
+    private static async Task<FoundryLocalManager> EnsureManagerAsync(CancellationToken ct)
+    {
+        if (s_managerInitialized)
+            return FoundryLocalManager.Instance;
+
+        await ManagerInitializationLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (!s_managerInitialized)
+            {
+                await FoundryLocalManager.CreateAsync(CreateConfiguration(), NullLogger.Instance)
+                    .WaitAsync(ct)
+                    .ConfigureAwait(false);
+                s_managerInitialized = true;
+            }
+
+            return FoundryLocalManager.Instance;
+        }
+        finally
+        {
+            ManagerInitializationLock.Release();
+        }
+    }
+
+    private static Configuration CreateConfiguration()
+    {
+        return new Configuration
+        {
+            AppName = "SmrtPad",
+            LogLevel = Microsoft.AI.Foundry.Local.LogLevel.Warning,
+        };
+    }
+
+    private static async Task<Model> GetModelAsync(FoundryLocalManager manager, AIExecutionTarget target, CancellationToken ct)
+    {
+        var catalog = await manager.GetCatalogAsync().ConfigureAwait(false);
+        var model = await catalog.GetModelAsync(ResolveModelAlias(target)).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Model '{ResolveModelAlias(target)}' was not found in the local Foundry catalog.");
+
+        SelectPreferredVariant(model, target);
+        ct.ThrowIfCancellationRequested();
+        return model;
+    }
+
+    private static string ResolveModelAlias(AIExecutionTarget target)
+    {
+        return target switch
+        {
+            AIExecutionTarget.FoundryLocalGpu => DefaultModelAlias,
+            AIExecutionTarget.FoundryLocalCpu => DefaultModelAlias,
+            _ => throw new ArgumentOutOfRangeException(nameof(target), target,
+                "ConcreteFoundryModelAdapter only supports GPU and CPU targets.")
+        };
+    }
+
+    private static void SelectPreferredVariant(Model model, AIExecutionTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        var selectedVariant = target switch
+        {
+            AIExecutionTarget.FoundryLocalCpu => model.Variants.FirstOrDefault(v => v.Info.Runtime?.DeviceType == DeviceType.CPU),
+            AIExecutionTarget.FoundryLocalGpu => model.Variants.FirstOrDefault(v => v.Info.Runtime?.DeviceType != DeviceType.CPU),
+            _ => null,
+        };
+
+        if (selectedVariant is not null)
+            model.SelectVariant(selectedVariant);
     }
 }

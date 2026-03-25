@@ -1,5 +1,7 @@
 using Microsoft.Windows.AI;
 using Microsoft.Windows.AI.MachineLearning;
+using System.Runtime.InteropServices;
+using Windows.ApplicationModel;
 
 namespace SmrtPad.AI;
 
@@ -11,42 +13,124 @@ namespace SmrtPad.AI;
 internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProviderCatalogAdapter
 {
     /// <inheritdoc/>
-    public Task<bool> IsNpuAvailableAsync(CancellationToken ct)
+    public Task<AIBackendCapability> ProbePhiSilicaAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
+
+        if (!HasPackageIdentity())
+        {
+            return Task.FromResult(new AIBackendCapability(
+                "Phi Silica",
+                AIBackendAvailabilityStatus.RequiresPackageIdentity,
+                DiagnosticCode: "PACKAGE_IDENTITY_REQUIRED",
+                DiagnosticMessage: "Phi Silica requires the app to be running with registered package identity."));
+        }
+
         try
         {
             var readyState = Microsoft.Windows.AI.Text.LanguageModel.GetReadyState();
-            return Task.FromResult(readyState is AIFeatureReadyState.Ready or AIFeatureReadyState.NotReady);
+
+            if (readyState == AIFeatureReadyState.Ready)
+            {
+                return Task.FromResult(new AIBackendCapability(
+                    "Phi Silica",
+                    AIBackendAvailabilityStatus.Available,
+                    DiagnosticCode: readyState.ToString()));
+            }
+
+            if (readyState == AIFeatureReadyState.NotReady)
+            {
+                return Task.FromResult(new AIBackendCapability(
+                    "Phi Silica",
+                    AIBackendAvailabilityStatus.InstallRequired,
+                    DiagnosticCode: readyState.ToString(),
+                    DiagnosticMessage: "Phi Silica is supported but still needs model preparation."));
+            }
+
+            var availability = string.Equals(readyState.ToString(), "NotSupportedOnCurrentSystem", StringComparison.Ordinal)
+                ? AIBackendAvailabilityStatus.Unsupported
+                : AIBackendAvailabilityStatus.Unavailable;
+
+            return Task.FromResult(new AIBackendCapability(
+                "Phi Silica",
+                availability,
+                DiagnosticCode: readyState.ToString(),
+                DiagnosticMessage: $"Phi Silica reported readiness state '{readyState}'."));
         }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x80070490))
+        catch (COMException ex) when (ex.HResult == unchecked((int)0x80070490))
         {
-            // 0x80070490 = ERROR_NOT_FOUND: Microsoft.Windows.Workloads.dll cannot resolve
-            // the app's package installation path because the package is not registered in
-            // the Windows package store.  This is a deployment gap, not an NPU absence.
-            // Fix: stop the app, run  SmrtPad (Package)\deploy.ps1  to register the loose
-            // MSIX, then restart the debug session.
-            return Task.FromResult(false);
+            return Task.FromResult(new AIBackendCapability(
+                "Phi Silica",
+                AIBackendAvailabilityStatus.RequiresPackageIdentity,
+                DiagnosticCode: $"0x{ex.HResult:X8}",
+                DiagnosticMessage: "Phi Silica could not resolve the package registration required by Microsoft.Windows.Workloads."));
         }
-        catch
+        catch (COMException ex)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(new AIBackendCapability(
+                "Phi Silica",
+                AIBackendAvailabilityStatus.Error,
+                DiagnosticCode: $"0x{ex.HResult:X8}",
+                DiagnosticMessage: ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Task.FromResult(new AIBackendCapability(
+                "Phi Silica",
+                AIBackendAvailabilityStatus.Error,
+                DiagnosticCode: ex.GetType().Name,
+                DiagnosticMessage: ex.Message));
         }
     }
 
     /// <inheritdoc/>
-    public Task<bool> IsGpuAvailableAsync(CancellationToken ct)
+    public Task<AIBackendCapability> ProbeFoundryGpuAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
+
         try
         {
             var catalog = ExecutionProviderCatalog.GetDefault();
             var providers = catalog.FindAllProviders();
-            return Task.FromResult(providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready));
+            return Task.FromResult(providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready)
+                ? new AIBackendCapability(
+                    "Foundry Local GPU",
+                    AIBackendAvailabilityStatus.Available,
+                    DiagnosticCode: "READY")
+                : new AIBackendCapability(
+                    "Foundry Local GPU",
+                    AIBackendAvailabilityStatus.Unavailable,
+                    DiagnosticCode: "NO_READY_PROVIDER",
+                    DiagnosticMessage: "No ready GPU execution provider was reported by Windows AI."));
         }
-        catch
+        catch (COMException ex)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(new AIBackendCapability(
+                "Foundry Local GPU",
+                AIBackendAvailabilityStatus.Error,
+                DiagnosticCode: $"0x{ex.HResult:X8}",
+                DiagnosticMessage: ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Task.FromResult(new AIBackendCapability(
+                "Foundry Local GPU",
+                AIBackendAvailabilityStatus.Error,
+                DiagnosticCode: ex.GetType().Name,
+                DiagnosticMessage: ex.Message));
+        }
+    }
+
+    private static bool HasPackageIdentity()
+    {
+        try
+        {
+            _ = Package.Current.Id.FullName;
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
         }
     }
 }
@@ -66,14 +150,24 @@ public sealed class AIDispatcherFactory
         return new AIDispatcher(probe, CreateModelAdapterAsync);
     }
 
-    private static async Task<ILanguageModelAdapter> CreateModelAdapterAsync(AIExecutionTarget target)
+    private static Task<ILanguageModelAdapter> CreateModelAdapterAsync(AIExecutionTarget target, CancellationToken ct)
     {
         return target switch
         {
-            AIExecutionTarget.PhiSilicaNpu => await ConcretePhiSilicaModelAdapter.CreateAsync().ConfigureAwait(false),
+            AIExecutionTarget.PhiSilicaNpu => CreatePhiSilicaModelAdapterAsync(ct),
             AIExecutionTarget.FoundryLocalGpu or AIExecutionTarget.FoundryLocalCpu =>
-                await ConcreteFoundryModelAdapter.CreateAsync(target).ConfigureAwait(false),
+                CreateFoundryModelAdapterAsync(target, ct),
             _ => throw new ArgumentOutOfRangeException(nameof(target), target, "Unsupported AI execution target.")
         };
+    }
+
+    private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)
+    {
+        return await ConcretePhiSilicaModelAdapter.CreateAsync(ct).ConfigureAwait(false);
+    }
+
+    private static async Task<ILanguageModelAdapter> CreateFoundryModelAdapterAsync(AIExecutionTarget target, CancellationToken ct)
+    {
+        return await ConcreteFoundryModelAdapter.CreateAsync(target, ct).ConfigureAwait(false);
     }
 }

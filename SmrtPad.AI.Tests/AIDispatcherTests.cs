@@ -15,10 +15,14 @@ public sealed class AIDispatcherTests : IAsyncDisposable
     private static Mock<IExecutionProviderCatalogAdapter> CreateCatalog(AIExecutionTarget target)
     {
         var mock = new Mock<IExecutionProviderCatalogAdapter>();
-        mock.Setup(c => c.IsNpuAvailableAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(target == AIExecutionTarget.PhiSilicaNpu);
-        mock.Setup(c => c.IsGpuAvailableAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(target == AIExecutionTarget.FoundryLocalGpu);
+        mock.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(target == AIExecutionTarget.PhiSilicaNpu
+                ? new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Available)
+                : new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
+        mock.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(target == AIExecutionTarget.FoundryLocalGpu
+                ? new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available)
+                : new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
         return mock;
     }
 
@@ -41,7 +45,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var probe = new HardwareProbeService(catalog.Object);
         var model = modelMock ?? CreateModelAdapter("Hello", " world");
 
-        _dispatcher = new AIDispatcher(probe, _ => Task.FromResult(model.Object));
+        _dispatcher = new AIDispatcher(probe, (_, _) => Task.FromResult(model.Object));
         return _dispatcher;
     }
 
@@ -75,7 +79,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var probe = new HardwareProbeService(catalog.Object);
         var model = CreateModelAdapter();
 
-        _dispatcher = new AIDispatcher(probe, _ =>
+        _dispatcher = new AIDispatcher(probe, (_, _) =>
         {
             Interlocked.Increment(ref factoryCallCount);
             return Task.FromResult(model.Object);
@@ -93,6 +97,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher(AIExecutionTarget.PhiSilicaNpu);
         await dispatcher.InitializeAsync();
         Assert.Equal(AIExecutionTarget.PhiSilicaNpu, dispatcher.ExecutionTarget);
+        Assert.Equal(AIBackendAvailabilityStatus.Available, dispatcher.ProbeResult.PhiSilica.Status);
     }
 
     [Fact]
@@ -109,6 +114,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher(AIExecutionTarget.FoundryLocalGpu);
         await dispatcher.InitializeAsync();
         Assert.Equal(AIExecutionTarget.FoundryLocalGpu, dispatcher.ExecutionTarget);
+        Assert.Equal(AIBackendAvailabilityStatus.Available, dispatcher.ProbeResult.FoundryGpu.Status);
     }
 
     [Fact]
