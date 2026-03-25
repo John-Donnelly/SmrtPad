@@ -71,6 +71,39 @@ namespace SmrtPad.UITests.Tests
         }
 
         /// <summary>
+        /// The toolbar toggle should also show the upsell dialog in the free tier.
+        /// </summary>
+        [SkippableFact]
+        public void ToolbarToggle_FreeTier_ShowsUpsellDialog()
+        {
+            RequireDriver();
+
+            _driver!.FindElement(MobileBy.AccessibilityId("SmrtSidebarToolbarButton")).Click();
+            Thread.Sleep(600);
+
+            var dialog = _driver.FindElement(MobileBy.Name("Upgrade to SmrtPad Pro"));
+            Assert.NotNull(dialog);
+
+            DismissUpsellDialog();
+        }
+
+        /// <summary>
+        /// Dismissing the upsell dialog should leave all Smart Sidebar controls hidden.
+        /// </summary>
+        [SkippableFact]
+        public void SidebarToggle_FreeTier_DismissLeavesAiControlsHidden()
+        {
+            RequireDriver();
+
+            OpenUpsellDialog();
+            DismissUpsellDialog();
+
+            Assert.Empty(_driver!.FindElements(MobileBy.AccessibilityId("SummarizeSectionButton")));
+            Assert.Empty(_driver.FindElements(MobileBy.AccessibilityId("GrammarFixRunButton")));
+            Assert.Empty(_driver.FindElements(MobileBy.AccessibilityId("AutoCompleteRunButton")));
+        }
+
+        /// <summary>
         /// In the free tier, the upsell dialog should expose its upgrade action.
         /// </summary>
         [SkippableFact]

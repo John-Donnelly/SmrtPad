@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
@@ -50,6 +51,41 @@ public sealed class SmrtSidebarProUITests : IDisposable
             }
         }
         catch { /* best-effort */ }
+    }
+
+    private void EnsureSidebarOpen()
+    {
+        var summarizeButtons = _driver!.FindElements(MobileBy.AccessibilityId("SummarizeSectionButton"));
+        if (summarizeButtons.Count > 0)
+            return;
+
+        _driver.FindElement(MobileBy.AccessibilityId("SmrtSidebarToolbarButton")).Click();
+        var opened = _fx.WaitForElementOrNull("SummarizeSectionButton", timeoutMs: 20_000);
+        Assert.NotNull(opened);
+    }
+
+    private void SeedSelectedText(string text)
+    {
+        _fx.ClearEditor();
+        _fx.TypeInEditor(text);
+        _fx.SelectAllInEditor();
+        Thread.Sleep(200);
+    }
+
+    private string WaitForNonEmptyText(string automationId, int timeoutMs = 30_000)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            var elements = _driver!.FindElements(MobileBy.AccessibilityId(automationId));
+            if (elements.Count > 0 && !string.IsNullOrWhiteSpace(elements[0].Text))
+                return elements[0].Text;
+
+            Thread.Sleep(250);
+        }
+
+        var fallback = _driver!.FindElement(MobileBy.AccessibilityId(automationId));
+        return fallback.Text;
     }
 
     // ── Toolbar button presence ──────────────────────────────────────────────
@@ -271,6 +307,129 @@ public sealed class SmrtSidebarProUITests : IDisposable
 
         var searchBox = _driver.FindElements(MobileBy.AccessibilityId("SemanticSearchBox"));
         Assert.NotEmpty(searchBox);
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void ToneRewrite_Run_ProducesOutput()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        SeedSelectedText("Please rewrite this note in a better tone.");
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("ToneRewriteButton")).Click();
+
+        var output = WaitForNonEmptyText("ToneOutputText");
+        Assert.False(string.IsNullOrWhiteSpace(output));
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void GrammarFix_Run_ProducesOutput()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        SeedSelectedText("this are a test sentence with bad grammar");
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("GrammarFixRunButton")).Click();
+
+        var output = WaitForNonEmptyText("GrammarFixOutputBox");
+        Assert.False(string.IsNullOrWhiteSpace(output));
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void Shorten_Run_ProducesOutput()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        SeedSelectedText("This sentence is intentionally much longer than it needs to be for a simple note.");
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("ShortenRunButton")).Click();
+
+        var output = WaitForNonEmptyText("ShortenOutputBox");
+        Assert.False(string.IsNullOrWhiteSpace(output));
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void AutoComplete_Run_ProducesOutput()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        _fx.ClearEditor();
+        _fx.TypeInEditor("Please review the attached draft and");
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("AutoCompleteRunButton")).Click();
+
+        var output = WaitForNonEmptyText("AutoCompleteOutputBox");
+        Assert.False(string.IsNullOrWhiteSpace(output));
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void AutoComplete_Accept_IncreasesCharacterCount()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        _fx.ClearEditor();
+        _fx.TypeInEditor("Please review the attached draft and");
+        var before = _fx.GetStatusBarText("CharCountText");
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("AutoCompleteRunButton")).Click();
+        var output = WaitForNonEmptyText("AutoCompleteOutputBox");
+        Assert.False(string.IsNullOrWhiteSpace(output));
+
+        _driver.FindElement(MobileBy.AccessibilityId("AutoCompleteAcceptButton")).Click();
+        Thread.Sleep(500);
+
+        var after = _fx.GetStatusBarText("CharCountText");
+        Assert.NotEqual(before, after);
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void GrammarFix_NoSelection_ShowsValidationMessage()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        _fx.ClearEditor();
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("GrammarFixRunButton")).Click();
+
+        var output = WaitForNonEmptyText("GrammarFixOutputBox", timeoutMs: 5_000);
+        Assert.Contains("Select text", output);
+
+        EnsureSidebarClosed();
+    }
+
+    [SkippableFact]
+    public void AutoComplete_Cancel_HidesAcceptButton()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        _fx.ClearEditor();
+        _fx.TypeInEditor("Please review the attached draft and");
+        EnsureSidebarOpen();
+
+        _driver!.FindElement(MobileBy.AccessibilityId("AutoCompleteRunButton")).Click();
+        _driver.FindElement(MobileBy.AccessibilityId("StopAutoCompleteButton")).Click();
+        Thread.Sleep(500);
+
+        var applyButtons = _driver.FindElements(MobileBy.AccessibilityId("AutoCompleteAcceptButton"));
+        Assert.Empty(applyButtons.Where(static button => button.Displayed));
 
         EnsureSidebarClosed();
     }

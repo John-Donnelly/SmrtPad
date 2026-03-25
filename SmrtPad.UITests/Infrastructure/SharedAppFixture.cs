@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
@@ -32,6 +34,8 @@ namespace SmrtPad.UITests.Infrastructure
         private AppiumSession? _session;
         private readonly string? _launchArgument;
         private readonly bool _forceUnpackaged;
+        private string? _appId;
+        private string? _initializationFailure;
         private string? _mainWindowHandle;
 
         public WindowsDriver? Driver { get; private set; }
@@ -64,7 +68,7 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         public void RequireSession()
         {
-            Skip.If(Driver is null, "WinAppDriver / Appium not available or SmrtPad.exe not built.");
+            Skip.If(Driver is null, _initializationFailure ?? "WinAppDriver / Appium not available or SmrtPad.exe not built.");
             if (!IsSessionAlive())
             {
                 if (!TryRestartSession())
@@ -105,11 +109,14 @@ namespace SmrtPad.UITests.Infrastructure
                 _session = null;
                 Driver = null;
 
-                if (!AppiumSession.IsAvailable()) return false;
-                string? exe = AppiumSession.FindSmrtPadExe();
-                if (exe is null) return false;
+                if (!AppiumSession.IsAvailable() || string.IsNullOrWhiteSpace(_appId)) return false;
 
-                _session = new AppiumSession(exe, launchArgument: _launchArgument, forceUnpackaged: _forceUnpackaged);
+                _session = new AppiumSession(
+                    _appId,
+                    launchArgument: _launchArgument,
+                    forceUnpackaged: _forceUnpackaged,
+                    launchViaAppId: true,
+                    serverUrl: AppiumSession.DefaultServerUrl);
                 Driver = _session.Driver;
                 Thread.Sleep(2000);
                 DismissSessionRestoreDialogIfPresent();
@@ -165,16 +172,27 @@ namespace SmrtPad.UITests.Infrastructure
         /// </summary>
         protected SharedAppFixture(string? launchArgument, bool forceUnpackaged = false)
         {
+            DotEnvLoader.EnsureLoaded();
             _launchArgument = launchArgument;
             _forceUnpackaged = forceUnpackaged;
 
             if (!AppiumSession.IsAvailable()) return;
-            string? exe = AppiumSession.FindSmrtPadExe();
-            if (exe is null) return;
 
             try
             {
-                _session = new AppiumSession(exe, launchArgument: launchArgument, forceUnpackaged: forceUnpackaged);
+                _appId = DeployPackageAndGetAppId();
+                if (string.IsNullOrWhiteSpace(_appId))
+                {
+                    _initializationFailure = "Remote UI test package deployment did not return an app identity.";
+                    return;
+                }
+
+                _session = new AppiumSession(
+                    _appId,
+                    launchArgument: launchArgument,
+                    forceUnpackaged: forceUnpackaged,
+                    launchViaAppId: true,
+                    serverUrl: AppiumSession.DefaultServerUrl);
                 Driver   = _session.Driver;
 
                 // Allow the app's async startup sequence (session-restore check,
@@ -184,11 +202,78 @@ namespace SmrtPad.UITests.Infrastructure
                 DismissSessionRestoreDialogIfPresent();
                 _mainWindowHandle = Driver?.CurrentWindowHandle;
             }
-            catch
+            catch (InvalidOperationException ex)
             {
+                _initializationFailure = ex.Message;
                 _session = null;
                 Driver   = null;
             }
+            catch (WebDriverException ex)
+            {
+                _initializationFailure = ex.Message;
+                _session = null;
+                Driver   = null;
+            }
+        }
+
+        internal static string? DeployPackageAndGetAppId()
+        {
+            DotEnvLoader.EnsureLoaded();
+            string scriptPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "SmrtPad (Package)", "deploy.ps1");
+            scriptPath = Path.GetFullPath(scriptPath);
+            if (!File.Exists(scriptPath))
+                return null;
+
+            string remoteHost = Environment.GetEnvironmentVariable("SMRTPAD_REMOTE_HOST") ?? "192.168.0.100";
+            string? remoteUser = Environment.GetEnvironmentVariable("UITEST_REMOTE_WINRM_USERNAME")
+                ?? Environment.GetEnvironmentVariable("SMRTPAD_REMOTE_USER");
+            string? remotePassword = Environment.GetEnvironmentVariable("UITEST_REMOTE_WINRM_PASSWORD")
+                ?? Environment.GetEnvironmentVariable("SMRTPAD_REMOTE_PASS");
+            string? remoteShareRoot = Environment.GetEnvironmentVariable("UITEST_REMOTE_SHARE_ROOT");
+
+            var arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -RemoteHost \"{remoteHost}\"";
+            if (!string.IsNullOrWhiteSpace(remoteUser) && !string.IsNullOrWhiteSpace(remotePassword))
+            {
+                arguments += $" -RemoteUser \"{remoteUser}\" -RemotePassword \"{remotePassword}\"";
+            }
+
+            if (!string.IsNullOrWhiteSpace(remoteShareRoot))
+            {
+                arguments += $" -RemoteShareRoot \"{remoteShareRoot}\"";
+            }
+
+            var startInfo = new ProcessStartInfo("powershell.exe", arguments)
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+
+            using var process = Process.Start(startInfo)
+                ?? throw new InvalidOperationException("Failed to start deploy.ps1 for remote UI test setup.");
+
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Remote deploy failed with exit code {process.ExitCode}. Output: {output} Error: {error}".Trim());
+            }
+
+            string? appId = output
+                .Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries)
+                .Select(static line => line.Trim())
+                .FirstOrDefault(static line => line.StartsWith("AUMID=", StringComparison.OrdinalIgnoreCase));
+
+            if (string.IsNullOrWhiteSpace(appId))
+            {
+                throw new InvalidOperationException("Remote deploy completed but did not report an AUMID.");
+            }
+
+            return appId["AUMID=".Length..];
         }
 
         public void Dispose()

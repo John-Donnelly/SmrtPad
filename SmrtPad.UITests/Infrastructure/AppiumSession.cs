@@ -32,14 +32,22 @@ namespace SmrtPad.UITests.Infrastructure
     /// </summary>
     public sealed class AppiumSession : IDisposable
     {
-        private const string ServerUrl      = "http://127.0.0.1:4723";
-        private const string StatusEndpoint = ServerUrl + "/status";
-
+        private static readonly string ServerUrl = CreateServerUrl();
+        private static readonly string StatusEndpoint = new Uri(new Uri(ServerUrl), "status").AbsoluteUri;
         private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(2) };
 
-        private readonly int _launchedPid;
+        private readonly int? _launchedPid;
 
         public WindowsDriver Driver { get; }
+
+        public static string DefaultServerUrl => ServerUrl;
+
+        private static string CreateServerUrl()
+        {
+            DotEnvLoader.EnsureLoaded();
+            return NormalizeServerUrl(
+                Environment.GetEnvironmentVariable("SMRTPAD_APPIUM_SERVER") ?? "http://192.168.0.100:4723");
+        }
 
         /// <summary>
         /// Launches SmrtPad and attaches an Appium session.
@@ -57,8 +65,30 @@ namespace SmrtPad.UITests.Infrastructure
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 "SmrtPad_FreeTier.flag");
 
-        public AppiumSession(string appPath, string? launchArgument = null, bool forceUnpackaged = false)
+        public AppiumSession(
+            string appPath,
+            string? launchArgument = null,
+            bool forceUnpackaged = false,
+            bool launchViaAppId = false,
+            string? serverUrl = null)
         {
+            var effectiveServerUrl = NormalizeServerUrl(serverUrl ?? ServerUrl);
+
+            if (launchViaAppId)
+            {
+                var remoteOptions = new AppiumOptions();
+                remoteOptions.PlatformName = "Windows";
+                remoteOptions.AutomationName = "Windows";
+                remoteOptions.App = appPath;
+                if (!string.IsNullOrWhiteSpace(launchArgument))
+                {
+                    remoteOptions.AddAdditionalAppiumOption("appArguments", launchArgument);
+                }
+
+                Driver = new WindowsDriver(new Uri(effectiveServerUrl), remoteOptions, TimeSpan.FromSeconds(60));
+                return;
+            }
+
             // Clear startup-blocking state before launching so dialogs don't appear during tests.
             ClearStartupBlockers();
 
@@ -76,7 +106,7 @@ namespace SmrtPad.UITests.Infrastructure
                 try
                 {
                     _launchedPid = ActivateApplication(aumid, launchArgument);
-                    process = Process.GetProcessById(_launchedPid);
+                    process = Process.GetProcessById(_launchedPid.Value);
                     usedAumid = true;
                 }
                 catch (InvalidOperationException ex)
@@ -111,7 +141,7 @@ namespace SmrtPad.UITests.Infrastructure
             options.AutomationName = "Windows";
             options.AddAdditionalAppiumOption("appTopLevelWindow", $"0x{hwnd:X}");
 
-            Driver = new WindowsDriver(new Uri(ServerUrl), options,
+            Driver = new WindowsDriver(new Uri(effectiveServerUrl), options,
                 TimeSpan.FromSeconds(30));
         }
 
@@ -187,13 +217,24 @@ namespace SmrtPad.UITests.Infrastructure
         {
             try { Driver?.Quit(); } catch { }
 
+            if (_launchedPid is not int launchedPid)
+                return;
+
             try
             {
-                var p = Process.GetProcessById(_launchedPid);
+                var p = Process.GetProcessById(launchedPid);
                 if (!p.HasExited)
                     p.Kill(entireProcessTree: true);
             }
             catch { }
+        }
+
+        private static string NormalizeServerUrl(string serverUrl)
+        {
+            if (string.IsNullOrWhiteSpace(serverUrl))
+                throw new ArgumentException("A valid Appium server URL is required.", nameof(serverUrl));
+
+            return serverUrl.TrimEnd('/') + "/";
         }
 
         /// <summary>

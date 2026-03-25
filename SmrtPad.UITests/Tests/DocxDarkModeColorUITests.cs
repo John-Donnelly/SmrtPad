@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Text.Json.Nodes;
+using System.Text.Json;
 using System.Threading;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
@@ -32,12 +32,6 @@ namespace SmrtPad.UITests.Tests
     /// </summary>
     public sealed class DocxDarkModeFixture : IDisposable
     {
-        // ── Settings file path (same location as SettingsService uses) ─────────
-
-        private static readonly string SettingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SmrtPad", "settings.json");
-
         // ── DOCX search locations ──────────────────────────────────────────────
 
         private static string? FindDocx()
@@ -62,7 +56,7 @@ namespace SmrtPad.UITests.Tests
         // ── Fixture state ──────────────────────────────────────────────────────
 
         private readonly AppiumSession? _session;
-        private readonly string?        _originalSettings;
+        private string?                 _originalSettings;
 
         public WindowsDriver? Driver        { get; }
         public bool           IsAvailable   => Driver is not null;
@@ -72,52 +66,126 @@ namespace SmrtPad.UITests.Tests
 
         public DocxDarkModeFixture()
         {
+            DotEnvLoader.EnsureLoaded();
+
             if (!AppiumSession.IsAvailable()) { SkipReason = "Appium server not reachable on port 4723."; return; }
 
-            string? exe  = AppiumSession.FindSmrtPadExe();
-            if (exe is null)            { SkipReason = "SmrtPad.exe not found (build the project first)."; return; }
+            string? appId = SharedAppFixture.DeployPackageAndGetAppId();
+            if (appId is null) { SkipReason = "Remote UI test package deployment did not return an app identity."; return; }
 
             string? docx = FindDocx();
-            if (docx is null)           { SkipReason = $"DOCX not found. Tried OneDrive/Documents/Desktop for 'CelestiPets Business Plan 2026.docx'."; return; }
+            if (docx is null) { SkipReason = "DOCX not found. Tried OneDrive/Documents/Desktop for 'CelestiPets Business Plan 2026.docx'."; return; }
 
             DocxPath = docx;
 
             try
             {
-                // Backup and patch settings → Dark theme
-                _originalSettings = File.Exists(SettingsPath)
-                    ? File.ReadAllText(SettingsPath)
-                    : null;
+                // Patch the remote machine's settings file → Dark theme via WinRM
+                // before launching so the app starts in dark mode.
+                // Falls through silently if the remote settings cannot be reached
+                // (the test will still run; the theme toggle just won't be preset).
+                TrySetRemoteTheme("Dark");
 
-                SetThemeInSettings(SettingsPath, "Dark");
-
-                // Use AUMID activation with the DOCX path as activation argument.
-                // The app's OnLaunched checks both Environment.GetCommandLineArgs()
-                // and LaunchActivatedEventArgs.Arguments for the file to open.
-                _session = new AppiumSession(exe, docx);
-                Driver   = _session.Driver;
+                // Launch via AUMID so the packaged app retains its identity.
+                // Pass the DOCX path as the activation argument; OnLaunched opens it.
+                _session = new AppiumSession(
+                    appId,
+                    launchArgument: docx,
+                    launchViaAppId: true,
+                    serverUrl: AppiumSession.DefaultServerUrl);
+                Driver = _session.Driver;
             }
             catch (Exception ex)
             {
                 SkipReason = $"AppiumSession failed: {ex.GetType().Name}: {ex.Message}";
-                RestoreSettings();
             }
         }
 
         public void Dispose()
         {
             try { _session?.Dispose(); } catch { }
-            RestoreSettings();
+            TryRestoreRemoteSettings();
         }
 
-        // ── Settings helpers ───────────────────────────────────────────────────
+        // ── Remote settings helpers ────────────────────────────────────────────
 
         /// <summary>
-        /// Opens the DOCX file via the File > Open backstage button and the
-        /// system file picker. Interacts with the native Windows file dialog
-        /// through keyboard navigation: types the full path into the filename
-        /// field and presses Enter.
+        /// Attempts to set ThemePreference on the remote machine via WinRM so the
+        /// app launches in the requested theme.  Non-fatal: logs but does not throw.
         /// </summary>
+        private void TrySetRemoteTheme(string theme)
+        {
+            try
+            {
+                string? user     = Environment.GetEnvironmentVariable("UITEST_REMOTE_WINRM_USERNAME");
+                string? password = Environment.GetEnvironmentVariable("UITEST_REMOTE_WINRM_PASSWORD");
+                string  host     = Environment.GetEnvironmentVariable("SMRTPAD_REMOTE_HOST") ?? "192.168.0.100";
+
+                if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password)) return;
+
+                // Backup existing settings on remote machine for later restoration.
+                _originalSettings = RunRemotePowerShell(host, user, password,
+                    "$p = \"$env:LOCALAPPDATA\\SmrtPad\\settings.json\"; " +
+                    "if (Test-Path $p) { Get-Content $p -Raw } else { '' }");
+
+                RunRemotePowerShell(host, user, password,
+                    $"$p = \"$env:LOCALAPPDATA\\SmrtPad\\settings.json\"; " +
+                    $"$d = Split-Path $p; if (-not (Test-Path $d)) {{ New-Item $d -ItemType Directory -Force | Out-Null }}; " +
+                    $"$j = if (Test-Path $p) {{ Get-Content $p -Raw | ConvertFrom-Json }} else {{ [pscustomobject]@{{}} }}; " +
+                    $"$j | Add-Member -Force -MemberType NoteProperty -Name ThemePreference -Value '{theme}'; " +
+                    $"$j | ConvertTo-Json -Depth 5 | Set-Content $p -Encoding UTF8 -Force");
+            }
+            catch { /* non-fatal */ }
+        }
+
+        private void TryRestoreRemoteSettings()
+        {
+            try
+            {
+                if (_originalSettings is null) return;
+
+                string? user     = Environment.GetEnvironmentVariable("UITEST_REMOTE_WINRM_USERNAME");
+                string? password = Environment.GetEnvironmentVariable("UITEST_REMOTE_WINRM_PASSWORD");
+                string  host     = Environment.GetEnvironmentVariable("SMRTPAD_REMOTE_HOST") ?? "192.168.0.100";
+
+                if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password)) return;
+
+                if (string.IsNullOrWhiteSpace(_originalSettings))
+                {
+                    RunRemotePowerShell(host, user, password,
+                        "Remove-Item \"$env:LOCALAPPDATA\\SmrtPad\\settings.json\" -Force -ErrorAction SilentlyContinue");
+                }
+                else
+                {
+                    string escaped = _originalSettings.Replace("'", "''");
+                    RunRemotePowerShell(host, user, password,
+                        $"Set-Content \"$env:LOCALAPPDATA\\SmrtPad\\settings.json\" -Value '{escaped}' -Encoding UTF8 -Force");
+                }
+            }
+            catch { /* non-fatal */ }
+        }
+
+        private static string RunRemotePowerShell(string host, string user, string password, string scriptBlock)
+        {
+            var psi = new ProcessStartInfo("powershell.exe",
+                $"-NoProfile -ExecutionPolicy Bypass -Command \"" +
+                $"$pw = ConvertTo-SecureString '{password}' -AsPlainText -Force; " +
+                $"$cred = New-Object System.Management.Automation.PSCredential('{user}', $pw); " +
+                $"$s = New-PSSession -ComputerName {host} -Credential $cred; " +
+                $"Invoke-Command -Session $s -ScriptBlock {{ {scriptBlock} }}; " +
+                $"Remove-PSSession $s\"")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                UseShellExecute        = false,
+                CreateNoWindow         = true,
+            };
+            using var p = Process.Start(psi)!;
+            string output = p.StandardOutput.ReadToEnd();
+            p.WaitForExit();
+            return output.Trim();
+        }
+
         private void OpenDocxViaUI(string docxPath)
         {
             if (Driver is null) return;
@@ -161,34 +229,7 @@ namespace SmrtPad.UITests.Tests
             }
         }
 
-        private void RestoreSettings()
-        {
-            try
-            {
-                if (_originalSettings is not null)
-                    File.WriteAllText(SettingsPath, _originalSettings);
-            }
-            catch { }
         }
-
-        /// <summary>
-        /// Reads (or creates) the SmrtPad settings JSON and writes the
-        /// <c>ThemePreference</c> key without touching any other values.
-        /// </summary>
-        private static void SetThemeInSettings(string path, string theme)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-
-            JsonNode root = File.Exists(path)
-                ? JsonNode.Parse(File.ReadAllText(path)) ?? new JsonObject()
-                : new JsonObject();
-
-            root["ThemePreference"] = theme;
-
-            File.WriteAllText(path, root.ToJsonString(
-                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-        }
-    }
 
     /// <summary>
     /// Tests in this class each get a fresh SmrtPad session launched in dark mode
