@@ -13,6 +13,9 @@ public interface IAIDispatcher
     /// <summary>User-friendly label for the active execution path (e.g. "NPU", "GPU", "CPU").</summary>
     string ExecutionTargetDisplayName { get; }
 
+    /// <summary>The latest backend availability snapshot reported by the dispatcher.</summary>
+    AIDispatcherAvailability Availability { get; }
+
     /// <summary>Detects hardware and loads the model. Idempotent.</summary>
     Task InitializeAsync(CancellationToken ct = default);
 

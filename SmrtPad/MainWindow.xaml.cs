@@ -3232,8 +3232,11 @@ namespace SmrtPad
                 var sidebar = new Controls.SmartSidebar(aiDispatcher);
                 sidebar.GetSelectedText = GetSelectionOrDocumentText;
                 sidebar.GetRewriteSourceText = GetSelectionOrCurrentParagraphText;
+                sidebar.GetTextBeforeCaret = GetCurrentParagraphTextBeforeCaret;
                 sidebar.ApplyToneRewrite = text => ApplySidebarRewrite(text, highlightTemporarily: true);
                 sidebar.ApplyClarityRewrite = text => ApplySidebarRewrite(text, highlightTemporarily: false);
+                sidebar.ApplyGrammarFix = text => ApplySidebarRewrite(text, highlightTemporarily: false);
+                sidebar.ApplyShortenRewrite = text => ApplySidebarRewrite(text, highlightTemporarily: false);
                 sidebar.InsertGeneratedText = InsertSidebarText;
                 sidebar.GetSemanticDocuments = GetSemanticDocumentsSnapshot;
                 sidebar.NavigateToSemanticResult = NavigateToSemanticResult;
@@ -3316,6 +3319,27 @@ namespace SmrtPad
 
             selection.Text = text;
             RefreshEditorState();
+        }
+
+        private string GetCurrentParagraphTextBeforeCaret()
+        {
+            var selection = Editor.Document.Selection;
+            if (selection is null)
+                return string.Empty;
+
+            Editor.Document.GetText(TextGetOptions.None, out var fullText);
+            if (string.IsNullOrEmpty(fullText))
+                return string.Empty;
+
+            var caretPosition = Math.Clamp(Math.Min(selection.StartPosition, selection.EndPosition), 0, fullText.Length);
+            var paragraphStart = caretPosition > 0
+                ? fullText.LastIndexOf('\r', caretPosition - 1) + 1
+                : 0;
+
+            if (caretPosition <= paragraphStart)
+                return string.Empty;
+
+            return fullText[paragraphStart..caretPosition];
         }
 
         private (int Start, int End) GetSidebarRewriteRange()

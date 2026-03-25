@@ -24,7 +24,14 @@ public sealed partial class SmartSidebar : UserControl
 {
     private readonly IAIDispatcher _dispatcher;
     private CancellationTokenSource? _activeCts;
+    private CancellationTokenSource? _initializationCts;
+    private Task? _initializationTask;
     private string _lastOcrText = string.Empty;
+    private string _lastToneRewrite = string.Empty;
+    private string _lastClarityRewrite = string.Empty;
+    private string _lastGrammarFix = string.Empty;
+    private string _lastShortenedText = string.Empty;
+    private string _lastAutoCompleteText = string.Empty;
     private string _lastTokensPerSecond = string.Empty;
     private readonly HashSet<int> _indexedSemanticTabs = [];
     private readonly TextBlock _ocrResultTitleText = new() { FontWeight = FontWeights.SemiBold };
@@ -42,6 +49,7 @@ public sealed partial class SmartSidebar : UserControl
     private readonly TextBlock _hardwareModelValueText = new() { TextWrapping = TextWrapping.Wrap };
     private readonly TextBlock _hardwareTokensLabelText = new();
     private readonly TextBlock _hardwareTokensValueText = new() { TextWrapping = TextWrapping.Wrap };
+    private TextBlock InitializationStatusTextControl => (TextBlock)FindName("InitializationStatusText")!;
 
     /// <summary>Raised when the user clicks the close button.</summary>
     public event EventHandler? CloseRequested;
@@ -52,11 +60,20 @@ public sealed partial class SmartSidebar : UserControl
     /// <summary>Delegate the sidebar calls to get the current rewrite source from the active editor.</summary>
     public Func<string>? GetRewriteSourceText { get; set; }
 
+    /// <summary>Delegate the sidebar calls to get the text before the caret for inline completion.</summary>
+    public Func<string>? GetTextBeforeCaret { get; set; }
+
     /// <summary>Delegate invoked when a tone rewrite should replace text in the active editor.</summary>
     public Action<string>? ApplyToneRewrite { get; set; }
 
     /// <summary>Delegate invoked when a clarity rewrite should replace text in the active editor.</summary>
     public Action<string>? ApplyClarityRewrite { get; set; }
+
+    /// <summary>Delegate invoked when a grammar-fix rewrite should replace text in the active editor.</summary>
+    public Action<string>? ApplyGrammarFix { get; set; }
+
+    /// <summary>Delegate invoked when a shortened rewrite should replace text in the active editor.</summary>
+    public Action<string>? ApplyShortenRewrite { get; set; }
 
     /// <summary>Delegate invoked when generated text should be inserted into the active editor.</summary>
     public Action<string>? InsertGeneratedText { get; set; }
@@ -72,35 +89,73 @@ public sealed partial class SmartSidebar : UserControl
         ArgumentNullException.ThrowIfNull(dispatcher);
         _dispatcher = dispatcher;
         InitializeComponent();
+        Loaded += SmartSidebar_Loaded;
+        Unloaded += SmartSidebar_Unloaded;
         InitializeFlyouts();
         ApplyLocalizedStrings();
         SemanticSection.Visibility = FeatureFlags.IsEnabled(SmrtPadFeature.SemanticSearch)
             ? Visibility.Visible
             : Visibility.Collapsed;
-        _ = InitializeDispatcherAsync();
+        ApplyDispatcherPendingState();
     }
 
-    private async Task InitializeDispatcherAsync()
+    private async void SmartSidebar_Loaded(object sender, RoutedEventArgs e)
     {
+        if (_dispatcher.IsInitialized)
+        {
+            ApplyDispatcherReadyState();
+            return;
+        }
+
+        if (_initializationTask is not null && !_initializationTask.IsCompleted)
+            return;
+
+        _initializationCts?.Dispose();
+        _initializationCts = new CancellationTokenSource();
+        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
+
         try
         {
-            if (!_dispatcher.IsInitialized)
-                await _dispatcher.InitializeAsync();
-
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                HardwareBadge.Text = _dispatcher.ExecutionTargetDisplayName;
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
-                    HardwareBadge, $"AI execution: {_dispatcher.ExecutionTargetDisplayName}");
-                ToolTipService.SetToolTip(HardwareBadge, GetHardwareTooltip());
-                _hardwareModelValueText.Text = GetModelName();
-                _hardwareTokensValueText.Text = GetPendingMetricsText();
-            });
+            await _initializationTask;
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            System.Diagnostics.Debug.WriteLine($"AI init failed: {ex.Message}");
         }
+        catch (InvalidOperationException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+            Debug.WriteLine($"AI init failed: {ex.Message}");
+        }
+        catch (COMException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+            Debug.WriteLine($"AI init failed: {ex.Message}");
+        }
+    }
+
+    private void SmartSidebar_Unloaded(object sender, RoutedEventArgs e)
+    {
+        CancelActive();
+
+        if (_initializationCts is not null)
+        {
+            _initializationCts.Cancel();
+            _initializationCts.Dispose();
+            _initializationCts = null;
+        }
+
+        _initializationTask = null;
+    }
+
+    private async Task InitializeDispatcherAsync(CancellationToken ct)
+    {
+        ApplyDispatcherPendingState();
+
+        if (!_dispatcher.IsInitialized)
+            await _dispatcher.InitializeAsync(ct);
+
+        ct.ThrowIfCancellationRequested();
+        ApplyDispatcherReadyState();
     }
 
     // ── Header ──
@@ -134,7 +189,10 @@ public sealed partial class SmartSidebar : UserControl
     {
         var text = GetRewriteSourceText?.Invoke() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(text))
+        {
+            ShowValidationMessage(ToneOutput);
             return;
+        }
 
         var tone = ToneToggle.IsOn ? "professional" : "casual";
         await RunStreamingOperationAsync(
@@ -142,23 +200,180 @@ public sealed partial class SmartSidebar : UserControl
             $"Rewrite the following text in a {tone} tone:\n\n{text}",
             ToneOutput,
             ToneProgress,
-            null,
-            finalText => ApplyToneRewrite?.Invoke(finalText));
+            StopToneRewriteButtonControl,
+            finalText =>
+            {
+                _lastToneRewrite = finalText;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ApplyToneRewriteButtonControl.Visibility = string.IsNullOrWhiteSpace(finalText)
+                        ? Visibility.Collapsed
+                        : Visibility.Visible;
+                });
+            });
     }
+
+    private void StopToneRewriteButton_Click(object sender, RoutedEventArgs e) =>
+        CancelActive();
 
     private async void ClarityRewriteButton_Click(object sender, RoutedEventArgs e)
     {
         var text = GetRewriteSourceText?.Invoke() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(text))
+        {
+            ShowValidationMessage(ClarityOutputControl);
             return;
+        }
 
         await RunStreamingOperationAsync(
             ResourceHelper.GetString("SmartSidebarErrorFormat"),
             $"Rewrite the following text to improve clarity and readability:\n\n{text}",
             ClarityOutputControl,
             ClarityProgressControl,
-            null,
-            finalText => ApplyClarityRewrite?.Invoke(finalText));
+            StopClarityRewriteButtonControl,
+            finalText =>
+            {
+                _lastClarityRewrite = finalText;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ApplyClarityRewriteButtonControl.Visibility = string.IsNullOrWhiteSpace(finalText)
+                        ? Visibility.Collapsed
+                        : Visibility.Visible;
+                });
+            });
+    }
+
+    private void StopClarityRewriteButton_Click(object sender, RoutedEventArgs e) =>
+        CancelActive();
+
+    private async void GrammarFixButton_Click(object sender, RoutedEventArgs e)
+    {
+        var text = GetRewriteSourceText?.Invoke() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            ShowValidationMessage(GrammarFixOutputControl, ApplyGrammarFixButtonControl);
+            return;
+        }
+
+        await RunStreamingOperationAsync(
+            ResourceHelper.GetString("SmartSidebarErrorFormat"),
+            BuildGrammarFixPrompt(text),
+            GrammarFixOutputControl,
+            GrammarFixProgressControl,
+            StopGrammarFixButtonControl,
+            finalText =>
+            {
+                _lastGrammarFix = finalText;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ApplyGrammarFixButtonControl.Visibility = string.IsNullOrWhiteSpace(finalText)
+                        ? Visibility.Collapsed
+                        : Visibility.Visible;
+                });
+            });
+    }
+
+    private void StopGrammarFixButton_Click(object sender, RoutedEventArgs e) =>
+        CancelActive();
+
+    private async void ShortenButton_Click(object sender, RoutedEventArgs e)
+    {
+        var text = GetRewriteSourceText?.Invoke() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            ShowValidationMessage(ShortenOutputControl, ApplyShortenButtonControl);
+            return;
+        }
+
+        await RunStreamingOperationAsync(
+            ResourceHelper.GetString("SmartSidebarErrorFormat"),
+            BuildShortenPrompt(text),
+            ShortenOutputControl,
+            ShortenProgressControl,
+            StopShortenButtonControl,
+            finalText =>
+            {
+                _lastShortenedText = finalText;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ApplyShortenButtonControl.Visibility = string.IsNullOrWhiteSpace(finalText)
+                        ? Visibility.Collapsed
+                        : Visibility.Visible;
+                });
+            });
+    }
+
+    private void StopShortenButton_Click(object sender, RoutedEventArgs e) =>
+        CancelActive();
+
+    private async void AutoCompleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        var text = GetTextBeforeCaret?.Invoke() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            ShowValidationMessage(AutoCompleteOutputControl, ApplyAutoCompleteButtonControl);
+            return;
+        }
+
+        await RunStreamingOperationAsync(
+            ResourceHelper.GetString("SmartSidebarErrorFormat"),
+            BuildAutoCompletePrompt(text),
+            AutoCompleteOutputControl,
+            AutoCompleteProgressControl,
+            StopAutoCompleteButtonControl,
+            finalText =>
+            {
+                _lastAutoCompleteText = finalText;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    ApplyAutoCompleteButtonControl.Visibility = string.IsNullOrWhiteSpace(finalText)
+                        ? Visibility.Collapsed
+                        : Visibility.Visible;
+                });
+            });
+    }
+
+    private void StopAutoCompleteButton_Click(object sender, RoutedEventArgs e) =>
+        CancelActive();
+
+    private void ApplyToneRewriteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_lastToneRewrite))
+            return;
+
+        ApplyToneRewrite?.Invoke(_lastToneRewrite);
+    }
+
+    private void ApplyClarityRewriteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_lastClarityRewrite))
+            return;
+
+        ApplyClarityRewrite?.Invoke(_lastClarityRewrite);
+    }
+
+    private void ApplyGrammarFixButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_lastGrammarFix))
+            return;
+
+        ApplyGrammarFix?.Invoke(_lastGrammarFix);
+    }
+
+    private void ApplyShortenButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_lastShortenedText))
+            return;
+
+        ApplyShortenRewrite?.Invoke(_lastShortenedText);
+    }
+
+    private void ApplyAutoCompleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_lastAutoCompleteText))
+            return;
+
+        InsertGeneratedText?.Invoke(_lastAutoCompleteText);
     }
 
     // ── Semantic Search ──
@@ -275,9 +490,57 @@ public sealed partial class SmartSidebar : UserControl
 
     private Button ClarityRewriteButtonControl => (Button)FindName("ClarityRewriteButton")!;
 
+    private StackPanel AssistSectionControl => (StackPanel)FindName("AssistSection")!;
+
+    private TextBlock GrammarSectionTitleTextControl => (TextBlock)FindName("GrammarSectionTitleText")!;
+
+    private TextBlock ShortenSectionTitleTextControl => (TextBlock)FindName("ShortenSectionTitleText")!;
+
+    private TextBlock AutoCompleteSectionTitleTextControl => (TextBlock)FindName("AutoCompleteSectionTitleText")!;
+
+    private Button GrammarFixButtonControl => (Button)FindName("GrammarFixButton")!;
+
+    private Button ShortenButtonControl => (Button)FindName("ShortenButton")!;
+
+    private Button AutoCompleteButtonControl => (Button)FindName("AutoCompleteButton")!;
+
+    private Button StopToneRewriteButtonControl => (Button)FindName("StopToneRewriteButton")!;
+
+    private Button StopClarityRewriteButtonControl => (Button)FindName("StopClarityRewriteButton")!;
+
+    private Button StopGrammarFixButtonControl => (Button)FindName("StopGrammarFixButton")!;
+
+    private Button StopShortenButtonControl => (Button)FindName("StopShortenButton")!;
+
+    private Button StopAutoCompleteButtonControl => (Button)FindName("StopAutoCompleteButton")!;
+
+    private Button ApplyClarityRewriteButtonControl => (Button)FindName("ApplyClarityRewriteButton")!;
+
+    private Button ApplyToneRewriteButtonControl => (Button)FindName("ApplyToneRewriteButton")!;
+
+    private Button ApplyGrammarFixButtonControl => (Button)FindName("ApplyGrammarFixButton")!;
+
+    private Button ApplyShortenButtonControl => (Button)FindName("ApplyShortenButton")!;
+
+    private Button ApplyAutoCompleteButtonControl => (Button)FindName("ApplyAutoCompleteButton")!;
+
     private TextBlock ClarityOutputControl => (TextBlock)FindName("ClarityOutput")!;
 
+    private TextBlock GrammarFixOutputControl => (TextBlock)FindName("GrammarFixOutput")!;
+
+    private TextBlock ShortenOutputControl => (TextBlock)FindName("ShortenOutput")!;
+
+    private TextBlock AutoCompleteOutputControl => (TextBlock)FindName("AutoCompleteOutput")!;
+
+    private TextBlock ResponsibleAiNoticeTextControl => (TextBlock)FindName("ResponsibleAiNoticeText")!;
+
     private ProgressRing ClarityProgressControl => (ProgressRing)FindName("ClarityProgress")!;
+
+    private ProgressRing GrammarFixProgressControl => (ProgressRing)FindName("GrammarFixProgress")!;
+
+    private ProgressRing ShortenProgressControl => (ProgressRing)FindName("ShortenProgress")!;
+
+    private ProgressRing AutoCompleteProgressControl => (ProgressRing)FindName("AutoCompleteProgress")!;
 
     private Grid OcrDropHostControl => (Grid)FindName("OcrDropHost")!;
 
@@ -330,6 +593,18 @@ public sealed partial class SmartSidebar : UserControl
 
     private void ApplyLocalizedStrings()
     {
+        GrammarSectionTitleTextControl.Text = ResourceHelper.GetString("SmartSidebarGrammarSectionTitle");
+        ShortenSectionTitleTextControl.Text = ResourceHelper.GetString("SmartSidebarShortenSectionTitle");
+        AutoCompleteSectionTitleTextControl.Text = ResourceHelper.GetString("SmartSidebarAutoCompleteSectionTitle");
+        GrammarFixButtonControl.Content = ResourceHelper.GetString("SmartSidebarGrammarFix");
+        ShortenButtonControl.Content = ResourceHelper.GetString("SmartSidebarShorten");
+        AutoCompleteButtonControl.Content = ResourceHelper.GetString("SmartSidebarAutoComplete");
+        StopSummarizeButton.Content = ResourceHelper.GetString("SmartSidebarCancel");
+        StopToneRewriteButtonControl.Content = ResourceHelper.GetString("SmartSidebarCancel");
+        StopClarityRewriteButtonControl.Content = ResourceHelper.GetString("SmartSidebarCancel");
+        StopGrammarFixButtonControl.Content = ResourceHelper.GetString("SmartSidebarCancel");
+        StopShortenButtonControl.Content = ResourceHelper.GetString("SmartSidebarCancel");
+        StopAutoCompleteButtonControl.Content = ResourceHelper.GetString("SmartSidebarCancel");
         ClarityRewriteButtonControl.Content = ResourceHelper.GetString("SmartSidebarRewriteForClarity");
         OcrDropPromptTextControl.Text = ResourceHelper.GetString("SmartSidebarOcrDropPrompt");
         OcrDropHintTextControl.Text = ResourceHelper.GetString("SmartSidebarOcrDropHint");
@@ -339,6 +614,103 @@ public sealed partial class SmartSidebar : UserControl
         _hardwareModelLabelText.Text = ResourceHelper.GetString("SmartSidebarExecutionModel");
         _hardwareTokensLabelText.Text = ResourceHelper.GetString("SmartSidebarExecutionTokensPerSecond");
         _hardwareTokensValueText.Text = ResourceHelper.GetString("SmartSidebarExecutionPending");
+        ResponsibleAiNoticeTextControl.Text = ResourceHelper.GetString("SmartSidebarResponsibleAiNotice");
+        ApplyToneRewriteButtonControl.Content = ResourceHelper.GetString("SmartSidebarApplyGeneratedText");
+        ApplyClarityRewriteButtonControl.Content = ResourceHelper.GetString("SmartSidebarApplyGeneratedText");
+        ApplyGrammarFixButtonControl.Content = ResourceHelper.GetString("SmartSidebarApplyGeneratedText");
+        ApplyShortenButtonControl.Content = ResourceHelper.GetString("SmartSidebarApplyGeneratedText");
+        ApplyAutoCompleteButtonControl.Content = ResourceHelper.GetString("SmartSidebarInsertGeneratedText");
+    }
+
+    private void ApplyDispatcherPendingState()
+    {
+        SetAiInteractionsEnabled(false);
+        SetInitializationStatus(
+            ResourceHelper.GetString("SmartSidebarInitializationPending"),
+            isVisible: true);
+        HardwareBadge.Text = "…";
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
+            HardwareBadge,
+            $"AI execution: {ResourceHelper.GetString("SmartSidebarExecutionPending")}");
+        _hardwareModelValueText.Text = ResourceHelper.GetString("SmartSidebarExecutionPending");
+        _hardwareTokensValueText.Text = ResourceHelper.GetString("SmartSidebarExecutionPending");
+        ToolTipService.SetToolTip(HardwareBadge, ResourceHelper.GetString("SmartSidebarExecutionPending"));
+    }
+
+    private void ApplyDispatcherReadyState()
+    {
+        SetAiInteractionsEnabled(true);
+        SetInitializationStatus(
+            ResourceHelper.GetFormatted("SmartSidebarExecutionReady", _dispatcher.ExecutionTargetDisplayName),
+            isVisible: true);
+        HardwareBadge.Text = _dispatcher.ExecutionTargetDisplayName;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
+            HardwareBadge,
+            $"AI execution: {_dispatcher.ExecutionTargetDisplayName}");
+        _hardwareModelValueText.Text = GetModelName();
+        _hardwareTokensValueText.Text = GetPendingMetricsText();
+        ToolTipService.SetToolTip(HardwareBadge, GetHardwareTooltip());
+    }
+
+    private void ApplyDispatcherUnavailableState(string? failureMessage)
+    {
+        SetAiInteractionsEnabled(false);
+
+        var availabilityMessage = GetDispatcherUnavailableMessage(failureMessage);
+        SetInitializationStatus(availabilityMessage, isVisible: true);
+        HardwareBadge.Text = "⚠";
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
+            HardwareBadge,
+            $"AI execution: {availabilityMessage}");
+        _hardwareModelValueText.Text = availabilityMessage;
+        _hardwareTokensValueText.Text = ResourceHelper.GetString("SmartSidebarExecutionPending");
+        ToolTipService.SetToolTip(HardwareBadge, availabilityMessage);
+    }
+
+    private void SetAiInteractionsEnabled(bool isEnabled)
+    {
+        SetSectionInteractivity(SummarizeSection, isEnabled);
+        SetSectionInteractivity(ToneSection, isEnabled);
+        SetSectionInteractivity(AssistSectionControl, isEnabled);
+    }
+
+    private static void SetSectionInteractivity(UIElement section, bool isEnabled)
+    {
+        ArgumentNullException.ThrowIfNull(section);
+
+        section.IsHitTestVisible = isEnabled;
+        if (section is FrameworkElement element)
+            element.Opacity = isEnabled ? 1d : 0.6d;
+    }
+
+    private string GetDispatcherUnavailableMessage(string? failureMessage)
+    {
+        if (!string.IsNullOrWhiteSpace(failureMessage))
+            return ResourceHelper.GetFormatted("SmartSidebarErrorFormat", failureMessage);
+
+        var availability = _dispatcher.Availability;
+        return availability switch
+        {
+            { PhiSilica.Status: AIBackendAvailabilityStatus.RequiresPackageIdentity } =>
+                ResourceHelper.GetString("SmartSidebarExecutionPackageIdentityRequired"),
+            { PhiSilica.Status: AIBackendAvailabilityStatus.Unsupported, FoundryGpu.IsUsable: false } =>
+                ResourceHelper.GetString("SmartSidebarExecutionUnsupported"),
+            { FoundryGpu.Status: AIBackendAvailabilityStatus.Error } =>
+                ResourceHelper.GetFormatted("SmartSidebarErrorFormat", availability.FoundryGpu.DiagnosticMessage ?? availability.FoundryGpu.DiagnosticCode ?? ResourceHelper.GetString("SmartSidebarExecutionUnavailable")),
+            { PhiSilica.Status: AIBackendAvailabilityStatus.Error } =>
+                ResourceHelper.GetFormatted("SmartSidebarErrorFormat", availability.PhiSilica.DiagnosticMessage ?? availability.PhiSilica.DiagnosticCode ?? ResourceHelper.GetString("SmartSidebarExecutionUnavailable")),
+            { FoundryGpu.Status: AIBackendAvailabilityStatus.Unavailable } =>
+                ResourceHelper.GetString("SmartSidebarExecutionUnavailable"),
+            _ => ResourceHelper.GetString("SmartSidebarExecutionUnavailable")
+        };
+    }
+
+    private void SetInitializationStatus(string text, bool isVisible)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        InitializationStatusTextControl.Text = text;
+        InitializationStatusTextControl.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async Task RunStreamingOperationAsync(
@@ -367,6 +739,32 @@ public sealed partial class SmartSidebar : UserControl
         if (stopButton is not null)
             stopButton.Visibility = Visibility.Visible;
 
+        if (ReferenceEquals(output, ToneOutput))
+        {
+            _lastToneRewrite = string.Empty;
+            ApplyToneRewriteButtonControl.Visibility = Visibility.Collapsed;
+        }
+        else if (ReferenceEquals(output, ClarityOutputControl))
+        {
+            _lastClarityRewrite = string.Empty;
+            ApplyClarityRewriteButtonControl.Visibility = Visibility.Collapsed;
+        }
+        else if (ReferenceEquals(output, GrammarFixOutputControl))
+        {
+            _lastGrammarFix = string.Empty;
+            ApplyGrammarFixButtonControl.Visibility = Visibility.Collapsed;
+        }
+        else if (ReferenceEquals(output, ShortenOutputControl))
+        {
+            _lastShortenedText = string.Empty;
+            ApplyShortenButtonControl.Visibility = Visibility.Collapsed;
+        }
+        else if (ReferenceEquals(output, AutoCompleteOutputControl))
+        {
+            _lastAutoCompleteText = string.Empty;
+            ApplyAutoCompleteButtonControl.Visibility = Visibility.Collapsed;
+        }
+
         await _dispatcher.StreamResponseAsync(
             prompt,
             onToken: token =>
@@ -382,6 +780,22 @@ public sealed partial class SmartSidebar : UserControl
             onComplete: () => DispatcherQueue.TryEnqueue(() =>
             {
                 CloseProgressState(progress, stopButton);
+                if (ct.IsCancellationRequested)
+                {
+                    if (ReferenceEquals(output, ToneOutput))
+                        ApplyToneRewriteButtonControl.Visibility = Visibility.Collapsed;
+                    else if (ReferenceEquals(output, ClarityOutputControl))
+                        ApplyClarityRewriteButtonControl.Visibility = Visibility.Collapsed;
+                    else if (ReferenceEquals(output, GrammarFixOutputControl))
+                        ApplyGrammarFixButtonControl.Visibility = Visibility.Collapsed;
+                    else if (ReferenceEquals(output, ShortenOutputControl))
+                        ApplyShortenButtonControl.Visibility = Visibility.Collapsed;
+                    else if (ReferenceEquals(output, AutoCompleteOutputControl))
+                        ApplyAutoCompleteButtonControl.Visibility = Visibility.Collapsed;
+
+                    return;
+                }
+
                 UpdateInferenceMetrics(tokenCount, stopwatch.Elapsed);
                 onCompletedText?.Invoke(builder.ToString());
             }),
@@ -389,8 +803,45 @@ public sealed partial class SmartSidebar : UserControl
             {
                 output.Text = string.Format(errorFormat, ex.Message);
                 CloseProgressState(progress, stopButton);
+                if (ReferenceEquals(output, ToneOutput))
+                    ApplyToneRewriteButtonControl.Visibility = Visibility.Collapsed;
+                else if (ReferenceEquals(output, ClarityOutputControl))
+                    ApplyClarityRewriteButtonControl.Visibility = Visibility.Collapsed;
+                else if (ReferenceEquals(output, GrammarFixOutputControl))
+                    ApplyGrammarFixButtonControl.Visibility = Visibility.Collapsed;
+                else if (ReferenceEquals(output, ShortenOutputControl))
+                    ApplyShortenButtonControl.Visibility = Visibility.Collapsed;
+                else if (ReferenceEquals(output, AutoCompleteOutputControl))
+                    ApplyAutoCompleteButtonControl.Visibility = Visibility.Collapsed;
             }),
             ct: ct);
+    }
+
+    private static string BuildGrammarFixPrompt(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return $"Correct grammar, punctuation, and spelling in the following text without changing its meaning or tone. Return only the corrected text:\n\n{text}";
+    }
+
+    private static string BuildShortenPrompt(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return $"Shorten the following text while preserving its meaning and key details. Return only the revised text:\n\n{text}";
+    }
+
+    private static string BuildAutoCompletePrompt(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return $"Continue the current sentence based on the existing context. Return only the completion text, keep it concise, and do not start a new paragraph:\n\n{text}";
+    }
+
+    private void ShowValidationMessage(TextBlock output, Button? applyButton = null)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+
+        output.Text = ResourceHelper.GetString("SmartSidebarSelectionRequired");
+        if (applyButton is not null)
+            applyButton.Visibility = Visibility.Collapsed;
     }
 
     private static int EstimateTokenCount(string chunk)
