@@ -75,4 +75,21 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
   </PropertyGroup>
+
+  <Target Name="FlattenWinUiPageXbfOutputs" AfterTargets="Build">
+    <ItemGroup>
+      <FlattenedXbf Include="$(TargetDir)Controls\SmartSidebar.xbf" Condition="Exists('$(TargetDir)Controls\SmartSidebar.xbf')">
+        <Destination>$(TargetDir)SmartSidebar.xbf</Destination>
+      </FlattenedXbf>
+      <FlattenedXbf Include="$(TargetDir)Views\FileBackstageView.xbf" Condition="Exists('$(TargetDir)Views\FileBackstageView.xbf')">
+        <Destination>$(TargetDir)FileBackstageView.xbf</Destination>
+      </FlattenedXbf>
+    </ItemGroup>
+
+    <Copy
+      SourceFiles="@(FlattenedXbf)"
+      DestinationFiles="@(FlattenedXbf->'%(Destination)')"
+      SkipUnchangedFiles="true"
+      Condition="@(FlattenedXbf) != ''" />
+  </Target>
 </Project>
