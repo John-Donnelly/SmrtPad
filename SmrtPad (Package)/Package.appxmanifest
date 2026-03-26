@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -11,7 +11,7 @@
 
   <Identity
     Name="JohnDonnelly.SmrtPad"
-    Publisher="CN=John_"
+    Publisher="CN=2B43AD1A-273D-402E-A9A5-FF23C52C75B9"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="ba856c8e-bc34-4bbb-b9f8-df880b92fd70" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>

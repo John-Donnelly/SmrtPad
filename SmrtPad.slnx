@@ -7,21 +7,15 @@
   <Project Path="SmrtPad (Package)/SmrtPad (Package).wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5">
     <Deploy />
   </Project>
-  <Project Path="SmrtPad.AI.Tests/SmrtPad.AI.Tests.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x64" />
-  </Project>
-  <Project Path="SmrtPad.AI/SmrtPad.AI.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x64" />
-  </Project>
   <Project Path="SmrtPad.Tests/SmrtPad.Tests.csproj">
-    <Platform Project="x64" />
+    <Platform Solution="*|ARM64" Project="x64" Build="false" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x64" Build="false" />
   </Project>
   <Project Path="SmrtPad.UITests/SmrtPad.UITests.csproj">
-    <Platform Project="x64" />
+    <Platform Solution="*|ARM64" Project="x64" Build="false" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x64" Build="false" />
   </Project>
   <Project Path="SmrtPad/SmrtPad.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
