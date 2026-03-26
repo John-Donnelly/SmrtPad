@@ -3,12 +3,14 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Shapes;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Printing;
+using System.Numerics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,6 +31,9 @@ using Windows.Storage.Provider;
 using Windows.Storage.Streams;
 using Microsoft.UI.Text;
 using Windows.UI;
+using Windows.UI.Core;
+using Windows.UI.Input.Inking;
+using WinUIPointerPoint = Microsoft.UI.Input.PointerPoint;
 using WinRT.Interop;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
@@ -39,6 +44,7 @@ using SmrtPad.Views;
 using SmrtPad.Services;
 using Res = SmrtPad.Helpers.ResourceHelper;
 using AutomationPeer = Microsoft.UI.Xaml.Automation.AutomationProperties;
+using Path = System.IO.Path;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -53,6 +59,7 @@ namespace SmrtPad
         private readonly ISettingsService _settings;
         private readonly IDialogService _dialogService;
         private readonly IFileService _fileService;
+        private readonly IInkService _inkService;
         private readonly ISessionRestoreService _sessionRestoreService;
         private DispatcherTimer? _autoSaveTimer;
         private DispatcherTimer? _sessionSaveTimer;
@@ -115,6 +122,7 @@ namespace SmrtPad
         private Grid EditorContainer => ActiveTab.EditorContainer;
         private Border PageViewBorder => ActiveTab.PageViewBorder;
         private ScaleTransform EditorScaleTransform => ActiveTab.EditorScaleTransform;
+        private Canvas InkOverlay => ActiveTab.InkOverlay;
         public EditorViewModel ViewModel { get; }
 
         public MainWindow()
@@ -122,6 +130,7 @@ namespace SmrtPad
             _settings = App.Current.Services.GetRequiredService<ISettingsService>();
             _dialogService = App.Current.Services.GetRequiredService<IDialogService>();
             _fileService = App.Current.Services.GetRequiredService<IFileService>();
+            _inkService = App.Current.Services.GetRequiredService<IInkService>();
             _sessionRestoreService = App.Current.Services.GetRequiredService<ISessionRestoreService>();
             ViewModel = App.Current.Services.GetRequiredService<EditorViewModel>();
             InitializeComponent();
@@ -329,6 +338,10 @@ namespace SmrtPad
             tab.Editor.DragOver += Editor_DragOver;
             tab.Editor.Drop += Editor_Drop;
             tab.ScrollViewer.PointerWheelChanged += EditorScrollViewer_PointerWheelChanged;
+            tab.InkOverlay.PointerPressed += InkOverlay_PointerPressed;
+            tab.InkOverlay.PointerMoved += InkOverlay_PointerMoved;
+            tab.InkOverlay.PointerReleased += InkOverlay_PointerReleased;
+            tab.InkOverlay.PointerCanceled += InkOverlay_PointerCanceled;
             // When the OS system theme changes (e.g. Windows auto dark/light mode),
             // re-normalise text colors so the active document stays readable.
             tab.EditorContainer.ActualThemeChanged += (_, _) =>
@@ -423,6 +436,12 @@ namespace SmrtPad
         private void DuplicateLine_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             DuplicateLineOrSelection();
+            args.Handled = true;
+        }
+
+        private async void RecognizeInk_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            await RecognizeActiveInkAsync();
             args.Handled = true;
         }
 
@@ -616,6 +635,106 @@ namespace SmrtPad
             ViewModel.ZoomLevel = tab.ZoomLevel;
             UpdateEncoding(tab.Encoding);
             UpdateStatusBarCounts();
+
+            if (InkModeToggle is not null)
+            {
+                InkModeToggle.IsChecked = tab.IsInkModeActive;
+            }
+        }
+
+        private void ToggleInk_Click(object sender, RoutedEventArgs e)
+        {
+            bool isActive = sender is ToggleMenuFlyoutItem toggle ? toggle.IsChecked : !ActiveTab.IsInkModeActive;
+            SetInkMode(isActive);
+        }
+
+        private void SetInkMode(bool isActive)
+        {
+            if (!HasActiveTab)
+            {
+                return;
+            }
+
+            ActiveTab.IsInkModeActive = isActive;
+            InkOverlay.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
+            Editor.IsReadOnly = isActive;
+
+            if (InkModeToggle is not null && InkModeToggle.IsChecked != isActive)
+            {
+                InkModeToggle.IsChecked = isActive;
+            }
+        }
+
+        private async Task RecognizeActiveInkAsync()
+        {
+            if (!HasActiveTab)
+            {
+                return;
+            }
+
+            IReadOnlyList<InkStroke> strokes = ActiveTab.GetInkStrokes();
+            if (strokes.Count == 0)
+            {
+                return;
+            }
+
+            string recognizedText = await _inkService.RecognizeAsync(strokes);
+            if (!string.IsNullOrWhiteSpace(recognizedText))
+            {
+                Editor.Document.Selection.Text = recognizedText;
+                RefreshEditorState();
+            }
+
+            ActiveTab.ClearInk();
+            SetInkMode(false);
+            ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
+        }
+
+        private void InkOverlay_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is not Canvas canvas || !ActiveTab.IsInkModeActive)
+            {
+                return;
+            }
+
+            canvas.CapturePointer(e.Pointer);
+            ActiveTab.StartInkStroke(e.GetCurrentPoint(canvas));
+            e.Handled = true;
+        }
+
+        private void InkOverlay_PointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is not Canvas canvas || !ActiveTab.IsInkModeActive)
+            {
+                return;
+            }
+
+            ActiveTab.AppendInkPoint(e.GetCurrentPoint(canvas));
+            e.Handled = true;
+        }
+
+        private void InkOverlay_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is not Canvas canvas)
+            {
+                return;
+            }
+
+            ActiveTab.CompleteInkStroke(e.GetCurrentPoint(canvas));
+            canvas.ReleasePointerCapture(e.Pointer);
+            e.Handled = true;
+        }
+
+        private void InkOverlay_PointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is not Canvas canvas)
+            {
+                return;
+            }
+
+            ActiveTab.CancelInkStroke();
+            canvas.ReleasePointerCapture(e.Pointer);
+            e.Handled = true;
         }
 
         public async Task OpenFileByPathAsync(string filePath)
@@ -3717,57 +3836,8 @@ namespace SmrtPad
 
         private async void PaintDrawing_Click(object sender, RoutedEventArgs e)
         {
-            if (!IsSmrtDoodleInstalled())
-            {
-                var notInstalledDialog = new ContentDialog
-                {
-                    Title = Res.GetString("SmrtDoodleNotFound"),
-                    Content = Res.GetString("SmrtDoodleNotFoundMessage"),
-                    PrimaryButtonText = Res.GetString("SmrtDoodleGetFromStore"),
-                    CloseButtonText = Res.GetString("DlgOK"),
-                    XamlRoot = Content.XamlRoot
-                };
-                var notInstalledResult = await notInstalledDialog.ShowAsync();
-                if (notInstalledResult == ContentDialogResult.Primary)
-                    await Launcher.LaunchUriAsync(new Uri("ms-windows-store://search/?query=SmrtDoodle"));
-                return;
-            }
-
-            string tempDir = Path.Combine(Path.GetTempPath(), "SmrtPad");
-            Directory.CreateDirectory(tempDir);
-            string tempFile = Path.Combine(tempDir, $"drawing_{DateTime.Now:yyyyMMdd_HHmmss}.png");
-
-            try
-            {
-                var process = new Process();
-                process.StartInfo.FileName = "SmrtDoodle.exe";
-                process.StartInfo.Arguments = $"\"{tempFile}\"";
-                process.StartInfo.UseShellExecute = true;
-                process.Start();
-                await Task.Run(() => process.WaitForExit());
-
-                if (process.ExitCode == 0 && File.Exists(tempFile))
-                {
-                    var file = await StorageFile.GetFileFromPathAsync(tempFile);
-                    using (var stream = await file.OpenAsync(FileAccessMode.Read))
-                    {
-                        Editor.Document.Selection.InsertImage(0, 0, 0, VerticalCharacterAlignment.Baseline, file.Name, stream);
-                    }
-                    ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
-                }
-                else if (process.ExitCode != 0)
-                {
-                    ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
-                }
-            }
-            catch (System.ComponentModel.Win32Exception)
-            {
-                ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
-            }
-            finally
-            {
-                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
-            }
+            SetInkMode(true);
+            await Task.CompletedTask;
         }
 
         private static bool IsSmrtDoodleInstalled()
@@ -4694,15 +4764,20 @@ namespace SmrtPad
         public int Id { get; internal set; }
         public TabViewItem TabViewItem { get; }
         public RichEditBox Editor { get; }
+        public Canvas InkOverlay { get; }
         public ScrollViewer ScrollViewer { get; }
         public Grid EditorContainer { get; }
         public Border PageViewBorder { get; }
         public ScaleTransform EditorScaleTransform { get; } = new ScaleTransform();
+        public bool IsInkModeActive { get; set; }
 
         public StorageFile? CurrentFile { get; set; }
         public bool IsModified { get; set; }
         public string Encoding { get; set; } = "UTF-8";
         public double ZoomLevel { get; set; } = 100.0;
+        private readonly List<InkStroke> _inkStrokes = [];
+        private readonly List<InkPoint> _currentInkPoints = [];
+        private Polyline? _activePolyline;
 
         public DocumentTab(string title, ISettingsService settings)
         {
@@ -4760,6 +4835,15 @@ namespace SmrtPad
                 MinHeight = 1056,
             };
 
+            InkOverlay = new Canvas
+            {
+                Visibility = Visibility.Collapsed,
+                Background = new SolidColorBrush(Windows.UI.Color.FromArgb(24, 255, 255, 0)),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(InkOverlay, "InkOverlay");
+
             EditorContainer = new Grid 
             { 
                 Margin = new Thickness(4),
@@ -4779,6 +4863,7 @@ namespace SmrtPad
             EditorContainer.ActualThemeChanged += (_, _) => ApplyEditorBackground(EditorContainer);
             EditorContainer.Children.Add(PageViewBorder);
             EditorContainer.Children.Add(Editor);
+            EditorContainer.Children.Add(InkOverlay);
 
             ScrollViewer = new ScrollViewer
             {
@@ -4802,6 +4887,82 @@ namespace SmrtPad
                 IsClosable = true,
                 Content = ScrollViewer,
             };
+        }
+
+        public void StartInkStroke(WinUIPointerPoint point)
+        {
+            _currentInkPoints.Clear();
+            _activePolyline = null;
+
+            _activePolyline = new Polyline
+            {
+                Stroke = new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)),
+                StrokeThickness = 2,
+                StrokeLineJoin = PenLineJoin.Round,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round,
+            };
+
+            InkOverlay.Children.Add(_activePolyline);
+            AppendInkPoint(point);
+        }
+
+        public void AppendInkPoint(WinUIPointerPoint point)
+        {
+            if (_activePolyline is null)
+            {
+                return;
+            }
+
+            _activePolyline.Points.Add(point.Position);
+            _currentInkPoints.Add(new InkPoint(point.Position, point.Properties.Pressure));
+        }
+
+        public void CompleteInkStroke(WinUIPointerPoint point)
+        {
+            if (_activePolyline is null)
+            {
+                return;
+            }
+
+            AppendInkPoint(point);
+            if (_currentInkPoints.Count >= 2)
+            {
+                var builder = new InkStrokeBuilder();
+                builder.SetDefaultDrawingAttributes(new InkDrawingAttributes
+                {
+                    Color = Color.FromArgb(255, 0, 0, 0),
+                    IgnorePressure = false,
+                    FitToCurve = false,
+                    Size = new Windows.Foundation.Size(2, 2)
+                });
+
+                _inkStrokes.Add(builder.CreateStrokeFromInkPoints(_currentInkPoints, Matrix3x2.Identity));
+            }
+
+            _currentInkPoints.Clear();
+            _activePolyline = null;
+        }
+
+        public void CancelInkStroke()
+        {
+            if (_activePolyline is not null)
+            {
+                InkOverlay.Children.Remove(_activePolyline);
+                _activePolyline = null;
+            }
+
+            _currentInkPoints.Clear();
+        }
+
+        public IReadOnlyList<InkStroke> GetInkStrokes() => _inkStrokes.Select(stroke => stroke.Clone()).ToList();
+
+        public void ClearInk()
+        {
+            _inkStrokes.Clear();
+            _currentInkPoints.Clear();
+            _activePolyline = null;
+            InkOverlay.Children.Clear();
         }
     }
 }

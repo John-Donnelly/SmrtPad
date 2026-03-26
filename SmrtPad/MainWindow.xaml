@@ -23,6 +23,7 @@
             <KeyboardAccelerator Key="H" Modifiers="Control" Invoked="OpenReplace_Invoked"/>
             <KeyboardAccelerator Key="F3" Invoked="FindNextShortcut_Invoked"/>
             <KeyboardAccelerator Key="D" Modifiers="Control" Invoked="DuplicateLine_Invoked"/>
+            <KeyboardAccelerator Key="R" Modifiers="Control,Shift" Invoked="RecognizeInk_Invoked"/>
         </Grid.KeyboardAccelerators>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -114,6 +115,8 @@
                         <MenuFlyoutSeparator />
                         <ToggleMenuFlyoutItem x:Name="SmartSidebarToggle" x:Uid="SmartSidebarToggle" Text="✨ Smart Sidebar" Click="SmartSidebarToggle_Click"
                                              AutomationProperties.AutomationId="SmartSidebarToggle" />
+                        <ToggleMenuFlyoutItem x:Name="InkModeToggle" Text="✏️ Ink" Click="ToggleInk_Click"
+                                             AutomationProperties.AutomationId="InkModeToggle" />
                     </MenuBarItem>
                     <MenuBarItem x:Uid="FormatMenu" Title="Format" AutomationProperties.AutomationId="FormatMenuBarItem">
                         <MenuFlyoutItem x:Uid="FormatFontMenuItem" Text="Font..." Click="FormatFont_Click"

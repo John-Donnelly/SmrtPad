@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>false</IsPackable>
     <UseWinUI>true</UseWinUI>
+    <RollForward>LatestPatch</RollForward>
   </PropertyGroup>
 
   <ItemGroup>

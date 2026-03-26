@@ -7,6 +7,11 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <!-- VS 2026 sets DOTNET_ROOT=<app_dir> during debug launch, so the app must be self-contained
+         to ensure the .NET runtime is co-located with the executable. -->
+    <RuntimeIdentifier Condition="'$(Platform)' == 'x64' AND '$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64' AND '$(RuntimeIdentifier)' == ''">win-arm64</RuntimeIdentifier>
+    <SelfContained Condition="'$(RuntimeIdentifier)' != '' AND '$(SelfContained)' == ''">true</SelfContained>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
