@@ -24,7 +24,8 @@ public sealed class SummarizerSkill
         ArgumentNullException.ThrowIfNull(onComplete);
 
         return _dispatcher.StreamResponseAsync(
-            PromptTemplates.Summarize(text),
+            "summarize",
+            text,
             onToken,
             onComplete,
             onError,

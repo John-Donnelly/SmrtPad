@@ -89,6 +89,9 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
     {
         ct.ThrowIfCancellationRequested();
 
+        long vramMb = HardwareProbeService.QueryDxgiVramMb();
+        long ramMb = HardwareProbeService.QueryAvailableRamMb();
+
         // First: Windows AI ExecutionProviderCatalog (DirectML-backed providers on some systems).
         try
         {
@@ -99,7 +102,9 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
                 return Task.FromResult(new AIBackendCapability(
                     "Foundry Local GPU",
                     AIBackendAvailabilityStatus.Available,
-                    DiagnosticCode: "READY"));
+                    DiagnosticCode: "READY",
+                    GpuVramMb: vramMb,
+                    AvailableSystemRamMb: ramMb));
             }
         }
         catch (COMException) { }
@@ -111,18 +116,26 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
         // mean CUDA is unavailable.
         if (HasCudaDriver())
         {
+            // WMI fallback for VRAM when DXGI returned nothing (can happen on some NVIDIA configs)
+            if (vramMb == 0)
+                vramMb = HardwareProbeService.QueryWmiVramMb();
+
             return Task.FromResult(new AIBackendCapability(
                 "Foundry Local GPU",
                 AIBackendAvailabilityStatus.Available,
                 DiagnosticCode: "CUDA_DRIVER",
-                DiagnosticMessage: "NVIDIA CUDA driver detected."));
+                DiagnosticMessage: "NVIDIA CUDA driver detected.",
+                GpuVramMb: vramMb,
+                AvailableSystemRamMb: ramMb));
         }
 
         return Task.FromResult(new AIBackendCapability(
             "Foundry Local GPU",
             AIBackendAvailabilityStatus.Unavailable,
             DiagnosticCode: "NO_GPU",
-            DiagnosticMessage: "No GPU found via Windows AI catalog or CUDA driver check."));
+            DiagnosticMessage: "No GPU found via Windows AI catalog or CUDA driver check.",
+            GpuVramMb: vramMb,
+            AvailableSystemRamMb: ramMb));
     }
 
     private static bool HasCudaDriver()
@@ -157,18 +170,13 @@ public sealed class AIDispatcherFactory
         var catalog = new ConcreteExecutionProviderCatalogAdapter();
         var probe = new HardwareProbeService(catalog);
 
-        return new AIDispatcher(probe, CreateModelAdapterAsync);
-    }
-
-    private static Task<ILanguageModelAdapter> CreateModelAdapterAsync(AIExecutionTarget target, CancellationToken ct)
-    {
-        return target switch
+        return new AIDispatcher(probe, async (target, probeResult, ct) =>
         {
-            AIExecutionTarget.PhiSilicaNpu => CreatePhiSilicaModelAdapterAsync(ct),
-            AIExecutionTarget.FoundryLocalGpu or AIExecutionTarget.FoundryLocalCpu =>
-                CreateFoundryModelAdapterAsync(target, ct),
-            _ => throw new ArgumentOutOfRangeException(nameof(target), target, "Unsupported AI execution target.")
-        };
+            if (target == AIExecutionTarget.PhiSilicaNpu)
+                return await CreatePhiSilicaModelAdapterAsync(ct).ConfigureAwait(false);
+
+            return await CreateFoundryModelAdapterAsync(target, probeResult.FoundryGpu, ct).ConfigureAwait(false);
+        });
     }
 
     private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)
@@ -176,18 +184,29 @@ public sealed class AIDispatcherFactory
         return await ConcretePhiSilicaModelAdapter.CreateAsync(ct).ConfigureAwait(false);
     }
 
-    private static async Task<ILanguageModelAdapter> CreateFoundryModelAdapterAsync(AIExecutionTarget target, CancellationToken ct)
+    private static async Task<ILanguageModelAdapter> CreateFoundryModelAdapterAsync(
+        AIExecutionTarget target,
+        AIBackendCapability gpuCapability,
+        CancellationToken ct)
     {
+        var (alias, maxContextTokens) = await ModelSizeSelector
+            .SelectBestAliasAsync(gpuCapability, ct)
+            .ConfigureAwait(false);
+
         if (target == AIExecutionTarget.FoundryLocalGpu)
         {
             try
             {
-                return await ConcreteFoundryModelAdapter.CreateAsync(AIExecutionTarget.FoundryLocalGpu, ct).ConfigureAwait(false);
+                return await ConcreteFoundryModelAdapter
+                    .CreateAsync(AIExecutionTarget.FoundryLocalGpu, alias, maxContextTokens, ct)
+                    .ConfigureAwait(false);
             }
             catch (FoundryLocalException) { }     // GPU model failed to load
             catch (InvalidOperationException) { } // No GPU variant in catalog
         }
 
-        return await ConcreteFoundryModelAdapter.CreateAsync(AIExecutionTarget.FoundryLocalCpu, ct).ConfigureAwait(false);
+        return await ConcreteFoundryModelAdapter
+            .CreateAsync(AIExecutionTarget.FoundryLocalCpu, alias, maxContextTokens, ct)
+            .ConfigureAwait(false);
     }
 }

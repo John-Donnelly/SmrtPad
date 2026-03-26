@@ -31,13 +31,10 @@ public sealed class ToneShifterSkill
         ArgumentNullException.ThrowIfNull(onToken);
         ArgumentNullException.ThrowIfNull(onComplete);
 
-        var prompt = target switch
-        {
-            ToneTarget.Professional => PromptTemplates.ToneProfessional(text),
-            ToneTarget.Casual => PromptTemplates.ToneCasual(text),
-            _ => throw new ArgumentOutOfRangeException(nameof(target), target, "Unsupported tone target.")
-        };
+        if (target is not (ToneTarget.Professional or ToneTarget.Casual))
+            throw new ArgumentOutOfRangeException(nameof(target), target, "Unsupported tone target.");
 
-        return _dispatcher.StreamResponseAsync(prompt, onToken, onComplete, onError, ct);
+        var skillKey = target == ToneTarget.Professional ? "tone-professional" : "tone-casual";
+        return _dispatcher.StreamResponseAsync(skillKey, text, onToken, onComplete, onError, ct);
     }
 }

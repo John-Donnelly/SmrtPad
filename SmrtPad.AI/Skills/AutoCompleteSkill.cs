@@ -24,7 +24,8 @@ public sealed class AutoCompleteSkill
         ArgumentNullException.ThrowIfNull(onComplete);
 
         return _dispatcher.StreamResponseAsync(
-            PromptTemplates.AutoComplete(textBeforeCaret),
+            "autocomplete",
+            textBeforeCaret,
             onToken,
             onComplete,
             onError,

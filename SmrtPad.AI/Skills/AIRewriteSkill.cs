@@ -24,7 +24,8 @@ public sealed class AIRewriteSkill
         ArgumentNullException.ThrowIfNull(onComplete);
 
         return _dispatcher.StreamResponseAsync(
-            PromptTemplates.Rewrite(text),
+            "rewrite",
+            text,
             onToken,
             onComplete,
             onError,

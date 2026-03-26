@@ -24,7 +24,8 @@ public sealed class GrammarFixSkill
         ArgumentNullException.ThrowIfNull(onComplete);
 
         return _dispatcher.StreamResponseAsync(
-            PromptTemplates.GrammarFix(text),
+            "grammar",
+            text,
             onToken,
             onComplete,
             onError,

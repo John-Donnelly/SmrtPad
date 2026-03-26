@@ -10,31 +10,31 @@ namespace SmrtPad.AI;
 /// </summary>
 internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
 {
-    private const string DefaultModelAlias = "phi-3.5-mini";
-    // Caps the prompt length sent to the model. Phi-3.5-mini's 128 K context window
-    // pre-allocates a proportional KV cache in system RAM; 3 072 tokens keeps peak
-    // memory well under 1 GB while covering all realistic editor operations.
-    private const int MaxContextTokens = 3072;
     private static readonly SemaphoreSlim ManagerInitializationLock = new(1, 1);
     private static bool s_managerInitialized;
 
     private readonly Model _model;
     private readonly OpenAIChatClient _chatClient;
+    private readonly int _maxContextTokens;
 
-    private ConcreteFoundryModelAdapter(Model model, OpenAIChatClient chatClient)
+    private ConcreteFoundryModelAdapter(Model model, OpenAIChatClient chatClient, int maxContextTokens)
     {
         _model = model;
         _chatClient = chatClient;
+        _maxContextTokens = maxContextTokens;
     }
 
     /// <summary>Creates and initializes a Foundry Local adapter for the given <paramref name="target"/>.</summary>
     public static async Task<ConcreteFoundryModelAdapter> CreateAsync(
-        AIExecutionTarget target, CancellationToken ct = default)
+        AIExecutionTarget target,
+        string alias,
+        int maxContextTokens,
+        CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 
         var manager = await EnsureManagerAsync(ct).ConfigureAwait(false);
-        var model = await GetModelAsync(manager, target, ct).ConfigureAwait(false);
+        var model = await GetModelAsync(manager, target, alias, ct).ConfigureAwait(false);
 
         await model.DownloadAsync().WaitAsync(ct).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
@@ -44,7 +44,7 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
 
         var chatClient = await model.GetChatClientAsync().WaitAsync(ct).ConfigureAwait(false);
 
-        return new ConcreteFoundryModelAdapter(model, chatClient);
+        return new ConcreteFoundryModelAdapter(model, chatClient, maxContextTokens);
     }
 
     /// <inheritdoc/>
@@ -54,7 +54,7 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
     {
         ArgumentNullException.ThrowIfNull(prompt);
 
-        prompt = TextChunker.TruncateToTokens(prompt, MaxContextTokens);
+        prompt = TextChunker.TruncateToTokens(prompt, _maxContextTokens);
 
         var messages = new List<ChatMessage>
         {
@@ -123,26 +123,15 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
         };
     }
 
-    private static async Task<Model> GetModelAsync(FoundryLocalManager manager, AIExecutionTarget target, CancellationToken ct)
+    private static async Task<Model> GetModelAsync(FoundryLocalManager manager, AIExecutionTarget target, string alias, CancellationToken ct)
     {
         var catalog = await manager.GetCatalogAsync().WaitAsync(ct).ConfigureAwait(false);
-        var model = await catalog.GetModelAsync(ResolveModelAlias(target)).WaitAsync(ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Model '{ResolveModelAlias(target)}' was not found in the local Foundry catalog.");
+        var model = await catalog.GetModelAsync(alias).WaitAsync(ct).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Model '{alias}' was not found in the local Foundry catalog.");
 
         SelectPreferredVariant(model, target);
         ct.ThrowIfCancellationRequested();
         return model;
-    }
-
-    private static string ResolveModelAlias(AIExecutionTarget target)
-    {
-        return target switch
-        {
-            AIExecutionTarget.FoundryLocalGpu => DefaultModelAlias,
-            AIExecutionTarget.FoundryLocalCpu => DefaultModelAlias,
-            _ => throw new ArgumentOutOfRangeException(nameof(target), target,
-                "ConcreteFoundryModelAdapter only supports GPU and CPU targets.")
-        };
     }
 
     private static void SelectPreferredVariant(Model model, AIExecutionTarget target)

@@ -24,7 +24,8 @@ public sealed class ShortenSkill
         ArgumentNullException.ThrowIfNull(onComplete);
 
         return _dispatcher.StreamResponseAsync(
-            PromptTemplates.Shorten(text),
+            "shorten",
+            text,
             onToken,
             onComplete,
             onError,

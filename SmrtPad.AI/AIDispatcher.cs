@@ -19,7 +19,7 @@ public interface ILanguageModelAdapter : IAsyncDisposable
 public sealed class AIDispatcher : IAsyncDisposable
 {
     private readonly HardwareProbeService _hardwareProbe;
-    private readonly Func<AIExecutionTarget, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
+    private readonly Func<AIExecutionTarget, HardwareProbeResult, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private ILanguageModelAdapter? _model;
     private SemanticSearchService? _semanticSearchService;
@@ -35,7 +35,7 @@ public sealed class AIDispatcher : IAsyncDisposable
 
     public AIDispatcher(
         HardwareProbeService hardwareProbe,
-        Func<AIExecutionTarget, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
+        Func<AIExecutionTarget, HardwareProbeResult, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
     {
         ArgumentNullException.ThrowIfNull(hardwareProbe);
         ArgumentNullException.ThrowIfNull(modelFactory);
@@ -60,7 +60,7 @@ public sealed class AIDispatcher : IAsyncDisposable
             ct.ThrowIfCancellationRequested();
             ProbeResult = await _hardwareProbe.DetectAsync(ct).ConfigureAwait(false);
             ExecutionTarget = ProbeResult.SelectedTarget;
-            _model = await _modelFactory(ExecutionTarget, ct).ConfigureAwait(false);
+            _model = await _modelFactory(ExecutionTarget, ProbeResult, ct).ConfigureAwait(false);
             IsInitialized = true;
         }
         finally
@@ -73,22 +73,39 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// Streams model responses token-by-token. Auto-initializes if not yet done.
     /// </summary>
     public async Task StreamResponseAsync(
+        string skillKey,
         string prompt,
         Action<string> onToken,
         Action onComplete,
         Action<Exception>? onError = null,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(skillKey);
         ArgumentNullException.ThrowIfNull(prompt);
         ArgumentNullException.ThrowIfNull(onToken);
         ArgumentNullException.ThrowIfNull(onComplete);
+
+        var builtPrompt = skillKey switch
+        {
+            "summarize"    => PromptTemplates.Summarize(prompt),
+            "tone-professional" => PromptTemplates.ToneProfessional(prompt),
+            "tone-casual"  => PromptTemplates.ToneCasual(prompt),
+            "rewrite"      => PromptTemplates.Rewrite(prompt),
+            "grammar"      => PromptTemplates.GrammarFix(prompt),
+            "shorten"      => PromptTemplates.Shorten(prompt),
+            "autocomplete" => PromptTemplates.AutoComplete(prompt),
+            "semantic"     => PromptTemplates.SemanticQuery(prompt),
+            "ocr"          => PromptTemplates.OcrFallback(prompt),
+            "freeform"     => PromptTemplates.FreeformChat(prompt),
+            _              => prompt,
+        };
 
         try
         {
             if (!IsInitialized)
                 await InitializeAsync(ct).ConfigureAwait(false);
 
-            await foreach (var token in _model!.StreamAsync(prompt, ct).ConfigureAwait(false))
+            await foreach (var token in _model!.StreamAsync(builtPrompt, ct).ConfigureAwait(false))
             {
                 onToken(token);
             }
