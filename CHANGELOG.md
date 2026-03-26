@@ -5,6 +5,33 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
+- **InkService** — new `SmrtPad/Services/InkService.cs` implementing `IInkService.RecognizeAsync`; uses `InkAnalyzer` (when `FeatureFlags.IsEnabled(InkAnalytics)`) for structured line/word recognition, falling back to `InkRecognizerContainer` for legacy handwriting recognition; drawing strokes filtered out via `InkAnalysisNodeKind.InkDrawing` stroke-id set
+- **Ink overlay canvas** — `DocumentTab.InkOverlay` (`Canvas` with semi-transparent yellow tint, `AutomationId="InkOverlay"`) added to each tab's `EditorContainer`; toggled visible/collapsed by `SetInkMode`; `IsInkModeActive` property on `DocumentTab` guards pointer event routing
+- **Ink stroke management on `DocumentTab`** — `StartInkStroke`, `AppendInkPoint`, `CompleteInkStroke`, `CancelInkStroke`, `GetInkStrokes`, and `ClearInk` methods; committed strokes persisted as `InkStroke` objects built via `InkStrokeBuilder`; live strokes rendered as `Polyline` children on `InkOverlay`
+- **Ink pointer event handlers** — `InkOverlay_PointerPressed`, `InkOverlay_PointerMoved`, `InkOverlay_PointerReleased`, `InkOverlay_PointerCanceled` wired up in `MainWindow`; pointer capture ensures complete strokes even when the pointer leaves the canvas
+- **`✏️ Ink` toggle menu item** — `InkModeToggle` `ToggleMenuFlyoutItem` added to the View menu (`MainWindow.xaml`) with `AutomationId="InkModeToggle"`
+- **`Ctrl+Shift+R` keyboard accelerator** — `RecognizeInk_Invoked` handler triggers `InkService.RecognizeAsync` on the active tab's committed strokes and inserts the recognised text at the caret
+- **`TextChunker.TruncateToTokens`** — new static method that truncates a string to `maxTokens` estimated tokens using the same 4-chars-per-token heuristic as `ChunkByParagraph`; used by `ConcreteFoundryModelAdapter` to cap prompt length before model inference
+- **`PreloadNativeOrtDlls`** — new `private static` method in `App.xaml.cs` that calls `NativeLibrary.TryLoad` for `onnxruntime_providers_shared.dll`, `onnxruntime.dll`, and `onnxruntime-genai.dll` from the AI assembly directory before the `AIAssemblyLoadContext` is created; prevents Windows App Runtime's ORT 1.23 from being found on the activation-context search path ahead of the required ORT 1.24 copy, which caused a CUDA EP vtable mismatch and `0xC0000005` access violation during model load
+- **`Microsoft.ML.OnnxRuntimeGenAI` v0.12.2** — added to `Directory.Packages.props` and referenced directly in `SmrtPad.AI.csproj` so MSBuild targets copy `onnxruntime-genai.dll` to the output directory (the `.Foundry` variant does not ship this native asset)
+- **`UpToDateCheckInput/Output` items in wapproj** — `SmrtPad.AI.dll` tracked as an `AIPlugin` input/output set so the WAP fast up-to-date check correctly detects when the AI plugin is rebuilt and `CopySmrtPadAiOutputs` fires
+- **Publish profiles in wapproj** — `Properties\PublishProfiles\win-ARM64.pubxml` and `win-x64.pubxml` added as `Content` items
+- **`SmartSidebarExecutionTimedOut`** — new resource string (`"AI initialization timed out. Try reopening the sidebar to retry."`) added to all 9 locale files
+
+### Changed
+- **`ConcreteFoundryModelAdapter.DefaultModelAlias`** — changed from `"phi-3.5-mini-instruct"` to `"phi-3.5-mini"` to match the catalog alias used by Foundry Local 0.9.0
+- **`ConcreteFoundryModelAdapter.MaxContextTokens = 3072`** — prompt passed to `SendAsync` is now truncated to 3 072 estimated tokens before sending; keeps peak KV-cache RAM well under 1 GB while covering all realistic editor operations
+- **`ConcreteFoundryModelAdapter.GetModelAsync`** — `GetCatalogAsync` and `GetModelAsync` now chain `.WaitAsync(ct)` so cancellation is propagated through the Foundry SDK's `ValueTask`/`Task` calls
+- **`ConcreteFoundryModelAdapter` GPU variant selection** — `SelectPreferredVariant` now matches on `DeviceType.GPU` exactly (was `!= DeviceType.CPU`), avoiding ambiguous matches on future device types
+- **`ConcreteExecutionProviderCatalogAdapter.ProbeFoundryGpuAsync`** — GPU probe now has two stages: (1) Windows AI `ExecutionProviderCatalog` checked first with `COMException`/`InvalidOperationException` silently swallowed on failure; (2) NVIDIA CUDA driver detected via `nvcuda.dll` presence in `System32` (`HasCudaDriver()`); returns `Available` if either check passes, `Unavailable` otherwise (replaces the previous error-return on catalog exceptions)
+- **`AIDispatcherFactory.CreateFoundryModelAdapterAsync`** — GPU adapter creation is now attempted first when `target == FoundryLocalGpu`; on `FoundryLocalException` or `InvalidOperationException` it falls through to a CPU adapter, providing automatic GPU→CPU fallback
+- **`SmartSidebar` initialization timeout** — `InitializeDispatcherAsync` now creates a 30-second linked `CancellationTokenSource` via `CreateLinkedTokenSource`; `OperationCanceledException` is split into two cases: sidebar-closed cancellation (silent) vs. timeout-fired-while-open (shows `SmartSidebarExecutionTimedOut` banner)
+- **`ResourceHelper.GetString` exception filter** — changed `catch (COMException ex) when (…)` to `catch (Exception ex) when (…)` to handle CsWinRT marshalling `winrt::hresult_error` as `System.Exception` for HRESULTs outside its well-known mapping
+- **`SmrtPad.csproj` self-contained build** — conditional `<RuntimeIdentifier>` and `<SelfContained>true</SelfContained>` properties added for VS 2026 debug sessions where `DOTNET_ROOT` is set to the app directory, ensuring the .NET runtime is co-located with the executable
+- **`SmrtPad.Tests.csproj` roll-forward** — `<RollForward>LatestPatch</RollForward>` added so the test project picks up the latest in-band .NET 10 patch without requiring an explicit SDK pin
+- **`deploy.ps1` pre-install removal** — `Get-AppxPackage -Name 'JohnDonnelly.SmrtPad'` followed by `Remove-AppxPackage` is now executed before `Add-AppxPackage`; prevents `0x80073CFB` failures when the version number is unchanged but the package contents differ (e.g. different signing certificate or a rebuild without a version bump)
+
+### Added
 - **GrammarFixSkill** — new AI skill in `SmrtPad.AI/Skills/GrammarFixSkill.cs` that streams grammar-corrected text for the current editor selection via `AIDispatcher`
 - **ShortenSkill** — new AI skill in `SmrtPad.AI/Skills/ShortenSkill.cs` that streams a condensed rewrite of the selection
 - **AutoCompleteSkill** — new AI skill in `SmrtPad.AI/Skills/AutoCompleteSkill.cs` that streams an inline continuation from the text before the caret; `MainWindow.GetCurrentParagraphTextBeforeCaret()` extracts the paragraph text up to the caret position for the prompt

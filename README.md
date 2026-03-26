@@ -42,6 +42,12 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 - **SmrtDoodle** ribbon button launches the SmrtDoodle companion drawing app, awaits exit, and inserts the resulting image into the document
 - Pre-launch installation check; if not installed a dialog offers a **Get from Store** button that opens the Microsoft Store search for SmrtDoodle
 
+### Ink Mode
+- **`✏️ Ink` toggle** in the View menu activates a translucent overlay canvas on the active tab
+- Handwriting strokes drawn with mouse, pen, or touch are rendered as live `Polyline` objects on the overlay
+- **`Ctrl+Shift+R`** recognizes committed strokes via `InkService`: uses Windows Ink Analysis (`InkAnalyzer`) when the `InkAnalytics` feature flag is on, falling back to `InkRecognizerContainer`; drawing strokes are excluded from recognition results
+- Recognized text is inserted at the current caret position; the ink overlay is cleared after successful recognition
+
 ### Macros
 - Macro recording and playback — record a sequence of typing and formatting actions, then replay them; persisted in settings
 
@@ -82,7 +88,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite has **2,600+ tests** (2,355+ unit/integration + 241 UI automation across 14 classes) covering:
+The test suite has **2,600+ tests** (2,355+ unit/integration + 244 UI automation across 14 classes) covering:
 - ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
 - Alignment, list type, and line spacing for all defined values
@@ -122,8 +128,8 @@ SmrtPad/
 │   │                        # ParagraphStyleHelper, PdfHelper, ResourceHelper,
 │   │                        # RtfHelper, RulerHelper
 │   ├── Models/              # DocumentTemplate
-│   ├── Services/            # DialogService, FileService, SettingsService
-│   │                        # (+ IDialogService, IFileService, ISettingsService)
+│   ├── Services/            # DialogService, FileService, InkService, SettingsService
+│   │                        # (+ IDialogService, IFileService, IInkService, ISettingsService)
 │   ├── Strings/             # 9 locale .resw files (en-US, de-DE, es-ES, fr-FR,
 │   │                        # ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK)
 │   ├── ViewModels/          # EditorViewModel
@@ -146,7 +152,9 @@ SmrtPad/
 │   ├── FontFormattingUpgradeTests.cs
 │   ├── FileManagementUpgradeTests.cs
 │   ├── ProductionFixTests.cs
-│   └── ReleaseReadinessBehaviorTests.cs
+│   ├── ReleaseReadinessBehaviorTests.cs
+│   └── Services/
+│       └── InkServiceTests.cs
 ├── SmrtPad.UITests/
 │   ├── Infrastructure/          # AppiumSession, SharedAppFixture
 │   └── Tests/                   # 14 WinAppDriver/Appium 2.x test classes (241 tests)
