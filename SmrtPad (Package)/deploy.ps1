@@ -153,6 +153,14 @@ function Install-RemoteMsix {
             $depArgs = " -DependencyPath @($depList)"
         }
 
+        # Remove the existing package (if any) before installing the new one.
+        # Add-AppxPackage -ForceUpdateFromAnyVersion can fail with 0x80073CFB when
+        # the version number is identical but the contents differ (e.g. different
+        # signing certificate or a rebuild without a version bump).  Removing first
+        # avoids that error entirely.
+        $scriptLines += "    `$existing = Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -ErrorAction SilentlyContinue"
+        $scriptLines += "    if (`$existing) { `$existing | Remove-AppxPackage -ErrorAction SilentlyContinue }"
+
         $scriptLines += "    Add-AppxPackage -Path '$msixPath'$depArgs -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop"
         $scriptLines += "    Set-Content -LiteralPath '$exitCodePath' -Value '0' -Encoding UTF8 -Force"
         $scriptLines += '} catch {'

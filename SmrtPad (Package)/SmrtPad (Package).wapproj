@@ -31,6 +31,13 @@
     <AIPlatform Condition="'$(AIPlatform)' == ''">$(Platform)</AIPlatform>
     <AIOutputDir>$(MSBuildThisFileDirectory)..\SmrtPad.AI\bin\$(AIPlatform)\$(Configuration)\$(AITargetFramework)\</AIOutputDir>
   </PropertyGroup>
+  <!-- Tell VS fast up-to-date check about the AI plugin DLL so the WAP project is
+       considered out-of-date whenever SmrtPad.AI is rebuilt, ensuring CopySmrtPadAiOutputs
+       fires and the AppX AI\ directory stays in sync. -->
+  <ItemGroup>
+    <UpToDateCheckInput  Include="$(AIOutputDir)SmrtPad.AI.dll" Set="AIPlugin" />
+    <UpToDateCheckOutput Include="$(AIPackageOutputDir)SmrtPad.AI.dll" Set="AIPlugin" />
+  </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
   <PropertyGroup>
     <ProjectGuid>db6b578e-a819-443b-9181-b6f109ca12d8</ProjectGuid>
@@ -57,6 +64,8 @@
     <Content Include="Images\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Images\StoreLogo.png" />
     <Content Include="Images\Wide310x150Logo.scale-200.png" />
+    <Content Include="Properties\PublishProfiles\win-ARM64.pubxml" />
+    <Content Include="Properties\PublishProfiles\win-x64.pubxml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SmrtPad\SmrtPad.csproj">
