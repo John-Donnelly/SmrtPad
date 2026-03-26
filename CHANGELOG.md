@@ -2,223 +2,51 @@
 
 All notable changes to SmrtPad are documented in this file.
 
+# Changelog
+
+All notable changes to SmrtPad are documented in this file.
+
 ## [Unreleased]
 
 ### Added
-- **InkService** — new `SmrtPad/Services/InkService.cs` implementing `IInkService.RecognizeAsync`; uses `InkAnalyzer` (when `FeatureFlags.IsEnabled(InkAnalytics)`) for structured line/word recognition, falling back to `InkRecognizerContainer` for legacy handwriting recognition; drawing strokes filtered out via `InkAnalysisNodeKind.InkDrawing` stroke-id set
-- **Ink overlay canvas** — `DocumentTab.InkOverlay` (`Canvas` with semi-transparent yellow tint, `AutomationId="InkOverlay"`) added to each tab's `EditorContainer`; toggled visible/collapsed by `SetInkMode`; `IsInkModeActive` property on `DocumentTab` guards pointer event routing
-- **Ink stroke management on `DocumentTab`** — `StartInkStroke`, `AppendInkPoint`, `CompleteInkStroke`, `CancelInkStroke`, `GetInkStrokes`, and `ClearInk` methods; committed strokes persisted as `InkStroke` objects built via `InkStrokeBuilder`; live strokes rendered as `Polyline` children on `InkOverlay`
-- **Ink pointer event handlers** — `InkOverlay_PointerPressed`, `InkOverlay_PointerMoved`, `InkOverlay_PointerReleased`, `InkOverlay_PointerCanceled` wired up in `MainWindow`; pointer capture ensures complete strokes even when the pointer leaves the canvas
-- **`✏️ Ink` toggle menu item** — `InkModeToggle` `ToggleMenuFlyoutItem` added to the View menu (`MainWindow.xaml`) with `AutomationId="InkModeToggle"`
-- **`Ctrl+Shift+R` keyboard accelerator** — `RecognizeInk_Invoked` handler triggers `InkService.RecognizeAsync` on the active tab's committed strokes and inserts the recognised text at the caret
-- **`TextChunker.TruncateToTokens`** — new static method that truncates a string to `maxTokens` estimated tokens using the same 4-chars-per-token heuristic as `ChunkByParagraph`; used by `ConcreteFoundryModelAdapter` to cap prompt length before model inference
-- **`PreloadNativeOrtDlls`** — new `private static` method in `App.xaml.cs` that calls `NativeLibrary.TryLoad` for `onnxruntime_providers_shared.dll`, `onnxruntime.dll`, and `onnxruntime-genai.dll` from the AI assembly directory before the `AIAssemblyLoadContext` is created; prevents Windows App Runtime's ORT 1.23 from being found on the activation-context search path ahead of the required ORT 1.24 copy, which caused a CUDA EP vtable mismatch and `0xC0000005` access violation during model load
-- **`Microsoft.ML.OnnxRuntimeGenAI` v0.12.2** — added to `Directory.Packages.props` and referenced directly in `SmrtPad.AI.csproj` so MSBuild targets copy `onnxruntime-genai.dll` to the output directory (the `.Foundry` variant does not ship this native asset)
-- **`UpToDateCheckInput/Output` items in wapproj** — `SmrtPad.AI.dll` tracked as an `AIPlugin` input/output set so the WAP fast up-to-date check correctly detects when the AI plugin is rebuilt and `CopySmrtPadAiOutputs` fires
-- **Publish profiles in wapproj** — `Properties\PublishProfiles\win-ARM64.pubxml` and `win-x64.pubxml` added as `Content` items
-- **`SmartSidebarExecutionTimedOut`** — new resource string (`"AI initialization timed out. Try reopening the sidebar to retry."`) added to all 9 locale files
+- **ModelSizeSelector** (`SmrtPad.AI/ModelSizeSelector.cs`) — selects the best Foundry Local model alias and context-token limit at runtime based on probed GPU VRAM or available system RAM; ordered preference list from `phi-4-mini-reasoning` down to `qwen2.5-0.5b`; GPU/CPU headroom factors prevent OOM; context window scales proportionally to free headroom and is clamped to 512–16 384 tokens
+- **ResponseCleaner** (`SmrtPad/Helpers/ResponseCleaner.cs`) — post-processes LLM output to strip preamble lines, code-fence delimiters, closing remarks ("Let me know if…"), and reasoning-leak lines emitted by thinking models; applied automatically before text is inserted into the document or displayed in the sidebar
+- **SidebarChatEntry** (`SmrtPad/Controls/SidebarChatEntry.cs`) — INPC chat-message model carrying role, text, streaming flag, thinking text, thinking-phase flag, and thinking-label; backed by `SetField` to minimise PropertyChanged noise
+- **SidebarChatTemplateSelector** (`SmrtPad/Controls/SidebarChatTemplateSelector.cs`) — `DataTemplateSelector` that routes `SidebarChatRole.User` entries to a user-bubble template and all other entries to an assistant-bubble template
+- **NonEmptyStringToVisibilityConverter** (`SmrtPad/Converters/NonEmptyStringToVisibilityConverter.cs`) — one-way converter; `Visibility.Visible` when string is non-empty, `Visibility.Collapsed` otherwise; used in sidebar thinking-panel binding
+- **DXGI VRAM enumeration** in `HardwareProbeService` — `QueryDxgiVramMb()` uses `CreateDXGIFactory1` P/Invoke and raw vtable dispatch (`IDXGIFactory1::EnumAdapters1`, `IDXGIAdapter1::GetDesc1`) to read `DedicatedVideoMemory` for every adapter; skips Microsoft Basic Render Driver (software adapter)
+- **WMI VRAM fallback** — `QueryWmiVramMb()` falls back to `Win32_VideoController.AdapterRAM` via `System.Management` when DXGI returns zero (some NVIDIA configurations)
+- **Available system RAM query** — `QueryAvailableRamMb()` uses `GlobalMemoryStatusEx` P/Invoke with a GC `GetGCMemoryInfo` fallback; result stored in `AIBackendCapability` and used by `ModelSizeSelector`
+- **Freeform chat prompt** — `PromptTemplates.FreeformChat(message)` routes open-ended user questions directly to the model with an explicit writing-assistant persona and clean-output instructions
+- **Skill-key routing in AIDispatcher** — `StreamResponseAsync` now accepts a `skillKey` string and builds the final prompt internally via `PromptTemplates`; callers no longer format prompts themselves
+- **New i18n strings** across all 9 locales — `SmartSidebarSummarize`, `SmartSidebarToneRewrite`, `SmartSidebarNewSession`, `SmartSidebarApplySkill`, `SmartSidebarSkillPlaceholder`, `SmartSidebarThinkingLabel`, `SmartSidebarThinkingDoneLabel`
+- `InternalsVisibleTo SmrtPad.AI.Tests` added to `SmrtPad.AI.csproj` so `ModelSizeSelector` internal methods are reachable from tests
 
 ### Changed
-- **`ConcreteFoundryModelAdapter.DefaultModelAlias`** — changed from `"phi-3.5-mini-instruct"` to `"phi-3.5-mini"` to match the catalog alias used by Foundry Local 0.9.0
-- **`ConcreteFoundryModelAdapter.MaxContextTokens = 3072`** — prompt passed to `SendAsync` is now truncated to 3 072 estimated tokens before sending; keeps peak KV-cache RAM well under 1 GB while covering all realistic editor operations
-- **`ConcreteFoundryModelAdapter.GetModelAsync`** — `GetCatalogAsync` and `GetModelAsync` now chain `.WaitAsync(ct)` so cancellation is propagated through the Foundry SDK's `ValueTask`/`Task` calls
-- **`ConcreteFoundryModelAdapter` GPU variant selection** — `SelectPreferredVariant` now matches on `DeviceType.GPU` exactly (was `!= DeviceType.CPU`), avoiding ambiguous matches on future device types
-- **`ConcreteExecutionProviderCatalogAdapter.ProbeFoundryGpuAsync`** — GPU probe now has two stages: (1) Windows AI `ExecutionProviderCatalog` checked first with `COMException`/`InvalidOperationException` silently swallowed on failure; (2) NVIDIA CUDA driver detected via `nvcuda.dll` presence in `System32` (`HasCudaDriver()`); returns `Available` if either check passes, `Unavailable` otherwise (replaces the previous error-return on catalog exceptions)
-- **`AIDispatcherFactory.CreateFoundryModelAdapterAsync`** — GPU adapter creation is now attempted first when `target == FoundryLocalGpu`; on `FoundryLocalException` or `InvalidOperationException` it falls through to a CPU adapter, providing automatic GPU→CPU fallback
-- **`SmartSidebar` initialization timeout** — `InitializeDispatcherAsync` now creates a 30-second linked `CancellationTokenSource` via `CreateLinkedTokenSource`; `OperationCanceledException` is split into two cases: sidebar-closed cancellation (silent) vs. timeout-fired-while-open (shows `SmartSidebarExecutionTimedOut` banner)
-- **`ResourceHelper.GetString` exception filter** — changed `catch (COMException ex) when (…)` to `catch (Exception ex) when (…)` to handle CsWinRT marshalling `winrt::hresult_error` as `System.Exception` for HRESULTs outside its well-known mapping
-- **`SmrtPad.csproj` self-contained build** — conditional `<RuntimeIdentifier>` and `<SelfContained>true</SelfContained>` properties added for VS 2026 debug sessions where `DOTNET_ROOT` is set to the app directory, ensuring the .NET runtime is co-located with the executable
-- **`SmrtPad.Tests.csproj` roll-forward** — `<RollForward>LatestPatch</RollForward>` added so the test project picks up the latest in-band .NET 10 patch without requiring an explicit SDK pin
-- **`deploy.ps1` pre-install removal** — `Get-AppxPackage -Name 'JohnDonnelly.SmrtPad'` followed by `Remove-AppxPackage` is now executed before `Add-AppxPackage`; prevents `0x80073CFB` failures when the version number is unchanged but the package contents differ (e.g. different signing certificate or a rebuild without a version bump)
-
-### Added
-- **GrammarFixSkill** — new AI skill in `SmrtPad.AI/Skills/GrammarFixSkill.cs` that streams grammar-corrected text for the current editor selection via `AIDispatcher`
-- **ShortenSkill** — new AI skill in `SmrtPad.AI/Skills/ShortenSkill.cs` that streams a condensed rewrite of the selection
-- **AutoCompleteSkill** — new AI skill in `SmrtPad.AI/Skills/AutoCompleteSkill.cs` that streams an inline continuation from the text before the caret; `MainWindow.GetCurrentParagraphTextBeforeCaret()` extracts the paragraph text up to the caret position for the prompt
-- **Grammar Fix section** in `SmartSidebar` — `GrammarFixButton` / `StopGrammarFixButton` / `ApplyGrammarFixButton`; connected via `ApplyGrammarFix` callback delegate; all labels localised
-- **Shorten section** in `SmartSidebar` — `ShortenButton` / `StopShortenButton` / `ApplyShortenButton`; connected via `ApplyShortenRewrite` callback delegate; all labels localised
-- **Auto-Complete section** in `SmartSidebar` — `AutoCompleteButton` / `StopAutoCompleteButton` / `ApplyAutoCompleteButton`; reads text before caret via `GetTextBeforeCaret` callback; "Insert into document" apply button; all labels localised
-- **`AIDispatcherAvailability` / `AIBackendAvailability` / `AIBackendAvailabilityStatus`** — new types in `SmrtPad/Services/AIDispatcherAvailability.cs` that capture the structured backend-probe result; `AIBackendAvailability.IsUsable` indicates whether a backend can still be initialised; exposed on `IAIDispatcher` as `Availability` property and implemented in `AIDispatcherProxy`
-- **Initialization status banner** in `SmartSidebar` — `InitializationStatusText` block shows localised "Checking…", "Ready on {0}", package-identity-required, unsupported, and error states based on `AIDispatcherAvailability`; `SmartSidebar_Loaded` kicks off `InitializeDispatcherAsync` on first load
-- **Responsible AI notice** — persistent `SmartSidebarResponsibleAiNotice` string displayed below AI output text blocks in all sections
-- **`AIBackendCapability`** — new result type returned by `IHardwareProbeService.ProbePhiSilicaAsync` and `ProbeFoundryGpuAsync`; carries `BackendName`, `AIBackendAvailabilityStatus`, `DiagnosticCode`, and `DiagnosticMessage`; `IsUsable` convenience property
-- **`HardwareProbeResult`** — new record returned by `HardwareProbeService.DetectAsync`; contains `PhiSilica: AIBackendCapability`, `FoundryGpu: AIBackendCapability`, `SelectedTarget: AIExecutionTarget`, and a static `Uninitialized` sentinel; replaces the previous `AIExecutionTarget` return type
-- **Token-frequency semantic search** — `SemanticSearchService` replaced embedding-based cosine similarity with a local TF-weighted cosine similarity over token frequency vectors, eliminating the dependency on `GenerateEmbeddingAsync`; index entries now store `Dictionary<string, int>` token frequencies instead of `float[]` embeddings; persistence format updated accordingly; new `internal static Tokenize(string)` helper (Unicode letter/digit/apostrophe regex)
-- **`Microsoft.AI.Foundry.Local`** / **`Microsoft.AI.Foundry.Local.Core`** NuGet packages — replaced `Microsoft.AI.Foundry.Local.WinML` in `SmrtPad.AI.csproj` and `Directory.Packages.props`; `Core` package added as a direct reference so its MSBuild targets copy `Microsoft.AI.Foundry.Local.Core.dll` to the output directory
-- **`ProbePhiSilicaAsync` / `ProbeFoundryGpuAsync`** — `IHardwareProbeService` interface and `ConcretePhiSilicaModelAdapter` / `ConcreteFoundryModelAdapter` now return `Task<AIBackendCapability>` instead of `Task<bool>`; fine-grained status codes (`Available`, `InstallRequired`, `RequiresPackageIdentity`, `Unsupported`, `Unavailable`, `Error`) replace the binary boolean; `0x80070490` COMException distinguished as `RequiresPackageIdentity`
-- **deploy.ps1 — full remote MSIX pipeline** — script rewritten from a loose `Add-AppxPackage -Register` (local AppX folder) to a complete WinRM-based pipeline: MSBuild Release|x64 build → `Get-OrCreateSigningCertificate` (self-signed PFX in `TestCerts\`) → `signtool sign` → copy `.msix` + cert to remote staging directory via `Copy-Item -ToSession` → `Install-RemoteTrustCertificate` (adds cert to `TrustedPeople`+`Root` stores) → `Install-RemoteMsix` (scheduled task with `LogonType Interactive / RunLevel Highest` bypasses WinRM token restriction for `Add-AppxPackage`) → polls `install.exitcode.txt` → outputs `AUMID=…` to stdout; `-RemoteHost`, `-RemoteUser`, `-RemotePassword`, `-RemoteUserName` parameters added; `New-OptionalCredential` helper handles passwordless sessions; `[System.Security.SecureString]::new()` used for empty PFX password
-- **`FlattenWinUiPageXbfOutputs` MSBuild target** — post-build target in `SmrtPad.csproj` copies `Controls\SmartSidebar.xbf` and `Views\FileBackstageView.xbf` to the output directory root so WinUI 3 `XamlControlsResources` can locate compiled XAML at runtime
-- **20 new Smart Sidebar Pro UI tests** (`SmrtSidebarProUITests`) — `ToneRewrite_Run_ProducesOutput`, `GrammarFix_Run_ProducesOutput`, `Shorten_Run_ProducesOutput`, `AutoComplete_Run_ProducesOutput`, `GrammarFix_NoSelection_ShowsValidationMessage`, `AutoComplete_Cancel_HidesAcceptButton`, `AutoComplete_Accept_IncreasesCharacterCount`; plus `EnsureSidebarOpen`, `SeedSelectedText`, `WaitForNonEmptyText` helpers
-- **`SmartSidebarUITests`** — new test class with `ViewMenu_ContainsSmartSidebarToggle`, `SidebarToggle_FreeTier_ShowsUpsellDialog`, and related tests for toolbar-button toggle
-- **`DotEnvLoader`** — new helper class (`SmrtPad.UITests/Infrastructure/DotEnvLoader.cs`) that walks up from `AppContext.BaseDirectory` to find a `.env` file at the repository root and populates `Environment` variables; called from `AppiumSession`, `SharedAppFixture`, and `DocxDarkModeFixture`
-- **19 new en-US resource strings**: `SmartSidebarGrammarSectionTitle`, `SmartSidebarShortenSectionTitle`, `SmartSidebarAutoCompleteSectionTitle`, `SmartSidebarGrammarFix`, `SmartSidebarShorten`, `SmartSidebarAutoComplete`, `SmartSidebarCancel`, `SmartSidebarSelectionRequired`, `SmartSidebarInitializationPending`, `SmartSidebarExecutionReady`, `SmartSidebarExecutionPackageIdentityRequired`, `SmartSidebarExecutionUnsupported`, `SmartSidebarExecutionUnavailable`, `SmartSidebarResponsibleAiNotice`, `SmartSidebarApplyGeneratedText`, `SmartSidebarInsertGeneratedText`; mirrored to all 8 additional locale files
-
-### Changed
-- **`SmartSidebar_Loaded` / `SmartSidebar_Unloaded`** — lifecycle events added; `_initializationTask` is started on first load and cancelled/cleared on unload
-- **`AppiumSession.App` capability** — `AddAdditionalAppiumOption("app", …)` replaced with `remoteOptions.App = appPath` to comply with Appium .NET client v6 which rejects the `"app"` capability key via the additional-options path
-- **`SharedAppFixture.DeployPackageAndGetAppId()`** — path corrected from 4× `..` to 5× `..` relative to `AppContext.BaseDirectory` so `deploy.ps1` is correctly located from `bin\x64\Debug\net10.0-windows10.0.19041.0\`; visibility changed from `private static` to `internal static` for reuse by `DocxDarkModeFixture`
-- **`DocxDarkModeFixture`** — rewritten to call `SharedAppFixture.DeployPackageAndGetAppId()` and launch via `launchViaAppId: true` with the DOCX as the activation argument; remote machine settings (theme preference) are now patched and restored via WinRM PowerShell; local `File.WriteAllText` on the settings path removed
-- **`HardwareProbeService.DetectAsync`** — return type changed from `AIExecutionTarget` to `HardwareProbeResult`; delegates to `ProbePhiSilicaAsync` and `ProbeFoundryGpuAsync`; target selection logic updated to use `IsUsable`
-- **`AIDispatcher.ProbeResult`** — now typed as `HardwareProbeResult` (was anonymous/dynamic)
-- **`AIDispatcherFactory`** — `IsNpuAvailableAsync` renamed to `ProbePhiSilicaAsync`; `IsGpuAvailableAsync` renamed to `ProbeFoundryGpuAsync`; both return `Task<AIBackendCapability>`
-- **`Package.appxmanifest`** — `MaxVersionTested` updated to `10.0.26226.0`; `systemai` added to `IgnorableNamespaces`; description shortened to "Windows 11"
-- **`WindowsAppSDK`** updated from `1.8.260209005` to `1.8.260317003`
+- **SmartSidebar redesigned** — replaced seven independent per-skill accordion sections with a unified chat-bubble UI; skills are selected via a `ComboBox` dropdown (`SkillDropdown`) and dispatched through a single `ApplySkillButton_Click`; chat history rendered in a `ListView` of `SidebarChatEntry` items using `SidebarChatTemplateSelector`; thinking/reasoning panel shown as a collapsible `Expander` during model inference
+- **Tone toggle** is now hidden until the `tone-professional` skill is selected, eliminating clutter for all other skills
+- **AIDispatcherFactory** model-factory delegate signature changed to `Func<AIExecutionTarget, HardwareProbeResult, CancellationToken, Task<ILanguageModelAdapter>>`; `HardwareProbeResult` carries the probed `AIBackendCapability` through to `CreateFoundryModelAdapterAsync` which feeds it to `ModelSizeSelector`
+- **ConcreteFoundryModelAdapter** — `MaxContextTokens` constant removed; context window is now an instance field set at construction from the hardware-selected value; `ResolveModelAlias` removed; `alias` and `maxContextTokens` are passed into `CreateAsync` from `ModelSizeSelector`
+- **Prompt templates hardened** — all six skill prompts (`Rewrite`, `GrammarFix`, `Shorten`, `AutoComplete`, `OcrFallback`, and the existing `Summarize`/`Tone` prompts) now open with an explicit "You are a writing assistant" persona and instruct the model to return only the result with no preamble or labels, reducing unwanted boilerplate in output
+- **`AllowUnsafeBlocks` enabled** in `SmrtPad.AI.csproj` to support DXGI vtable P/Invoke
+- `System.Management` v9.0.7 added to `Directory.Packages.props` and referenced in `SmrtPad.AI.csproj`
+- `SmrtPad.slnx` platform mappings updated — `SmrtPad.AI` and `SmrtPad.AI.Tests` explicit overrides removed (inherit solution defaults); `SmrtPad.Tests` and `SmrtPad.UITests` gain explicit ARM64/x86 `Build=false` entries
+- **Package publisher** changed from `CN=John_` to certificate thumbprint GUID for code-signing
 
 ### Fixed
-- **`ConvertTo-SecureString ''` in PowerShell 5** — replaced with `[System.Security.SecureString]::new()` to avoid `ParameterBindingValidationException`
-- **signtool "Missing filename"** — removed `/p7ce DetachedSignedData` and `/p ''` from the signtool command; passwordless PFX does not require `/p`
-- **`Add-AppxPackage` `0x80070005` Access Denied over WinRM** — `Install-RemoteMsix` rewrote install logic using `Register-ScheduledTask` with `LogonType Interactive / RunLevel Highest` principal so `Add-AppxPackage` runs under a full interactive user token
-- **UI tests all skipping** — two root causes fixed: (1) `DeployPackageAndGetAppId` path off-by-one (`4×` → `5× ..`), (2) `AddAdditionalAppiumOption("app", …)` rejected by Appium client v6 (`System.ArgumentException: already an option for appium:app`)
+- **File backstage navigation hover** — removed `_suppressSelectionEvent` workaround that set `Nav.SelectedItem` on hover, which caused subsequent clicks to not fire `SelectionChanged`; backstage pane now previewed on `PointerEntered` without touching the selection
 
-## [1.0.0-rc.1] — 2026-03-10
+### Refactored
+- `IAIDispatcher` and `AIDispatcherProxy` updated to match the new `skillKey` parameter on `StreamResponseAsync`
 
-### Added
-- **Smart Sidebar (Pro)** — `SmartSidebar` UserControl with Summarize, Tone-shift, Rewrite, Semantic Search, and OCR drop-zone sections; loaded at runtime via `AssemblyLoadContext` for Pro tier only
-- **IAIDispatcher / AIDispatcherProxy** — ALC boundary interface and proxy for safe Pro-only AI assembly loading
-- **AssemblyLoadContext guard** — `SmrtPad.AI.dll` loaded only when `FeatureFlags.IsEnabled(SmartSidebar)` is true; nil-safe in Free tier
-- **Pro upsell dialog** — `ContentDialog` shown when any Pro-gated feature is accessed in Free tier; opens Store page on primary button
-- **AI skills** — `SummarizerSkill`, `ToneShifterSkill`, `AIRewriteSkill`, `ImageOcrSkill` in `SmrtPad.AI/Skills/`; all stream tokens via `AIDispatcher`
-- **TextChunker** — paragraph-and-sentence-boundary chunking with configurable `maxTokens`
-- **SemanticSearchService** — HNSW cosine-similarity embedding index with persistence to `%LOCALAPPDATA%\SmrtPad\semantic_index.bin`
-- **Session restore** — `SessionRestoreService` auto-saves open tabs every 30 s to `%LOCALAPPDATA%\SmrtPad\session.json`; crash-recovery dialog on next launch
-- **MarkdownToRtfConverter** — converts H1–H3, bold, italic, inline code, lists, blockquotes, fenced code, and horizontal rules to RTF
-- **Opt-in crash telemetry** — first-launch consent dialog; writes structured JSON to `%LOCALAPPDATA%\SmrtPad\crashes\`; notifies WER via `WerReportFault`
-- **Empty-state placeholder** — shown when no tabs are open; New document and Open file quick-action buttons
-- **Find/Replace accessibility** — `AutomationProperties.Name` labels added to all Find/Replace text boxes for Narrator
-- **`CrashTelemetryEnabled` / `CrashTelemetryConsentAsked`** — new settings persisted in `settings.json`
-- **Package.appxmanifest** — configured for Store submission: `JohnDonnelly.SmrtPad` identity, `Windows.Desktop` min `10.0.22000.0`, file-type associations (`.rtf`, `.txt`, `.md`), `smrtpad.exe` execution alias
-- **Localization** — Phase 8 crash-telemetry, Pro/AI badge, and UI-polish strings added to all 9 locale `resw` files
-
-### Removed
-- **x86 platform** — removed from `SmrtPad.csproj` and WAP project; AI NuGet packages do not ship x86 binaries
-
-### Performance
-- Deferred post-launch work (license init, session restore, file open) to a background task to reduce UI-thread blocking on cold-start
-- Lazy validation of recent-files MRU list (deferred until first access)
+---
 
 ### Added
-- **`QuickAccessNewButton` automation ID** — quick-access toolbar New button now carries a stable `AutomationProperties.AutomationId="QuickAccessNewButton"` so UI automation tests can target it without relying on localized text
-- **`ClearFormattingButton` automation ID** — Clear Formatting ribbon button now carries `AutomationProperties.AutomationId="ClearFormattingButton"` replacing the previous ambiguous `Name="Clear Formatting"` lookup
-- **Edit menu stable automation IDs** — all five Edit menu items now carry `AutomationId`: `CutMenuItem`, `CopyMenuItem`, `PasteMenuItem`, `PasteSpecialMenuItem`, `SelectAllMenuItem`; `MenuBarItem` carries `EditMenuBarItem`
-- **View menu stable automation IDs** — `ZoomInMenuItem` and `ZoomOutMenuItem` carry stable `AutomationId`; `MenuBarItem` carries `ViewMenuBarItem`
-- **`RefreshEditorState()`** — new helper in `MainWindow.xaml.cs` that forces the editor focus, updates selection-length display, refreshes status-bar counts, and re-fires `Editor_SelectionChanged`; called by every clipboard command and formatting command so the ribbon and status bar reflect state immediately after programmatic changes
-- **`RefreshEditorViewportLayout()`** — new helper that calls `UpdateLayout()` on the tab strip, scroll viewer, editor container, page-view border, and editor itself; called by `ApplyZoom()` and `ApplyPageViewLayout()` so zoom and page-view transitions settle synchronously rather than deferring to the next async layout pass
-- **`SharedAppFixture.FindElementByIdOrName()`** — new helper that prefers a stable `AutomationId` lookup and falls back to a `Name`-based lookup, reducing test fragility under localization
-- **`SharedAppFixture.GetMenuAutomationId()` / `GetMenuItemAutomationId()`** — static maps from friendly menu/item names to their stable automation IDs; `ClickMenuItem()` now routes through these helpers
-
-### Changed
-- **`ApplyZoom()`** — now calls `RefreshEditorViewportLayout()` after applying the scale transform and ruler redraw to ensure bounds settle before the next UIA query
-- **`ApplyPageViewLayout()`** — now calls `RefreshEditorViewportLayout()` after adjusting the editor and page-view border
-- **`Bold_Click`, `Italic_Click`, `Underline_Click`, `Strikethrough_Click`, `Subscript_Click`, `Superscript_Click`** — each now calls `RefreshFormattingState()` after applying the character format so toggle states and status-bar counts are deterministic
-- **`ClearFormatting_Click`** — now calls `RefreshFormattingState()` before `UpdateStatus` so cleared-format toggle states are reflected immediately
-- **`Cut_Click`, `Copy_Click`, `Paste_Click`, `PasteSplitButton_Click`, `PasteAsPlainTextAsync`, `PasteSpecial_Click`, `SelectAll_Click`** — each now calls `RefreshEditorState()` after its operation
-- **`TabManagementUITests.CloseActiveTab()`** — switched from a generic `Close` element name search to keyboard `Ctrl+W` against the active editor, removing dependency on a non-unique element name
-- **`TabManagementUITests.FindQuickAccessNewButton()`** — new helper replaces inline `FindElement(MobileBy.Name("New"))` calls with `AccessibilityId("QuickAccessNewButton")`
-- **`TabManagementUITests.FindUntitledTabs()`** — new helper scopes `Name("Untitled")` searches inside the `DocumentTabs` container, preventing false matches outside the tab strip
-- **`TabManagementUITests.NewButton_CreatesNewTab_PreviousTabStillExists`** — replaced `Assert.True(tabsAfter.Count > countBefore)` with a deterministic count assertion
-- **`FormattingFunctionalUITests` Clear Formatting tests** — three tests switched from `MobileBy.Name("Clear Formatting")` to `MobileBy.AccessibilityId("ClearFormattingButton")`
-- **`SharedAppFixture.ClickMenuItem()`** — now calls `FindElementByIdOrName()` for both the menu bar item and the flyout item, falling back gracefully to name-based search when the ID is not mapped
-
-### Added
-- **Keyboard shortcuts** — `Ctrl+F` programmatically opens the Find flyout (`OpenFind_Invoked`); `Ctrl+H` opens the Replace flyout (`OpenReplace_Invoked`); `F3` triggers Find Next; `Ctrl+D` duplicates the current line or selection (`DuplicateLineOrSelection`) with status feedback
-- **Zoom slider** — `Slider` control (Minimum=10, Maximum=500, StepFrequency=10) added to the status bar, two-way bound to `ViewModel.ZoomLevel`; `ZoomSlider_ValueChanged` snaps to nearest 10% step and calls `ApplyZoom()`
-- **Zoom text-entry box** — `ZoomPercentBox` `TextBox` in status bar accepts a typed percentage; validated on `Enter` (KeyDown) and LostFocus via `ApplyZoomFromPercentBox`; clamped to 10–500%
-- **Format → Paragraph dialog** — consolidated `ContentDialog` accessible from Format > Paragraph…; reads `ITextParagraphFormat` on open and writes back on OK: alignment (ComboBox), left/right/first-line indents (NumberBox, inches), line spacing (NumberBox), space before/after (NumberBox, pt); `AutomationId="FormatParagraphDialog"`
-- **Status bar independent show/hide** — `StatusBarToggle` `ToggleMenuFlyoutItem` in View menu independently shows/hides the status bar without affecting the ribbon; state persisted via `SettingsService.ShowStatusBar`
-- **Paste Special format selector dialog** — `PasteSpecial_Click` now opens a `ContentDialog` (`AutomationId="PasteSpecialDialog"`) with three `RadioButton`s — Rich Text (RTF), Unformatted Text, HTML Format — enabled/disabled based on actual clipboard availability; RTF pasted via `SetText(TextSetOptions.FormatRtf, ...)`
-- **Paste SplitButton** — ribbon Paste button upgraded from `Button` to `SplitButton` (`AutomationId="PasteSplitButton"`); primary click = rich paste `Selection.Paste(0)`; secondary dropdown offers "Paste Plain" (plain-text insert via `PasteAsPlainTextAsync`) and "Paste Special…"
-- **Points & Picas measurement units** — `RulerHelper.GetPixelsPerUnit` extended with `"pt"` (96/72 px/unit) and `"pc"` (16 px/unit) cases; Options dialog Measurement Units dropdown adds Points and Picas entries alongside Inches and Centimeters
-- **Word wrap "Wrap to Ruler" mode** — third wrap mode added: editor `TextWrapping` = Enabled but column width clamped to a 6.5-inch ruler column (`ApplyWordWrapMode("WrapToRuler")`); View > Word Wrap is now a three-item submenu (No Wrap / Wrap / Wrap to Ruler) with per-item `AutomationId`; mode persisted as `SettingsService.WordWrapMode`
-- **Send by email** — backstage "Send by Email…" `NavigationViewItem` (`NavSendEmail`, `AutomationId="NavSendEmail"`) fires `SendEmailRequested` → `SendEmail_Click` → `Launcher.LaunchUriAsync(new Uri("mailto:?subject=…"))` using the default mail client
-- **Accessibility improvements** — `AutomationProperties.LiveSetting="Polite"` on `StatusText` and `WordCountText` so Narrator announces updates; `FontColorIndicator` and `HighlightColorIndicator` receive a static `AutomationProperties.Name` plus dynamic `AutomationPeer.SetName(…)` on every color change; `AutomationId` added to `PasteSplitButton`, `FindButton`, `ReplaceButton`, `ZoomSlider`, `ZoomPercentBox`, all three word-wrap sub-items, `StatusBarToggle`, and all Paste Special dialog controls
-- **`ISettingsService` / `SettingsService`** — added `ShowStatusBar` (default `true`) and `WordWrapMode` (default `"Wrap"`) properties; both persisted to `settings.json` and round-trip correctly
-- **37 new resource strings** added to all 9 locale files: `StatusDuplicatedLine`, `StatusDuplicatedSelection`, `ZoomSliderAccessibleName`, `ZoomPercentBoxAccessibleName`, 9 `ParagraphDialog*` keys, `StatusBarToggle.Text`, `StatusStatusBarShown`, `StatusStatusBarHidden`, 5 `PasteSpecial*` keys, `PastePlainRibbonLabel.Text`, `PasteSpecialRibbonItem.Text`, `OptionsRulerPoints`, `OptionsRulerPicas`, `WordWrapOffItem.Text`, `WordWrapWrapItem.Text`, `WordWrapToRulerItem.Text`, `SendEmailMenuItem.Text`, `SendEmailSubject`, `StatusEmailSent`, `BackstageSendEmailDesc`, `FontColorIndicatorName`, `HighlightColorIndicatorName`
-- **26 unit tests** (`NewFeatureTests.cs`) covering: `ZoomLevel`/`ZoomDisplay` defaults, `ZoomIn`/`ZoomOut` increments and boundary clamping, `ShowStatusBar` persistence round-trip, `RulerHelper` Points/Picas at 100% and scaled zoom, `WordWrapMode` default and all three-mode persistence
-- **13 Appium UI tests** (`NewFeatureUITests.cs`) covering: `Ctrl+F` opens Find flyout, `Ctrl+H` opens Replace flyout, `Ctrl+D` duplicates selection, `ZoomSlider`/`ZoomPercentBox` presence in status bar, Format→Paragraph dialog opens, StatusBar toggle hides/shows, PasteSpecial dialog opens, PasteSplitButton presence, Send by Email backstage item, `FontColorIndicator`/`HighlightColorIndicator` `AutomationId`, `ZoomSlider` accessible name
-- **Format → Font dialog** — new consolidated dialog (Format > Font...) that sets font family, size, style (bold/italic), effects (underline/strikethrough/subscript/superscript with mutual exclusion), and character color in one place — matching WordPad's Format > Font; reads current selection state on open, writes back on OK
-- **Format menu** — new "Format" menu bar item between View and Macro containing the Font... command
-- **"No Highlight" button** — added a "No Highlight" / Remove Highlight entry to the text highlight color flyout, allowing users to remove background highlighting from selected text
-- **30 unit tests** (`FontFormattingUpgradeTests.cs`) covering: ColorHelper hex parsing for all swatch colors (12 tests), remove highlight transparency verification (3 tests), Format > Font dialog ViewModel state management (15 tests)
-- **22 Appium UI tests** (`FontFormattingUpgradeUITests.cs`) covering: font-color indicator from color picker (3 tests), No Highlight button presence and functionality (4 tests), Format > Font dialog controls, state reading, formatting application, and cancel behavior (15 tests)
-- **10 new resource strings** added to all 9 locale files: `NoHighlightButton`, `FormatMenu`, `FormatFontMenuItem`, `FontDialogTitle`, `FontDialogFamily`, `FontDialogSize`, `FontDialogStyleHeader`, `FontDialogEffectsHeader`, `FontDialogColorHeader`, `StatusFontApplied`
-
-### Fixed
-- **Font-color indicator not updating from color picker** — moved `FontColorIndicator.Fill` update into `ApplyTextColor` so both swatch clicks and the `ColorPicker` control update the color-indicator rectangle; previously only swatches updated it, leaving the indicator stale when the picker was used
-- **Highlight-color indicator not updating from color picker** — applied the same fix to `ApplyHighlightColor` and `HighlightColorIndicator` for consistency
-
-### Added
-- **28 file-management tests** (`FileManagementUpgradeTests.cs`) covering:
-  - `HtmlConverterHelperTests` — 12 tests: null/empty input, BR tag conversion, list item bullet conversion, HTML entity decoding, blank-line collapse, empty/null HTML output, special character encoding, single-line-break-to-BR, round-trip fidelity
-  - `OdtImportExportTests` — 13 tests: ODT entry creation, mimetype validation, null/read-only stream guards, empty text export, content paragraph verification, DOCX/ODT text extraction, ODT-to-RTF null guard and fallback, font/color table presence
-  - `SettingsServiceRecentFilePruningTests` — 8 tests: missing-file pruning, duplicate removal, empty-path guard, MRU reorder-to-top, clear all, page setup defaults, page setup persistence round-trip, max-10 limit enforcement
-
-### Changed
-- **Word wrap menu upgraded to three-mode submenu** — View > Word Wrap changed from a binary `ToggleMenuFlyoutItem` to a `MenuFlyoutSubItem` with three items: No Wrap / Wrap / Wrap to Ruler; mode stored as `SettingsService.WordWrapMode` (`"Off"` / `"Wrap"` / `"WrapToRuler"`)
-- **Paste button upgraded to SplitButton** — primary action unchanged (rich paste via `Selection.Paste(0)`); dropdown adds "Paste Plain" (plain-text insert) and "Paste Special…" options; `PastePlain_Click` now delegates to `PasteAsPlainTextAsync`
-- **FileBackstageView event replaced** — `PageSetupRequested` event removed; `SendEmailRequested` event added (13 events total); `NavPageSetup` backstage item retained for display only; `NavSendEmail` item added
-
-### Fixed
-- **Blank tabs no longer show save dialog on close** — Added `_suppressTabModified` flag
-- **Last tab close now closes the application** — `DocumentTabs_TabCloseRequested` now calls `Close()` instead of creating a new blank tab when the last tab is closed; the `AppWindow.Closing` handler is unhooked to prevent re-entrance
-- **File backstage hover shows pane** — `FileBackstageView` now separates pane display from action execution; `PointerEntered` handlers on each `NavigationViewItem` show the relevant content pane (description, template picker, recent files) on hover, while click still executes the action (New, Open, Save, etc.)
-
-### Changed
-- **Tab bar: New always opens a new tab** — `New_Click` now always creates a new tab instead of prompting to save changes on the current tab; save prompts are reserved for tab close and app close only
-- **Tab bar: Open opens file in a new tab** — `Open_Click` and `OpenFileByPathAsync` now open files in a new tab (or reuse the current blank unmodified tab), rather than replacing the current document and prompting to save
-- **Tab header set for all file types** — `OpenStorageFileAsync` now consistently sets `ActiveTab.TabViewItem.Header`, `ActiveTab.IsModified`, and `ActiveTab.Encoding` for all file types (DOCX, ODT, HTML, RTF, TXT); previously only RTF/TXT branches updated the tab header
-- **Save dialog on close iterates all tabs** — `AppWindow_Closing` now checks all tabs for unsaved changes (not just the active tab); when multiple tabs have modifications, each is shown sequentially with its own save prompt, and the user can cancel at any point to abort closing
-- **Backstage Exit uses multi-tab save** — the backstage Exit handler and `Exit_Click` now use `PromptSaveAllTabsAsync` to iterate all modified tabs before closing
-
-### Added
-- **5 new UI tests** for tab and backstage behavior:
-  - New tab via `+` button closes without save dialog
-  - New tab via `New` button closes without save dialog
-  - Last-tab-close with extra tab does not close app
-  - Backstage hover shows correct pane headers
-  - Backstage Exit shows description pane
-- **`BackstageExitDesc` resource string** — added to all 9 locale files
-- **`PromptSaveAllTabsAsync` helper** — new method that iterates all tabs with unsaved changes, switches to each, and prompts save individually; used by `AppWindow_Closing`, `Exit_Click`, and backstage Exit
-
-### Added
-- **41 new production-fix tests** (`ProductionFixTests.cs`) covering:
-  - `Bullets_Click` ViewModel sync and macro recording (`BulletsClickContractTests` — 7 tests)
-  - Macro `SetAlignment` playback RTF application and round-trip (`MacroSetAlignmentPlaybackTests` — 7 tests)
-  - Debug logging removal verification (`AppDebugLoggingRemovedTests` — 3 tests)
-  - Full macro command coverage across all 15 command types (`MacroHelperFullCommandCoverageTests` — 20 tests)
-  - Resource management contracts (`MainWindowResourceManagementTests` — 4 tests)
-
-### Fixed
-- **Dark Mode DOCX text visibility** — Fixed an issue where `.docx` files loaded in Dark Mode appeared with invisible black text; `NormalizeDocumentColorsForTheme` now iterates through the document's character formatting runs to reset any text that explicitly uses the unreadable wrong-default colour (e.g. black in dark mode) while safely preserving intentional custom text colours throughout the rest of the document.
-- **`Bullets_Click`** — now calls `ViewModel.SetListType()`
-- **Macro `SetAlignment` playback** — `ExecuteMacroCommand` now applies the alignment directly to the RTF document's paragraph format in addition to updating the ViewModel; previously only `ViewModel.SetAlignment()` was called, so replaying a recorded alignment macro had no visible effect
-- **`App.xaml.cs` debug logging** — removed leftover `System.IO.File.WriteAllText/AppendAllText` calls that wrote `SmrtPad_App_Startup.log` to `%TEMP%` on every application launch; startup diagnostics are not appropriate for production builds
-- **Auto-save timer not stopped on close** — `MainWindow.Closed` event now stops `_autoSaveTimer` to prevent the timer from firing after the window is closed
-- **`ViewModel.PropertyChanged` handler leak** — handler is now stored in `_docTitleHandler` field and unsubscribed in `Closed` event; prevents secondary windows from keeping a live reference on the shared ViewModel singleton after close
-- **Silent auto-save error** — replaced empty `catch {}` in the auto-save timer tick with `catch (Exception ex) { Debug.WriteLine(...) }` so failures are visible in diagnostics without interrupting the user
-- **`AppWindow.SetIcon` crash guard** — icon path is now checked with `File.Exists` before calling `SetIcon`, preventing an unhandled exception on launch when the ico asset is absent
-
-### Added
-- **Comprehensive UI test expansion** — expanded UI automation test suite from ~84 to 240 tests across 13 test classes, covering all application features methodically
-  - **EditMenuUITests** (15 tests) — added Delete key, Backspace, Cut/Copy/Paste/Select All via Edit menu items, multiple Redo operations, Copy without selection safety, Paste into existing content
-  - **FindReplaceUITests** (13 tests) — added Match Case filtering, Whole Word filtering, single Replace, Replace All with empty string (deletion), Find wraps around document, empty search box safety, Replace All changes character count
-  - **FileBackstageUITests** (24 tests) — added close via Escape key, navigation to Save/Save As/Print/Export PDF/Export DOCX/OneDrive/Options panels with header verification, multiple template validation, New creates blank document, switching between backstage nav items updates header
-  - **TabManagementUITests** (11 tests) — added Ctrl+W close shortcut, new tab shows "Untitled" title, new tab has empty editor, rapid tab creation/close stress test, formatting state independence between tabs
-  - **ViewMenuUITests** (14 tests) — added Spell Check toggle status messages, Ruler toggle state verification, Focus mode hides status bar and restores it, Page View toggle cycle, Word Wrap toggle preserves content
-  - **FormattingFunctionalUITests** (30 tests) — added Ctrl+B/I/U keyboard shortcut tests, Bold+Italic combination, Clear Formatting resets italic/underline/all formats simultaneously, formatting does not change word/char count
-  - **ParagraphFormattingUITests** (24 tests) — added all remaining list types (lowercase/uppercase letters, lowercase/uppercase Roman), list type switch preserves word count, line spacing 1.15 and 1.5, Heading 2/3/Subtitle/Quote styles, multiple indent levels preserve word count
-  - **StatusBarAndThemeUITests** (16 tests) — added column number update after typing, theme toggle full cycle with distinct theme verification, punctuation word count, newline character count, zoom percent sign validation, partial selection length, empty editor Ln 1/Col 1
-  - **MacroFunctionalUITests** (17 tests) — added italic macro record/playback, Stop menu item safety when not recording, multiple commands in single macro, macro does not change editor content
-  - **EditorInteractionUITests** (23 tests) — added three Enter keys advance line count, Left arrow decreases column, Home key returns to column 1, End key moves to end of line, typing after undo updates word count, Backspace reduces char count, empty editor Ln 1/Col 1, multiple spaces between words, second line accumulates word count
-- **App icon** — `SmrtPad.ico` (16/32/48/256 px, PNG-in-ICO) generated from `SmrtPad.png` and added to `Assets/`; `AppWindow.SetIcon()` called in `MainWindow` constructor so the window, taskbar, and Alt-Tab thumbnail all show the correct icon; all 7 package visual asset slots updated with the new icon image
+- **App icon** — `SmrtPad.ico`
 - **SmrtDoodle install check** — `PaintDrawing_Click` calls `IsSmrtDoodleInstalled()` before launching; checks `%LOCALAPPDATA%\Microsoft\WindowsApps\SmrtDoodle.exe` (Store/MSIX install) and every directory on `PATH`; if not found shows a `ContentDialog` with a **Get from Store** primary button that opens `ms-windows-store://search/?query=SmrtDoodle`; removed the crash-prone built-in fallback drawing dialog (`ShowBuiltInDrawingDialogAsync`)
 - `SmrtDoodleGetFromStore` resource string added to all 9 locale files
 
 ### Changed
-- **UI automation launch robustness** — `AppiumSession` now falls back from MSIX/AUMID activation to direct `SmrtPad.exe` launch when the packaged app fails to start, enabling tests to run in both packaged and unpackaged configurations; diagnostic `Dx` test now skips gracefully (instead of throwing) when the WinAppDriver session cannot start
-- **`SharedAppFixture` helpers improved** — `ClearEditor` and `SelectAllInEditor` prefer Edit-menu clicks over raw keyboard shortcuts; `UndoInEditor` uses multi-strategy element lookup with a clear error when the Undo button is not found
-- **Additional `AutomationProperties.AutomationId` attributes** — status bar elements (`StatusText`, `WordCountText`, `CharCountText`, `SelectionLengthText`, `LineColText`, `EncodingText`, `ZoomText`), `DocumentTabs`, `ReplaceWithTextBox`, and `FileBackstageView.HeaderText`; `DocumentTabs_Loaded` handler sets `AutomationId` on the dynamically-created Add-tab button via `FindDescendantByName<T>`
-- **App startup diagnostics** — `App.xaml.cs` logs key startup events to a temp file during `OnLaunched` to aid debugging of packaged/unpackaged launch issues; `PrimaryLanguageOverride` wrapped in `try/catch(InvalidOperationException)` for unpackaged launches
-- **Custom entry point** — `SmrtPad.csproj` now uses `DefineConstants DISABLE_XAML_GENERATED_MAIN` instead of `Compile Remove="Program.cs"` for better compatibility with the .NET 10 SDK
 - **SmrtDoodle ribbon button** — redesigned to match all other ribbon buttons: `StackPanel` with a 22 px `Image` icon above a `TextBlock "SmrtDoodle"` label; button width reduced 72 → 52, padding corrected to 0; tooltip updated to `"SmrtDoodle - Create A Drawing"`
 - `SmrtDoodleNotFoundMessage` resource updated to reference the Microsoft Store
 - **SmrtDoodle assets** — `Assets/SmrtDoodle.png` and `Assets/SmrtDoodle-LM.png` replaced with new clean icons (no baked-in text)

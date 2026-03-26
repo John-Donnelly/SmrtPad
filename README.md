@@ -1,8 +1,6 @@
 # SmrtPad
 
-> **Version:** 1.0.0-rc.1 · [Microsoft Store](#) *(submission pending)*
-
-A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, AI-powered Pro features, and a full suite of export options.
+A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by Foundry Local / Windows AI APIs.
 
 ## Features
 
@@ -25,16 +23,14 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 
 ### File Operations
 - New, Open (RTF, TXT, DOCX, HTML, ODT), Save, Save As, Print
-- **Save/Save As** supports RTF, TXT, DOCX, ODT, and HTML formats
 - **Export to PDF** — multi-page PDF 1.4 (Helvetica, A4, 72 pt margins)
-- **Export to DOCX** — lossless RTF-to-DOCX via OpenXml AltChunk; import preserves bold, italic, underline, strikethrough, fonts, colors, alignment, page breaks, and embedded images
+- **Export to DOCX** — valid OOXML `.docx` via `ZipArchive` + `XDocument`
 - **Save to OneDrive** — saves via standard file picker to the user's OneDrive folder; guarded with availability check
 - Auto-save to recovery folder for unnamed documents; saves in-place for named documents
-- Recent files list (MRU, max 10, auto-pruned on load) in the backstage
+- Recent files list (MRU, max 10) in the backstage
 
 ### File Backstage
-- WordPad-style backstage for New, Templates, Open, Save, Save As, Print, Export PDF, Export DOCX, OneDrive, Page Setup, Options, and Exit
-- **Page Setup** — paper size (Letter, A4, Legal), orientation (Portrait, Landscape), and custom margins; persisted in settings
+- WordPad-style backstage for New, Templates, Open, Save, Save As, Print, Export PDF, Export DOCX, OneDrive, Options, and Exit
 - **Document Templates** — 5 built-in templates (Blank, Letter, Meeting Notes, To-Do List, Report)
 - Fully opaque overlay that covers the tab strip and editor when open
 
@@ -42,11 +38,17 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 - **SmrtDoodle** ribbon button launches the SmrtDoodle companion drawing app, awaits exit, and inserts the resulting image into the document
 - Pre-launch installation check; if not installed a dialog offers a **Get from Store** button that opens the Microsoft Store search for SmrtDoodle
 
-### Ink Mode
-- **`✏️ Ink` toggle** in the View menu activates a translucent overlay canvas on the active tab
-- Handwriting strokes drawn with mouse, pen, or touch are rendered as live `Polyline` objects on the overlay
-- **`Ctrl+Shift+R`** recognizes committed strokes via `InkService`: uses Windows Ink Analysis (`InkAnalyzer`) when the `InkAnalytics` feature flag is on, falling back to `InkRecognizerContainer`; drawing strokes are excluded from recognition results
-- Recognized text is inserted at the current caret position; the ink overlay is cleared after successful recognition
+### Smart Sidebar (on-device AI)
+- Collapsible AI panel that operates entirely on-device using Windows AI APIs (Phi Silica NPU) or Foundry Local (GPU/CPU)
+- **Chat-bubble UI** — user and assistant messages rendered as distinct bubbles in a scrollable history; real-time token streaming
+- **Thinking/reasoning display** — reasoning tokens emitted between `<think>…</think>` tags shown in a collapsible expander labelled "Thinking…" / "Thought process" once complete
+- **Skill dropdown** — one unified `ComboBox` selects the active skill (Summarize, Professional tone, Rewrite for clarity, Grammar fix, Shorten, Complete at cursor); single **Apply** button dispatches to the correct prompt template
+- **Tone toggle** shown only when the tone skill is active (professional / casual)
+- **Hardware-adaptive model selection** (`ModelSizeSelector`) — probes GPU VRAM via DXGI (WMI fallback) and available system RAM; selects the largest model alias that fits within the hardware budget with headroom; scales the context-token window proportionally (512–16 384 tokens)
+- **ResponseCleaner** strips preamble lines, code-fence delimiters, closing remarks, and reasoning-leak fragments from model output before text is shown or inserted
+- Prompt templates hardened with explicit persona instructions so the model returns clean text only
+- Freeform chat mode for open-ended writing questions and document drafting
+- New-session button clears chat history
 
 ### Macros
 - Macro recording and playback — record a sequence of typing and formatting actions, then replay them; persisted in settings
@@ -71,6 +73,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 - .NET 10 SDK
 - Windows App SDK 1.8+
 - (Optional) [SmrtDoodle](https://www.microsoft.com/store/apps) for in-document drawing
+- (Optional) [Foundry Local](https://aka.ms/foundry-local) or a Copilot+ PC (NPU) for on-device AI features
 
 ## Building
 
@@ -78,7 +81,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
    ```
    git clone https://github.com/John-Donnelly/SmrtPad.git
    ```
-2. Open `SmrtPad.slnx` in Visual Studio 2022 or later (Visual Studio 2026 also supported).
+2. Open `SmrtPad.slnx` in Visual Studio 2022 or later.
 3. Set the platform to **x64** (or ARM64).
 4. Build and run the **SmrtPad (Package)** project for a fully packaged experience, or the **SmrtPad** project for unpackaged debug.
 
@@ -86,9 +89,10 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 
 ```
 dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
+dotnet test SmrtPad.AI.Tests\SmrtPad.AI.Tests.csproj -c Debug -p:Platform=x64
 ```
 
-The test suite has **2,600+ tests** (2,355+ unit/integration + 244 UI automation across 14 classes) covering:
+The test suite covers:
 - ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
 - Alignment, list type, and line spacing for all defined values
@@ -96,25 +100,13 @@ The test suite has **2,600+ tests** (2,355+ unit/integration + 244 UI automation
 - `NewDocument` full state reset
 - `ColorHelper` hex parsing (6-digit, 8-digit, error cases)
 - PDF generation (page count, header content, byte-array structure)
-- DOCX generation (ZIP structure, `word/document.xml` content, paragraph mapping, rich formatting via RTF parser)
+- DOCX generation (ZIP structure, `word/document.xml` content, paragraph mapping)
 - OneDrive availability detection
-- Document import (DOCX, ODT text extraction; DOCX-to-RTF with formatting and images)
-- HTML import/export (tag stripping, entity decoding, paragraph preservation, round-trip)
-- ODT export (valid ODF packages with mimetype, content.xml, manifest)
+- Document import (DOCX, ODT text extraction)
 - Macro recording and playback
-- Settings persistence, concurrency, recent-files MRU, and page setup round-trip
-- Localization — all 9 locales, all 255 resource keys present and non-empty
-- UI automation (WinAppDriver/Appium 2.x) — editor interaction, formatting, tabs, find/replace, file backstage, macros, view menu, paragraph formatting, status bar, zoom behaviour
-- Stable automation IDs on all ribbon toggles, menu items, and quick-access buttons for deterministic UI test addressing
-
-## Performance Notes
-
-Cold-start profiling for `Task 8.2` was captured with Visual Studio 2026 CPU Usage on release-style startup traces.
-
-- **Baseline trace:** startup was dominated by WinUI app initialization (`Microsoft.UI.Xaml.Application.Start` at 52.74% total CPU / 42.38% self CPU), while the app cold path still performed settings construction, license initialization, window setup, and session-restore checks before or during first use.
-- **Current trace after deferrals:** WinUI/XAML startup remains the dominant cost (`Microsoft.UI.Xaml.Application.Start` at 54.67% total CPU / 34.06% self CPU; `Application.LoadComponent` at 7.12%), with app-visible costs reduced to smaller items such as `SettingsService.Load()` (~1.04% total CPU) and title-bar theming (`MainWindow.UpdateTitleBarTheme()` ~1.67% total CPU).
-- **Implemented changes:** `MainWindow` now activates before post-launch license/session/file-open work completes, recent-file validation in `SettingsService` is deferred until the MRU list is needed, and non-critical `MainWindow` setup such as font enumeration and print registration is queued after initial startup.
-- **Status:** the CPU traces confirm the launch-blocking app work was reduced, but an exact `<= 800 ms` first-interactive-frame confirmation still requires a dedicated Timeline pass on the target reference hardware.
+- Settings persistence, concurrency, and recent-files MRU
+- Localization — all 9 locales, all resource keys present and non-empty
+- **AI engine** — `ModelSizeSelector` alias/budget logic, `HardwareProbeService` VRAM/RAM probing, `PromptTemplates` output, `AIDispatcher` skill routing, `ResponseCleaner` output stripping
 
 ## Project Structure
 
@@ -122,14 +114,16 @@ Cold-start profiling for `Task 8.2` was captured with Visual Studio 2026 CPU Usa
 SmrtPad/
 ├── SmrtPad/
 │   ├── Assets/              # App icon (SmrtPad.ico/.png), SmrtDoodle icons
-│   ├── Helpers/             # ColorHelper, DocxAltChunkExporter, DocxImportHelper,
-│   │                        # DocumentImportHelper, DocumentTemplates, HtmlConverterHelper,
-│   │                        # MacroHelper, OdtExportHelper, OneDriveHelper,
+│   ├── Controls/            # SmartSidebar, SidebarChatEntry, SidebarChatTemplateSelector
+│   ├── Converters/          # NonEmptyStringToVisibilityConverter
+│   ├── Helpers/             # ColorHelper, DocxExportHelper, DocumentImportHelper,
+│   │                        # DocumentTemplates, MacroHelper, OneDriveHelper,
 │   │                        # ParagraphStyleHelper, PdfHelper, ResourceHelper,
-│   │                        # RtfHelper, RulerHelper
+│   │                        # ResponseCleaner, RtfHelper, RulerHelper
 │   ├── Models/              # DocumentTemplate
-│   ├── Services/            # DialogService, FileService, InkService, SettingsService
-│   │                        # (+ IDialogService, IFileService, IInkService, ISettingsService)
+│   ├── Services/            # AIDispatcherProxy, DialogService, FileService,
+│   │                        # IAIDispatcher, SettingsService
+│   │                        # (+ IDialogService, IFileService, ISettingsService)
 │   ├── Strings/             # 9 locale .resw files (en-US, de-DE, es-ES, fr-FR,
 │   │                        # ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK)
 │   ├── ViewModels/          # EditorViewModel
@@ -138,26 +132,22 @@ SmrtPad/
 │   ├── MainWindow.xaml.cs   # Code-behind — editor logic, ribbon handlers
 │   ├── App.xaml             # Application resources and ThemeDictionaries
 │   └── App.xaml.cs          # Entry point, DI container, multi-window factory
+├── SmrtPad.AI/
+│   ├── Skills/              # AIRewriteSkill, AutoCompleteSkill, GrammarFixSkill,
+│   │                        # ShortenSkill, SummarizerSkill, ToneShifterSkill
+│   ├── AIDispatcher.cs      # Core streaming dispatcher with skill-key routing
+│   ├── AIDispatcherFactory.cs # DI factory — hardware probing, model selection
+│   ├── ConcreteFoundryModelAdapter.cs  # Foundry Local chat client wrapper
+│   ├── HardwareProbeService.cs # DXGI VRAM + system RAM detection
+│   ├── ModelSizeSelector.cs # Hardware-budget → alias + context-token selection
+│   └── PromptTemplates.cs   # Hardened per-skill prompt templates + FreeformChat
+├── SmrtPad.AI.Tests/        # Unit tests for AI engine components
 ├── SmrtPad (Package)/       # MSIX packaging project
 ├── SmrtPad.Tests/
-│   ├── EditorTests.cs               # ViewModel unit tests
-│   ├── IntegrationTests.cs          # Helper + service integration tests
-│   ├── LocalizationTests.cs         # Locale completeness tests
-│   ├── CoverageCompletionTests.cs
-│   ├── MaxCoverageTests.cs
-│   ├── MaxCoverageTests2.cs
-│   ├── MaxCoverageTests3.cs
-│   ├── MaxCoverageTests4.cs
-│   ├── NewFeatureTests.cs
-│   ├── FontFormattingUpgradeTests.cs
-│   ├── FileManagementUpgradeTests.cs
-│   ├── ProductionFixTests.cs
-│   ├── ReleaseReadinessBehaviorTests.cs
-│   └── Services/
-│       └── InkServiceTests.cs
-├── SmrtPad.UITests/
-│   ├── Infrastructure/          # AppiumSession, SharedAppFixture
-│   └── Tests/                   # 14 WinAppDriver/Appium 2.x test classes (241 tests)
+│   ├── EditorTests.cs       # ViewModel unit tests
+│   ├── IntegrationTests.cs  # Helper + service integration tests
+│   ├── LocalizationTests.cs # Locale completeness tests
+│   └── ResponseCleanerTests.cs # ResponseCleaner unit tests
 ├── README.md
 └── CHANGELOG.md
 ```
