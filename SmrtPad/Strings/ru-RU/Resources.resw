@@ -1054,6 +1054,12 @@
   <data name="SmartSidebarToggle.Text" xml:space="preserve">
     <value>Умная панель</value>
   </data>
+    <data name="SmartSidebarSummarize" xml:space="preserve">
+    <value>Summarize</value>
+  </data>
+  <data name="SmartSidebarToneRewrite" xml:space="preserve">
+    <value>Professional tone</value>
+  </data>
   <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
     <value>Rewrite for clarity</value>
   </data>
@@ -1100,7 +1106,6 @@
   <data name="SessionRestoreDiscard" xml:space="preserve">
     <value>Отменить</value>
   </data>
-
   <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
   <data name="CrashTelemetryTitle" xml:space="preserve">
     <value>Помогите улучшить SmrtPad</value>
@@ -1114,7 +1119,6 @@
   <data name="CrashTelemetryDecline" xml:space="preserve">
     <value>Нет, спасибо</value>
   </data>
-
   <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
   <data name="SmartSidebarTitle" xml:space="preserve">
     <value>✨ Умная боковая панель</value>
@@ -1143,7 +1147,6 @@
   <data name="DocumentOutlineMenuItem" xml:space="preserve">
     <value>📋 Структура документа</value>
   </data>
-
   <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
   <data name="EmptyStateMessage" xml:space="preserve">
     <value>Создайте новый документ или откройте файл</value>
@@ -1178,5 +1181,47 @@
   </data>
   <data name="SmartSidebarApplyGeneratedText" xml:space="preserve">
     <value>Применить к документу</value>
+  </data>
+  <data name="SmartSidebarGrammarSectionTitle" xml:space="preserve">
+    <value>✍️ GRAMMAR</value>
+  </data>
+  <data name="SmartSidebarShortenSectionTitle" xml:space="preserve">
+    <value>📏 SHORTEN</value>
+  </data>
+  <data name="SmartSidebarAutoCompleteSectionTitle" xml:space="preserve">
+    <value>⚡ AUTOCOMPLETE</value>
+  </data>
+  <data name="SmartSidebarGrammarFix" xml:space="preserve">
+    <value>Fix grammar</value>
+  </data>
+  <data name="SmartSidebarShorten" xml:space="preserve">
+    <value>Shorten selection</value>
+  </data>
+  <data name="SmartSidebarAutoComplete" xml:space="preserve">
+    <value>Complete at cursor</value>
+  </data>
+  <data name="SmartSidebarCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+    <data name="SmartSidebarNewSession" xml:space="preserve">
+    <value>New session</value>
+  </data>
+  <data name="SmartSidebarApplySkill" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="SmartSidebarSkillPlaceholder" xml:space="preserve">
+    <value>Choose a skill\u2026</value>
+  </data>
+  <data name="SmartSidebarThinkingLabel" xml:space="preserve">
+    <value>Thinking\u2026</value>
+  </data>
+  <data name="SmartSidebarThinkingDoneLabel" xml:space="preserve">
+    <value>Thought process</value>
+  </data>
+  <data name="SmartSidebarSelectionRequired" xml:space="preserve">
+    <value>Select text or place the caret in text first.</value>
+  </data>
+  <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
+    <value>Insert into document</value>
   </data>
 </root>

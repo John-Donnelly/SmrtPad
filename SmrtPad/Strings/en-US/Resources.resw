@@ -1150,6 +1150,12 @@
     <value>✨ Smrt Sidebar</value>
   </data>
 
+  <data name="SmartSidebarSummarize" xml:space="preserve">
+    <value>Summarize</value>
+  </data>
+  <data name="SmartSidebarToneRewrite" xml:space="preserve">
+    <value>Professional tone</value>
+  </data>
   <data name="SmartSidebarRewriteForClarity" xml:space="preserve">
     <value>Rewrite for clarity</value>
   </data>
@@ -1170,6 +1176,21 @@
   </data>
   <data name="SmartSidebarAutoComplete" xml:space="preserve">
     <value>Complete at cursor</value>
+  </data>
+  <data name="SmartSidebarNewSession" xml:space="preserve">
+    <value>New session</value>
+  </data>
+  <data name="SmartSidebarApplySkill" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="SmartSidebarSkillPlaceholder" xml:space="preserve">
+    <value>Choose a skill…</value>
+  </data>
+  <data name="SmartSidebarThinkingLabel" xml:space="preserve">
+    <value>Thinking…</value>
+  </data>
+  <data name="SmartSidebarThinkingDoneLabel" xml:space="preserve">
+    <value>Thought process</value>
   </data>
   <data name="SmartSidebarCancel" xml:space="preserve">
     <value>Cancel</value>
