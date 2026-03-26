@@ -1,3 +1,4 @@
+using Microsoft.AI.Foundry.Local;
 using Microsoft.Windows.AI;
 using Microsoft.Windows.AI.MachineLearning;
 using System.Runtime.InteropServices;
@@ -88,37 +89,46 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
     {
         ct.ThrowIfCancellationRequested();
 
+        // First: Windows AI ExecutionProviderCatalog (DirectML-backed providers on some systems).
         try
         {
             var catalog = ExecutionProviderCatalog.GetDefault();
             var providers = catalog.FindAllProviders();
-            return Task.FromResult(providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready)
-                ? new AIBackendCapability(
+            if (providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready))
+            {
+                return Task.FromResult(new AIBackendCapability(
                     "Foundry Local GPU",
                     AIBackendAvailabilityStatus.Available,
-                    DiagnosticCode: "READY")
-                : new AIBackendCapability(
-                    "Foundry Local GPU",
-                    AIBackendAvailabilityStatus.Unavailable,
-                    DiagnosticCode: "NO_READY_PROVIDER",
-                    DiagnosticMessage: "No ready GPU execution provider was reported by Windows AI."));
+                    DiagnosticCode: "READY"));
+            }
         }
-        catch (COMException ex)
+        catch (COMException) { }
+        catch (InvalidOperationException) { }
+
+        // Second: NVIDIA CUDA — nvcuda.dll in System32 is present whenever the CUDA driver
+        // is installed. Foundry Local downloads its own CUDA execution provider and does not
+        // rely on the Windows AI catalog, so the catalog returning no ready providers does not
+        // mean CUDA is unavailable.
+        if (HasCudaDriver())
         {
             return Task.FromResult(new AIBackendCapability(
                 "Foundry Local GPU",
-                AIBackendAvailabilityStatus.Error,
-                DiagnosticCode: $"0x{ex.HResult:X8}",
-                DiagnosticMessage: ex.Message));
+                AIBackendAvailabilityStatus.Available,
+                DiagnosticCode: "CUDA_DRIVER",
+                DiagnosticMessage: "NVIDIA CUDA driver detected."));
         }
-        catch (InvalidOperationException ex)
-        {
-            return Task.FromResult(new AIBackendCapability(
-                "Foundry Local GPU",
-                AIBackendAvailabilityStatus.Error,
-                DiagnosticCode: ex.GetType().Name,
-                DiagnosticMessage: ex.Message));
-        }
+
+        return Task.FromResult(new AIBackendCapability(
+            "Foundry Local GPU",
+            AIBackendAvailabilityStatus.Unavailable,
+            DiagnosticCode: "NO_GPU",
+            DiagnosticMessage: "No GPU found via Windows AI catalog or CUDA driver check."));
+    }
+
+    private static bool HasCudaDriver()
+    {
+        var system32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        return File.Exists(Path.Combine(system32, "nvcuda.dll"));
     }
 
     private static bool HasPackageIdentity()
@@ -168,6 +178,16 @@ public sealed class AIDispatcherFactory
 
     private static async Task<ILanguageModelAdapter> CreateFoundryModelAdapterAsync(AIExecutionTarget target, CancellationToken ct)
     {
-        return await ConcreteFoundryModelAdapter.CreateAsync(target, ct).ConfigureAwait(false);
+        if (target == AIExecutionTarget.FoundryLocalGpu)
+        {
+            try
+            {
+                return await ConcreteFoundryModelAdapter.CreateAsync(AIExecutionTarget.FoundryLocalGpu, ct).ConfigureAwait(false);
+            }
+            catch (FoundryLocalException) { }     // GPU model failed to load
+            catch (InvalidOperationException) { } // No GPU variant in catalog
+        }
+
+        return await ConcreteFoundryModelAdapter.CreateAsync(AIExecutionTarget.FoundryLocalCpu, ct).ConfigureAwait(false);
     }
 }

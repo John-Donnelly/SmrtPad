@@ -10,7 +10,11 @@ namespace SmrtPad.AI;
 /// </summary>
 internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
 {
-    private const string DefaultModelAlias = "phi-3.5-mini-instruct";
+    private const string DefaultModelAlias = "phi-3.5-mini";
+    // Caps the prompt length sent to the model. Phi-3.5-mini's 128 K context window
+    // pre-allocates a proportional KV cache in system RAM; 3 072 tokens keeps peak
+    // memory well under 1 GB while covering all realistic editor operations.
+    private const int MaxContextTokens = 3072;
     private static readonly SemaphoreSlim ManagerInitializationLock = new(1, 1);
     private static bool s_managerInitialized;
 
@@ -49,6 +53,8 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
         [EnumeratorCancellation] CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(prompt);
+
+        prompt = TextChunker.TruncateToTokens(prompt, MaxContextTokens);
 
         var messages = new List<ChatMessage>
         {
@@ -119,8 +125,8 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
 
     private static async Task<Model> GetModelAsync(FoundryLocalManager manager, AIExecutionTarget target, CancellationToken ct)
     {
-        var catalog = await manager.GetCatalogAsync().ConfigureAwait(false);
-        var model = await catalog.GetModelAsync(ResolveModelAlias(target)).ConfigureAwait(false)
+        var catalog = await manager.GetCatalogAsync().WaitAsync(ct).ConfigureAwait(false);
+        var model = await catalog.GetModelAsync(ResolveModelAlias(target)).WaitAsync(ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Model '{ResolveModelAlias(target)}' was not found in the local Foundry catalog.");
 
         SelectPreferredVariant(model, target);
@@ -146,7 +152,7 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
         var selectedVariant = target switch
         {
             AIExecutionTarget.FoundryLocalCpu => model.Variants.FirstOrDefault(v => v.Info.Runtime?.DeviceType == DeviceType.CPU),
-            AIExecutionTarget.FoundryLocalGpu => model.Variants.FirstOrDefault(v => v.Info.Runtime?.DeviceType != DeviceType.CPU),
+            AIExecutionTarget.FoundryLocalGpu => model.Variants.FirstOrDefault(v => v.Info.Runtime?.DeviceType == DeviceType.GPU),
             _ => null,
         };
 

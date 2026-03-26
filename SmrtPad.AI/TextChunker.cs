@@ -4,6 +4,20 @@ namespace SmrtPad.AI;
 
 public static partial class TextChunker
 {
+    /// <summary>
+    /// Truncates <paramref name="text"/> to at most <paramref name="maxTokens"/> estimated tokens,
+    /// using the same 4-chars-per-token approximation as <see cref="ChunkByParagraph"/>.
+    /// </summary>
+    public static string TruncateToTokens(string text, int maxTokens)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (maxTokens <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxTokens));
+
+        var maxChars = maxTokens * 4;
+        return text.Length <= maxChars ? text : text[..maxChars];
+    }
+
     public static IReadOnlyList<string> ChunkByParagraph(string text, int maxTokens = 512)
     {
         ArgumentNullException.ThrowIfNull(text);

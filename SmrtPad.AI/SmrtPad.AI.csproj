@@ -25,6 +25,15 @@
       the native-copy target.
     -->
     <PackageReference Include="Microsoft.AI.Foundry.Local.Core" />
+    <!--
+      Direct reference required for the same reason as Microsoft.AI.Foundry.Local.Core above:
+      Microsoft.ML.OnnxRuntimeGenAI is only a transitive dependency of
+      Microsoft.AI.Foundry.Local.Core, so its build/ targets never fire and
+      onnxruntime-genai.dll is never copied to the output dir.
+      Note: the .Foundry variant does not ship onnxruntime-genai.dll as a native asset;
+      the base package must be referenced directly.
+    -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
 </Project>
