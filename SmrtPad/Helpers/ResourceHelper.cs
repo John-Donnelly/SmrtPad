@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Xml.Linq;
 using Microsoft.Windows.ApplicationModel.Resources;
 
@@ -41,8 +40,11 @@ namespace SmrtPad.Helpers
                     if (!string.IsNullOrEmpty(resourceValue))
                         return resourceValue;
                 }
-                catch (COMException ex) when (ex.HResult == NamedResourceNotFoundHResult)
+                catch (Exception ex) when (ex.HResult == NamedResourceNotFoundHResult)
                 {
+                    // CsWinRT (Windows App SDK) marshals winrt::hresult_error as System.Exception,
+                    // not COMException, for HRESULTs outside its well-known mapping.
+                    // Catching Exception covers both that case and classic COMException.
                 }
             }
 

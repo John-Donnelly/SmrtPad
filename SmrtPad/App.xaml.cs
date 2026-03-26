@@ -86,6 +86,7 @@ namespace SmrtPad
             services.AddSingleton<EditorViewModel>();
             services.AddTransient<IDialogService, DialogService>();
             services.AddTransient<IFileService, FileService>();
+            services.AddSingleton<IInkService, InkService>();
             services.AddSingleton<ISessionRestoreService, SessionRestoreService>();
             services.AddSingleton<IStoreContextAdapter, StubStoreContextAdapter>();
             services.AddSingleton<LocalKeyValidator>();
@@ -235,6 +236,11 @@ namespace SmrtPad
             if (orchestrator is null)
                 return;
 
+#if DEBUG
+            // Force Pro mode on for local debug builds without requiring a Store licence or .lic file.
+            FeatureFlags.SetProFlags();
+            _aiDispatcher = TryLoadAIDispatcher();
+#else
             await Task.Run(() => orchestrator.InitializeAsync());
 
             if (orchestrator.IsPro)
@@ -257,6 +263,7 @@ namespace SmrtPad
                     }
                 });
             };
+#endif
         }
 
         private async Task PromptForSessionRestoreAsync(MainWindow mainWindow)
@@ -389,6 +396,17 @@ namespace SmrtPad
                 if (!File.Exists(aiDllPath))
                     return null;
 
+                // Pre-load native ORT DLLs from the AI subdirectory before any managed or native
+                // code triggers a LoadLibrary("onnxruntime.dll") search. Without this, the Windows
+                // App Runtime's onnxruntime.dll (1.23) is found on the activation-context search
+                // path before the AI-directory copy (1.24). Microsoft.AI.Foundry.Local.Core then
+                // runs against ORT 1.23 while the CUDA EP it downloads is built for ORT 1.24,
+                // causing an internal vtable mismatch and a 0xC0000005 access violation during
+                // model load. Once a DLL is resident in the process by base name, a subsequent
+                // LoadLibrary("onnxruntime.dll") from native code returns the already-loaded
+                // module instead of walking the search path again.
+                PreloadNativeOrtDlls(Path.GetDirectoryName(aiDllPath)!);
+
                 var alc = new AIAssemblyLoadContext(aiDllPath);
                 var assembly = alc.LoadFromAssemblyPath(aiDllPath);
                 var factoryType = assembly.GetType("SmrtPad.AI.AIDispatcherFactory");
@@ -403,6 +421,29 @@ namespace SmrtPad
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to load SmrtPad.AI: {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Loads ORT native DLLs from <paramref name="aiDir"/> into the process module table so
+        /// that a later bare-name <c>LoadLibrary</c> from native code returns the already-resident
+        /// module rather than searching the path and finding a mismatched version shipped by the
+        /// Windows App Runtime.
+        /// </summary>
+        private static void PreloadNativeOrtDlls(string aiDir)
+        {
+            // Load order matters:
+            // 1. onnxruntime_providers_shared.dll — ORT validates this handle during its own init.
+            // 2. onnxruntime.dll                  — core runtime; genai depends on it.
+            // 3. onnxruntime-genai.dll             — GenAI layer; must follow onnxruntime.dll.
+            foreach (var name in (ReadOnlySpan<string>)[
+                "onnxruntime_providers_shared.dll",
+                "onnxruntime.dll",
+                "onnxruntime-genai.dll"])
+            {
+                var fullPath = Path.Combine(aiDir, name);
+                if (File.Exists(fullPath))
+                    System.Runtime.InteropServices.NativeLibrary.TryLoad(fullPath, out _);
             }
         }
     }

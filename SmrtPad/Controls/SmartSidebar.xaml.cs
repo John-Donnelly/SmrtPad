@@ -118,8 +118,14 @@ public sealed partial class SmartSidebar : UserControl
         {
             await _initializationTask;
         }
+        catch (OperationCanceledException) when (_initializationCts?.IsCancellationRequested == true)
+        {
+            // Sidebar was closed before init finished — no UI update needed.
+        }
         catch (OperationCanceledException)
         {
+            // Inner timeout fired while the sidebar is still open.
+            ApplyDispatcherUnavailableState(ResourceHelper.GetString("SmartSidebarExecutionTimedOut"));
         }
         catch (InvalidOperationException ex)
         {
@@ -152,7 +158,11 @@ public sealed partial class SmartSidebar : UserControl
         ApplyDispatcherPendingState();
 
         if (!_dispatcher.IsInitialized)
-            await _dispatcher.InitializeAsync(ct);
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(30));
+            await _dispatcher.InitializeAsync(timeoutCts.Token);
+        }
 
         ct.ThrowIfCancellationRequested();
         ApplyDispatcherReadyState();

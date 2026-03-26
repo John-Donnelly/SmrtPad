@@ -1170,6 +1170,9 @@
   <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
     <value>La IA no está disponible en este momento.</value>
   </data>
+  <data name="SmartSidebarExecutionTimedOut" xml:space="preserve">
+    <value>Se agotó el tiempo de inicialización de la IA. Vuelve a abrir el panel lateral para intentarlo de nuevo.</value>
+  </data>
   <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
     <value>Las sugerencias de IA pueden ser inexactas. Revise el texto generado antes de usarlo.</value>
   </data>

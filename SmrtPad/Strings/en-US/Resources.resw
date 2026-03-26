@@ -1220,6 +1220,9 @@
   <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
     <value>AI is currently unavailable. Try reopening the sidebar after deployment and model setup complete.</value>
   </data>
+  <data name="SmartSidebarExecutionTimedOut" xml:space="preserve">
+    <value>AI initialization timed out. Try reopening the sidebar to retry.</value>
+  </data>
   <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
     <value>AI suggestions can be inaccurate or incomplete. Review generated text before using it in your document.</value>
   </data>

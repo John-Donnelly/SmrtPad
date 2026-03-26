@@ -1170,6 +1170,9 @@
   <data name="SmartSidebarExecutionUnavailable" xml:space="preserve">
     <value>AI ابھی دستیاب نہیں ہے۔</value>
   </data>
+  <data name="SmartSidebarExecutionTimedOut" xml:space="preserve">
+    <value>AI initialization timed out. Try reopening the sidebar to retry.</value>
+  </data>
   <data name="SmartSidebarResponsibleAiNotice" xml:space="preserve">
     <value>AI کی تجاویز غلط ہو سکتی ہیں۔ دستاویز میں استعمال کرنے سے پہلے تیار کردہ متن کا جائزہ لیں۔</value>
   </data>
