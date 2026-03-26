@@ -69,12 +69,13 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
 
     /// <inheritdoc/>
     public Task StreamResponseAsync(
+        string skillKey,
         string prompt,
         Action<string> onToken,
         Action onComplete,
         Action<Exception>? onError = null,
         CancellationToken ct = default) =>
-        (Task)_dispatcher.StreamResponseAsync(prompt, onToken, onComplete, onError, ct);
+        (Task)_dispatcher.StreamResponseAsync(skillKey, prompt, onToken, onComplete, onError, ct);
 
     /// <inheritdoc/>
     public Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken ct = default) =>

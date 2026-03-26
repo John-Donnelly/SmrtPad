@@ -137,11 +137,9 @@ public sealed partial class FileBackstageView : UserControl
         if (sender is not NavigationViewItem item)
             return;
 
-        // Select the item so the NavigationView visually highlights it
-        _suppressSelectionEvent = true;
-        Nav.SelectedItem = item;
-        _suppressSelectionEvent = false;
-
+        // Preview the pane on hover without changing the selection.
+        // Pre-selecting here would suppress SelectionChanged on the subsequent click
+        // (because the selection wouldn't change), making all nav items unclickable.
         ShowPaneForTag(item.Tag as string);
     }
 

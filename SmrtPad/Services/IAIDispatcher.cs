@@ -19,8 +19,9 @@ public interface IAIDispatcher
     /// <summary>Detects hardware and loads the model. Idempotent.</summary>
     Task InitializeAsync(CancellationToken ct = default);
 
-    /// <summary>Streams generated tokens for the given <paramref name="prompt"/>.</summary>
+    /// <summary>Streams generated tokens for the given <paramref name="prompt"/> using the specified <paramref name="skillKey"/>.</summary>
     Task StreamResponseAsync(
+        string skillKey,
         string prompt,
         Action<string> onToken,
         Action onComplete,
