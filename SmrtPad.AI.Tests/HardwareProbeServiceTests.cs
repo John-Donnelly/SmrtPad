@@ -165,4 +165,20 @@ public class HardwareProbeServiceTests
         Assert.Equal(result1.SelectedTarget, result2.SelectedTarget);
         Assert.Equal(result1.FoundryGpu.Status, result2.FoundryGpu.Status);
     }
+
+    [Fact]
+    public void QueryDxgiVramMb_ReturnsNonNegativeValue()
+    {
+        var vram = HardwareProbeService.QueryDxgiVramMb();
+
+        Assert.True(vram >= 0);
+    }
+
+    [Fact]
+    public void QueryAvailableRamMb_ReturnsPositiveValue()
+    {
+        var ram = HardwareProbeService.QueryAvailableRamMb();
+
+        Assert.True(ram > 0);
+    }
 }

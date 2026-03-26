@@ -45,7 +45,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var probe = new HardwareProbeService(catalog.Object);
         var model = modelMock ?? CreateModelAdapter("Hello", " world");
 
-        _dispatcher = new AIDispatcher(probe, (_, _) => Task.FromResult(model.Object));
+        _dispatcher = new AIDispatcher(probe, (_, _, _) => Task.FromResult(model.Object));
         return _dispatcher;
     }
 
@@ -79,7 +79,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var probe = new HardwareProbeService(catalog.Object);
         var model = CreateModelAdapter();
 
-        _dispatcher = new AIDispatcher(probe, (_, _) =>
+        _dispatcher = new AIDispatcher(probe, (_, _, _) =>
         {
             Interlocked.Increment(ref factoryCallCount);
             return Task.FromResult(model.Object);
@@ -135,7 +135,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher();
         var tokens = new List<string>();
 
-        await dispatcher.StreamResponseAsync("prompt", tokens.Add, () => { });
+        await dispatcher.StreamResponseAsync("freeform", "prompt", tokens.Add, () => { });
 
         Assert.Equal(2, tokens.Count);
         Assert.Equal("Hello", tokens[0]);
@@ -148,7 +148,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher();
         bool completed = false;
 
-        await dispatcher.StreamResponseAsync("prompt", _ => { }, () => completed = true);
+        await dispatcher.StreamResponseAsync("freeform", "prompt", _ => { }, () => completed = true);
 
         Assert.True(completed);
     }
@@ -163,7 +163,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var tokens = new List<string>();
         bool completed = false;
 
-        await dispatcher.StreamResponseAsync("prompt", tokens.Add, () => completed = true);
+        await dispatcher.StreamResponseAsync("freeform", "prompt", tokens.Add, () => completed = true);
 
         Assert.Empty(tokens);
         Assert.True(completed);
@@ -181,7 +181,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher(modelMock: model);
         var tokens = new List<string>();
 
-        await dispatcher.StreamResponseAsync("prompt", tokens.Add, () => { }, ct: cts.Token);
+        await dispatcher.StreamResponseAsync("freeform", "prompt", tokens.Add, () => { }, ct: cts.Token);
 
         Assert.Single(tokens);
     }
@@ -198,7 +198,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher(modelMock: model);
         bool completed = false;
 
-        await dispatcher.StreamResponseAsync("prompt", _ => { }, () => completed = true, ct: cts.Token);
+        await dispatcher.StreamResponseAsync("freeform", "prompt", _ => { }, () => completed = true, ct: cts.Token);
 
         Assert.True(completed);
     }
@@ -215,7 +215,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher(modelMock: model);
         Exception? captured = null;
 
-        await dispatcher.StreamResponseAsync("prompt", _ => { }, () => { }, ex => captured = ex);
+        await dispatcher.StreamResponseAsync("freeform", "prompt", _ => { }, () => { }, ex => captured = ex);
 
         Assert.Same(expectedException, captured);
     }
@@ -231,7 +231,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher(modelMock: model);
 
         // Should not throw even though onError is null
-        await dispatcher.StreamResponseAsync("prompt", _ => { }, () => { });
+        await dispatcher.StreamResponseAsync("freeform", "prompt", _ => { }, () => { });
     }
 
     [Fact]
@@ -240,7 +240,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var dispatcher = CreateDispatcher();
         Assert.False(dispatcher.IsInitialized);
 
-        await dispatcher.StreamResponseAsync("prompt", _ => { }, () => { });
+        await dispatcher.StreamResponseAsync("freeform", "prompt", _ => { }, () => { });
 
         Assert.True(dispatcher.IsInitialized);
     }
@@ -252,8 +252,8 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         bool complete1 = false;
         bool complete2 = false;
 
-        var t1 = dispatcher.StreamResponseAsync("p1", _ => { }, () => complete1 = true);
-        var t2 = dispatcher.StreamResponseAsync("p2", _ => { }, () => complete2 = true);
+        var t1 = dispatcher.StreamResponseAsync("freeform", "p1", _ => { }, () => complete1 = true);
+        var t2 = dispatcher.StreamResponseAsync("freeform", "p2", _ => { }, () => complete2 = true);
 
         await Task.WhenAll(t1, t2);
 

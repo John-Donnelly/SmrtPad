@@ -266,4 +266,62 @@ public class PromptTemplatesTests
         var shorten = PromptTemplates.Shorten(text);
         Assert.NotEqual(grammarFix, shorten);
     }
+
+    // --- FreeformChat ---
+
+    [Fact]
+    public void FreeformChat_ContainsUserMessage()
+    {
+        var result = PromptTemplates.FreeformChat("write a cover letter");
+        Assert.Contains("write a cover letter", result);
+    }
+
+    [Fact]
+    public void FreeformChat_EmptyMessage_ReturnsValidPrompt()
+    {
+        var result = PromptTemplates.FreeformChat("");
+        Assert.False(string.IsNullOrWhiteSpace(result));
+    }
+
+    [Fact]
+    public void FreeformChat_NullMessage_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => PromptTemplates.FreeformChat(null!));
+    }
+
+    [Fact]
+    public void FreeformChat_IdentifiesAsWritingAssistant()
+    {
+        var result = PromptTemplates.FreeformChat("anything");
+        Assert.Contains("writing assistant", result);
+    }
+
+    [Fact]
+    public void FreeformChat_InstructsDocumentOutputOnly()
+    {
+        var result = PromptTemplates.FreeformChat("anything");
+        Assert.Contains("output only the content", result);
+    }
+
+    [Fact]
+    public void FreeformChat_InstructsDocumentDraftBehaviour()
+    {
+        var result = PromptTemplates.FreeformChat("anything");
+        Assert.Contains("write or draft a document", result);
+    }
+
+    [Fact]
+    public void FreeformChat_InstructsConversationalBehaviour()
+    {
+        var result = PromptTemplates.FreeformChat("anything");
+        Assert.Contains("one or two plain sentences", result);
+    }
+
+    [Fact]
+    public void FreeformChat_MessageWithSpecialChars_ContainsRawMessage()
+    {
+        const string message = "Write an email: subject \"Q1 Report\" & attach <file>";
+        var result = PromptTemplates.FreeformChat(message);
+        Assert.Contains(message, result);
+    }
 }
