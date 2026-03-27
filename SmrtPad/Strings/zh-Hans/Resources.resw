@@ -1227,6 +1227,12 @@
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
   </data>
+  <data name="SmartSidebarOptions" xml:space="preserve">
+    <value>选项</value>
+  </data>
+  <data name="SmartSidebarModelSelector" xml:space="preserve">
+    <value>模型</value>
+  </data>
   <data name="SmartSidebarExecutionTarget" xml:space="preserve">
     <value>处理器</value>
   </data>

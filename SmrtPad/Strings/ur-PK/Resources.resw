@@ -1227,6 +1227,12 @@
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
   </data>
+  <data name="SmartSidebarOptions" xml:space="preserve">
+    <value>اختیارات</value>
+  </data>
+  <data name="SmartSidebarModelSelector" xml:space="preserve">
+    <value>ماڈل</value>
+  </data>
   <data name="SmartSidebarExecutionTarget" xml:space="preserve">
     <value>پروسیسر</value>
   </data>
