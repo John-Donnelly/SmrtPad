@@ -30,6 +30,9 @@
     <AIPackageOutputDir>$(MSBuildProjectDirectory)\bin\$(Platform)\$(Configuration)\AppX\SmrtPad\AI\</AIPackageOutputDir>
     <AIPlatform Condition="'$(AIPlatform)' == ''">$(Platform)</AIPlatform>
     <AIOutputDir>$(MSBuildThisFileDirectory)..\SmrtPad.AI\bin\$(AIPlatform)\$(Configuration)\$(AITargetFramework)\</AIOutputDir>
+    <!-- RID string used to probe runtimes/{rid}/native/ when native assets are not flat. -->
+    <AIRuntimeIdentifier Condition="'$(AIPlatform)' == 'x64'">win-x64</AIRuntimeIdentifier>
+    <AIRuntimeIdentifier Condition="'$(AIPlatform)' == 'ARM64'">win-arm64</AIRuntimeIdentifier>
   </PropertyGroup>
   <!-- Tell VS fast up-to-date check about the AI plugin DLL so the WAP project is
        considered out-of-date whenever SmrtPad.AI is rebuilt, ensuring CopySmrtPadAiOutputs
@@ -37,6 +40,11 @@
   <ItemGroup>
     <UpToDateCheckInput  Include="$(AIOutputDir)SmrtPad.AI.dll" Set="AIPlugin" />
     <UpToDateCheckOutput Include="$(AIPackageOutputDir)SmrtPad.AI.dll" Set="AIPlugin" />
+    <!-- Track native core DLL so VS re-deploys if it appears or changes in the build output.
+         The input covers both the flat layout (RuntimeIdentifier build) and the runtimes layout. -->
+    <UpToDateCheckInput  Include="$(AIOutputDir)Microsoft.AI.Foundry.Local.Core.dll" Set="AIPlugin" />
+    <UpToDateCheckInput  Include="$(AIOutputDir)runtimes\$(AIRuntimeIdentifier)\native\Microsoft.AI.Foundry.Local.Core.dll" Set="AIPlugin" Condition="'$(AIRuntimeIdentifier)' != ''" />
+    <UpToDateCheckOutput Include="$(AIPackageOutputDir)Microsoft.AI.Foundry.Local.Core.dll" Set="AIPlugin" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.props" />
   <PropertyGroup>
@@ -81,9 +89,15 @@
     <MSBuild Projects="$(AIProjectPath)" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(AIPlatform)" />
     <ItemGroup>
       <SmrtPadAiOutputs Include="$(AIOutputDir)*" />
+      <!-- Native DLLs from the runtimes layout (present when RuntimeIdentifier is not set during
+           the nested build, e.g. Debug).  Copy them flat alongside the managed assemblies so the
+           AIAssemblyLoadContext can locate them without needing a runtimes subdirectory in AppX. -->
+      <SmrtPadAiNativeRuntimeOutputs Include="$(AIOutputDir)runtimes\$(AIRuntimeIdentifier)\native\*"
+                                      Condition="'$(AIRuntimeIdentifier)' != ''" />
     </ItemGroup>
     <MakeDir Directories="$(AIPackageOutputDir)" />
     <Copy SourceFiles="@(SmrtPadAiOutputs)" DestinationFiles="@(SmrtPadAiOutputs->'$(AIPackageOutputDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SmrtPadAiNativeRuntimeOutputs)" DestinationFiles="@(SmrtPadAiNativeRuntimeOutputs->'$(AIPackageOutputDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
