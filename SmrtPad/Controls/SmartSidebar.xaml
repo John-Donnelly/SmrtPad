@@ -120,12 +120,35 @@
                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                            Tapped="HardwareBadge_Tapped" />
             </StackPanel>
-            <Button x:Name="NewSessionButton" Grid.Column="1" Click="NewSessionButton_Click"
-                    AutomationProperties.Name="New session"
-                    Background="Transparent" BorderThickness="0" Padding="6"
-                    VerticalAlignment="Top">
-                <FontIcon Glyph="&#xE8BB;" FontSize="12" />
-            </Button>
+            <DropDownButton x:Name="OptionsButton" Grid.Column="1"
+                            AutomationProperties.Name="Options"
+                            Background="Transparent" BorderThickness="0" Padding="6"
+                            VerticalAlignment="Top">
+                <FontIcon Glyph="&#xE712;" FontSize="12" />
+                <DropDownButton.Flyout>
+                    <MenuFlyout x:Name="OptionsFlyout" Placement="Bottom">
+                        <MenuFlyoutItem x:Name="NewSessionMenuItem"
+                                        AutomationProperties.AutomationId="NewSessionMenuItem"
+                                        Click="NewSessionMenuItem_Click">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE8BB;" FontSize="12" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator x:Name="ModelSeparator" Visibility="Collapsed" />
+                        <MenuFlyoutSubItem x:Name="ModelSubMenu" Visibility="Collapsed">
+                            <MenuFlyoutSubItem.Icon>
+                                <FontIcon Glyph="&#xE9CE;" FontSize="12" />
+                            </MenuFlyoutSubItem.Icon>
+                        </MenuFlyoutSubItem>
+                        <MenuFlyoutSeparator x:Name="ExecutionTargetSeparator" Visibility="Collapsed" />
+                        <MenuFlyoutSubItem x:Name="ExecutionTargetSubMenu" Visibility="Collapsed">
+                            <MenuFlyoutSubItem.Icon>
+                                <FontIcon Glyph="&#xE950;" FontSize="12" />
+                            </MenuFlyoutSubItem.Icon>
+                        </MenuFlyoutSubItem>
+                    </MenuFlyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
             <Button x:Name="CloseButton" Grid.Column="2" Click="CloseButton_Click"
                     AutomationProperties.Name="Close sidebar"
                     Background="Transparent" BorderThickness="0" Padding="6"

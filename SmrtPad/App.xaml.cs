@@ -433,10 +433,12 @@ namespace SmrtPad
         private static void PreloadNativeOrtDlls(string aiDir)
         {
             // Load order matters:
-            // 1. onnxruntime_providers_shared.dll — ORT validates this handle during its own init.
-            // 2. onnxruntime.dll                  — core runtime; genai depends on it.
-            // 3. onnxruntime-genai.dll             — GenAI layer; must follow onnxruntime.dll.
+            // 1. Microsoft.AI.Foundry.Local.Core.dll — native core P/Invoked by the managed SDK.
+            // 2. onnxruntime_providers_shared.dll    — ORT validates this handle during its own init.
+            // 3. onnxruntime.dll                     — core runtime; genai depends on it.
+            // 4. onnxruntime-genai.dll               — GenAI layer; must follow onnxruntime.dll.
             foreach (var name in (ReadOnlySpan<string>)[
+                "Microsoft.AI.Foundry.Local.Core.dll",
                 "onnxruntime_providers_shared.dll",
                 "onnxruntime.dll",
                 "onnxruntime-genai.dll"])

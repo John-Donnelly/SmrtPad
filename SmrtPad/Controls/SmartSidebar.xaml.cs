@@ -86,6 +86,9 @@ public sealed partial class SmartSidebar : UserControl
     /// <summary>Delegate invoked when a semantic-search result should navigate to a tab and chunk.</summary>
     public Action<int, string>? NavigateToSemanticResult { get; set; }
 
+    /// <summary>Delegate invoked with a human-readable status message each time the AI initialization stage changes.</summary>
+    public Action<string>? ReportStatus { get; set; }
+
     public SmartSidebar(IAIDispatcher dispatcher)
     {
         ArgumentNullException.ThrowIfNull(dispatcher);
@@ -176,12 +179,45 @@ public sealed partial class SmartSidebar : UserControl
         if (!_dispatcher.IsInitialized)
         {
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            timeoutCts.CancelAfter(TimeSpan.FromSeconds(30));
-            await _dispatcher.InitializeAsync(timeoutCts.Token);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(120));
+
+            await _dispatcher.InitializeAsync(
+                onProgress: token =>
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        var msg = ParseProgressToken(token);
+                        SetInitializationStatus(msg, isVisible: true);
+                        ReportStatus?.Invoke(msg);
+                    }),
+                ct: timeoutCts.Token);
         }
 
         ct.ThrowIfCancellationRequested();
         ApplyDispatcherReadyState();
+    }
+
+    /// <summary>Converts an internal stage token into a localized, user-facing progress string.</summary>
+    private string ParseProgressToken(string token)
+    {
+        if (token.StartsWith("AI_STAGE_DOWNLOADING\t", StringComparison.Ordinal))
+        {
+            var parts = token.Split('\t');
+            string alias = parts.Length > 1 ? parts[1] : string.Empty;
+            string mb = parts.Length > 2 ? parts[2] : "0";
+            if (parts.Length > 3 && int.TryParse(parts[3], out int pct))
+                return ResourceHelper.GetFormatted("SmartSidebarStageDownloadingPct", alias, mb, pct);
+            return ResourceHelper.GetFormatted("SmartSidebarStageDownloading", alias, mb);
+        }
+
+        return token switch
+        {
+            "AI_STAGE_PROBING"   => ResourceHelper.GetString("SmartSidebarStageProbing"),
+            "AI_STAGE_SELECTING" => ResourceHelper.GetString("SmartSidebarStageSelecting"),
+            "AI_STAGE_SERVICE"   => ResourceHelper.GetString("SmartSidebarStageService"),
+            "AI_STAGE_CACHED"    => ResourceHelper.GetString("SmartSidebarStageCached"),
+            "AI_STAGE_LOADING"   => ResourceHelper.GetString("SmartSidebarStageLoading"),
+            _ => token,
+        };
     }
 
     // ── Header ──
@@ -189,10 +225,171 @@ public sealed partial class SmartSidebar : UserControl
     private void CloseButton_Click(object sender, RoutedEventArgs e) =>
         CloseRequested?.Invoke(this, EventArgs.Empty);
 
-    private void NewSessionButton_Click(object sender, RoutedEventArgs e)
+    private void NewSessionMenuItem_Click(object sender, RoutedEventArgs e)
     {
         CancelActive();
         _chatEntries.Clear();
+    }
+
+    private async void ModelMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioMenuFlyoutItem { Tag: string alias })
+            return;
+
+        _dispatcher.SetPreferredModelAlias(alias);
+        CancelActive();
+        _chatEntries.Clear();
+
+        // Cancel any in-flight initialization and drain it (stay on UI thread so continuations are safe)
+        if (_initializationCts is not null)
+        {
+            _initializationCts.Cancel();
+            _initializationCts.Dispose();
+            _initializationCts = null;
+        }
+        if (_initializationTask is not null)
+        {
+            try { await _initializationTask; } catch { }
+            _initializationTask = null;
+        }
+
+        // Reset dispatcher state on a background thread, then resume on the UI thread
+        await Task.Run(() => _dispatcher.ResetAsync());
+
+        _initializationCts = new CancellationTokenSource();
+        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
+        try
+        {
+            await _initializationTask;
+        }
+        catch (OperationCanceledException) { }
+        catch (InvalidOperationException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+        }
+        catch (COMException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+        }
+    }
+
+    private void PopulateModelMenu()
+    {
+        var aliases = _dispatcher.GetEligibleModelAliases();
+        if (aliases.Count == 0)
+            return;
+
+        var modelSubMenu = (MenuFlyoutSubItem)OptionsFlyout.Items
+            .OfType<MenuFlyoutSubItem>().First();
+        var separator = OptionsFlyout.Items
+            .OfType<MenuFlyoutSeparator>().First();
+
+        modelSubMenu.Items.Clear();
+
+        var currentAlias = _dispatcher.PreferredModelAlias;
+
+        foreach (var alias in aliases)
+        {
+            var item = new RadioMenuFlyoutItem
+            {
+                Text = alias,
+                Tag = alias,
+                GroupName = "ModelSelection",
+                IsChecked = string.Equals(alias, currentAlias, StringComparison.OrdinalIgnoreCase),
+            };
+            item.Click += ModelMenuItem_Click;
+            modelSubMenu.Items.Add(item);
+        }
+
+        separator.Visibility = Visibility.Visible;
+        modelSubMenu.Visibility = Visibility.Visible;
+    }
+
+    private void PopulateExecutionTargetMenu()
+    {
+        var availability = _dispatcher.Availability;
+
+        var targetSubMenu = OptionsFlyout.Items
+            .OfType<MenuFlyoutSubItem>()
+            .Skip(1)
+            .FirstOrDefault();
+        var targetSeparator = OptionsFlyout.Items
+            .OfType<MenuFlyoutSeparator>()
+            .Skip(1)
+            .FirstOrDefault();
+
+        if (targetSubMenu is null || targetSeparator is null)
+            return;
+
+        targetSubMenu.Items.Clear();
+
+        var currentTarget = _dispatcher.PreferredExecutionTarget
+            ?? _dispatcher.Availability.SelectedTarget;
+
+        (string Key, string Label, bool IsEnabled)[] targets =
+        [
+            ("PhiSilicaNpu",    ResourceHelper.GetString("SmartSidebarNpu"), availability.PhiSilica.IsUsable),
+            ("FoundryLocalGpu", ResourceHelper.GetString("SmartSidebarGpu"), availability.FoundryGpu.IsUsable),
+            ("FoundryLocalCpu", ResourceHelper.GetString("SmartSidebarCpu"), true),
+        ];
+
+        foreach (var (key, label, isEnabled) in targets)
+        {
+            var item = new RadioMenuFlyoutItem
+            {
+                Text = label,
+                Tag = key,
+                GroupName = "ExecutionTarget",
+                IsEnabled = isEnabled,
+                IsChecked = string.Equals(key, currentTarget, StringComparison.Ordinal),
+            };
+            item.Click += ExecutionTargetMenuItem_Click;
+            targetSubMenu.Items.Add(item);
+        }
+
+        targetSeparator.Visibility = Visibility.Visible;
+        targetSubMenu.Visibility = Visibility.Visible;
+    }
+
+    private async void ExecutionTargetMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioMenuFlyoutItem { Tag: string targetKey })
+            return;
+
+        _dispatcher.SetPreferredExecutionTarget(targetKey);
+        _dispatcher.SetPreferredModelAlias(null); // reset model so target is auto-selected
+        CancelActive();
+        _chatEntries.Clear();
+
+        if (_initializationCts is not null)
+        {
+            _initializationCts.Cancel();
+            _initializationCts.Dispose();
+            _initializationCts = null;
+        }
+        if (_initializationTask is not null)
+        {
+            try { await _initializationTask; } catch { }
+            _initializationTask = null;
+        }
+
+        await Task.Run(() => _dispatcher.ResetAsync());
+
+        _initializationCts = new CancellationTokenSource();
+        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
+        try
+        {
+            await _initializationTask;
+        }
+        catch (OperationCanceledException) { }
+        catch (InvalidOperationException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+        }
+        catch (COMException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+        }
     }
 
     // ── Skill dropdown ──
@@ -614,6 +811,10 @@ public sealed partial class SmartSidebar : UserControl
         _hardwareModelValueText.Text = GetModelName();
         _hardwareTokensValueText.Text = GetPendingMetricsText();
         ToolTipService.SetToolTip(HardwareBadge, GetHardwareTooltip());
+        PopulateModelMenu();
+        PopulateExecutionTargetMenu();
+        // Clear the status bar now that AI is ready
+        ReportStatus?.Invoke(string.Empty);
     }
 
     private void ApplyDispatcherUnavailableState(string? failureMessage)
@@ -723,7 +924,14 @@ public sealed partial class SmartSidebar : UserControl
         _hardwareTokensLabelText.Text = ResourceHelper.GetString("SmartSidebarExecutionTokensPerSecond");
         _hardwareTokensValueText.Text = ResourceHelper.GetString("SmartSidebarExecutionPending");
         ResponsibleAiNoticeText.Text = ResourceHelper.GetString("SmartSidebarResponsibleAiNotice");
-        ToolTipService.SetToolTip(NewSessionButton, ResourceHelper.GetString("SmartSidebarNewSession"));
+        var newSessionItem = OptionsFlyout.Items.OfType<MenuFlyoutItem>().First();
+        newSessionItem.Text = ResourceHelper.GetString("SmartSidebarNewSession");
+        var modelSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().First();
+        modelSubMenu.Text = ResourceHelper.GetString("SmartSidebarModelSelector");
+        var executionTargetSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().Skip(1).FirstOrDefault();
+        if (executionTargetSubMenu is not null)
+            executionTargetSubMenu.Text = ResourceHelper.GetString("SmartSidebarExecutionTarget");
+        ToolTipService.SetToolTip(OptionsButton, ResourceHelper.GetString("SmartSidebarOptions"));
         ToolTipService.SetToolTip(ApplySkillButton, ResourceHelper.GetString("SmartSidebarApplySkill"));
     }
 
@@ -753,11 +961,17 @@ public sealed partial class SmartSidebar : UserControl
 
     private string GetModelName()
     {
+        // Prefer the alias that was actually loaded; fall back to the preferred alias
+        // that will be used on the next init, then to a display label from the target name.
+        if (!string.IsNullOrEmpty(_dispatcher.ActiveModelAlias))
+            return _dispatcher.ActiveModelAlias;
+
+        if (!string.IsNullOrEmpty(_dispatcher.PreferredModelAlias))
+            return _dispatcher.PreferredModelAlias;
+
         return _dispatcher.ExecutionTargetDisplayName switch
         {
             "⚡ NPU" => "Phi Silica",
-            "🖥️ GPU" => "phi-3.5-mini-instruct",
-            "🐢 CPU" => "phi-3.5-mini-instruct-generic-cpu",
             _ => _dispatcher.ExecutionTargetDisplayName,
         };
     }

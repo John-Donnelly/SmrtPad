@@ -3360,6 +3360,7 @@ namespace SmrtPad
                 sidebar.GetSemanticDocuments = GetSemanticDocumentsSnapshot;
                 sidebar.NavigateToSemanticResult = NavigateToSemanticResult;
                 sidebar.CloseRequested += (_, _) => CloseSmartSidebar();
+                sidebar.ReportStatus = msg => ViewModel.UpdateStatus(msg);
                 SidebarHost.Content = sidebar;
                 SidebarHost.Visibility = Visibility.Visible;
             }
