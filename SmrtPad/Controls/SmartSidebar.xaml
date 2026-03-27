@@ -96,7 +96,6 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- ═══ HEADER ═══ -->
@@ -157,122 +156,130 @@
             </Button>
         </Grid>
 
-        <!-- ═══ CHAT HISTORY ═══ -->
-        <ListView x:Name="ChatHistoryList"
-                  Grid.Row="1"
-                  ItemTemplateSelector="{StaticResource ChatTemplateSelector}"
-                  SelectionMode="None"
-                  HorizontalContentAlignment="Stretch"
-                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                  AutomationProperties.AutomationId="ChatHistoryList">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="Padding" Value="0" />
-                    <Setter Property="Background" Value="Transparent" />
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
+        <!-- ═══ CHAT HISTORY + SKILL CONTROLS (fills all remaining space) ═══ -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- ═══ SKILL SELECTOR + SEMANTIC ═══ -->
-        <StackPanel Grid.Row="2" Spacing="8" Margin="0,8,0,0">
+            <!-- Chat history — expands to fill whatever space the skill section leaves -->
+            <ListView x:Name="ChatHistoryList"
+                      Grid.Row="0"
+                      ItemTemplateSelector="{StaticResource ChatTemplateSelector}"
+                      SelectionMode="None"
+                      HorizontalContentAlignment="Stretch"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      AutomationProperties.AutomationId="ChatHistoryList">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
 
-            <!-- Responsible AI notice (collapsed until shown) -->
-            <Border x:Name="ResponsibleAiBanner"
-                    Padding="8"
-                    CornerRadius="8"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    Visibility="Collapsed">
-                <TextBlock x:Name="ResponsibleAiNoticeText"
-                           AutomationProperties.AutomationId="ResponsibleAiNoticeText"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </Border>
+            <!-- Skill controls — anchored to the bottom of the chat area -->
+            <StackPanel Grid.Row="1" Spacing="8" Margin="0,8,0,0">
 
-            <!-- Skill dropdown + Apply row -->
-            <Grid ColumnSpacing="6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <ComboBox x:Name="SkillDropdown"
-                          Grid.Column="0"
-                          HorizontalAlignment="Stretch"
-                          AutomationProperties.AutomationId="SkillDropdown"
-                          SelectionChanged="SkillDropdown_SelectionChanged" />
-                <Button x:Name="ApplySkillButton"
-                        Grid.Column="1"
-                        Click="ApplySkillButton_Click"
-                        AutomationProperties.AutomationId="ApplySkillButton"
-                        IsEnabled="False"
-                        Padding="10,6">
-                    <FontIcon Glyph="&#xE768;" FontSize="13" />
-                </Button>
-            </Grid>
+                <!-- Responsible AI notice (collapsed until shown) -->
+                <Border x:Name="ResponsibleAiBanner"
+                        Padding="8"
+                        CornerRadius="8"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="ResponsibleAiNoticeText"
+                               AutomationProperties.AutomationId="ResponsibleAiNoticeText"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Border>
 
-            <!-- Tone toggle (shown when a tone skill is selected) -->
-            <ToggleSwitch x:Name="ToneToggle"
-                          OnContent="Professional" OffContent="Casual"
-                          AutomationProperties.AutomationId="ToneToggleSwitch"
-                          IsOn="True"
-                          Visibility="Collapsed" />
-
-            <!-- Semantic search (shown when semantic skill selected) -->
-            <StackPanel x:Name="SemanticSection" Spacing="6" Visibility="Collapsed">
-                <Grid x:Name="OcrDropHost">
-                    <Border x:Name="OcrDropZone"
-                            AutomationProperties.AutomationId="OcrDropZone"
-                            AllowDrop="True"
-                            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="12"
-                            DragOver="OcrDropZone_DragOver"
-                            Drop="OcrDropZone_Drop">
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="OcrDropPromptText" FontWeight="SemiBold" />
-                            <TextBlock x:Name="OcrDropHintText"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
+                <!-- Skill dropdown + Apply row -->
+                <Grid ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox x:Name="SkillDropdown"
+                              Grid.Column="0"
+                              HorizontalAlignment="Stretch"
+                              AutomationProperties.AutomationId="SkillDropdown"
+                              SelectionChanged="SkillDropdown_SelectionChanged" />
+                    <Button x:Name="ApplySkillButton"
+                            Grid.Column="1"
+                            Click="ApplySkillButton_Click"
+                            AutomationProperties.AutomationId="ApplySkillButton"
+                            IsEnabled="False"
+                            Padding="10,6">
+                        <FontIcon Glyph="&#xE768;" FontSize="13" />
+                    </Button>
                 </Grid>
-                <ProgressRing x:Name="OcrProgress" IsActive="False" Visibility="Collapsed"
-                              Width="20" Height="20" HorizontalAlignment="Left"
-                              AutomationProperties.Name="Loading" />
-                <AutoSuggestBox x:Name="SemanticSearchBox"
-                                PlaceholderText="Search across all tabs..."
-                                AutomationProperties.AutomationId="SemanticSearchBox"
-                                QuerySubmitted="SemanticSearchBox_QuerySubmitted" />
-                <ProgressRing x:Name="SearchProgress" IsActive="False" Visibility="Collapsed"
-                              Width="20" Height="20" HorizontalAlignment="Left"
-                              AutomationProperties.Name="Loading" />
-                <ListView x:Name="SearchResultsList" SelectionMode="Single"
-                          SelectionChanged="SearchResultsList_SelectionChanged"
-                          MaxHeight="200">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Spacing="2">
-                                <Border Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                        CornerRadius="999"
-                                        HorizontalAlignment="Left"
-                                        Padding="8,2">
-                                    <TextBlock Text="{Binding TabName}"
-                                               FontSize="11"
-                                               Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                                </Border>
-                                <TextBlock Text="{Binding ChunkText}" TextTrimming="CharacterEllipsis"
-                                           MaxLines="2" TextWrapping="Wrap" />
+
+                <!-- Tone toggle (shown when a tone skill is selected) -->
+                <ToggleSwitch x:Name="ToneToggle"
+                              OnContent="Professional" OffContent="Casual"
+                              AutomationProperties.AutomationId="ToneToggleSwitch"
+                              IsOn="True"
+                              Visibility="Collapsed" />
+
+                <!-- Semantic search (shown when semantic skill selected) -->
+                <StackPanel x:Name="SemanticSection" Spacing="6" Visibility="Collapsed">
+                    <Grid x:Name="OcrDropHost">
+                        <Border x:Name="OcrDropZone"
+                                AutomationProperties.AutomationId="OcrDropZone"
+                                AllowDrop="True"
+                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12"
+                                DragOver="OcrDropZone_DragOver"
+                                Drop="OcrDropZone_Drop">
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Name="OcrDropPromptText" FontWeight="SemiBold" />
+                                <TextBlock x:Name="OcrDropHintText"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
                             </StackPanel>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                        </Border>
+                    </Grid>
+                    <ProgressRing x:Name="OcrProgress" IsActive="False" Visibility="Collapsed"
+                                  Width="20" Height="20" HorizontalAlignment="Left"
+                                  AutomationProperties.Name="Loading" />
+                    <AutoSuggestBox x:Name="SemanticSearchBox"
+                                    PlaceholderText="Search across all tabs..."
+                                    AutomationProperties.AutomationId="SemanticSearchBox"
+                                    QuerySubmitted="SemanticSearchBox_QuerySubmitted" />
+                    <ProgressRing x:Name="SearchProgress" IsActive="False" Visibility="Collapsed"
+                                  Width="20" Height="20" HorizontalAlignment="Left"
+                                  AutomationProperties.Name="Loading" />
+                    <ListView x:Name="SearchResultsList" SelectionMode="Single"
+                              SelectionChanged="SearchResultsList_SelectionChanged"
+                              MaxHeight="200">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="2">
+                                    <Border Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                            CornerRadius="999"
+                                            HorizontalAlignment="Left"
+                                            Padding="8,2">
+                                        <TextBlock Text="{Binding TabName}"
+                                                   FontSize="11"
+                                                   Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding ChunkText}" TextTrimming="CharacterEllipsis"
+                                               MaxLines="2" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+        </Grid>
 
         <!-- ═══ INPUT ROW ═══ -->
-        <Grid Grid.Row="3" Margin="0,8,0,0" ColumnSpacing="4">
+        <Grid Grid.Row="2" Margin="0,8,0,0" ColumnSpacing="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
