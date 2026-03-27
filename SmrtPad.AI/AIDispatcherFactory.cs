@@ -170,13 +170,15 @@ public sealed class AIDispatcherFactory
         var catalog = new ConcreteExecutionProviderCatalogAdapter();
         var probe = new HardwareProbeService(catalog);
 
-        return new AIDispatcher(probe, async (target, probeResult, ct) =>
+        AIDispatcher? dispatcher = null;
+        dispatcher = new AIDispatcher(probe, async (target, probeResult, onProgress, ct) =>
         {
             if (target == AIExecutionTarget.PhiSilicaNpu)
                 return await CreatePhiSilicaModelAdapterAsync(ct).ConfigureAwait(false);
 
-            return await CreateFoundryModelAdapterAsync(target, probeResult.FoundryGpu, ct).ConfigureAwait(false);
+            return await CreateFoundryModelAdapterAsync(target, probeResult.FoundryGpu, dispatcher!.PreferredAlias, onProgress, ct).ConfigureAwait(false);
         });
+        return dispatcher;
     }
 
     private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)
@@ -187,26 +189,54 @@ public sealed class AIDispatcherFactory
     private static async Task<ILanguageModelAdapter> CreateFoundryModelAdapterAsync(
         AIExecutionTarget target,
         AIBackendCapability gpuCapability,
+        string? preferredAlias,
+        Action<string>? onProgress,
         CancellationToken ct)
     {
-        var (alias, maxContextTokens) = await ModelSizeSelector
-            .SelectBestAliasAsync(gpuCapability, ct)
-            .ConfigureAwait(false);
+        string alias;
+        int maxContextTokens;
+
+        if (preferredAlias is not null && ModelSizeSelector.TryGetAlias(preferredAlias, out var gpuMb, out var cpuMb))
+        {
+            alias = preferredAlias;
+            long footprintMb = target == AIExecutionTarget.FoundryLocalCpu ? cpuMb : gpuMb;
+            maxContextTokens = ModelSizeSelector.PickContextTokens(footprintMb);
+        }
+        else
+        {
+            // When the CPU target is forced, evaluate model sizes against system RAM, not VRAM
+            var capabilityForSelection = target == AIExecutionTarget.FoundryLocalCpu
+                ? gpuCapability with { GpuVramMb = 0 }
+                : gpuCapability;
+
+            (alias, maxContextTokens) = await ModelSizeSelector
+                .SelectBestAliasAsync(capabilityForSelection, ct)
+                .ConfigureAwait(false);
+        }
 
         if (target == AIExecutionTarget.FoundryLocalGpu)
         {
             try
             {
                 return await ConcreteFoundryModelAdapter
-                    .CreateAsync(AIExecutionTarget.FoundryLocalGpu, alias, maxContextTokens, ct)
+                    .CreateAsync(AIExecutionTarget.FoundryLocalGpu, alias, maxContextTokens, onProgress, ct)
                     .ConfigureAwait(false);
             }
             catch (FoundryLocalException) { }     // GPU model failed to load
             catch (InvalidOperationException) { } // No GPU variant in catalog
         }
 
-        return await ConcreteFoundryModelAdapter
-            .CreateAsync(AIExecutionTarget.FoundryLocalCpu, alias, maxContextTokens, ct)
-            .ConfigureAwait(false);
+        try
+        {
+            return await ConcreteFoundryModelAdapter
+                .CreateAsync(AIExecutionTarget.FoundryLocalCpu, alias, maxContextTokens, onProgress, ct)
+                .ConfigureAwait(false);
+        }
+        catch (FoundryLocalException ex)
+        {
+            // FoundryLocalException is internal to SmrtPad.AI — wrap it so callers
+            // across the assembly boundary receive a well-known exception type.
+            throw new InvalidOperationException(ex.Message, ex);
+        }
     }
 }

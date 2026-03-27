@@ -29,22 +29,129 @@ internal sealed class ConcreteFoundryModelAdapter : ILanguageModelAdapter
         AIExecutionTarget target,
         string alias,
         int maxContextTokens,
+        Action<string>? onProgress = null,
         CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 
+        onProgress?.Invoke("AI_STAGE_SERVICE");
         var manager = await EnsureManagerAsync(ct).ConfigureAwait(false);
         var model = await GetModelAsync(manager, target, alias, ct).ConfigureAwait(false);
 
-        await model.DownloadAsync().WaitAsync(ct).ConfigureAwait(false);
-        ct.ThrowIfCancellationRequested();
+        bool alreadyCached = await model.IsCachedAsync().WaitAsync(ct).ConfigureAwait(false);
+        if (alreadyCached)
+        {
+            onProgress?.Invoke("AI_STAGE_CACHED");
+        }
+        else
+        {
+            // Get expected file size from the selected variant for progress reporting
+            long expectedBytes = GetExpectedBytes(model);
+            string? cachePath = await TryGetCachePathAsync(model, ct).ConfigureAwait(false);
 
+            // Start polling file size in the background while DownloadAsync runs
+            using var pollCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var pollTask = PollDownloadProgressAsync(cachePath, expectedBytes, alias, onProgress, pollCts.Token);
+
+            try
+            {
+                onProgress?.Invoke($"AI_STAGE_DOWNLOADING\t{alias}\t{expectedBytes / (1024 * 1024)}");
+                await model.DownloadAsync().WaitAsync(ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                await pollCts.CancelAsync().ConfigureAwait(false);
+                try { await pollTask.ConfigureAwait(false); } catch (OperationCanceledException) { }
+            }
+        }
+
+        ct.ThrowIfCancellationRequested();
+        onProgress?.Invoke("AI_STAGE_LOADING");
         await model.LoadAsync().WaitAsync(ct).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
 
         var chatClient = await model.GetChatClientAsync().WaitAsync(ct).ConfigureAwait(false);
 
         return new ConcreteFoundryModelAdapter(model, chatClient, maxContextTokens);
+    }
+
+    private static long GetExpectedBytes(Model model)
+    {
+        // Use the first variant for size estimation (SelectPreferredVariant runs before this)
+        var info = model.Variants.FirstOrDefault()?.Info;
+        if (info is not null)
+        {
+            try
+            {
+                // FileSizeInBytes is the authoritative field when present
+                var prop = info.GetType().GetProperty("FileSizeInBytes")
+                    ?? info.GetType().GetProperty("FileSizeMb");
+                if (prop?.GetValue(info) is long bytes && bytes > 0)
+                    return bytes;
+                if (prop?.GetValue(info) is int mb && mb > 0)
+                    return (long)mb * 1024 * 1024;
+            }
+            catch { }
+        }
+        return 0;
+    }
+
+    private static async Task<string?> TryGetCachePathAsync(Model model, CancellationToken ct)
+    {
+        try
+        {
+            return await model.GetPathAsync().WaitAsync(ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task PollDownloadProgressAsync(
+        string? cachePath,
+        long expectedBytes,
+        string alias,
+        Action<string>? onProgress,
+        CancellationToken ct)
+    {
+        if (onProgress is null || expectedBytes <= 0 || string.IsNullOrEmpty(cachePath))
+        {
+            // Still poll periodically with an indeterminate message
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(2000, ct).ConfigureAwait(false);
+                onProgress?.Invoke($"AI_STAGE_DOWNLOADING\t{alias}\t0");
+            }
+            return;
+        }
+
+        var dir = Path.GetDirectoryName(cachePath);
+        int lastPct = -1;
+        while (!ct.IsCancellationRequested)
+        {
+            await Task.Delay(800, ct).ConfigureAwait(false);
+            if (ct.IsCancellationRequested) break;
+            try
+            {
+                long downloaded = 0;
+                if (Directory.Exists(dir))
+                {
+                    foreach (var f in Directory.GetFiles(dir!, "*", SearchOption.AllDirectories))
+                    {
+                        try { downloaded += new FileInfo(f).Length; } catch { }
+                    }
+                }
+
+                int pct = expectedBytes > 0 ? (int)Math.Min(99, downloaded * 100 / expectedBytes) : 0;
+                if (pct != lastPct)
+                {
+                    lastPct = pct;
+                    onProgress?.Invoke($"AI_STAGE_DOWNLOADING\t{alias}\t{expectedBytes / (1024 * 1024)}\t{pct}");
+                }
+            }
+            catch { }
+        }
     }
 
     /// <inheritdoc/>

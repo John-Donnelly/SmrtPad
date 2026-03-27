@@ -19,7 +19,7 @@ public interface ILanguageModelAdapter : IAsyncDisposable
 public sealed class AIDispatcher : IAsyncDisposable
 {
     private readonly HardwareProbeService _hardwareProbe;
-    private readonly Func<AIExecutionTarget, HardwareProbeResult, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
+    private readonly Func<AIExecutionTarget, HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private ILanguageModelAdapter? _model;
     private SemanticSearchService? _semanticSearchService;
@@ -33,9 +33,30 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// <summary>Whether <see cref="InitializeAsync"/> has completed successfully.</summary>
     public bool IsInitialized { get; private set; }
 
+    /// <summary>
+    /// User-selected model alias override. When set, overrides automatic hardware-based model selection.
+    /// </summary>
+    public string? PreferredAlias { get; private set; }
+
+    /// <summary>
+    /// The alias of the model that was actually loaded during the last successful initialization.
+    /// </summary>
+    public string? ActiveModelAlias { get; private set; }
+
+    /// <summary>
+    /// User-selected execution target override. When set, overrides automatic hardware-based target selection.
+    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"FoundryLocalGpu"</c>, <c>"FoundryLocalCpu"</c>.
+    /// </summary>
+    public string? PreferredExecutionTarget { get; private set; }
+
+    public void SetPreferredExecutionTarget(string? target)
+    {
+        PreferredExecutionTarget = target;
+    }
+
     public AIDispatcher(
         HardwareProbeService hardwareProbe,
-        Func<AIExecutionTarget, HardwareProbeResult, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
+        Func<AIExecutionTarget, HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
     {
         ArgumentNullException.ThrowIfNull(hardwareProbe);
         ArgumentNullException.ThrowIfNull(modelFactory);
@@ -46,7 +67,16 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// <summary>
     /// Detects hardware and creates the language model adapter. Idempotent — second calls are no-ops.
     /// </summary>
-    public async Task InitializeAsync(CancellationToken ct = default)
+    public Task InitializeAsync(CancellationToken ct = default) =>
+        InitializeCoreAsync(onProgress: null, ct);
+
+    /// <summary>
+    /// Detects hardware and loads the model, emitting descriptive progress messages via <paramref name="onProgress"/>.
+    /// </summary>
+    public Task InitializeAsync(Action<string> onProgress, CancellationToken ct = default) =>
+        InitializeCoreAsync(onProgress, ct);
+
+    private async Task InitializeCoreAsync(Action<string>? onProgress, CancellationToken ct)
     {
         if (IsInitialized)
             return;
@@ -58,9 +88,29 @@ public sealed class AIDispatcher : IAsyncDisposable
                 return;
 
             ct.ThrowIfCancellationRequested();
+            onProgress?.Invoke("AI_STAGE_PROBING");
             ProbeResult = await _hardwareProbe.DetectAsync(ct).ConfigureAwait(false);
-            ExecutionTarget = ProbeResult.SelectedTarget;
-            _model = await _modelFactory(ExecutionTarget, ProbeResult, ct).ConfigureAwait(false);
+
+            // Apply user execution target override if set and valid
+            ExecutionTarget = PreferredExecutionTarget switch
+            {
+                "PhiSilicaNpu" when ProbeResult.PhiSilica.IsUsable => AIExecutionTarget.PhiSilicaNpu,
+                "FoundryLocalGpu" when ProbeResult.FoundryGpu.IsUsable => AIExecutionTarget.FoundryLocalGpu,
+                "FoundryLocalCpu" => AIExecutionTarget.FoundryLocalCpu,
+                _ => ProbeResult.SelectedTarget,
+            };
+
+            onProgress?.Invoke("AI_STAGE_SELECTING");
+            _model = await _modelFactory(ExecutionTarget, ProbeResult, onProgress, ct).ConfigureAwait(false);
+
+            // Capture the alias that was actually loaded for display purposes
+            ActiveModelAlias = ExecutionTarget == AIExecutionTarget.PhiSilicaNpu
+                ? "Phi Silica"
+                : PreferredAlias ?? ModelSizeSelector.GetBestAliasForCapability(
+                    ExecutionTarget == AIExecutionTarget.FoundryLocalCpu
+                        ? ProbeResult.FoundryGpu with { GpuVramMb = 0 }
+                        : ProbeResult.FoundryGpu);
+
             IsInitialized = true;
         }
         finally
@@ -161,6 +211,53 @@ public sealed class AIDispatcher : IAsyncDisposable
     public void RemoveIndexedTab(int tabId)
     {
         _semanticSearchService?.RemoveTab(tabId);
+    }
+
+    /// <summary>
+    /// Stores the user's preferred model alias for use on the next <see cref="InitializeAsync"/> call.
+    /// Pass <c>null</c> to revert to automatic hardware-based selection.
+    /// </summary>
+    public void SetPreferredModelAlias(string? alias)
+    {
+        PreferredAlias = alias;
+    }
+
+    /// <summary>
+    /// Returns the model aliases that fit within the detected hardware budget, ordered best-first.
+    /// Returns all known aliases when called before initialization.
+    /// </summary>
+    public IReadOnlyList<string> GetEligibleModelAliases() =>
+        ModelSizeSelector.GetEligibleAliases(ProbeResult.FoundryGpu);
+
+    /// <summary>
+    /// Disposes the current model and resets initialization state so the dispatcher can be
+    /// re-initialized (e.g. after the user selects a different model alias).
+    /// Unlike <see cref="DisposeAsync"/>, the lock and hardware probe are kept alive.
+    /// </summary>
+    public async Task ResetAsync()
+    {
+        await _initLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_semanticSearchService is not null)
+            {
+                await _semanticSearchService.DisposeAsync().ConfigureAwait(false);
+                _semanticSearchService = null;
+            }
+
+            if (_model is not null)
+            {
+                await _model.DisposeAsync().ConfigureAwait(false);
+                _model = null;
+            }
+
+            IsInitialized = false;
+            ActiveModelAlias = null;
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     /// <inheritdoc/>

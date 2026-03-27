@@ -6,6 +6,22 @@
     <RootNamespace>SmrtPad.AI</RootNamespace>
     <Platforms>x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <!--
+      Set a specific RuntimeIdentifier so the NuGet package build targets extract
+      native DLLs (e.g. Microsoft.AI.Foundry.Local.Core.dll, onnxruntime-genai.dll)
+      from runtimes/{rid}/native/ into the output root.  Without this, those DLLs stay
+      in the runtimes subdirectory and cannot be found at runtime.
+    -->
+    <RuntimeIdentifier Condition="'$(Platform)' == 'x64' AND '$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64' AND '$(RuntimeIdentifier)' == ''">win-arm64</RuntimeIdentifier>
+    <!--
+      Keep outputs in the TFM-only directory (no win-x64/win-arm64 subdirectory) so that
+      AIOutputDir in the wapproj's CopySmrtPadAiOutputs target can locate every file —
+      including the native Microsoft.AI.Foundry.Local.Core.dll — with its flat glob.
+      Without this, AppendRuntimeIdentifierToOutputPath=true (the SDK default) routes all
+      outputs into a RID-qualified subdirectory that the glob never reaches.
+    -->
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <NoWarn>$(NoWarn);NU1603</NoWarn>
