@@ -1160,6 +1160,27 @@
   <data name="SmartSidebarInitializationPending" xml:space="preserve">
     <value>正在检查本地 AI 可用性...</value>
   </data>
+  <data name="SmartSidebarStageProbing" xml:space="preserve">
+    <value>正在检测 AI 硬件...</value>
+  </data>
+  <data name="SmartSidebarStageSelecting" xml:space="preserve">
+    <value>正在为您的硬件选择最佳模型...</value>
+  </data>
+  <data name="SmartSidebarStageService" xml:space="preserve">
+    <value>正在启动 AI 服务...</value>
+  </data>
+  <data name="SmartSidebarStageCached" xml:space="preserve">
+    <value>模型已下载 — 正在加载...</value>
+  </data>
+  <data name="SmartSidebarStageDownloading" xml:space="preserve">
+    <value>正在下载 {0}（{1} MB）...</value>
+  </data>
+  <data name="SmartSidebarStageDownloadingPct" xml:space="preserve">
+    <value>正在下载 {0}（{1} MB）— {2}%</value>
+  </data>
+  <data name="SmartSidebarStageLoading" xml:space="preserve">
+    <value>正在将模型加载到内存...</value>
+  </data>
   <data name="SmartSidebarExecutionReady" xml:space="preserve">
     <value>已在 {0} 上准备就绪</value>
     <comment>{0} = execution target display name</comment>
@@ -1205,6 +1226,18 @@
   </data>
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
+  </data>
+  <data name="SmartSidebarExecutionTarget" xml:space="preserve">
+    <value>处理器</value>
+  </data>
+  <data name="SmartSidebarNpu" xml:space="preserve">
+    <value>⚡ NPU (Phi Silica)</value>
+  </data>
+  <data name="SmartSidebarGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="SmartSidebarCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
   </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>

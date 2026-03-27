@@ -1160,6 +1160,27 @@
   <data name="SmartSidebarInitializationPending" xml:space="preserve">
     <value>Проверка доступности локального ИИ...</value>
   </data>
+  <data name="SmartSidebarStageProbing" xml:space="preserve">
+    <value>Определение оборудования ИИ...</value>
+  </data>
+  <data name="SmartSidebarStageSelecting" xml:space="preserve">
+    <value>Выбор лучшей модели для вашего оборудования...</value>
+  </data>
+  <data name="SmartSidebarStageService" xml:space="preserve">
+    <value>Запуск службы ИИ...</value>
+  </data>
+  <data name="SmartSidebarStageCached" xml:space="preserve">
+    <value>Модель уже загружена — выполняется загрузка...</value>
+  </data>
+  <data name="SmartSidebarStageDownloading" xml:space="preserve">
+    <value>Загрузка {0} ({1} МБ)...</value>
+  </data>
+  <data name="SmartSidebarStageDownloadingPct" xml:space="preserve">
+    <value>Загрузка {0} ({1} МБ) — {2}%</value>
+  </data>
+  <data name="SmartSidebarStageLoading" xml:space="preserve">
+    <value>Загрузка модели в память...</value>
+  </data>
   <data name="SmartSidebarExecutionReady" xml:space="preserve">
     <value>Готово на {0}</value>
     <comment>{0} = execution target display name</comment>
@@ -1205,6 +1226,18 @@
   </data>
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
+  </data>
+  <data name="SmartSidebarExecutionTarget" xml:space="preserve">
+    <value>Процессор</value>
+  </data>
+  <data name="SmartSidebarNpu" xml:space="preserve">
+    <value>⚡ NPU (Phi Silica)</value>
+  </data>
+  <data name="SmartSidebarGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="SmartSidebarCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
   </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>

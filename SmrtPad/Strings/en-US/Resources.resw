@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -41,7 +41,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
-  <!-- ═══ MENU BAR ═══ -->
+  <!-- â•â•â• MENU BAR â•â•â• -->
   <data name="FileMenuButton.Content" xml:space="preserve">
     <value>File</value>
   </data>
@@ -85,7 +85,7 @@
     <value>Page View</value>
   </data>
 
-  <!-- ═══ RIBBON — CLIPBOARD ═══ -->
+  <!-- â•â•â• RIBBON â€” CLIPBOARD â•â•â• -->
   <data name="PasteRibbonLabel.Text" xml:space="preserve">
     <value>Paste</value>
   </data>
@@ -99,7 +99,7 @@
     <value>Clipboard</value>
   </data>
 
-  <!-- ═══ RIBBON — FONT ═══ -->
+  <!-- â•â•â• RIBBON â€” FONT â•â•â• -->
   <data name="FontFamilyComboBox.PlaceholderText" xml:space="preserve">
     <value>Font</value>
   </data>
@@ -110,7 +110,7 @@
     <value>Font</value>
   </data>
 
-  <!-- ═══ RIBBON — PARAGRAPH ═══ -->
+  <!-- â•â•â• RIBBON â€” PARAGRAPH â•â•â• -->
   <data name="ListTypeNoneItem.Text" xml:space="preserve">
     <value>None</value>
   </data>
@@ -151,7 +151,7 @@
     <value>Paragraph</value>
   </data>
 
-  <!-- ═══ RIBBON — INSERT ═══ -->
+  <!-- â•â•â• RIBBON â€” INSERT â•â•â• -->
   <data name="PictureRibbonLabel.Text" xml:space="preserve">
     <value>Picture</value>
   </data>
@@ -177,7 +177,7 @@
     <value>Insert</value>
   </data>
 
-  <!-- ═══ RIBBON — EDITING ═══ -->
+  <!-- â•â•â• RIBBON â€” EDITING â•â•â• -->
   <data name="FindFlyoutHeader.Text" xml:space="preserve">
     <value>Find</value>
   </data>
@@ -233,7 +233,7 @@
     <value>Editing</value>
   </data>
 
-  <!-- ═══ BACKSTAGE ═══ -->
+  <!-- â•â•â• BACKSTAGE â•â•â• -->
   <data name="NewNavItem.Content" xml:space="preserve">
     <value>New</value>
   </data>
@@ -262,12 +262,12 @@
     <value>Choose an option on the left.</value>
   </data>
 
-  <!-- ═══ STATUS BAR (initial values) ═══ -->
+  <!-- â•â•â• STATUS BAR (initial values) â•â•â• -->
   <data name="StatusText.Text" xml:space="preserve">
     <value>Ready</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: General ═══ -->
+  <!-- â•â•â• CODE-BEHIND: General â•â•â• -->
   <data name="AppTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
     <comment>{0} = document title</comment>
@@ -300,7 +300,7 @@
     <value>Print</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: File operations ═══ -->
+  <!-- â•â•â• CODE-BEHIND: File operations â•â•â• -->
   <data name="StatusOpened" xml:space="preserve">
     <value>Opened {0}</value>
     <comment>{0} = file name</comment>
@@ -332,7 +332,7 @@
     <value>Document</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Print ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Print â•â•â• -->
   <data name="PrintTitle" xml:space="preserve">
     <value>Print</value>
   </data>
@@ -364,7 +364,7 @@
     <value>Print Error</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Options dialog ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Options dialog â•â•â• -->
   <data name="OptionsTitle" xml:space="preserve">
     <value>Options</value>
   </data>
@@ -437,7 +437,7 @@
     <value>disabled</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Find / Replace ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Find / Replace â•â•â• -->
   <data name="StatusNoMatch" xml:space="preserve">
     <value>No match found.</value>
   </data>
@@ -459,12 +459,12 @@
     <value>Invalid regular expression.</value>
   </data>
 
-  <!-- ═══ XAML: Find regex checkbox ═══ -->
+  <!-- â•â•â• XAML: Find regex checkbox â•â•â• -->
   <data name="FindRegexCheckBox.Content" xml:space="preserve">
     <value>Use regular expressions</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Focus mode ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Focus mode â•â•â• -->
   <data name="StatusFocusModeEnabled" xml:space="preserve">
     <value>Focus mode enabled.</value>
   </data>
@@ -472,7 +472,7 @@
     <value>Focus mode disabled.</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Insert features ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Insert features â•â•â• -->
   <data name="DateTimeTitle" xml:space="preserve">
     <value>Date and Time</value>
   </data>
@@ -528,7 +528,7 @@
     <value>Columns</value>
   </data>
   <data name="StatusInsertedTable" xml:space="preserve">
-    <value>Inserted {0}×{1} table.</value>
+    <value>Inserted {0}Ã—{1} table.</value>
     <comment>{0} = rows, {1} = columns</comment>
   </data>
   <data name="SymbolTitle" xml:space="preserve">
@@ -556,7 +556,7 @@
     <comment>{0} = theme name</comment>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Print (real) ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Print (real) â•â•â• -->
   <data name="PrintJobTitle" xml:space="preserve">
     <value>SmrtPad - {0}</value>
     <comment>{0} = document title</comment>
@@ -577,7 +577,7 @@
     <value>Printing cancelled.</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: File format import ═══ -->
+  <!-- â•â•â• CODE-BEHIND: File format import â•â•â• -->
   <data name="FileTypeDocx" xml:space="preserve">
     <value>Word Document</value>
   </data>
@@ -588,7 +588,7 @@
     <value>OpenDocument Text</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Paste / Error ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Paste / Error â•â•â• -->
   <data name="ErrorPaste" xml:space="preserve">
     <value>Paste Error</value>
   </data>
@@ -599,7 +599,7 @@
     <value>Open file</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Status bar format strings ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Status bar format strings â•â•â• -->
   <data name="StatusBarWords" xml:space="preserve">
     <value>Words: {0}</value>
     <comment>{0} = word count</comment>
@@ -617,7 +617,7 @@
     <comment>{0} = line, {1} = column</comment>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Dialog service ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Dialog service â•â•â• -->
   <data name="DlgUnsavedChanges" xml:space="preserve">
     <value>Unsaved Changes</value>
   </data>
@@ -638,7 +638,7 @@
     <value>OK</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Backstage descriptions ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Backstage descriptions â•â•â• -->
   <data name="BackstageFile" xml:space="preserve">
     <value>File</value>
   </data>
@@ -667,7 +667,7 @@
     <value>No recent files.</value>
   </data>
 
-  <!-- ═══ CODE-BEHIND: Tab stops ═══ -->
+  <!-- â•â•â• CODE-BEHIND: Tab stops â•â•â• -->
   <data name="TabStopTitle" xml:space="preserve">
     <value>Tab Stops</value>
   </data>
@@ -720,7 +720,7 @@
     <value>Tab stops updated.</value>
   </data>
 
-  <!-- ═══ XAML: Paragraph styles ═══ -->
+  <!-- â•â•â• XAML: Paragraph styles â•â•â• -->
   <data name="StyleNormalItem.Text" xml:space="preserve">
     <value>Normal</value>
   </data>
@@ -743,7 +743,7 @@
     <value>Style applied.</value>
   </data>
 
-  <!-- ═══ XAML: Backstage document properties ═══ -->
+  <!-- â•â•â• XAML: Backstage document properties â•â•â• -->
   <data name="BackstageDocPropertiesHeader.Text" xml:space="preserve">
     <value>Document Properties</value>
   </data>
@@ -769,7 +769,7 @@
     <value>No</value>
   </data>
 
-  <!-- ═══ Built-in drawing dialog ═══ -->
+  <!-- â•â•â• Built-in drawing dialog â•â•â• -->
   <data name="DrawingTitle" xml:space="preserve">
     <value>Draw</value>
   </data>
@@ -786,7 +786,7 @@
     <value>Stroke Width</value>
   </data>
 
-  <!-- ═══ Spell check ═══ -->
+  <!-- â•â•â• Spell check â•â•â• -->
   <data name="SpellCheckToggle.Text" xml:space="preserve">
     <value>Spell Check</value>
   </data>
@@ -800,7 +800,7 @@
     <value>Spell check disabled.</value>
   </data>
 
-  <!-- ═══ Export to PDF ═══ -->
+  <!-- â•â•â• Export to PDF â•â•â• -->
   <data name="ExportPdfNavItem.Content" xml:space="preserve">
     <value>Export to PDF</value>
   </data>
@@ -818,7 +818,7 @@
     <value>Export the current document as a PDF file.</value>
   </data>
 
-  <!-- ═══ Export to DOCX ═══ -->
+  <!-- â•â•â• Export to DOCX â•â•â• -->
   <data name="ExportDocxNavItem.Content" xml:space="preserve">
     <value>Export to DOCX</value>
   </data>
@@ -833,7 +833,7 @@
     <value>Export the current document as a Word DOCX file.</value>
   </data>
 
-  <!-- ═══ OneDrive integration ═══ -->
+  <!-- â•â•â• OneDrive integration â•â•â• -->
   <data name="OneDriveNavItem.Content" xml:space="preserve">
     <value>Save to OneDrive</value>
   </data>
@@ -896,7 +896,7 @@
     <value>Page setup saved.</value>
   </data>
 
-  <!-- ═══ Macro recording ═══ -->
+  <!-- â•â•â• Macro recording â•â•â• -->
   <data name="MacroMenuBar.Title" xml:space="preserve">
     <value>Macro</value>
   </data>
@@ -937,7 +937,7 @@
     <value>No commands recorded. Use Record Macro first.</value>
   </data>
 
-  <!-- ═══ Tabbed document interface ═══ -->
+  <!-- â•â•â• Tabbed document interface â•â•â• -->
   <data name="StatusNewTab" xml:space="preserve">
     <value>New tab created.</value>
   </data>
@@ -945,7 +945,7 @@
     <value>Tab closed.</value>
   </data>
 
-  <!-- ═══ Multi-window ═══ -->
+  <!-- â•â•â• Multi-window â•â•â• -->
   <data name="WindowMenu.Title" xml:space="preserve">
     <value>Window</value>
   </data>
@@ -953,7 +953,7 @@
     <value>New Window</value>
   </data>
 
-  <!-- ═══ Templates ═══ -->
+  <!-- â•â•â• Templates â•â•â• -->
   <data name="TemplatesNavItem.Content" xml:space="preserve">
     <value>Templates</value>
   </data>
@@ -964,7 +964,7 @@
     <value>Close the application.</value>
   </data>
 
-  <!-- ═══ Font formatting upgrades ═══ -->
+  <!-- â•â•â• Font formatting upgrades â•â•â• -->
   <data name="NoHighlightButton.Content" xml:space="preserve">
     <value>No Highlight</value>
   </data>
@@ -996,7 +996,7 @@
     <value>Font formatting applied.</value>
   </data>
 
-  <!-- ═══ Keyboard shortcuts (Step 1) ═══ -->
+  <!-- â•â•â• Keyboard shortcuts (Step 1) â•â•â• -->
   <data name="StatusDuplicatedLine" xml:space="preserve">
     <value>Line duplicated.</value>
   </data>
@@ -1004,7 +1004,7 @@
     <value>Selection duplicated.</value>
   </data>
 
-  <!-- ═══ Zoom slider (Step 2) ═══ -->
+  <!-- â•â•â• Zoom slider (Step 2) â•â•â• -->
   <data name="ZoomSliderAccessibleName" xml:space="preserve">
     <value>Zoom slider</value>
   </data>
@@ -1012,7 +1012,7 @@
     <value>Zoom percentage</value>
   </data>
 
-  <!-- ═══ Format → Paragraph dialog (Step 3) ═══ -->
+  <!-- â•â•â• Format â†’ Paragraph dialog (Step 3) â•â•â• -->
   <data name="FormatParagraphMenuItem.Text" xml:space="preserve">
     <value>Paragraph...</value>
   </data>
@@ -1050,7 +1050,7 @@
     <value>Paragraph formatting applied.</value>
   </data>
 
-  <!-- ═══ Status bar toggle (Step 4) ═══ -->
+  <!-- â•â•â• Status bar toggle (Step 4) â•â•â• -->
   <data name="StatusBarToggle.Text" xml:space="preserve">
     <value>Status Bar</value>
   </data>
@@ -1061,7 +1061,7 @@
     <value>Status bar hidden.</value>
   </data>
 
-  <!-- ═══ Paste Special dialog (Step 5) ═══ -->
+  <!-- â•â•â• Paste Special dialog (Step 5) â•â•â• -->
   <data name="PasteSpecialTitle" xml:space="preserve">
     <value>Paste Special</value>
   </data>
@@ -1081,7 +1081,7 @@
     <value>Paste special applied.</value>
   </data>
 
-  <!-- ═══ Paste SplitButton (Step 6) ═══ -->
+  <!-- â•â•â• Paste SplitButton (Step 6) â•â•â• -->
   <data name="PastePlainRibbonLabel.Text" xml:space="preserve">
     <value>Paste Plain</value>
   </data>
@@ -1089,7 +1089,7 @@
     <value>Paste Special...</value>
   </data>
 
-  <!-- ═══ Points &amp; Picas ruler units (Step 7) ═══ -->
+  <!-- â•â•â• Points &amp; Picas ruler units (Step 7) â•â•â• -->
   <data name="OptionsRulerPoints" xml:space="preserve">
     <value>Points</value>
   </data>
@@ -1097,7 +1097,7 @@
     <value>Picas</value>
   </data>
 
-  <!-- ═══ Word wrap modes (Step 8) ═══ -->
+  <!-- â•â•â• Word wrap modes (Step 8) â•â•â• -->
   <data name="WordWrapOffItem.Text" xml:space="preserve">
     <value>No Wrap</value>
   </data>
@@ -1108,7 +1108,7 @@
     <value>Wrap to Ruler</value>
   </data>
 
-  <!-- ═══ Send by Email (Step 9) ═══ -->
+  <!-- â•â•â• Send by Email (Step 9) â•â•â• -->
   <data name="SendEmailMenuItem.Text" xml:space="preserve">
     <value>Send by Email...</value>
   </data>
@@ -1123,7 +1123,7 @@
     <value>Send the current document by email using your default mail client.</value>
   </data>
 
-  <!-- ═══ Accessibility (Step 10) ═══ -->
+  <!-- â•â•â• Accessibility (Step 10) â•â•â• -->
   <data name="FontColorIndicatorName" xml:space="preserve">
     <value>Font color: {0}</value>
     <comment>{0} = color name or hex</comment>
@@ -1133,7 +1133,7 @@
     <comment>{0} = color name or hex</comment>
   </data>
 
-  <!-- ═══ Pro-tier strings (Phase 4) ═══ -->
+  <!-- â•â•â• Pro-tier strings (Phase 4) â•â•â• -->
   <data name="ProUpsellTitle" xml:space="preserve">
     <value>Upgrade to SmrtPad Pro</value>
   </data>
@@ -1147,7 +1147,7 @@
     <value>Not now</value>
   </data>
   <data name="SmartSidebarToggle.Text" xml:space="preserve">
-    <value>✨ Smrt Sidebar</value>
+    <value>âœ¨ Smrt Sidebar</value>
   </data>
 
   <data name="SmartSidebarSummarize" xml:space="preserve">
@@ -1160,13 +1160,13 @@
     <value>Rewrite for clarity</value>
   </data>
   <data name="SmartSidebarGrammarSectionTitle" xml:space="preserve">
-    <value>✍️ GRAMMAR</value>
+    <value>âœï¸ GRAMMAR</value>
   </data>
   <data name="SmartSidebarShortenSectionTitle" xml:space="preserve">
-    <value>📏 SHORTEN</value>
+    <value>ðŸ“ SHORTEN</value>
   </data>
   <data name="SmartSidebarAutoCompleteSectionTitle" xml:space="preserve">
-    <value>⚡ AUTOCOMPLETE</value>
+    <value>âš¡ AUTOCOMPLETE</value>
   </data>
   <data name="SmartSidebarGrammarFix" xml:space="preserve">
     <value>Fix grammar</value>
@@ -1180,14 +1180,32 @@
   <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
   </data>
+  <data name="SmartSidebarOptions" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="SmartSidebarModelSelector" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="SmartSidebarExecutionTarget" xml:space="preserve">
+    <value>Processor</value>
+  </data>
+  <data name="SmartSidebarNpu" xml:space="preserve">
+    <value>⚡ NPU (Phi Silica)</value>
+  </data>
+  <data name="SmartSidebarGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="SmartSidebarCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
+  </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>
   </data>
   <data name="SmartSidebarSkillPlaceholder" xml:space="preserve">
-    <value>Choose a skill…</value>
+    <value>Choose a skillâ€¦</value>
   </data>
   <data name="SmartSidebarThinkingLabel" xml:space="preserve">
-    <value>Thinking…</value>
+    <value>Thinkingâ€¦</value>
   </data>
   <data name="SmartSidebarThinkingDoneLabel" xml:space="preserve">
     <value>Thought process</value>
@@ -1227,6 +1245,27 @@
   </data>
   <data name="SmartSidebarInitializationPending" xml:space="preserve">
     <value>Checking local AI availability...</value>
+  </data>
+  <data name="SmartSidebarStageProbing" xml:space="preserve">
+    <value>Detecting AI hardware...</value>
+  </data>
+  <data name="SmartSidebarStageSelecting" xml:space="preserve">
+    <value>Selecting best model for your hardware...</value>
+  </data>
+  <data name="SmartSidebarStageService" xml:space="preserve">
+    <value>Starting AI service...</value>
+  </data>
+  <data name="SmartSidebarStageCached" xml:space="preserve">
+    <value>Model already downloaded — loading...</value>
+  </data>
+  <data name="SmartSidebarStageDownloading" xml:space="preserve">
+    <value>Downloading {0} ({1} MB)...</value>
+  </data>
+  <data name="SmartSidebarStageDownloadingPct" xml:space="preserve">
+    <value>Downloading {0} ({1} MB) — {2}%</value>
+  </data>
+  <data name="SmartSidebarStageLoading" xml:space="preserve">
+    <value>Loading model into memory...</value>
   </data>
   <data name="SmartSidebarExecutionReady" xml:space="preserve">
     <value>Ready on {0}</value>
@@ -1270,7 +1309,7 @@
     <value>Discard</value>
   </data>
 
-  <!-- ═══ PHASE 8 — CRASH TELEMETRY ═══ -->
+  <!-- â•â•â• PHASE 8 â€” CRASH TELEMETRY â•â•â• -->
   <data name="CrashTelemetryTitle" xml:space="preserve">
     <value>Help improve SmrtPad</value>
   </data>
@@ -1284,36 +1323,36 @@
     <value>No thanks</value>
   </data>
 
-  <!-- ═══ PHASE 8.5 — PRO / AI STRINGS ═══ -->
+  <!-- â•â•â• PHASE 8.5 â€” PRO / AI STRINGS â•â•â• -->
   <data name="SmartSidebarTitle" xml:space="preserve">
-    <value>✨ Smart Sidebar</value>
+    <value>âœ¨ Smart Sidebar</value>
   </data>
   <data name="SummarizeSectionHeading" xml:space="preserve">
-    <value>📝 SUMMARIZE</value>
+    <value>ðŸ“ SUMMARIZE</value>
   </data>
   <data name="ToneSectionHeading" xml:space="preserve">
-    <value>🎨 TONE</value>
+    <value>ðŸŽ¨ TONE</value>
   </data>
   <data name="SemanticSectionHeading" xml:space="preserve">
-    <value>🔎 SEMANTIC</value>
+    <value>ðŸ”Ž SEMANTIC</value>
   </data>
   <data name="HardwareBadgeNpu" xml:space="preserve">
-    <value>⚡ NPU</value>
+    <value>âš¡ NPU</value>
   </data>
   <data name="HardwareBadgeGpu" xml:space="preserve">
-    <value>🖥️ GPU</value>
+    <value>ðŸ–¥ï¸ GPU</value>
   </data>
   <data name="HardwareBadgeCpu" xml:space="preserve">
-    <value>🐢 CPU</value>
+    <value>ðŸ¢ CPU</value>
   </data>
   <data name="InkModeMenuItem" xml:space="preserve">
-    <value>✏️ Ink</value>
+    <value>âœï¸ Ink</value>
   </data>
   <data name="DocumentOutlineMenuItem" xml:space="preserve">
-    <value>📋 Document Outline</value>
+    <value>ðŸ“‹ Document Outline</value>
   </data>
 
-  <!-- ═══ PHASE 8.4 — UI POLISH ═══ -->
+  <!-- â•â•â• PHASE 8.4 â€” UI POLISH â•â•â• -->
   <data name="EmptyStateMessage" xml:space="preserve">
     <value>Start a new document or open a file</value>
   </data>
@@ -1321,6 +1360,7 @@
     <value>New document</value>
   </data>
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
-    <value>Open file…</value>
+    <value>Open fileâ€¦</value>
   </data>
 </root>
+

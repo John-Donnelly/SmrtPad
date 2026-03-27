@@ -1160,6 +1160,27 @@
   <data name="SmartSidebarInitializationPending" xml:space="preserve">
     <value>مقامی AI دستیابی جانچ رہے ہیں...</value>
   </data>
+  <data name="SmartSidebarStageProbing" xml:space="preserve">
+    <value>AI ہارڈویئر کا پتہ لگایا جا رہا ہے...</value>
+  </data>
+  <data name="SmartSidebarStageSelecting" xml:space="preserve">
+    <value>آپ کے ہارڈویئر کے لیے بہترین ماڈل منتخب ہو رہا ہے...</value>
+  </data>
+  <data name="SmartSidebarStageService" xml:space="preserve">
+    <value>AI سروس شروع ہو رہی ہے...</value>
+  </data>
+  <data name="SmartSidebarStageCached" xml:space="preserve">
+    <value>ماڈل پہلے سے ڈاؤن لوڈ ہے — لوڈ ہو رہا ہے...</value>
+  </data>
+  <data name="SmartSidebarStageDownloading" xml:space="preserve">
+    <value>{0} ({1} MB) ڈاؤن لوڈ ہو رہا ہے...</value>
+  </data>
+  <data name="SmartSidebarStageDownloadingPct" xml:space="preserve">
+    <value>{0} ({1} MB) ڈاؤن لوڈ ہو رہا ہے — {2}%</value>
+  </data>
+  <data name="SmartSidebarStageLoading" xml:space="preserve">
+    <value>ماڈل میموری میں لوڈ ہو رہا ہے...</value>
+  </data>
   <data name="SmartSidebarExecutionReady" xml:space="preserve">
     <value>{0} پر تیار</value>
     <comment>{0} = execution target display name</comment>
@@ -1205,6 +1226,18 @@
   </data>
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
+  </data>
+  <data name="SmartSidebarExecutionTarget" xml:space="preserve">
+    <value>پروسیسر</value>
+  </data>
+  <data name="SmartSidebarNpu" xml:space="preserve">
+    <value>⚡ NPU (Phi Silica)</value>
+  </data>
+  <data name="SmartSidebarGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="SmartSidebarCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
   </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>

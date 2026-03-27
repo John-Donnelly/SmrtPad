@@ -1160,6 +1160,27 @@
   <data name="SmartSidebarInitializationPending" xml:space="preserve">
     <value>جارٍ التحقق من توفر الذكاء الاصطناعي المحلي...</value>
   </data>
+  <data name="SmartSidebarStageProbing" xml:space="preserve">
+    <value>جارٍ اكتشاف أجهزة الذكاء الاصطناعي...</value>
+  </data>
+  <data name="SmartSidebarStageSelecting" xml:space="preserve">
+    <value>جارٍ اختيار أفضل نموذج للأجهزة...</value>
+  </data>
+  <data name="SmartSidebarStageService" xml:space="preserve">
+    <value>جارٍ بدء خدمة الذكاء الاصطناعي...</value>
+  </data>
+  <data name="SmartSidebarStageCached" xml:space="preserve">
+    <value>تم تنزيل النموذج مسبقاً — جارٍ التحميل...</value>
+  </data>
+  <data name="SmartSidebarStageDownloading" xml:space="preserve">
+    <value>جارٍ تنزيل {0} ({1} ميغابايت)...</value>
+  </data>
+  <data name="SmartSidebarStageDownloadingPct" xml:space="preserve">
+    <value>جارٍ تنزيل {0} ({1} ميغابايت) — {2}%</value>
+  </data>
+  <data name="SmartSidebarStageLoading" xml:space="preserve">
+    <value>جارٍ تحميل النموذج في الذاكرة...</value>
+  </data>
   <data name="SmartSidebarExecutionReady" xml:space="preserve">
     <value>جاهز على {0}</value>
     <comment>{0} = execution target display name</comment>
@@ -1205,6 +1226,18 @@
   </data>
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
+  </data>
+  <data name="SmartSidebarExecutionTarget" xml:space="preserve">
+    <value>المعالج</value>
+  </data>
+  <data name="SmartSidebarNpu" xml:space="preserve">
+    <value>⚡ NPU (Phi Silica)</value>
+  </data>
+  <data name="SmartSidebarGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="SmartSidebarCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
   </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>

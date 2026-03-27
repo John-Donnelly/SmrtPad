@@ -1160,6 +1160,27 @@
   <data name="SmartSidebarInitializationPending" xml:space="preserve">
     <value>ローカル AI の可用性を確認中...</value>
   </data>
+  <data name="SmartSidebarStageProbing" xml:space="preserve">
+    <value>AI ハードウェアを検出中...</value>
+  </data>
+  <data name="SmartSidebarStageSelecting" xml:space="preserve">
+    <value>ハードウェアに最適なモデルを選択中...</value>
+  </data>
+  <data name="SmartSidebarStageService" xml:space="preserve">
+    <value>AI サービスを起動中...</value>
+  </data>
+  <data name="SmartSidebarStageCached" xml:space="preserve">
+    <value>モデルは既にダウンロード済み — 読み込み中...</value>
+  </data>
+  <data name="SmartSidebarStageDownloading" xml:space="preserve">
+    <value>{0} ({1} MB) をダウンロード中...</value>
+  </data>
+  <data name="SmartSidebarStageDownloadingPct" xml:space="preserve">
+    <value>{0} ({1} MB) をダウンロード中 — {2}%</value>
+  </data>
+  <data name="SmartSidebarStageLoading" xml:space="preserve">
+    <value>モデルをメモリに読み込み中...</value>
+  </data>
   <data name="SmartSidebarExecutionReady" xml:space="preserve">
     <value>{0} で準備完了</value>
     <comment>{0} = execution target display name</comment>
@@ -1205,6 +1226,18 @@
   </data>
     <data name="SmartSidebarNewSession" xml:space="preserve">
     <value>New session</value>
+  </data>
+  <data name="SmartSidebarExecutionTarget" xml:space="preserve">
+    <value>プロセッサ</value>
+  </data>
+  <data name="SmartSidebarNpu" xml:space="preserve">
+    <value>⚡ NPU (Phi Silica)</value>
+  </data>
+  <data name="SmartSidebarGpu" xml:space="preserve">
+    <value>🖥️ GPU</value>
+  </data>
+  <data name="SmartSidebarCpu" xml:space="preserve">
+    <value>🐢 CPU</value>
   </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>
