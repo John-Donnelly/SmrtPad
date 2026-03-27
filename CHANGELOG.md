@@ -9,7 +9,38 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
-- **ModelSizeSelector** (`SmrtPad.AI/ModelSizeSelector.cs`) — selects the best Foundry Local model alias and context-token limit at runtime based on probed GPU VRAM or available system RAM; ordered preference list from `phi-4-mini-reasoning` down to `qwen2.5-0.5b`; GPU/CPU headroom factors prevent OOM; context window scales proportionally to free headroom and is clamped to 512–16 384 tokens
+- **Live AI initialization progress** — `InitializeAsync(Action<string> onProgress, CancellationToken)` overload added to `IAIDispatcher`, `AIDispatcherProxy`, and `AIDispatcher`; stage tokens (`AI_STAGE_PROBING`, `AI_STAGE_SELECTING`, `AI_STAGE_SERVICE`, `AI_STAGE_CACHED`, `AI_STAGE_DOWNLOADING`, `AI_STAGE_LOADING`) are emitted across the ALC boundary as plain strings and parsed by `SmartSidebar.ParseProgressToken` into localized messages
+- **Download progress polling** — `ConcreteFoundryModelAdapter` polls the model cache directory every 800 ms during `DownloadAsync` (which has no `IProgress<T>` overload) and emits `AI_STAGE_DOWNLOADING\t{alias}\t{mb}\t{pct}` tokens; `IsCachedAsync` is checked first and the download stage is skipped entirely when the model is already cached; `GetExpectedBytes` reads variant size via reflection with a silent fallback to indeterminate mode
+- **Status bar mirroring** — `SmartSidebar.ReportStatus` (`Action<string>?` property) is wired in `MainWindow.ToggleSmrtSidebarAsync` to `ViewModel.UpdateStatus`; every progress stage update also updates the app status bar; bar is cleared when AI reaches ready state
+- **Model selector UI** — `OptionsButton` flyout with `ModelSubMenu` (`MenuFlyoutSubItem`) listing all hardware-eligible models as `RadioMenuFlyoutItem`; active model shown with checkmark; selecting an alias calls `SetPreferredModelAlias` + `ResetAsync` + re-initializes
+- **Execution target selector** — `ExecutionTargetSubMenu` (`MenuFlyoutSubItem`) in the same flyout with NPU / GPU / CPU options; selecting a target calls `SetPreferredExecutionTarget` + `ResetAsync` + re-initializes; menu auto-hides unavailable targets
+- **`ModelSizeSelector.TryGetAlias`** — looks up a named alias and returns its GPU and CPU footprints in MB; used by `CreateFoundryModelAdapterAsync` to honour the user's model choice with the correct footprint for the active execution target
+- **`ModelSizeSelector.GetBestAliasForCapability`** — returns the alias of the best-fitting model for a given `AIBackendCapability` without running `SelectBestAliasAsync`; used by `AIDispatcher.ActiveModelAlias`
+- **`ModelSizeSelector.GetEligibleAliases`** — returns all model aliases that fit the hardware budget, ordered best-first; used to populate the model selector menu
+- **`ModelSizeSelector.PickContextTokens(long footprintMb)`** overload — returns `BaseContextTokens` for a user-forced alias (no hardware headroom calculation needed)
+- **`IAIDispatcher.ActiveModelAlias`** — alias of the model actually loaded during the last initialization, or `null` pre-init
+- **`IAIDispatcher.SetPreferredModelAlias` / `PreferredModelAlias`** — user-chosen model alias; `null` = automatic hardware selection
+- **`IAIDispatcher.SetPreferredExecutionTarget` / `PreferredExecutionTarget`** — user-chosen execution target key (`"PhiSilicaNpu"`, `"FoundryLocalGpu"`, `"FoundryLocalCpu"`); `null` = automatic
+- **`IAIDispatcher.GetEligibleModelAliases`** — returns hardware-eligible aliases ordered best-first
+- **`IAIDispatcher.ResetAsync`** — disposes the current model and resets initialized state so the dispatcher can be re-initialized with a different alias or target
+- **i18n stage strings** — `SmartSidebarStageProbing`, `SmartSidebarStageSelecting`, `SmartSidebarStageService`, `SmartSidebarStageCached`, `SmartSidebarStageDownloading`, `SmartSidebarStageDownloadingPct`, `SmartSidebarStageLoading` added to all 9 locale `.resw` files
+- **i18n model/target selector strings** — `SmartSidebarModelSelector`, `SmartSidebarExecutionTarget`, `SmartSidebarOptions`, `SmartSidebarExecutionTargetSeparator` added to all 9 locale files
+
+### Changed
+- **`AIDispatcher` factory delegate** — signature updated from `Func<AIExecutionTarget, HardwareProbeResult, CancellationToken, Task<ILanguageModelAdapter>>` to `Func<AIExecutionTarget, HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>>`; `onProgress` threaded through `AIDispatcherFactory` → `CreateFoundryModelAdapterAsync` → `ConcreteFoundryModelAdapter.CreateAsync`
+- **`ConcreteFoundryModelAdapter.CreateAsync`** — accepts `Action<string>? onProgress`; checks `IsCachedAsync` before calling `DownloadAsync`; starts `PollDownloadProgressAsync` as a background `Task` cancelled immediately after download; emits `AI_STAGE_SERVICE`, `AI_STAGE_CACHED`, `AI_STAGE_LOADING` tokens
+- **`SmartSidebar.InitializeDispatcherAsync`** — passes a `DispatcherQueue.TryEnqueue`-wrapped progress callback to `_dispatcher.InitializeAsync`; init timeout raised from 60 s to 120 s to accommodate large model downloads
+- **`SmartSidebar.GetModelName`** — now prefers `_dispatcher.ActiveModelAlias`, then `PreferredModelAlias`, then falls back to the execution target display name; removes hard-coded `phi-3.5-mini-instruct` fallback
+- **`AIBackendAvailability` mapping in `AIDispatcherProxy`** — `GpuVramMb` and `AvailableSystemRamMb` fields are now correctly mapped from the dynamic capability object
+- **`ModelSizeSelector.SelectBestAliasAsync`** — updated to use `(Alias, GpuMb, CpuMb)` tuples; `footprintMb` resolved based on `isGpu` flag so CPU targets use CPU footprints, preventing over-sized download attempts
+
+### Fixed
+- **CPU model download failure** — `CreateFoundryModelAdapterAsync` now passes CPU footprint (not GPU footprint) to `ModelSizeSelector` when the execution target is `FoundryLocalCpu`; previously the GPU footprint was used for both targets, causing the service to request a variant too large for the system
+- **`SmrtPad.AI.csproj` native DLL resolution** — added `<RuntimeIdentifier>` based on `$(Platform)` and `<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>` so `Microsoft.AI.Foundry.Local.Core.dll` and other native DLLs are placed flat in the build output directory where `AIAssemblyLoadContext` and the WAP copy target can find them
+- **WAP project native DLL tracking** — added `UpToDateCheckInput`/`UpToDateCheckOutput` entries for `Microsoft.AI.Foundry.Local.Core.dll` and a `CopySmrtPadAiNativeRuntimeOutputs` copy step for the `runtimes/{rid}/native/` layout, ensuring VS incremental build re-deploys the native DLL when it changes
+
+---
+
 - **ResponseCleaner** (`SmrtPad/Helpers/ResponseCleaner.cs`) — post-processes LLM output to strip preamble lines, code-fence delimiters, closing remarks ("Let me know if…"), and reasoning-leak lines emitted by thinking models; applied automatically before text is inserted into the document or displayed in the sidebar
 - **SidebarChatEntry** (`SmrtPad/Controls/SidebarChatEntry.cs`) — INPC chat-message model carrying role, text, streaming flag, thinking text, thinking-phase flag, and thinking-label; backed by `SetField` to minimise PropertyChanged noise
 - **SidebarChatTemplateSelector** (`SmrtPad/Controls/SidebarChatTemplateSelector.cs`) — `DataTemplateSelector` that routes `SidebarChatRole.User` entries to a user-bubble template and all other entries to an assistant-bubble template
