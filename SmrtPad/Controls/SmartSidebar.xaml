@@ -9,7 +9,8 @@
     xmlns:conv="using:SmrtPad.Converters"
     mc:Ignorable="d"
     Width="340"
-    MinWidth="280">
+    MinWidth="280"
+    VerticalAlignment="Stretch">
 
     <UserControl.Transitions>
         <TransitionCollection>
@@ -91,7 +92,8 @@
     <Grid Background="{ThemeResource LayerFillColorDefaultBrush}"
           BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
           BorderThickness="1,0,0,0"
-          Padding="12">
+          Padding="12"
+          VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

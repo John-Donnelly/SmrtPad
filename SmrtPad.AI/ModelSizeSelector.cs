@@ -6,7 +6,7 @@ namespace SmrtPad.AI;
 /// </summary>
 internal static class ModelSizeSelector
 {
-    internal const string FallbackAlias = "phi-3.5-mini";
+    internal const string FallbackAlias = "phi-4-mini";
     private const int MinContextTokens = 512;
     private const int MaxContextTokens = 16384;
     private const int BaseContextTokens = 2048;
