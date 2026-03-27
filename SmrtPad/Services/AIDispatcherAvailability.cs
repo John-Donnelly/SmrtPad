@@ -30,7 +30,9 @@ public sealed record AIBackendAvailability(
     string BackendName,
     AIBackendAvailabilityStatus Status,
     string? DiagnosticCode,
-    string? DiagnosticMessage)
+    string? DiagnosticMessage,
+    long GpuVramMb = 0,
+    long AvailableSystemRamMb = 0)
 {
     /// <summary>Whether the backend can still be selected for initialization.</summary>
     public bool IsUsable =>

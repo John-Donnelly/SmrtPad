@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 
 namespace SmrtPad.Services;
@@ -24,6 +25,38 @@ internal sealed class AIAssemblyLoadContext : AssemblyLoadContext
             return LoadFromAssemblyPath(candidate);
 
         return null; // fall through to Default context
+    }
+
+    protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+    {
+        // The CLR passes the bare name from [DllImport] without a file extension.
+        // Append .dll so File.Exists probes the correct path on Windows.
+        var dllFileName = unmanagedDllName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+            ? unmanagedDllName
+            : unmanagedDllName + ".dll";
+
+        // Look in the plugin directory first (flat layout produced by RuntimeIdentifier builds).
+        var directPath = Path.Combine(_pluginDirectory, dllFileName);
+        if (File.Exists(directPath))
+            return LoadUnmanagedDllFromPath(directPath);
+
+        // Fall back to the runtimes/{rid}/native/ layout produced when no RuntimeIdentifier is set
+        // during the SmrtPad.AI build (e.g. ad-hoc builds or CI without -r flag).
+        var rid = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "win-x64",
+            Architecture.Arm64 => "win-arm64",
+            _ => null,
+        };
+
+        if (rid is not null)
+        {
+            var runtimesPath = Path.Combine(_pluginDirectory, "runtimes", rid, "native", dllFileName);
+            if (File.Exists(runtimesPath))
+                return LoadUnmanagedDllFromPath(runtimesPath);
+        }
+
+        return base.LoadUnmanagedDll(unmanagedDllName);
     }
 }
 
@@ -68,6 +101,10 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
         (Task)_dispatcher.InitializeAsync(ct);
 
     /// <inheritdoc/>
+    public Task InitializeAsync(Action<string> onProgress, CancellationToken ct = default) =>
+        (Task)_dispatcher.InitializeAsync(onProgress, ct);
+
+    /// <inheritdoc/>
     public Task StreamResponseAsync(
         string skillKey,
         string prompt,
@@ -101,6 +138,37 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
     /// <inheritdoc/>
     public void RemoveIndexedTab(int tabId) =>
         _dispatcher.RemoveIndexedTab(tabId);
+
+    /// <inheritdoc/>
+    public void SetPreferredModelAlias(string? alias) =>
+        _dispatcher.SetPreferredModelAlias(alias);
+
+    /// <inheritdoc/>
+    public string? PreferredModelAlias => (string?)_dispatcher.PreferredAlias;
+
+    /// <inheritdoc/>
+    public string? ActiveModelAlias => (string?)_dispatcher.ActiveModelAlias;
+
+    /// <inheritdoc/>
+    public void SetPreferredExecutionTarget(string? target) =>
+        _dispatcher.SetPreferredExecutionTarget(target);
+
+    /// <inheritdoc/>
+    public string? PreferredExecutionTarget => (string?)_dispatcher.PreferredExecutionTarget;
+
+    /// <inheritdoc/>
+    public IReadOnlyList<string> GetEligibleModelAliases()
+    {
+        dynamic results = _dispatcher.GetEligibleModelAliases();
+        var list = new List<string>();
+        foreach (var item in results)
+            list.Add((string)item);
+        return list;
+    }
+
+    /// <inheritdoc/>
+    public Task ResetAsync() =>
+        (Task)_dispatcher.ResetAsync();
 
     /// <summary>Disposes the underlying AI dispatcher.</summary>
     public async ValueTask DisposeAsync()
@@ -136,6 +204,8 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
                 ? status
                 : AIBackendAvailabilityStatus.Unknown,
             DiagnosticCode: capability.DiagnosticCode,
-            DiagnosticMessage: capability.DiagnosticMessage);
+            DiagnosticMessage: capability.DiagnosticMessage,
+            GpuVramMb: (long)capability.GpuVramMb,
+            AvailableSystemRamMb: (long)capability.AvailableSystemRamMb);
     }
 }
