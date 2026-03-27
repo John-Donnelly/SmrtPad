@@ -294,7 +294,7 @@ public sealed class SemanticSearchServiceTests
                 .ReturnsAsync(Array.Empty<float>());
             _model.Setup(m => m.DisposeAsync()).Returns(ValueTask.CompletedTask);
 
-            Dispatcher = new AIDispatcher(new HardwareProbeService(catalog.Object), (_, _, _) => Task.FromResult(_model.Object));
+            Dispatcher = new AIDispatcher(new HardwareProbeService(catalog.Object), (_, _, _, _) => Task.FromResult(_model.Object));
             Service = new SemanticSearchService(Dispatcher);
         }
 

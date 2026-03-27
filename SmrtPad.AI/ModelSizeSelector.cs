@@ -11,9 +11,9 @@ internal static class ModelSizeSelector
     private const int MaxContextTokens = 16384;
     private const int BaseContextTokens = 2048;
 
-    // Show a model if the hardware budget covers at least 90% of its footprint (~10% leeway).
-    private const double GpuHeadroomFactor = 0.90;
-    private const double CpuHeadroomFactor = 0.90;
+    // A model is eligible when its footprint × 1.10 ≤ budget,
+    // i.e. the model occupies at most ~91% of available memory, leaving ≥10% overhead free.
+    private const double HeadroomFactor = 1.10;
 
     /// <summary>
     /// Ordered from largest (most capable) to smallest (most compatible).
@@ -61,14 +61,13 @@ internal static class ModelSizeSelector
 
         bool isGpu = capability.GpuVramMb > 0;
         long budgetMb = isGpu ? capability.GpuVramMb : capability.AvailableSystemRamMb;
-        double headroom = isGpu ? GpuHeadroomFactor : CpuHeadroomFactor;
 
         foreach (var (alias, gpuMb, cpuMb) in PreferredAliases)
         {
             long footprintMb = isGpu ? gpuMb : cpuMb;
-            if (IsAliasEligible(footprintMb, budgetMb, headroom))
+            if (IsAliasEligible(footprintMb, budgetMb))
             {
-                int ctx = PickContextTokens(footprintMb, budgetMb, headroom);
+                int ctx = PickContextTokens(footprintMb, budgetMb);
                 return Task.FromResult((alias, ctx));
             }
         }
@@ -87,21 +86,23 @@ internal static class ModelSizeSelector
 
         bool isGpu = capability.GpuVramMb > 0;
         long budgetMb = isGpu ? capability.GpuVramMb : capability.AvailableSystemRamMb;
-        double headroom = isGpu ? GpuHeadroomFactor : CpuHeadroomFactor;
 
         // If no hardware data yet, return all aliases so the user can still pick
         if (budgetMb <= 0)
             return PreferredAliases.Select(static p => p.Alias).ToArray();
 
         return PreferredAliases
-            .Where(p => IsAliasEligible(isGpu ? p.GpuMb : p.CpuMb, budgetMb, headroom))
+            .Where(p => IsAliasEligible(isGpu ? p.GpuMb : p.CpuMb, budgetMb))
             .Select(static p => p.Alias)
             .ToArray();
     }
 
-    /// <summary>Returns true when the hardware budget can accommodate the model with the required headroom.</summary>
-    internal static bool IsAliasEligible(long footprintMb, long budgetMb, double headroomFactor)
-        => budgetMb > 0 && budgetMb >= (long)(footprintMb * headroomFactor);
+    /// <summary>
+    /// Returns <c>true</c> when the model footprint fits within the hardware budget
+    /// with at least 10% overhead remaining (<c>footprint × 1.10 ≤ budget</c>).
+    /// </summary>
+    internal static bool IsAliasEligible(long footprintMb, long budgetMb)
+        => budgetMb > 0 && (long)(footprintMb * HeadroomFactor) <= budgetMb;
 
     /// <summary>
     /// Looks up a known alias by name and returns its GPU and CPU footprints in MB.
@@ -127,16 +128,17 @@ internal static class ModelSizeSelector
     internal static int PickContextTokens(long footprintMb) => BaseContextTokens;
 
     /// <summary>
-    /// Scales context tokens proportionally to available headroom.
+    /// Scales context tokens proportionally to available headroom above the minimum required budget.
     /// More headroom → longer context, clamped to [<see cref="MinContextTokens"/>, <see cref="MaxContextTokens"/>].
     /// </summary>
-    internal static int PickContextTokens(long footprintMb, long budgetMb, double headroomFactor)
+    internal static int PickContextTokens(long footprintMb, long budgetMb)
     {
         if (footprintMb <= 0 || budgetMb <= 0)
             return BaseContextTokens;
 
+        // scale = 1.0 when budget == footprint * HeadroomFactor (minimum eligible budget)
         double actualRatio = (double)budgetMb / footprintMb;
-        double scale = actualRatio / headroomFactor;
+        double scale = actualRatio / HeadroomFactor;
         int tokens = (int)(BaseContextTokens * scale);
         return Math.Clamp(tokens, MinContextTokens, MaxContextTokens);
     }
@@ -151,12 +153,11 @@ internal static class ModelSizeSelector
 
         bool isGpu = capability.GpuVramMb > 0;
         long budgetMb = isGpu ? capability.GpuVramMb : capability.AvailableSystemRamMb;
-        double headroom = isGpu ? GpuHeadroomFactor : CpuHeadroomFactor;
 
         foreach (var (alias, gpuMb, cpuMb) in PreferredAliases)
         {
             long footprintMb = isGpu ? gpuMb : cpuMb;
-            if (IsAliasEligible(footprintMb, budgetMb, headroom))
+            if (IsAliasEligible(footprintMb, budgetMb))
                 return alias;
         }
 

@@ -45,7 +45,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var probe = new HardwareProbeService(catalog.Object);
         var model = modelMock ?? CreateModelAdapter("Hello", " world");
 
-        _dispatcher = new AIDispatcher(probe, (_, _, _) => Task.FromResult(model.Object));
+        _dispatcher = new AIDispatcher(probe, (_, _, _, _) => Task.FromResult(model.Object));
         return _dispatcher;
     }
 
@@ -79,7 +79,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
         var probe = new HardwareProbeService(catalog.Object);
         var model = CreateModelAdapter();
 
-        _dispatcher = new AIDispatcher(probe, (_, _, _) =>
+        _dispatcher = new AIDispatcher(probe, (_, _, _, _) =>
         {
             Interlocked.Increment(ref factoryCallCount);
             return Task.FromResult(model.Object);

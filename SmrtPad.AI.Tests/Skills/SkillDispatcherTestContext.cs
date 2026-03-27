@@ -25,7 +25,7 @@ internal sealed class SkillDispatcherTestContext : IAsyncDisposable
 
         Dispatcher = new AIDispatcher(
             new HardwareProbeService(_catalog.Object),
-            (_, _, _) => Task.FromResult(Model.Object));
+            (_, _, _, _) => Task.FromResult(Model.Object));
     }
 
     public AIDispatcher Dispatcher { get; }
