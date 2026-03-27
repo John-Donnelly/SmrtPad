@@ -29,6 +29,7 @@ public sealed partial class SmartSidebar : UserControl
     private CancellationTokenSource? _activeCts;
     private CancellationTokenSource? _initializationCts;
     private Task? _initializationTask;
+    private Task? _activeStreamTask;
     private string _lastOcrText = string.Empty;
     private string _lastTokensPerSecond = string.Empty;
     private readonly HashSet<int> _indexedSemanticTabs = [];
@@ -238,6 +239,14 @@ public sealed partial class SmartSidebar : UserControl
 
         _dispatcher.SetPreferredModelAlias(alias);
         CancelActive();
+
+        // Drain any in-flight stream before disposing the model to prevent crashes
+        if (_activeStreamTask is not null)
+        {
+            try { await _activeStreamTask; } catch { }
+            _activeStreamTask = null;
+        }
+
         _chatEntries.Clear();
 
         // Cancel any in-flight initialization and drain it (stay on UI thread so continuations are safe)
@@ -359,6 +368,14 @@ public sealed partial class SmartSidebar : UserControl
         _dispatcher.SetPreferredExecutionTarget(targetKey);
         _dispatcher.SetPreferredModelAlias(null); // reset model so target is auto-selected
         CancelActive();
+
+        // Drain any in-flight stream before disposing the model to prevent crashes
+        if (_activeStreamTask is not null)
+        {
+            try { await _activeStreamTask; } catch { }
+            _activeStreamTask = null;
+        }
+
         _chatEntries.Clear();
 
         if (_initializationCts is not null)
@@ -480,8 +497,12 @@ public sealed partial class SmartSidebar : UserControl
 
     private void InsertBubbleButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string text } && !string.IsNullOrWhiteSpace(text))
-            InsertGeneratedText?.Invoke(text);
+        if (sender is Button btn && btn.DataContext is SidebarChatEntry entry)
+        {
+            var text = entry.InsertText ?? entry.Text;
+            if (!string.IsNullOrWhiteSpace(text))
+                InsertGeneratedText?.Invoke(text);
+        }
     }
 
     // ── Semantic Search ──
@@ -614,18 +635,20 @@ public sealed partial class SmartSidebar : UserControl
         _activeCts = new CancellationTokenSource();
         var ct = _activeCts.Token;
 
-        // Separate buffers for <think> content and actual answer
+        // Separate buffers for <think>, <insert>, and actual answer content
         var thinkBuilder = new StringBuilder();
         var answerBuilder = new StringBuilder();
+        var insertBuilder = new StringBuilder();
         var rawBuffer = new StringBuilder();
         bool inThinkBlock = false;
+        bool inInsertBlock = false;
         var tokenCount = 0;
         var stopwatch = Stopwatch.StartNew();
 
         SendChatButton.Visibility = Visibility.Collapsed;
         StopChatButton.Visibility = Visibility.Visible;
 
-        await _dispatcher.StreamResponseAsync(
+        _activeStreamTask = _dispatcher.StreamResponseAsync(
             skillKey,
             prompt,
             onToken: token =>
@@ -633,8 +656,8 @@ public sealed partial class SmartSidebar : UserControl
                 rawBuffer.Append(token);
                 tokenCount += EstimateTokenCount(token);
 
-                // Parse <think>…</think> tags out of the raw stream
-                ParseThinkingToken(rawBuffer, thinkBuilder, answerBuilder, ref inThinkBlock);
+                // Parse <think>…</think> and <insert>…</insert> tags out of the raw stream
+                ParseThinkingToken(rawBuffer, thinkBuilder, answerBuilder, insertBuilder, ref inThinkBlock, ref inInsertBlock);
 
                 DispatcherQueue.TryEnqueue(() =>
                     UpdateStreamingEntryWithThinking(
@@ -651,7 +674,8 @@ public sealed partial class SmartSidebar : UserControl
                 FinalizeStreamingEntry(
                     streamingIndex,
                     finalText,
-                    thinkBuilder.ToString());
+                    thinkBuilder.ToString(),
+                    insertBuilder.Length > 0 ? insertBuilder.ToString() : null);
                 if (!ct.IsCancellationRequested)
                     UpdateInferenceMetrics(tokenCount, stopwatch.Elapsed);
                 SendChatButton.Visibility = Visibility.Visible;
@@ -667,17 +691,22 @@ public sealed partial class SmartSidebar : UserControl
                 StopChatButton.Visibility = Visibility.Collapsed;
             }),
             ct: ct);
+        await _activeStreamTask;
     }
 
     /// <summary>
-    /// Drains <paramref name="rawBuffer"/> and routes characters into thinking vs answer.
-    /// Tags &lt;think&gt; and &lt;/think&gt; are consumed and not forwarded to either builder.
+    /// Drains <paramref name="rawBuffer"/> and routes characters into thinking vs answer vs insert.
+    /// Tags &lt;think&gt;, &lt;/think&gt;, &lt;insert&gt;, and &lt;/insert&gt; are consumed and not forwarded.
+    /// Content inside &lt;insert&gt;…&lt;/insert&gt; goes to <paramref name="insertBuilder"/>;
+    /// content outside all tags goes to <paramref name="answerBuilder"/>.
     /// </summary>
     private static void ParseThinkingToken(
         StringBuilder rawBuffer,
         StringBuilder thinkBuilder,
         StringBuilder answerBuilder,
-        ref bool inThinkBlock)
+        StringBuilder insertBuilder,
+        ref bool inThinkBlock,
+        ref bool inInsertBlock)
     {
         var raw = rawBuffer.ToString();
         rawBuffer.Clear();
@@ -685,25 +714,39 @@ public sealed partial class SmartSidebar : UserControl
         int i = 0;
         while (i < raw.Length)
         {
-            // Check for opening tag
-            if (!inThinkBlock && raw.AsSpan(i).StartsWith("<think>", StringComparison.OrdinalIgnoreCase))
+            // Check for <think> opening tag
+            if (!inThinkBlock && !inInsertBlock && raw.AsSpan(i).StartsWith("<think>", StringComparison.OrdinalIgnoreCase))
             {
                 inThinkBlock = true;
                 i += "<think>".Length;
                 continue;
             }
-            // Check for closing tag
+            // Check for </think> closing tag
             if (inThinkBlock && raw.AsSpan(i).StartsWith("</think>", StringComparison.OrdinalIgnoreCase))
             {
                 inThinkBlock = false;
                 i += "</think>".Length;
                 continue;
             }
+            // Check for <insert> opening tag
+            if (!inThinkBlock && !inInsertBlock && raw.AsSpan(i).StartsWith("<insert>", StringComparison.OrdinalIgnoreCase))
+            {
+                inInsertBlock = true;
+                i += "<insert>".Length;
+                continue;
+            }
+            // Check for </insert> closing tag
+            if (inInsertBlock && raw.AsSpan(i).StartsWith("</insert>", StringComparison.OrdinalIgnoreCase))
+            {
+                inInsertBlock = false;
+                i += "</insert>".Length;
+                continue;
+            }
             // Partial tag at end — keep it buffered for the next token
             if (raw[i] == '<')
             {
                 int remaining = raw.Length - i;
-                const int maxTagLen = 8; // "</think>" length
+                const int maxTagLen = 9; // "</insert>" length
                 if (remaining < maxTagLen)
                 {
                     // Could be an incomplete tag — put remainder back in buffer and stop
@@ -714,6 +757,8 @@ public sealed partial class SmartSidebar : UserControl
 
             if (inThinkBlock)
                 thinkBuilder.Append(raw[i]);
+            else if (inInsertBlock)
+                insertBuilder.Append(raw[i]);
             else
                 answerBuilder.Append(raw[i]);
 
@@ -747,7 +792,7 @@ public sealed partial class SmartSidebar : UserControl
         _pendingScroll = true;
     }
 
-    private void FinalizeStreamingEntry(int index, string text, string thinkingText = "")
+    private void FinalizeStreamingEntry(int index, string text, string thinkingText = "", string? insertText = null)
     {
         if (index >= 0 && index < _chatEntries.Count)
         {
@@ -759,6 +804,7 @@ public sealed partial class SmartSidebar : UserControl
             entry.ThinkingLabel = !string.IsNullOrEmpty(thinkingText)
                 ? ResourceHelper.GetString("SmartSidebarThinkingDoneLabel")
                 : string.Empty;
+            entry.InsertText = insertText;
         }
         ScrollChatToBottom();
     }

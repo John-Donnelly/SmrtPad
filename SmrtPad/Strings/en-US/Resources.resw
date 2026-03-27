@@ -1147,7 +1147,7 @@
     <value>Not now</value>
   </data>
   <data name="SmartSidebarToggle.Text" xml:space="preserve">
-    <value>âœ¨ Smrt Sidebar</value>
+    <value>&#x2728; Smrt Sidebar</value>
   </data>
 
   <data name="SmartSidebarSummarize" xml:space="preserve">
@@ -1160,13 +1160,13 @@
     <value>Rewrite for clarity</value>
   </data>
   <data name="SmartSidebarGrammarSectionTitle" xml:space="preserve">
-    <value>âœï¸ GRAMMAR</value>
+    <value>&#x270F;&#xFE0F; GRAMMAR</value>
   </data>
   <data name="SmartSidebarShortenSectionTitle" xml:space="preserve">
-    <value>ðŸ“ SHORTEN</value>
+    <value>&#x1F50D; SHORTEN</value>
   </data>
   <data name="SmartSidebarAutoCompleteSectionTitle" xml:space="preserve">
-    <value>âš¡ AUTOCOMPLETE</value>
+    <value>&#x26A1; AUTOCOMPLETE</value>
   </data>
   <data name="SmartSidebarGrammarFix" xml:space="preserve">
     <value>Fix grammar</value>
@@ -1190,22 +1190,22 @@
     <value>Processor</value>
   </data>
   <data name="SmartSidebarNpu" xml:space="preserve">
-    <value>⚡ NPU (Phi Silica)</value>
+    <value>&#x26A1; NPU (Phi Silica)</value>
   </data>
   <data name="SmartSidebarGpu" xml:space="preserve">
-    <value>🖥️ GPU</value>
+    <value>&#x1F5A5;&#xFE0F; GPU</value>
   </data>
   <data name="SmartSidebarCpu" xml:space="preserve">
-    <value>🐢 CPU</value>
+    <value>&#x1F422; CPU</value>
   </data>
   <data name="SmartSidebarApplySkill" xml:space="preserve">
     <value>Apply</value>
   </data>
   <data name="SmartSidebarSkillPlaceholder" xml:space="preserve">
-    <value>Choose a skillâ€¦</value>
+    <value>Choose a skill…</value>
   </data>
   <data name="SmartSidebarThinkingLabel" xml:space="preserve">
-    <value>Thinkingâ€¦</value>
+    <value>Thinking…</value>
   </data>
   <data name="SmartSidebarThinkingDoneLabel" xml:space="preserve">
     <value>Thought process</value>
@@ -1325,31 +1325,31 @@
 
   <!-- â•â•â• PHASE 8.5 â€” PRO / AI STRINGS â•â•â• -->
   <data name="SmartSidebarTitle" xml:space="preserve">
-    <value>âœ¨ Smart Sidebar</value>
+    <value>&#x2728; Smart Sidebar</value>
   </data>
   <data name="SummarizeSectionHeading" xml:space="preserve">
-    <value>ðŸ“ SUMMARIZE</value>
+    <value>&#x1F4DD; SUMMARIZE</value>
   </data>
   <data name="ToneSectionHeading" xml:space="preserve">
-    <value>ðŸŽ¨ TONE</value>
+    <value>&#x1F3A8; TONE</value>
   </data>
   <data name="SemanticSectionHeading" xml:space="preserve">
-    <value>ðŸ”Ž SEMANTIC</value>
+    <value>&#x1F50E; SEMANTIC</value>
   </data>
   <data name="HardwareBadgeNpu" xml:space="preserve">
-    <value>âš¡ NPU</value>
+    <value>&#x26A1; NPU</value>
   </data>
   <data name="HardwareBadgeGpu" xml:space="preserve">
-    <value>ðŸ–¥ï¸ GPU</value>
+    <value>&#x1F5A5;&#xFE0F; GPU</value>
   </data>
   <data name="HardwareBadgeCpu" xml:space="preserve">
-    <value>ðŸ¢ CPU</value>
+    <value>&#x1F422; CPU</value>
   </data>
   <data name="InkModeMenuItem" xml:space="preserve">
-    <value>âœï¸ Ink</value>
+    <value>&#x270F;&#xFE0F; Ink</value>
   </data>
   <data name="DocumentOutlineMenuItem" xml:space="preserve">
-    <value>ðŸ“‹ Document Outline</value>
+    <value>&#x1F4CB; Document Outline</value>
   </data>
 
   <!-- â•â•â• PHASE 8.4 â€” UI POLISH â•â•â• -->
@@ -1360,7 +1360,7 @@
     <value>New document</value>
   </data>
   <data name="EmptyStateOpenButton.Content" xml:space="preserve">
-    <value>Open fileâ€¦</value>
+    <value>Open file…</value>
   </data>
 </root>
 

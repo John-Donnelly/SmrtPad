@@ -79,6 +79,19 @@ public sealed class SidebarChatEntry : INotifyPropertyChanged
         set => SetField(ref _thinkingLabel, value);
     }
 
+    private string? _insertText;
+
+    /// <summary>
+    /// The text extracted from the model's &lt;insert&gt;…&lt;/insert&gt; region, if present.
+    /// When non-null this is what the Insert button places into the document.
+    /// Falls back to <see cref="Text"/> when null.
+    /// </summary>
+    public string? InsertText
+    {
+        get => _insertText;
+        set => SetField(ref _insertText, value);
+    }
+
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value)) return;

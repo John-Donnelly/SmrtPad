@@ -76,7 +76,6 @@
                                FontSize="13" />
                 </Border>
                 <Button Content="Insert"
-                        Tag="{Binding Text}"
                         Click="InsertBubbleButton_Click"
                         Padding="8,4"
                         FontSize="12"
