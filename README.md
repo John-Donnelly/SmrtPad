@@ -95,6 +95,60 @@ dotnet test SmrtPad.Tests\SmrtPad.Tests.csproj -c Debug -p:Platform=x64
 dotnet test SmrtPad.AI.Tests\SmrtPad.AI.Tests.csproj -c Debug -p:Platform=x64
 ```
 
+### AI benchmark UI tests
+
+SmrtPad includes a local Appium-based benchmark suite for the Smart Sidebar AI models. The benchmark exercises all supported sidebar skills across a curated prompt set, records latency and throughput, applies rule-based scoring, estimates electricity cost, and generates report artifacts for qualitative review.
+
+#### Prerequisites
+
+- Build and deploy the packaged **SmrtPad (Package)** app so the local AUMID is registered.
+- Install [Appium](https://appium.io/) via npm.
+- Install the Appium Windows driver:
+
+  ```powershell
+  appium driver install --source=npm appium-windows-driver
+  ```
+
+- Install WinAppDriver 1.2.1.
+- Start the local benchmark infrastructure:
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\SmrtPad.UITests\Scripts\start-benchmark.ps1
+  ```
+
+#### Benchmark tests
+
+- Smoke validation:
+
+  ```powershell
+  dotnet test .\SmrtPad.UITests\SmrtPad.UITests.csproj -c Debug -p:Platform=x64 --filter "FullyQualifiedName=SmrtPad.UITests.Tests.ModelBenchmarkTests.SmokeTest_SinglePrompt"
+  ```
+
+- Full benchmark:
+
+  ```powershell
+  dotnet test .\SmrtPad.UITests\SmrtPad.UITests.csproj -c Debug -p:Platform=x64 --filter "FullyQualifiedName=SmrtPad.UITests.Tests.ModelBenchmarkTests.RunFullBenchmark"
+  ```
+
+#### Environment variables
+
+- `BENCHMARK_MODEL_FILTER` — comma-separated model alias filter for subset runs, for example `phi-4-mini` or `phi-4-mini,qwen2.5-1.5b`
+- `BENCHMARK_GPU_WATTS` — GPU power draw override, default `115`
+- `BENCHMARK_CPU_WATTS` — CPU power draw override, default `105`
+- `BENCHMARK_NPU_WATTS` — NPU power draw override, default `15`
+- `BENCHMARK_ELECTRICITY_RATE` — electricity cost in USD per kWh, default `0.12`
+
+#### Generated artifacts
+
+Each benchmark run produces:
+
+- `benchmark-report-*.md` — Markdown summary report
+- `benchmark-dashboard-*.html` — static Chart.js dashboard
+- `benchmark-results-*.json` — raw machine-readable results
+- `qualitative-assessment-prompt-*.md` — prompt for chat-based qualitative review
+
+Artifacts are written to `BenchmarkResults\` at the solution root when discoverable. If the solution root cannot be resolved from the test host, the suite falls back to `%TEMP%\SmrtPad-BenchmarkResults\`.
+
 The test suite covers:
 - ViewModel default values and all property-change notifications
 - All formatting toggle commands (Bold, Italic, Underline, Strikethrough, Subscript, Superscript)
@@ -110,6 +164,7 @@ The test suite covers:
 - Settings persistence, concurrency, and recent-files MRU
 - Localization — all 9 locales, all resource keys present and non-empty
 - **AI engine** — `ModelSizeSelector` alias/budget logic, `HardwareProbeService` VRAM/RAM probing, `PromptTemplates` output, `AIDispatcher` skill routing, `ResponseCleaner` output stripping
+- **AI benchmark suite** — Smart Sidebar Appium automation, per-model prompt execution, rule-based scoring, electricity cost estimation, Markdown/HTML/JSON report generation, and qualitative-assessment prompt generation
 
 ## Project Structure
 

@@ -19,9 +19,13 @@ namespace SmrtPad.UITests.Benchmark;
 public sealed class SidebarAutomationHelper
 {
     private readonly BenchmarkAppFixture _fixture;
+    private readonly Action<string>? _log;
 
     /// <summary>Maximum time to wait for model initialization after switching (ms).</summary>
     private const int ModelInitTimeoutMs = 180_000; // 3 min — large models may download
+
+    /// <summary>Maximum time to wait for the sidebar controls to become enabled (ms).</summary>
+    private const int SidebarReadyTimeoutMs = 180_000; // 3 min — first model load can take time
 
     /// <summary>Maximum time to wait for a streaming response to complete (ms).</summary>
     private const int ResponseTimeoutMs = 300_000; // 5 min — long prompts on slow models
@@ -29,11 +33,14 @@ public sealed class SidebarAutomationHelper
     /// <summary>Polling interval while waiting for UI state changes (ms).</summary>
     private const int PollIntervalMs = 500;
 
-    public SidebarAutomationHelper(BenchmarkAppFixture fixture)
+    public SidebarAutomationHelper(BenchmarkAppFixture fixture, Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(fixture);
         _fixture = fixture;
+        _log = log;
     }
+
+    private void Log(string message) => _log?.Invoke($"[Sidebar] {message}");
 
     private WindowsDriver Driver => _fixture.Driver
         ?? throw new InvalidOperationException("Appium session is not available.");
@@ -47,19 +54,26 @@ public sealed class SidebarAutomationHelper
     public bool EnsureSidebarOpen()
     {
         if (IsSidebarOpen())
+        {
+            Log("Sidebar already open");
             return true;
+        }
 
+        Log("Opening sidebar via toolbar button...");
         ClickToolbarButton();
         Thread.Sleep(800);
 
         // Retry once in case the first click was swallowed
         if (!IsSidebarOpen())
         {
+            Log("Sidebar not open after first click, retrying...");
             ClickToolbarButton();
             Thread.Sleep(1000);
         }
 
-        return IsSidebarOpen();
+        var isOpen = IsSidebarOpen();
+        Log(isOpen ? "Sidebar opened successfully" : "Failed to open sidebar");
+        return isOpen;
     }
 
     /// <summary>
@@ -185,6 +199,7 @@ public sealed class SidebarAutomationHelper
     public void StartNewSession()
     {
         EnsureSidebarOpen();
+        WaitForAiInteractionsEnabled(SidebarReadyTimeoutMs);
 
         Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
         Thread.Sleep(400);
@@ -208,9 +223,12 @@ public sealed class SidebarAutomationHelper
 
         try
         {
+            Log($"ExecutePrompt: starting [{prompt.Id}] skill={prompt.SkillKey}");
             EnsureSidebarOpen();
+            WaitForAiInteractionsEnabled(SidebarReadyTimeoutMs);
 
             // Start a new session for each prompt to isolate results
+            Log("ExecutePrompt: starting new session...");
             StartNewSession();
             Thread.Sleep(300);
 
@@ -279,6 +297,7 @@ public sealed class SidebarAutomationHelper
         Thread.Sleep(300);
 
         EnsureSidebarOpen();
+        WaitForAiInteractionsEnabled(SidebarReadyTimeoutMs);
 
         // Select the skill from the dropdown
         SelectSkill(skillKey);
@@ -295,22 +314,32 @@ public sealed class SidebarAutomationHelper
 
     private string SendFreeformChat(string inputText)
     {
+        Log("SendFreeformChat: ensuring sidebar open...");
         EnsureSidebarOpen();
+        WaitForAiInteractionsEnabled(SidebarReadyTimeoutMs);
 
         // Type into chat input
+        Log("SendFreeformChat: finding ChatInputBox...");
         var chatInput = Driver.FindElement(MobileBy.AccessibilityId("ChatInputBox"));
+        Log($"SendFreeformChat: ChatInputBox found, enabled={chatInput.Enabled}");
         chatInput.Clear();
         chatInput.SendKeys(inputText);
         Thread.Sleep(200);
 
         // Click Send
+        Log("SendFreeformChat: finding Send button...");
         var sendBtn = Driver.FindElement(MobileBy.Name("Send"));
+        Log($"SendFreeformChat: Send button found, displayed={sendBtn.Displayed}, enabled={sendBtn.Enabled}");
         sendBtn.Click();
+        Log("SendFreeformChat: Send clicked, waiting for streaming...");
 
         // Wait for streaming to complete
         WaitForStreamingComplete();
+        Log("SendFreeformChat: streaming complete, extracting response...");
 
-        return GetLastAssistantResponse();
+        var response = GetLastAssistantResponse();
+        Log($"SendFreeformChat: response length={response.Length}");
+        return response;
     }
 
     private string SendSemanticQuery(string queryText)
@@ -319,6 +348,57 @@ public sealed class SidebarAutomationHelper
         // search box requires indexed documents. The sidebar routes "semantic"
         // skill key through the chat stream.
         return SendFreeformChat(queryText);
+    }
+
+    /// <summary>
+    /// Waits until the Smart Sidebar's chat controls are enabled, which indicates
+    /// the AI dispatcher has finished initialization and user interactions are ready.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when the sidebar does not become ready within the timeout.</exception>
+    private void WaitForAiInteractionsEnabled(int timeoutMs)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        Log("WaitForReady: waiting for ChatInputBox and Send button to become enabled...");
+        var iteration = 0;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            iteration++;
+            var chatInputs = Driver.FindElements(MobileBy.AccessibilityId("ChatInputBox"));
+            var sendButtons = Driver.FindElements(MobileBy.Name("Send"));
+            var statusText = GetStatusText();
+
+            var chatReady = chatInputs.Count > 0 && chatInputs[0].Enabled;
+            var sendReady = sendButtons.Count > 0 && sendButtons[0].Enabled;
+
+            if (iteration == 1 || iteration % 20 == 0)
+            {
+                Log($"WaitForReady: poll={iteration}, chatCount={chatInputs.Count}, chatEnabled={chatReady}, sendCount={sendButtons.Count}, sendEnabled={sendReady}, status='{statusText}'");
+            }
+
+            if (chatReady && sendReady)
+            {
+                Log("WaitForReady: chat controls are enabled");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(statusText)
+                && statusText.Contains("ready", StringComparison.OrdinalIgnoreCase)
+                && chatInputs.Count > 0
+                && sendButtons.Count > 0)
+            {
+                Log("WaitForReady: sidebar status reports ready; proceeding despite disabled-state mismatch");
+                return;
+            }
+
+            Thread.Sleep(PollIntervalMs);
+        }
+
+        var status = GetStatusText();
+        throw new InvalidOperationException(
+            string.IsNullOrWhiteSpace(status)
+                ? "Smart Sidebar did not become ready before the timeout elapsed."
+                : $"Smart Sidebar did not become ready before the timeout elapsed. Status: {status}");
     }
 
     // ── Skill selection ──────────────────────────────────────────────────────
@@ -387,31 +467,46 @@ public sealed class SidebarAutomationHelper
     private void WaitForStreamingComplete()
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(ResponseTimeoutMs);
+        var phase1Start = DateTime.UtcNow;
 
         // First, wait for the StopChatButton to appear (streaming started)
+        Log("WaitForStreaming: phase 1 — waiting for Stop button or Send button...");
         while (DateTime.UtcNow < deadline)
         {
             var stopBtns = Driver.FindElements(MobileBy.Name("Stop generation"));
             if (stopBtns.Count > 0 && stopBtns[0].Displayed)
+            {
+                Log($"WaitForStreaming: Stop button appeared after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
                 break;
+            }
 
             // Also check if Send is already visible (instant response or error)
             var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
             if (sendBtns.Count > 0 && sendBtns[0].Displayed)
+            {
+                Log($"WaitForStreaming: Send button still visible (instant response or error) after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
                 return;
+            }
 
             Thread.Sleep(PollIntervalMs);
         }
 
         // Now wait for Send button to reappear (streaming complete)
+        var phase2Start = DateTime.UtcNow;
+        Log("WaitForStreaming: phase 2 — waiting for Send button to reappear...");
         while (DateTime.UtcNow < deadline)
         {
             var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
             if (sendBtns.Count > 0 && sendBtns[0].Displayed)
+            {
+                Log($"WaitForStreaming: Send button reappeared after {(DateTime.UtcNow - phase2Start).TotalSeconds:F1}s");
                 return;
+            }
 
             Thread.Sleep(PollIntervalMs);
         }
+
+        Log("WaitForStreaming: TIMEOUT — Send button never reappeared");
     }
 
     // ── Response extraction ──────────────────────────────────────────────────
@@ -423,18 +518,35 @@ public sealed class SidebarAutomationHelper
     {
         try
         {
-            var chatList = Driver.FindElement(MobileBy.AccessibilityId("ChatHistoryList"));
+            var chatLists = Driver.FindElements(MobileBy.AccessibilityId("ChatHistoryList"));
+            Log($"GetLastAssistantResponse: ChatHistoryList count={chatLists.Count}");
+            if (chatLists.Count == 0)
+                return string.Empty;
+
+            var chatList = chatLists[0];
             var items = chatList.FindElements(By.XPath(".//*"));
+            Log($"GetLastAssistantResponse: child elements={items.Count}");
 
             // Walk backwards through the list items to find the last non-empty text
             // that isn't the user's input
             var texts = new List<string>();
             foreach (var item in items)
             {
-                var text = item.Text;
-                if (!string.IsNullOrWhiteSpace(text))
-                    texts.Add(text);
+                try
+                {
+                    var text = item.Text;
+                    if (!string.IsNullOrWhiteSpace(text))
+                        texts.Add(text);
+                }
+                catch
+                {
+                    // stale element — skip
+                }
             }
+
+            Log($"GetLastAssistantResponse: non-empty texts={texts.Count}");
+            if (texts.Count > 0)
+                Log($"GetLastAssistantResponse: last text preview='{texts[^1][..Math.Min(80, texts[^1].Length)]}'");
 
             // The last text block in the chat history that isn't empty should be the
             // assistant's response. Work backwards.
@@ -447,8 +559,9 @@ public sealed class SidebarAutomationHelper
 
             return string.Empty;
         }
-        catch
+        catch (Exception ex)
         {
+            Log($"GetLastAssistantResponse: EXCEPTION {ex.GetType().Name}: {ex.Message}");
             return string.Empty;
         }
     }

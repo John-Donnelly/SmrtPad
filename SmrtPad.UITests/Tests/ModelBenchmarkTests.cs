@@ -44,7 +44,7 @@ public sealed class ModelBenchmarkTests
 
         _fixture.RequireSession();
 
-        var sidebar = new SidebarAutomationHelper(_fixture);
+        var sidebar = new SidebarAutomationHelper(_fixture, msg => _output.WriteLine(msg));
         var scorer = new RuleBasedScorer();
         var costEstimator = new CostEstimator();
 
@@ -106,7 +106,7 @@ public sealed class ModelBenchmarkTests
 
         _fixture.RequireSession();
 
-        var sidebar = new SidebarAutomationHelper(_fixture);
+        var sidebar = new SidebarAutomationHelper(_fixture, msg => _output.WriteLine(msg));
         var scorer = new RuleBasedScorer();
         var costEstimator = new CostEstimator();
 
@@ -121,7 +121,8 @@ public sealed class ModelBenchmarkTests
         var result = sidebar.ExecutePrompt(prompt, "current", "GPU");
 
         _output.WriteLine($"Succeeded: {result.Succeeded}");
-        _output.WriteLine($"Output: {result.OutputText}");
+        _output.WriteLine($"Output: '{result.OutputText}'");
+        _output.WriteLine($"Error: '{result.ErrorMessage}'");
         _output.WriteLine($"Elapsed: {result.ElapsedSeconds:F1}s");
         _output.WriteLine($"TPS: {result.TokensPerSecond:F1}");
 
