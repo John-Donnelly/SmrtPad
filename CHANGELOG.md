@@ -6,7 +6,7 @@ All notable changes to SmrtPad are documented in this file.
 
 ---
 
-## [1.2.0] - 2026-03-27
+## [0.6.0] - 2026-03-27
 
 ### Added
 - **Live AI initialization progress**
@@ -41,7 +41,7 @@ All notable changes to SmrtPad are documented in this file.
 
 ---
 
-## [1.1.0] - 2026-03-26
+## [0.5.0] - 2026-03-26
 
 ### Added
 - **ResponseCleaner**
@@ -75,7 +75,7 @@ All notable changes to SmrtPad are documented in this file.
 
 ---
 
-## [1.0.0-rc.1] - 2026-03-11
+## [0.4.0] - 2026-03-11
 
 ### Added
 - **App icon**
