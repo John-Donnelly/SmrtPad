@@ -234,14 +234,40 @@ public sealed class BenchmarkAppFixture : IDisposable
         }
     }
 
-    /// <summary>Clicks the editor to focus it, then sends <paramref name="text"/> as keystrokes.</summary>
+    /// <summary>
+    /// Clicks the editor to focus it, then pastes <paramref name="text"/> via the clipboard.
+    /// Using the clipboard instead of SendKeys avoids WinAppDriver keystroke-injection
+    /// failures on long strings and characters that confuse the key-sequence encoder.
+    /// </summary>
     public void TypeInEditor(string text)
     {
+        // Put the text on the Windows clipboard from the test-host process.
+        SetClipboardText(text);
+
         var editor = Driver!.FindElement(MobileBy.AccessibilityId("Editor"));
         editor.Click();
-        Thread.Sleep(100);
-        editor.SendKeys(text);
-        Thread.Sleep(250);
+        Thread.Sleep(150);
+        // Ctrl+V pastes the clipboard content directly into the RichEditBox.
+        editor.SendKeys(Keys.Control + "v");
+        Thread.Sleep(300);
+    }
+
+    /// <summary>Sets the Windows clipboard to <paramref name="text"/> using a PowerShell one-liner
+    /// so it works regardless of the test thread's apartment state.</summary>
+    private static void SetClipboardText(string text)
+    {
+        // Escape single quotes for PowerShell
+        var escaped = text.Replace("'", "''");
+        var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe",
+            $"-NoProfile -Command \"Set-Clipboard -Value '{escaped}'\"")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        using var proc = System.Diagnostics.Process.Start(psi)!;
+        proc.WaitForExit();
     }
 
     /// <summary>Sends Ctrl+A to the editor, selecting all content.</summary>
