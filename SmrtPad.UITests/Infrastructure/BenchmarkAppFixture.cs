@@ -292,16 +292,52 @@ public sealed class BenchmarkAppFixture : IDisposable
         return null;
     }
 
-    /// <summary>Dismisses the session-restore dialog if present.</summary>
-    public void DismissSessionRestoreDialogIfPresent()
+    /// <summary>
+    /// Polls up to <paramref name="timeoutMs"/> milliseconds for the session-restore
+    /// dialog and dismisses it by clicking "Discard" if it appears.
+    /// </summary>
+    public void DismissSessionRestoreDialogIfPresent(int timeoutMs = 5_000)
     {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                var discard = Driver!.FindElements(MobileBy.Name("Discard"));
+                if (discard.Count > 0 && discard[0].Displayed)
+                {
+                    discard[0].Click();
+                    Thread.Sleep(300);
+                    return;
+                }
+            }
+            catch { }
+            Thread.Sleep(200);
+        }
+    }
+
+    /// <summary>
+    /// Single-pass sweep that dismisses any blocking modal dialog currently on screen.
+    /// Handles: session-restore (Discard), unsaved-changes (Don't Save), pro-upsell (Not now),
+    /// and any generic error/info dialog (OK, Cancel).
+    /// Safe to call at any time — does nothing if no dialog is present.
+    /// </summary>
+    public void DismissAllBlockingDialogsIfPresent()
+    {
+        if (Driver is null) return;
+        // Ordered: most-destructive-safe first. Each is tried; first match wins per call.
+        string[] dismissButtonNames = ["Discard", "Don't Save", "Not now", "OK", "Cancel"];
         try
         {
-            var discard = Driver!.FindElements(MobileBy.Name("Discard"));
-            if (discard.Count > 0)
+            foreach (var name in dismissButtonNames)
             {
-                discard[0].Click();
-                Thread.Sleep(300);
+                var btns = Driver.FindElements(MobileBy.Name(name));
+                if (btns.Count > 0 && btns[0].Displayed)
+                {
+                    btns[0].Click();
+                    Thread.Sleep(300);
+                    return;
+                }
             }
         }
         catch { }

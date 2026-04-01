@@ -56,6 +56,12 @@ public sealed class SidebarAutomationHelper
     /// </summary>
     public bool TryRestartApp() => _fixture.TryRestartApp();
 
+    /// <summary>
+    /// Dismisses any blocking modal dialog currently on screen (session restore,
+    /// unsaved changes, pro upsell, generic OK/Cancel). Safe to call at any time.
+    /// </summary>
+    private void DismissBlockingDialogs() => _fixture.DismissAllBlockingDialogsIfPresent();
+
     // ── Sidebar visibility ───────────────────────────────────────────────────
 
     /// <summary>
@@ -450,6 +456,7 @@ public sealed class SidebarAutomationHelper
                 Log($"WaitForDispatcherReady: WebDriverException — {ex.Message[..Math.Min(80, ex.Message.Length)]}");
                 return false;
             }
+            DismissBlockingDialogs();
             Thread.Sleep(PollIntervalMs);
         }
         Log("WaitForDispatcherReady: timeout");
@@ -594,6 +601,7 @@ public sealed class SidebarAutomationHelper
                 return;
             }
 
+            DismissBlockingDialogs();
             Thread.Sleep(PollIntervalMs);
         }
 
@@ -609,6 +617,7 @@ public sealed class SidebarAutomationHelper
                 return;
             }
 
+            DismissBlockingDialogs();
             Thread.Sleep(PollIntervalMs);
         }
 
