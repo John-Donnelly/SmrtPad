@@ -124,8 +124,12 @@ internal static class ModelSizeSelector
         return false;
     }
 
-    /// <summary>Returns the context token count for a user-forced alias (uses base context budget as a safe default).</summary>
-    internal static int PickContextTokens(long footprintMb) => BaseContextTokens;
+    /// <summary>
+    /// Returns the context token count for a user-forced alias.
+    /// Uses <see cref="MaxContextTokens"/> because the user explicitly chose the model
+    /// and we should not silently truncate their input.
+    /// </summary>
+    internal static int PickContextTokens(long footprintMb) => MaxContextTokens;
 
     /// <summary>
     /// Scales context tokens proportionally to available headroom above the minimum required budget.
