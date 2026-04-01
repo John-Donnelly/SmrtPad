@@ -381,8 +381,13 @@ public sealed class SidebarAutomationHelper
         // Click Apply Skill
         Driver.FindElement(MobileBy.AccessibilityId("ApplySkillButton")).Click();
 
-        // Wait for streaming to complete
-        WaitForStreamingComplete();
+        // Give the async click handler time to fire on the UI thread and set
+        // StopChatButton visible before WaitForStreamingComplete starts polling.
+        Thread.Sleep(800);
+
+        // Wait for streaming to complete; require the Stop button to have appeared
+        // so we don't exit early when Send is still visible from before the stream.
+        WaitForStreamingComplete(requireStopFirst: true);
 
         return GetLastAssistantResponse();
     }
@@ -577,27 +582,40 @@ public sealed class SidebarAutomationHelper
 
     // ── Streaming completion detection ───────────────────────────────────────
 
-    private void WaitForStreamingComplete()
+    /// <summary>
+    /// Waits until the streaming response completes (Send button reappears).
+    /// </summary>
+    /// <param name="requireStopFirst">
+    /// When <c>true</c>, the early-exit that treats a visible Send button as
+    /// "already complete" is suppressed until the Stop button has been observed
+    /// at least once. Use for skill prompts where Send is still visible when
+    /// polling begins because the async click handler hasn't fired yet.
+    /// </param>
+    private void WaitForStreamingComplete(bool requireStopFirst = false)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(ResponseTimeoutMs);
         var phase1Start = DateTime.UtcNow;
+        bool stopSeen = false;
 
-        // First, wait for the StopChatButton to appear (streaming started)
-        Log("WaitForStreaming: phase 1 — waiting for Stop button or Send button...");
+        // Phase 1 — wait for StopChatButton to appear (streaming started)
+        Log($"WaitForStreaming: phase 1 — waiting for Stop button (requireStopFirst={requireStopFirst})...");
         while (DateTime.UtcNow < deadline)
         {
             var stopBtns = Driver.FindElements(MobileBy.Name("Stop generation"));
             if (stopBtns.Count > 0 && stopBtns[0].Displayed)
             {
+                stopSeen = true;
                 Log($"WaitForStreaming: Stop button appeared after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
                 break;
             }
 
-            // Also check if Send is already visible (instant response or error)
+            // Send still visible may mean the stream completed before we started polling,
+            // OR that the async click handler hasn't fired yet. Only treat it as
+            // "already done" when requireStopFirst is not set.
             var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
-            if (sendBtns.Count > 0 && sendBtns[0].Displayed)
+            if (sendBtns.Count > 0 && sendBtns[0].Displayed && !requireStopFirst)
             {
-                Log($"WaitForStreaming: Send button still visible (instant response or error) after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
+                Log($"WaitForStreaming: Send visible and requireStopFirst=false — treating as already complete after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
                 return;
             }
 
@@ -605,7 +623,13 @@ public sealed class SidebarAutomationHelper
             Thread.Sleep(PollIntervalMs);
         }
 
-        // Now wait for Send button to reappear (streaming complete)
+        if (!stopSeen)
+        {
+            Log("WaitForStreaming: phase 1 TIMEOUT — Stop button never appeared");
+            return;
+        }
+
+        // Phase 2 — wait for Send button to reappear (streaming complete)
         var phase2Start = DateTime.UtcNow;
         Log("WaitForStreaming: phase 2 — waiting for Send button to reappear...");
         while (DateTime.UtcNow < deadline)
