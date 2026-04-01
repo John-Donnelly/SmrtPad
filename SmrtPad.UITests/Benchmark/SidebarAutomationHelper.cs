@@ -118,8 +118,17 @@ public sealed class SidebarAutomationHelper
 
     private bool IsSidebarOpen()
     {
-        var elements = Driver.FindElements(MobileBy.AccessibilityId("SkillDropdown"));
-        return elements.Count > 0;
+        try
+        {
+            var elements = Driver.FindElements(MobileBy.AccessibilityId("SkillDropdown"));
+            return elements.Count > 0;
+        }
+        catch (InvalidOperationException)
+        {
+            // WinAppDriver can return elements with null/empty IDs when the app is not
+            // yet ready; treat this as "not open" so the caller retries.
+            return false;
+        }
     }
 
     private void ClickToolbarButton()
@@ -650,59 +659,75 @@ public sealed class SidebarAutomationHelper
 
     // ── Response extraction ──────────────────────────────────────────────────
 
+    // Minimum character length that distinguishes a real assistant response from
+    // an empty or placeholder state (e.g. "…", "Thinking").
+    private const int MinResponseLength = 10;
+
     /// <summary>
-    /// Gets the text of the last assistant response from the chat history.
+    /// Polls <c>ChatHistoryList</c> until a meaningful assistant response (at least
+    /// <see cref="MinResponseLength"/> characters) is visible, then returns it.
+    /// Waits up to <see cref="ResponseTimeoutMs"/> for content to appear so that
+    /// the call is safe to make immediately after <c>WaitForStreamingComplete</c>
+    /// returns — ListView rendering via DispatcherQueue is async and may lag the
+    /// Send-button state change by several frames.
     /// </summary>
     private string GetLastAssistantResponse()
     {
-        try
+        var deadline = DateTime.UtcNow.AddMilliseconds(ResponseTimeoutMs);
+        var attempt = 0;
+
+        while (DateTime.UtcNow < deadline)
         {
-            var chatLists = Driver.FindElements(MobileBy.AccessibilityId("ChatHistoryList"));
-            Log($"GetLastAssistantResponse: ChatHistoryList count={chatLists.Count}");
-            if (chatLists.Count == 0)
-                return string.Empty;
-
-            var chatList = chatLists[0];
-            var items = chatList.FindElements(By.XPath(".//*"));
-            Log($"GetLastAssistantResponse: child elements={items.Count}");
-
-            // Walk backwards through the list items to find the last non-empty text
-            // that isn't the user's input
-            var texts = new List<string>();
-            foreach (var item in items)
+            attempt++;
+            try
             {
-                try
+                var chatLists = Driver.FindElements(MobileBy.AccessibilityId("ChatHistoryList"));
+                if (chatLists.Count == 0)
                 {
-                    var text = item.Text;
-                    if (!string.IsNullOrWhiteSpace(text))
-                        texts.Add(text);
+                    Thread.Sleep(PollIntervalMs);
+                    continue;
                 }
-                catch
+
+                var chatList = chatLists[0];
+                var items = chatList.FindElements(By.XPath(".//*"));
+
+                // Collect all non-empty text nodes in document order.
+                var texts = new List<string>();
+                foreach (var item in items)
                 {
-                    // stale element — skip
+                    try
+                    {
+                        var text = item.Text;
+                        if (!string.IsNullOrWhiteSpace(text))
+                            texts.Add(text);
+                    }
+                    catch
+                    {
+                        // stale element — skip
+                    }
+                }
+
+                // Walk backwards to find the last substantive text block.
+                for (var i = texts.Count - 1; i >= 0; i--)
+                {
+                    var text = texts[i].Trim();
+                    if (text.Length >= MinResponseLength)
+                    {
+                        Log($"GetLastAssistantResponse: found after {attempt} attempt(s) — preview='{text[..Math.Min(80, text.Length)]}'");
+                        return text;
+                    }
                 }
             }
-
-            Log($"GetLastAssistantResponse: non-empty texts={texts.Count}");
-            if (texts.Count > 0)
-                Log($"GetLastAssistantResponse: last text preview='{texts[^1][..Math.Min(80, texts[^1].Length)]}'");
-
-            // The last text block in the chat history that isn't empty should be the
-            // assistant's response. Work backwards.
-            for (var i = texts.Count - 1; i >= 0; i--)
+            catch (Exception ex)
             {
-                var text = texts[i].Trim();
-                if (!string.IsNullOrWhiteSpace(text) && text.Length > 2)
-                    return text;
+                Log($"GetLastAssistantResponse: attempt {attempt} EXCEPTION {ex.GetType().Name}: {ex.Message}");
             }
 
-            return string.Empty;
+            Thread.Sleep(PollIntervalMs);
         }
-        catch (Exception ex)
-        {
-            Log($"GetLastAssistantResponse: EXCEPTION {ex.GetType().Name}: {ex.Message}");
-            return string.Empty;
-        }
+
+        Log($"GetLastAssistantResponse: TIMEOUT — no response of ≥{MinResponseLength} chars found after {attempt} attempt(s)");
+        return string.Empty;
     }
 
     // ── Hardware badge / metrics ─────────────────────────────────────────────
