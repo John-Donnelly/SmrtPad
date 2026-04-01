@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
+using OpenQA.Selenium;
 
 namespace SmrtPad.UITests.Benchmark;
 
@@ -110,66 +111,94 @@ public sealed class ModelBenchmarkRunner
             var isPhiSilica = model.Equals(PhiSilicaAlias, StringComparison.OrdinalIgnoreCase);
             var executionTarget = isPhiSilica ? PhiSilicaTarget : "GPU";
 
-            // Switch to the appropriate model
-            bool switchOk;
-            if (isPhiSilica)
+            try
             {
-                switchOk = _sidebar.SwitchExecutionTarget("⚡ NPU (Phi Silica)");
-            }
-            else
-            {
-                // Ensure we're on GPU first, then select the model
-                _sidebar.SwitchExecutionTarget("🖥️ GPU");
-                Thread.Sleep(500);
-                switchOk = _sidebar.SwitchModel(model);
-            }
+                // Switch to the appropriate model
+                bool switchOk;
+                if (isPhiSilica)
+                {
+                    switchOk = _sidebar.SwitchExecutionTarget("⚡ NPU (Phi Silica)");
+                }
+                else
+                {
+                    // GPU switch failure is non-fatal — log a warning and proceed
+                    if (!_sidebar.SwitchExecutionTarget("🖥️ GPU"))
+                        _log($"  ⚠ GPU target switch failed — proceeding with current target");
+                    Thread.Sleep(500);
+                    switchOk = _sidebar.SwitchModel(model);
+                }
 
-            if (!switchOk)
-            {
-                var reason = $"Failed to switch to model {model}";
-                _log($"  ⚠ {reason} — skipping");
-                modelErrors[model] = reason;
+                if (!switchOk)
+                {
+                    var reason = $"Failed to switch to model {model}";
+                    _log($"  ⚠ {reason} — skipping");
+                    modelErrors[model] = reason;
 
-                // Record failure for all prompts
+                    // Record failure for all prompts
+                    foreach (var prompt in prompts)
+                    {
+                        allResults.Add(new BenchmarkResult(
+                            prompt.Id, model, executionTarget, prompt.SkillKey,
+                            prompt.InputText, string.Empty, 0, 0, 0, 0,
+                            Succeeded: false, ErrorMessage: reason));
+                    }
+                    continue;
+                }
+
+                _log($"  Model ready. Running {prompts.Count} prompts...");
+
                 foreach (var prompt in prompts)
+                {
+                    _log($"  [{prompt.Id}] {prompt.Description}");
+
+                    var result = _sidebar.ExecutePrompt(prompt, model, executionTarget);
+                    allResults.Add(result);
+
+                    if (result.Succeeded)
+                    {
+                        var score = _scorer.Score(prompt, result);
+                        allScores.Add(score);
+
+                        var cost = _costEstimator.Estimate(result);
+                        allCosts.Add(cost);
+
+                        _log($"    ✓ {result.EstimatedOutputTokens} tokens, {result.TokensPerSecond:F1} tps, score={score.OverallScore:F2}, ${cost.EstimatedCostUsd:F6}");
+                    }
+                    else
+                    {
+                        _log($"    ✗ Error: {result.ErrorMessage}");
+                    }
+
+                    // Brief pause between prompts to let the UI settle
+                    Thread.Sleep(1000);
+                }
+
+                _log($"  Model {model} complete.");
+            }
+            catch (WebDriverException ex)
+            {
+                // App crashed or session lost — record remaining prompts and try to recover
+                var errorMsg = $"Session lost during {model}: {ex.Message[..Math.Min(120, ex.Message.Length)]}";
+                _log($"  ✗ {errorMsg}");
+                modelErrors[model] = errorMsg;
+
+                // Fill in failed results for any prompts not yet recorded
+                var recorded = allResults.Count(r => r.ModelAlias == model);
+                foreach (var prompt in prompts.Skip(recorded))
                 {
                     allResults.Add(new BenchmarkResult(
                         prompt.Id, model, executionTarget, prompt.SkillKey,
                         prompt.InputText, string.Empty, 0, 0, 0, 0,
-                        Succeeded: false, ErrorMessage: reason));
+                        Succeeded: false, ErrorMessage: errorMsg));
                 }
-                continue;
-            }
 
-            _log($"  Model ready. Running {prompts.Count} prompts...");
-
-            foreach (var prompt in prompts)
-            {
-                _log($"  [{prompt.Id}] {prompt.Description}");
-
-                var result = _sidebar.ExecutePrompt(prompt, model, executionTarget);
-                allResults.Add(result);
-
-                if (result.Succeeded)
-                {
-                    var score = _scorer.Score(prompt, result);
-                    allScores.Add(score);
-
-                    var cost = _costEstimator.Estimate(result);
-                    allCosts.Add(cost);
-
-                    _log($"    ✓ {result.EstimatedOutputTokens} tokens, {result.TokensPerSecond:F1} tps, score={score.OverallScore:F2}, ${cost.EstimatedCostUsd:F6}");
-                }
+                // Attempt session restart so the next model can run
+                _log($"  Attempting session restart...");
+                if (_sidebar.TryRestartApp())
+                    _log($"  Session restarted successfully — continuing to next model");
                 else
-                {
-                    _log($"    ✗ Error: {result.ErrorMessage}");
-                }
-
-                // Brief pause between prompts to let the UI settle
-                Thread.Sleep(1000);
+                    _log($"  Session restart failed — remaining models will fail their switch check");
             }
-
-            _log($"  Model {model} complete.");
         }
 
         overallStopwatch.Stop();

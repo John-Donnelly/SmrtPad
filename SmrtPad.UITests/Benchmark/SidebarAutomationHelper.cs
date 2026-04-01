@@ -33,6 +33,9 @@ public sealed class SidebarAutomationHelper
     /// <summary>Polling interval while waiting for UI state changes (ms).</summary>
     private const int PollIntervalMs = 500;
 
+    /// <summary>Maximum time to wait for a flyout menu item to become visible (ms).</summary>
+    private const int FlyoutItemTimeoutMs = 15_000;
+
     public SidebarAutomationHelper(BenchmarkAppFixture fixture, Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(fixture);
@@ -44,6 +47,14 @@ public sealed class SidebarAutomationHelper
 
     private WindowsDriver Driver => _fixture.Driver
         ?? throw new InvalidOperationException("Appium session is not available.");
+
+    private bool IsSessionAlive => _fixture.IsSessionAlive();
+
+    /// <summary>
+    /// Attempts to restart the Appium session after a crash.
+    /// Returns <c>true</c> if the session was successfully re-established.
+    /// </summary>
+    public bool TryRestartApp() => _fixture.TryRestartApp();
 
     // ── Sidebar visibility ───────────────────────────────────────────────────
 
@@ -121,16 +132,29 @@ public sealed class SidebarAutomationHelper
     {
         ArgumentNullException.ThrowIfNull(modelAlias);
 
+        if (!IsSessionAlive)
+        {
+            Log("SwitchModel: session not alive — aborting");
+            return false;
+        }
+
         EnsureSidebarOpen();
+
+        Log($"SwitchModel: waiting for dispatcher ready before opening flyout...");
+        if (!WaitForDispatcherReady(ModelInitTimeoutMs))
+        {
+            Log("SwitchModel: dispatcher did not become ready — aborting");
+            return false;
+        }
 
         Log($"SwitchModel: opening Options flyout for model '{modelAlias}'...");
         OpenOptionsFlyout();
 
-        Log("SwitchModel: locating ModelSubMenu by AccessibilityId...");
-        var modelSubMenu = FindElementInFlyoutByAccessibilityId("ModelSubMenu");
+        Log("SwitchModel: waiting for ModelSubMenu to become visible...");
+        var modelSubMenu = WaitForFlyoutItemByAccessibilityId("ModelSubMenu", FlyoutItemTimeoutMs);
         if (modelSubMenu is null)
         {
-            Log("SwitchModel: ModelSubMenu not found — dismissing flyout");
+            Log("SwitchModel: ModelSubMenu not visible after timeout — dismissing flyout");
             DismissFlyout();
             return false;
         }
@@ -140,17 +164,21 @@ public sealed class SidebarAutomationHelper
         Thread.Sleep(400);
 
         Log($"SwitchModel: locating radio item for alias '{modelAlias}'...");
-        var modelItem = FindElementInFlyoutByName(modelAlias);
+        var modelItem = WaitForFlyoutItemByName(modelAlias, FlyoutItemTimeoutMs);
         if (modelItem is null)
         {
-            Log($"SwitchModel: alias item '{modelAlias}' not found — dismissing flyout");
+            Log($"SwitchModel: alias item '{modelAlias}' not found after timeout — dismissing flyout");
             DismissFlyout();
             return false;
         }
 
         Log($"SwitchModel: clicking alias item '{modelAlias}'...");
         modelItem.Click();
-        Thread.Sleep(1000);
+
+        // Wait up to 10s for the reload to start (controls go disabled)
+        // ModelMenuItem_Click is async — it drains any active stream first, so there may be a short delay
+        Log("SwitchModel: waiting for reload to start (controls disabled)...");
+        WaitForControlsDisabled(10_000);
 
         Log("SwitchModel: waiting for model to become ready...");
         var ready = WaitForModelReady(modelAlias, ModelInitTimeoutMs);
@@ -166,16 +194,29 @@ public sealed class SidebarAutomationHelper
     {
         ArgumentNullException.ThrowIfNull(targetLabel);
 
+        if (!IsSessionAlive)
+        {
+            Log("SwitchExecutionTarget: session not alive — aborting");
+            return false;
+        }
+
         EnsureSidebarOpen();
+
+        Log($"SwitchExecutionTarget: waiting for dispatcher ready before opening flyout...");
+        if (!WaitForDispatcherReady(ModelInitTimeoutMs))
+        {
+            Log("SwitchExecutionTarget: dispatcher did not become ready — aborting");
+            return false;
+        }
 
         Log($"SwitchExecutionTarget: opening Options flyout for target '{targetLabel}'...");
         OpenOptionsFlyout();
 
-        Log("SwitchExecutionTarget: locating ExecutionTargetSubMenu by AccessibilityId...");
-        var targetSubMenu = FindElementInFlyoutByAccessibilityId("ExecutionTargetSubMenu");
+        Log("SwitchExecutionTarget: waiting for ExecutionTargetSubMenu to become visible...");
+        var targetSubMenu = WaitForFlyoutItemByAccessibilityId("ExecutionTargetSubMenu", FlyoutItemTimeoutMs);
         if (targetSubMenu is null)
         {
-            Log("SwitchExecutionTarget: ExecutionTargetSubMenu not found — dismissing flyout");
+            Log("SwitchExecutionTarget: ExecutionTargetSubMenu not visible after timeout — dismissing flyout");
             DismissFlyout();
             return false;
         }
@@ -185,17 +226,22 @@ public sealed class SidebarAutomationHelper
         Thread.Sleep(400);
 
         Log($"SwitchExecutionTarget: locating target item '{targetLabel}'...");
-        var targetItem = FindElementInFlyoutByName(targetLabel);
+        var targetItem = WaitForFlyoutItemByName(targetLabel, FlyoutItemTimeoutMs);
         if (targetItem is null)
         {
-            Log($"SwitchExecutionTarget: target item '{targetLabel}' not found — dismissing flyout");
+            Log($"SwitchExecutionTarget: target item '{targetLabel}' not found after timeout — dismissing flyout");
             DismissFlyout();
             return false;
         }
 
         Log($"SwitchExecutionTarget: clicking target item '{targetLabel}'...");
         targetItem.Click();
-        Thread.Sleep(1000);
+
+        // ExecutionTargetMenuItem_Click resets the model and kicks off re-init — wait for it
+        Log("SwitchExecutionTarget: waiting for reload to start (controls disabled)...");
+        WaitForControlsDisabled(10_000);
+        Log("SwitchExecutionTarget: waiting for reload to complete (controls re-enabled)...");
+        WaitForDispatcherReady(ModelInitTimeoutMs);
 
         return true;
     }
@@ -207,24 +253,31 @@ public sealed class SidebarAutomationHelper
     /// </summary>
     public void StartNewSession()
     {
-        EnsureSidebarOpen();
-        WaitForAiInteractionsEnabled(SidebarReadyTimeoutMs);
-
-        Log("StartNewSession: opening Options flyout...");
-        OpenOptionsFlyout();
-
-        Log("StartNewSession: locating NewSessionMenuItem by AccessibilityId...");
-        var newSessionItem = FindElementInFlyoutByAccessibilityId("NewSessionMenuItem");
-        if (newSessionItem is null)
+        try
         {
-            Log("StartNewSession: NewSessionMenuItem not found — dismissing flyout");
-            DismissFlyout();
-            return;
-        }
+            EnsureSidebarOpen();
+            WaitForDispatcherReady(SidebarReadyTimeoutMs);
 
-        Log("StartNewSession: clicking NewSessionMenuItem...");
-        newSessionItem.Click();
-        Thread.Sleep(500);
+            Log("StartNewSession: opening Options flyout...");
+            OpenOptionsFlyout();
+
+            Log("StartNewSession: waiting for NewSessionMenuItem to become visible...");
+            var newSessionItem = WaitForFlyoutItemByAccessibilityId("NewSessionMenuItem", FlyoutItemTimeoutMs);
+            if (newSessionItem is null)
+            {
+                Log("StartNewSession: NewSessionMenuItem not found after timeout — dismissing flyout");
+                DismissFlyout();
+                return;
+            }
+
+            Log("StartNewSession: clicking NewSessionMenuItem...");
+            newSessionItem.Click();
+            Thread.Sleep(500);
+        }
+        catch (WebDriverException ex)
+        {
+            Log($"StartNewSession: WebDriverException — {ex.Message[..Math.Min(80, ex.Message.Length)]}");
+        }
     }
 
     // ── Prompt execution ─────────────────────────────────────────────────────
@@ -364,6 +417,43 @@ public sealed class SidebarAutomationHelper
         // search box requires indexed documents. The sidebar routes "semantic"
         // skill key through the chat stream.
         return SendFreeformChat(queryText);
+    }
+
+    /// <summary>
+    /// Waits until <c>ChatInputBox</c> and <c>Send</c> are enabled (dispatcher ready), without throwing.
+    /// Returns <c>true</c> if ready within the timeout, <c>false</c> otherwise.
+    /// </summary>
+    private bool WaitForDispatcherReady(int timeoutMs)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        Log("WaitForDispatcherReady: waiting for chat controls to be enabled...");
+        while (DateTime.UtcNow < deadline)
+        {
+            if (!IsSessionAlive)
+            {
+                Log("WaitForDispatcherReady: session lost");
+                return false;
+            }
+            try
+            {
+                var chatInputs = Driver.FindElements(MobileBy.AccessibilityId("ChatInputBox"));
+                var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
+                if (chatInputs.Count > 0 && chatInputs[0].Enabled &&
+                    sendBtns.Count > 0 && sendBtns[0].Enabled)
+                {
+                    Log("WaitForDispatcherReady: ready");
+                    return true;
+                }
+            }
+            catch (WebDriverException ex)
+            {
+                Log($"WaitForDispatcherReady: WebDriverException — {ex.Message[..Math.Min(80, ex.Message.Length)]}");
+                return false;
+            }
+            Thread.Sleep(PollIntervalMs);
+        }
+        Log("WaitForDispatcherReady: timeout");
+        return false;
     }
 
     /// <summary>
@@ -639,43 +729,104 @@ public sealed class SidebarAutomationHelper
 
     /// <summary>
     /// Gets the current status text from the sidebar (initialization status, errors, etc.).
+    /// Returns empty string if the session is unavailable.
     /// </summary>
     public string GetStatusText()
     {
-        var elements = Driver.FindElements(MobileBy.AccessibilityId("SmartSidebarStatusText"));
-        return elements.Count > 0 ? elements[0].Text : string.Empty;
+        try
+        {
+            var elements = Driver.FindElements(MobileBy.AccessibilityId("SmartSidebarStatusText"));
+            return elements.Count > 0 ? elements[0].Text : string.Empty;
+        }
+        catch (WebDriverException)
+        {
+            return string.Empty;
+        }
     }
 
     // ── Model readiness ──────────────────────────────────────────────────────
 
     /// <summary>
-    /// Waits until the HardwareBadge tooltip contains the expected model alias,
-    /// indicating the model has finished loading.
+    /// Waits up to <paramref name="timeoutMs"/> for <c>ChatInputBox</c> and <c>Send</c>
+    /// to both become disabled, indicating the model reload has started.
+    /// Returns as soon as they are disabled; does not throw.
+    /// </summary>
+    private void WaitForControlsDisabled(int timeoutMs)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                var chatInputs = Driver.FindElements(MobileBy.AccessibilityId("ChatInputBox"));
+                var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
+                if (chatInputs.Count > 0 && !chatInputs[0].Enabled)
+                {
+                    Log("WaitForControlsDisabled: controls are now disabled (reload started)");
+                    return;
+                }
+            }
+            catch (WebDriverException)
+            {
+                return;
+            }
+            Thread.Sleep(PollIntervalMs);
+        }
+        Log("WaitForControlsDisabled: timeout — controls may still be enabled (reload may not have started yet)");
+    }
+
+    /// <summary>
+    /// Waits until the sidebar's chat controls become enabled again after a model reload,
+    /// confirming the model has finished loading. Uses the HardwareBadge tooltip as a
+    /// corroborating signal when available.
     /// </summary>
     private bool WaitForModelReady(string modelAlias, int timeoutMs)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        Log($"WaitForModelReady: waiting for '{modelAlias}' (timeout={timeoutMs / 1000}s)...");
 
         while (DateTime.UtcNow < deadline)
         {
-            var tooltip = GetHardwareBadgeTooltip();
-            if (!string.IsNullOrEmpty(tooltip) &&
-                tooltip.Contains(modelAlias, StringComparison.OrdinalIgnoreCase))
+            if (!IsSessionAlive)
             {
-                return true;
+                Log("WaitForModelReady: session lost — returning false");
+                return false;
             }
 
-            // Check for error states
-            var status = GetStatusText();
-            if (!string.IsNullOrEmpty(status) &&
-                status.Contains("error", StringComparison.OrdinalIgnoreCase))
+            try
             {
+                var chatInputs = Driver.FindElements(MobileBy.AccessibilityId("ChatInputBox"));
+                var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
+                var chatEnabled = chatInputs.Count > 0 && chatInputs[0].Enabled;
+                var sendEnabled = sendBtns.Count > 0 && sendBtns[0].Enabled;
+
+                if (chatEnabled && sendEnabled)
+                {
+                    // Controls re-enabled — reload complete. Log the tooltip for diagnostics.
+                    var tooltip = GetHardwareBadgeTooltip();
+                    Log($"WaitForModelReady: chat controls enabled again. HardwareBadge='{tooltip}'");
+                    return true;
+                }
+
+                // Abort on visible error state
+                var status = GetStatusText();
+                if (!string.IsNullOrEmpty(status) &&
+                    status.Contains("error", StringComparison.OrdinalIgnoreCase))
+                {
+                    Log($"WaitForModelReady: error status detected: '{status}'");
+                    return false;
+                }
+            }
+            catch (WebDriverException ex)
+            {
+                Log($"WaitForModelReady: WebDriverException — {ex.Message[..Math.Min(80, ex.Message.Length)]}");
                 return false;
             }
 
             Thread.Sleep(PollIntervalMs);
         }
 
+        Log($"WaitForModelReady: timeout waiting for '{modelAlias}'");
         return false;
     }
 
@@ -691,23 +842,64 @@ public sealed class SidebarAutomationHelper
     }
 
     /// <summary>
-    /// Searches the full UIA tree for an element with the given AccessibilityId.
-    /// Useful for flyout items that appear as popup windows outside the main tree.
+    /// Polls until an element with the given AccessibilityId appears and is displayed,
+    /// or the timeout elapses. Returns null on timeout or session loss.
     /// </summary>
-    private AppiumElement? FindElementInFlyoutByAccessibilityId(string automationId)
+    private AppiumElement? WaitForFlyoutItemByAccessibilityId(string automationId, int timeoutMs)
     {
-        var elements = Driver.FindElements(MobileBy.AccessibilityId(automationId));
-        return elements.Count > 0 ? elements[0] : null;
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                var elements = Driver.FindElements(MobileBy.AccessibilityId(automationId));
+                if (elements.Count > 0 && elements[0].Displayed)
+                    return elements[0];
+            }
+            catch (WebDriverException)
+            {
+                return null;
+            }
+            Thread.Sleep(PollIntervalMs);
+        }
+        return null;
     }
 
     /// <summary>
-    /// Searches the full UIA tree for an element with the given Name property.
-    /// Used for dynamically-created flyout items (e.g., model alias radio items).
+    /// Polls until an element with the given Name property appears and is displayed,
+    /// or the timeout elapses. Returns null on timeout or session loss.
     /// </summary>
+    private AppiumElement? WaitForFlyoutItemByName(string name, int timeoutMs)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                var elements = Driver.FindElements(MobileBy.Name(name));
+                if (elements.Count > 0 && elements[0].Displayed)
+                    return elements[0];
+            }
+            catch (WebDriverException)
+            {
+                return null;
+            }
+            Thread.Sleep(PollIntervalMs);
+        }
+        return null;
+    }
+
     private AppiumElement? FindElementInFlyoutByName(string name)
     {
-        var elements = Driver.FindElements(MobileBy.Name(name));
-        return elements.Count > 0 ? elements[0] : null;
+        try
+        {
+            var elements = Driver.FindElements(MobileBy.Name(name));
+            return elements.Count > 0 ? elements[0] : null;
+        }
+        catch (WebDriverException)
+        {
+            return null;
+        }
     }
 
     private void DismissFlyout()

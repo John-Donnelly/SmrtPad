@@ -166,6 +166,12 @@ public sealed class BenchmarkAppFixture : IDisposable
         catch { /* transient */ }
     }
 
+    /// <summary>
+    /// Attempts to restart the Appium session after a crash.
+    /// Returns <c>true</c> if the session was successfully re-established.
+    /// </summary>
+    public bool TryRestartApp() => TryRestartSession();
+
     private bool TryRestartSession()
     {
         try
