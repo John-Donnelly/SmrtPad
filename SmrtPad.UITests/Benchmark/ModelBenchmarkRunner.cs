@@ -89,14 +89,31 @@ public sealed class ModelBenchmarkRunner
     }
 
     /// <summary>
+    /// Returns the prompt limit from <c>BENCHMARK_PROMPT_LIMIT</c>, or <c>null</c> for no limit.
+    /// </summary>
+    public static int? GetPromptLimit()
+    {
+        var raw = Environment.GetEnvironmentVariable("BENCHMARK_PROMPT_LIMIT");
+        if (int.TryParse(raw, out var limit) && limit > 0)
+            return limit;
+        return null;
+    }
+
+    /// <summary>
     /// Runs the full benchmark suite against all selected models and prompts.
     /// </summary>
     public BenchmarkRunReport RunAll(IReadOnlyList<BenchmarkPrompt> prompts)
     {
         ArgumentNullException.ThrowIfNull(prompts);
 
+        var promptLimit = GetPromptLimit();
+        var activePrompts = promptLimit.HasValue
+            ? (IReadOnlyList<BenchmarkPrompt>)prompts.Take(promptLimit.Value).ToList()
+            : prompts;
+
         var models = GetModelsToRun();
-        _log($"Benchmark starting: {models.Count} models × {prompts.Count} prompts = {models.Count * prompts.Count} runs");
+        _log($"Benchmark starting: {models.Count} models × {activePrompts.Count} prompts = {models.Count * activePrompts.Count} runs"
+            + (promptLimit.HasValue ? $" (BENCHMARK_PROMPT_LIMIT={promptLimit})" : string.Empty));
 
         var allResults = new List<BenchmarkResult>();
         var allScores = new List<BenchmarkScore>();
@@ -135,7 +152,7 @@ public sealed class ModelBenchmarkRunner
                     modelErrors[model] = reason;
 
                     // Record failure for all prompts
-                    foreach (var prompt in prompts)
+                    foreach (var prompt in activePrompts)
                     {
                         allResults.Add(new BenchmarkResult(
                             prompt.Id, model, executionTarget, prompt.SkillKey,
@@ -145,9 +162,9 @@ public sealed class ModelBenchmarkRunner
                     continue;
                 }
 
-                _log($"  Model ready. Running {prompts.Count} prompts...");
+                _log($"  Model ready. Running {activePrompts.Count} prompts...");
 
-                foreach (var prompt in prompts)
+                foreach (var prompt in activePrompts)
                 {
                     _log($"  [{prompt.Id}] {prompt.Description}");
 
@@ -184,7 +201,7 @@ public sealed class ModelBenchmarkRunner
 
                 // Fill in failed results for any prompts not yet recorded
                 var recorded = allResults.Count(r => r.ModelAlias == model);
-                foreach (var prompt in prompts.Skip(recorded))
+                foreach (var prompt in activePrompts.Skip(recorded))
                 {
                     allResults.Add(new BenchmarkResult(
                         prompt.Id, model, executionTarget, prompt.SkillKey,
