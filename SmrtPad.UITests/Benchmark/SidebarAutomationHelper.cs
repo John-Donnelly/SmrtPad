@@ -123,32 +123,39 @@ public sealed class SidebarAutomationHelper
 
         EnsureSidebarOpen();
 
-        // Open Options flyout
-        Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
-        Thread.Sleep(600);
+        Log($"SwitchModel: opening Options flyout for model '{modelAlias}'...");
+        OpenOptionsFlyout();
 
-        // Find the Model submenu and click it
-        var modelSubMenu = FindElementByName("Model");
+        Log("SwitchModel: locating ModelSubMenu by AccessibilityId...");
+        var modelSubMenu = FindElementInFlyoutByAccessibilityId("ModelSubMenu");
         if (modelSubMenu is null)
         {
+            Log("SwitchModel: ModelSubMenu not found — dismissing flyout");
             DismissFlyout();
             return false;
         }
+
+        Log("SwitchModel: clicking ModelSubMenu...");
         modelSubMenu.Click();
         Thread.Sleep(400);
 
-        // Find the specific model alias radio item
-        var modelItem = FindElementByName(modelAlias);
+        Log($"SwitchModel: locating radio item for alias '{modelAlias}'...");
+        var modelItem = FindElementInFlyoutByName(modelAlias);
         if (modelItem is null)
         {
+            Log($"SwitchModel: alias item '{modelAlias}' not found — dismissing flyout");
             DismissFlyout();
             return false;
         }
+
+        Log($"SwitchModel: clicking alias item '{modelAlias}'...");
         modelItem.Click();
         Thread.Sleep(1000);
 
-        // Wait for model initialization
-        return WaitForModelReady(modelAlias, ModelInitTimeoutMs);
+        Log("SwitchModel: waiting for model to become ready...");
+        var ready = WaitForModelReady(modelAlias, ModelInitTimeoutMs);
+        Log($"SwitchModel: ready={ready}");
+        return ready;
     }
 
     /// <summary>
@@ -161,30 +168,32 @@ public sealed class SidebarAutomationHelper
 
         EnsureSidebarOpen();
 
-        Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
-        Thread.Sleep(600);
+        Log($"SwitchExecutionTarget: opening Options flyout for target '{targetLabel}'...");
+        OpenOptionsFlyout();
 
-        // Find Execution Target submenu
-        var targetSubMenu = FindElementByName("Execution Target");
+        Log("SwitchExecutionTarget: locating ExecutionTargetSubMenu by AccessibilityId...");
+        var targetSubMenu = FindElementInFlyoutByAccessibilityId("ExecutionTargetSubMenu");
         if (targetSubMenu is null)
         {
-            // Try localized
-            targetSubMenu = FindElementByName("Execution target");
-        }
-        if (targetSubMenu is null)
-        {
+            Log("SwitchExecutionTarget: ExecutionTargetSubMenu not found — dismissing flyout");
             DismissFlyout();
             return false;
         }
+
+        Log("SwitchExecutionTarget: clicking ExecutionTargetSubMenu...");
         targetSubMenu.Click();
         Thread.Sleep(400);
 
-        var targetItem = FindElementByName(targetLabel);
+        Log($"SwitchExecutionTarget: locating target item '{targetLabel}'...");
+        var targetItem = FindElementInFlyoutByName(targetLabel);
         if (targetItem is null)
         {
+            Log($"SwitchExecutionTarget: target item '{targetLabel}' not found — dismissing flyout");
             DismissFlyout();
             return false;
         }
+
+        Log($"SwitchExecutionTarget: clicking target item '{targetLabel}'...");
         targetItem.Click();
         Thread.Sleep(1000);
 
@@ -201,13 +210,20 @@ public sealed class SidebarAutomationHelper
         EnsureSidebarOpen();
         WaitForAiInteractionsEnabled(SidebarReadyTimeoutMs);
 
-        Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
-        Thread.Sleep(400);
+        Log("StartNewSession: opening Options flyout...");
+        OpenOptionsFlyout();
 
-        // The new session item is the first MenuFlyoutItem in the flyout
-        var newSessionItem = FindElementByName("New session")
-            ?? FindElementByName("New Session");
-        newSessionItem?.Click();
+        Log("StartNewSession: locating NewSessionMenuItem by AccessibilityId...");
+        var newSessionItem = FindElementInFlyoutByAccessibilityId("NewSessionMenuItem");
+        if (newSessionItem is null)
+        {
+            Log("StartNewSession: NewSessionMenuItem not found — dismissing flyout");
+            DismissFlyout();
+            return;
+        }
+
+        Log("StartNewSession: clicking NewSessionMenuItem...");
+        newSessionItem.Click();
         Thread.Sleep(500);
     }
 
@@ -423,7 +439,7 @@ public sealed class SidebarAutomationHelper
             _ => skillKey,
         };
 
-        var item = FindElementByName(skillLabel);
+        var item = FindElementInFlyoutByName(skillLabel);
         if (item is not null)
         {
             item.Click();
@@ -665,7 +681,30 @@ public sealed class SidebarAutomationHelper
 
     // ── UI helpers ───────────────────────────────────────────────────────────
 
-    private AppiumElement? FindElementByName(string name)
+    /// <summary>
+    /// Clicks the OptionsButton to open the flyout and waits for it to settle.
+    /// </summary>
+    private void OpenOptionsFlyout()
+    {
+        Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
+        Thread.Sleep(600);
+    }
+
+    /// <summary>
+    /// Searches the full UIA tree for an element with the given AccessibilityId.
+    /// Useful for flyout items that appear as popup windows outside the main tree.
+    /// </summary>
+    private AppiumElement? FindElementInFlyoutByAccessibilityId(string automationId)
+    {
+        var elements = Driver.FindElements(MobileBy.AccessibilityId(automationId));
+        return elements.Count > 0 ? elements[0] : null;
+    }
+
+    /// <summary>
+    /// Searches the full UIA tree for an element with the given Name property.
+    /// Used for dynamically-created flyout items (e.g., model alias radio items).
+    /// </summary>
+    private AppiumElement? FindElementInFlyoutByName(string name)
     {
         var elements = Driver.FindElements(MobileBy.Name(name));
         return elements.Count > 0 ? elements[0] : null;
@@ -675,10 +714,10 @@ public sealed class SidebarAutomationHelper
     {
         try
         {
-            // Press Escape to dismiss any open flyout/menu
-            Driver.FindElement(MobileBy.AccessibilityId("SmrtSidebarToolbarButton"))
+            // Send Escape to the OptionsButton (flyout owner) to close any open flyout
+            Driver.FindElement(MobileBy.AccessibilityId("OptionsButton"))
                 .SendKeys(Keys.Escape);
-            Thread.Sleep(200);
+            Thread.Sleep(300);
         }
         catch
         {

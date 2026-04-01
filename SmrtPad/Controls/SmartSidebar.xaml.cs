@@ -1,4 +1,5 @@
 ﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -972,11 +973,16 @@ public sealed partial class SmartSidebar : UserControl
         ResponsibleAiNoticeText.Text = ResourceHelper.GetString("SmartSidebarResponsibleAiNotice");
         var newSessionItem = OptionsFlyout.Items.OfType<MenuFlyoutItem>().First();
         newSessionItem.Text = ResourceHelper.GetString("SmartSidebarNewSession");
+        AutomationProperties.SetAutomationId(newSessionItem, "NewSessionMenuItem");
         var modelSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().First();
         modelSubMenu.Text = ResourceHelper.GetString("SmartSidebarModelSelector");
+        AutomationProperties.SetAutomationId(modelSubMenu, "ModelSubMenu");
         var executionTargetSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().Skip(1).FirstOrDefault();
         if (executionTargetSubMenu is not null)
+        {
             executionTargetSubMenu.Text = ResourceHelper.GetString("SmartSidebarExecutionTarget");
+            AutomationProperties.SetAutomationId(executionTargetSubMenu, "ExecutionTargetSubMenu");
+        }
         ToolTipService.SetToolTip(OptionsButton, ResourceHelper.GetString("SmartSidebarOptions"));
         ToolTipService.SetToolTip(ApplySkillButton, ResourceHelper.GetString("SmartSidebarApplySkill"));
     }

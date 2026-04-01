@@ -114,7 +114,7 @@ public sealed class ModelBenchmarkRunner
             bool switchOk;
             if (isPhiSilica)
             {
-                switchOk = _sidebar.SwitchExecutionTarget("⚡ NPU");
+                switchOk = _sidebar.SwitchExecutionTarget("⚡ NPU (Phi Silica)");
             }
             else
             {
