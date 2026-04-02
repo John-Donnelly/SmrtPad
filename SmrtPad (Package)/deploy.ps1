@@ -16,7 +16,16 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$configuration = if ([string]::IsNullOrWhiteSpace($RemoteHost)) { 'Debug' } else { 'Release' }
+$requestedConfiguration = $env:UITEST_DEPLOY_CONFIGURATION
+if (-not [string]::IsNullOrWhiteSpace($requestedConfiguration)) {
+    if ($requestedConfiguration -ne 'Debug' -and $requestedConfiguration -ne 'Release') {
+        throw "UITEST_DEPLOY_CONFIGURATION must be 'Debug' or 'Release' when set. Current value: '$requestedConfiguration'."
+    }
+    $configuration = $requestedConfiguration
+}
+else {
+    $configuration = if ([string]::IsNullOrWhiteSpace($RemoteHost)) { 'Debug' } else { 'Release' }
+}
 
 function New-OptionalCredential {
     param(
@@ -27,9 +36,345 @@ function New-OptionalCredential {
     if ([string]::IsNullOrWhiteSpace($UserName) -or [string]::IsNullOrWhiteSpace($Password)) {
         return $null
     }
-
     $securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
     return [pscredential]::new($UserName, $securePassword)
+}
+
+function Get-PackagePublisherFromManifest {
+    param(
+        [string]$ManifestPath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($ManifestPath)) {
+        throw 'Manifest path is required.'
+    }
+
+    if (-not (Test-Path $ManifestPath)) {
+        throw "Manifest not found at '$ManifestPath'."
+    }
+
+    [xml]$manifestXml = Get-Content -LiteralPath $ManifestPath -Raw
+    $publisher = $manifestXml.Package.Identity.Publisher
+    if ([string]::IsNullOrWhiteSpace($publisher)) {
+        throw "Could not read Package/Identity/@Publisher from '$ManifestPath'."
+    }
+
+    return $publisher
+}
+
+function Get-FoundryCommandPath {
+    $foundry = Get-Command foundry -ErrorAction SilentlyContinue
+    if ($null -ne $foundry) {
+        return $foundry.Source
+    }
+
+    $candidates = @(
+        (Join-Path $env:LOCALAPPDATA 'Microsoft\FoundryLocal\foundry.exe'),
+        (Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe')
+    )
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
+function Get-FoundryCandidatePackageIds {
+    $ids = @()
+    if (-not [string]::IsNullOrWhiteSpace($env:SMRTPAD_FOUNDRY_WINGET_ID)) {
+        $ids += $env:SMRTPAD_FOUNDRY_WINGET_ID.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries) |
+            ForEach-Object { $_.Trim() }
+    }
+
+    $ids += @('Microsoft.FoundryLocal', 'Microsoft.Foundry')
+    return $ids | Select-Object -Unique
+}
+
+function Get-FoundryInstallerUrl {
+    if (-not [string]::IsNullOrWhiteSpace($env:SMRTPAD_FOUNDRY_INSTALLER_URL)) {
+        return $env:SMRTPAD_FOUNDRY_INSTALLER_URL
+    }
+
+    return 'https://aka.ms/foundry-local-installer'
+}
+
+function Get-FoundryInstallerLocalPath {
+    $path = $env:SMRTPAD_FOUNDRY_INSTALLER_PATH
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return $null
+    }
+
+    if (Test-Path $path) {
+        return (Resolve-Path $path).Path
+    }
+
+    return $null
+}
+
+function Try-InstallFoundryFromDirectInstaller {
+    param(
+        [scriptblock]$GetFoundryPath
+    )
+
+    $tempDir = Join-Path $env:TEMP 'SmrtPadFoundryInstall'
+    New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
+    $targetPath = Join-Path $tempDir 'foundry-installer.bin'
+
+    $localInstallerPath = Get-FoundryInstallerLocalPath
+    if (-not [string]::IsNullOrWhiteSpace($localInstallerPath)) {
+        Copy-Item -Path $localInstallerPath -Destination $targetPath -Force
+    }
+    else {
+        $installerUrl = Get-FoundryInstallerUrl
+        if ([string]::IsNullOrWhiteSpace($installerUrl)) {
+            return $false
+        }
+
+        try {
+            Invoke-WebRequest -Uri $installerUrl -OutFile $targetPath -UseBasicParsing
+        }
+        catch {
+            return $false
+        }
+    }
+
+    $ext = [System.IO.Path]::GetExtension($targetPath)
+    if ($null -eq $ext) {
+        $ext = [string]::Empty
+    }
+    $ext = $ext.ToLowerInvariant()
+    if ([string]::IsNullOrWhiteSpace($ext) -and (Get-Item $targetPath).Name -match '\.([A-Za-z0-9]+)$') {
+        $ext = '.' + $matches[1].ToLowerInvariant()
+    }
+
+    $finalPath = $targetPath
+    if ($ext -in @('.exe', '.msi', '.msix', '.msixbundle', '.appx', '.appxbundle')) {
+        $finalPath = Join-Path $tempDir ("foundry-installer$ext")
+        Move-Item -Path $targetPath -Destination $finalPath -Force
+    }
+
+    try {
+        switch -Regex ($ext)
+        {
+            '^\.msix$|^\.msixbundle$|^\.appx$|^\.appxbundle$' {
+                Add-AppxPackage -Path $finalPath -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop
+                break
+            }
+            '^\.msi$' {
+                $proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList "/i `"$finalPath`" /qn /norestart" -Wait -PassThru -NoNewWindow
+                if ($proc.ExitCode -ne 0) { return $false }
+                break
+            }
+            default {
+                $proc = Start-Process -FilePath $finalPath -ArgumentList '/quiet /norestart' -Wait -PassThru -NoNewWindow
+                if ($proc.ExitCode -ne 0) {
+                    $proc = Start-Process -FilePath $finalPath -ArgumentList '/S' -Wait -PassThru -NoNewWindow
+                    if ($proc.ExitCode -ne 0) { return $false }
+                }
+                break
+            }
+        }
+    }
+    catch {
+        return $false
+    }
+
+    $installed = & $GetFoundryPath
+    return -not [string]::IsNullOrWhiteSpace($installed)
+}
+
+function Ensure-FoundryInstalledLocal {
+    $existing = Get-FoundryCommandPath
+    if (-not [string]::IsNullOrWhiteSpace($existing)) {
+        Write-Host "==> Foundry already installed: $existing" -ForegroundColor DarkGray
+        return
+    }
+
+    $winget = Get-Command winget -ErrorAction SilentlyContinue
+    if ($null -ne $winget) {
+        $candidateIds = Get-FoundryCandidatePackageIds
+        foreach ($source in @('winget', 'msstore')) {
+            foreach ($id in $candidateIds) {
+                Write-Host "==> Installing Foundry via winget id '$id' (source: $source)..." -ForegroundColor Cyan
+                & $winget.Source install --id $id --source $source --accept-package-agreements --accept-source-agreements --silent --exact --disable-interactivity
+                if ($LASTEXITCODE -eq 0) {
+                    $installed = Get-FoundryCommandPath
+                    if (-not [string]::IsNullOrWhiteSpace($installed)) {
+                        Write-Host "==> Foundry installed: $installed" -ForegroundColor Green
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    Write-Host '==> Attempting direct installer fallback for Foundry...' -ForegroundColor Yellow
+    if (Try-InstallFoundryFromDirectInstaller -GetFoundryPath { Get-FoundryCommandPath }) {
+        $installed = Get-FoundryCommandPath
+        Write-Host "==> Foundry installed: $installed" -ForegroundColor Green
+        return
+    }
+
+    throw 'Foundry Local is not installed and automatic installation failed. Install Foundry Local, then rerun deployment.'
+}
+
+function Ensure-FoundryInstalledRemote {
+    param(
+        [System.Management.Automation.Runspaces.PSSession]$Session,
+        [string]$RemoteHost,
+        [string]$RemoteInstallerPath
+    )
+
+    $candidateIds = Get-FoundryCandidatePackageIds
+    $idsCsv = ($candidateIds -join ';')
+
+    $result = Invoke-Command -Session $Session -ScriptBlock {
+        param([string]$CandidateIdsCsv, [string]$PreferredInstallerPath)
+
+        function Get-RemoteFoundryPath {
+            $foundry = Get-Command foundry -ErrorAction SilentlyContinue
+            if ($null -ne $foundry) {
+                return $foundry.Source
+            }
+
+            $candidates = @(
+                (Join-Path $env:LOCALAPPDATA 'Microsoft\FoundryLocal\foundry.exe'),
+                (Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe')
+            )
+
+            foreach ($candidate in $candidates) {
+                if (Test-Path $candidate) {
+                    return $candidate
+                }
+            }
+
+            return $null
+        }
+
+        $existing = Get-RemoteFoundryPath
+        if (-not [string]::IsNullOrWhiteSpace($existing)) {
+            return "FOUND:$existing"
+        }
+
+        function Try-InstallFromPath {
+            param([string]$InstallerPath)
+
+            if ([string]::IsNullOrWhiteSpace($InstallerPath) -or -not (Test-Path $InstallerPath)) {
+                return $null
+            }
+
+            $ext = [System.IO.Path]::GetExtension($InstallerPath)
+            if ($null -eq $ext) { $ext = [string]::Empty }
+            $ext = $ext.ToLowerInvariant()
+
+            try {
+                switch -Regex ($ext)
+                {
+                    '^\.msix$|^\.msixbundle$|^\.appx$|^\.appxbundle$' {
+                        Add-AppxPackage -Path $InstallerPath -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop
+                        break
+                    }
+                    '^\.msi$' {
+                        $proc = Start-Process -FilePath 'msiexec.exe' -ArgumentList "/i `"$InstallerPath`" /qn /norestart" -Wait -PassThru -NoNewWindow
+                        if ($proc.ExitCode -ne 0) { return $null }
+                        break
+                    }
+                    default {
+                        $proc = Start-Process -FilePath $InstallerPath -ArgumentList '/quiet /norestart' -Wait -PassThru -NoNewWindow
+                        if ($proc.ExitCode -ne 0) {
+                            $proc = Start-Process -FilePath $InstallerPath -ArgumentList '/S' -Wait -PassThru -NoNewWindow
+                            if ($proc.ExitCode -ne 0) { return $null }
+                        }
+                        break
+                    }
+                }
+            }
+            catch {
+                return $null
+            }
+
+            $installed = Get-RemoteFoundryPath
+            if (-not [string]::IsNullOrWhiteSpace($installed)) {
+                return "INSTALLED:$installed"
+            }
+
+            return $null
+        }
+
+        $preferredInstallResult = Try-InstallFromPath -InstallerPath $PreferredInstallerPath
+        if (-not [string]::IsNullOrWhiteSpace($preferredInstallResult)) {
+            return $preferredInstallResult
+        }
+
+        $winget = Get-Command winget -ErrorAction SilentlyContinue
+        if ($null -eq $winget) {
+            return 'MISSING:winget_not_found'
+        }
+
+        $ids = $CandidateIdsCsv.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)
+        foreach ($source in @('winget', 'msstore')) {
+            foreach ($id in $ids) {
+                & $winget.Source install --id $id --source $source --accept-package-agreements --accept-source-agreements --silent --exact --disable-interactivity
+                if ($LASTEXITCODE -eq 0) {
+                    $installed = Get-RemoteFoundryPath
+                    if (-not [string]::IsNullOrWhiteSpace($installed)) {
+                        return "INSTALLED:$installed"
+                    }
+                }
+            }
+        }
+
+        function Get-InstallerUrl {
+            if (-not [string]::IsNullOrWhiteSpace($env:SMRTPAD_FOUNDRY_INSTALLER_URL)) {
+                return $env:SMRTPAD_FOUNDRY_INSTALLER_URL
+            }
+            return 'https://aka.ms/foundry-local-installer'
+        }
+
+        try {
+            $installerUrl = Get-InstallerUrl
+            $tempDir = Join-Path $env:TEMP 'SmrtPadFoundryInstall'
+            New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
+            $installerPath = Join-Path $tempDir 'foundry-installer.bin'
+            Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath -UseBasicParsing
+
+            $ext = [System.IO.Path]::GetExtension($installerPath)
+            if ($null -eq $ext) {
+                $ext = [string]::Empty
+            }
+            $ext = $ext.ToLowerInvariant()
+            $finalPath = $installerPath
+            if ($ext -in @('.exe', '.msi', '.msix', '.msixbundle', '.appx', '.appxbundle')) {
+                $finalPath = Join-Path $tempDir ("foundry-installer$ext")
+                Move-Item -Path $installerPath -Destination $finalPath -Force
+            }
+
+            $downloadInstallResult = Try-InstallFromPath -InstallerPath $finalPath
+            if (-not [string]::IsNullOrWhiteSpace($downloadInstallResult)) {
+                return $downloadInstallResult
+            }
+        }
+        catch {
+            # ignore and return final missing state below
+        }
+
+        $after = Get-RemoteFoundryPath
+        if (-not [string]::IsNullOrWhiteSpace($after)) {
+            return "FOUND:$after"
+        }
+
+        return 'MISSING:install_failed'
+    } -ArgumentList $idsCsv, $RemoteInstallerPath
+
+    if ($result -like 'FOUND:*' -or $result -like 'INSTALLED:*') {
+        Write-Host "==> Foundry available on ${RemoteHost}: $($result.Split(':', 2)[1])" -ForegroundColor Green
+        return
+    }
+
+    throw "Foundry Local is not available on $RemoteHost and automatic installation failed ($result). Install Foundry Local on the remote machine, then rerun deployment."
 }
 
 function Get-AppUserModelId {
@@ -47,6 +392,7 @@ function Get-AppUserModelId {
 
 # Ensures a self-signed PFX exists for the given publisher subject and returns its path.
 # The cert is stored in the script directory and reused across runs.
+# The PFX is protected with a fixed test password so signtool can consume it.
 function Get-OrCreateSigningCertificate {
     param(
         [string]$Subject,
@@ -55,8 +401,11 @@ function Get-OrCreateSigningCertificate {
 
     $pfxPath = Join-Path $OutputDir 'SmrtPadTestSign.pfx'
     $cerPath = Join-Path $OutputDir 'SmrtPadTestSign.cer'
+    # Fixed password used for the test-signing PFX — not a security secret.
+    $pfxPassword = 'SmrtPadTestSign'
 
-    if (-not (Test-Path $pfxPath)) {
+    # Regenerate if either file is missing.
+    if (-not (Test-Path $pfxPath) -or -not (Test-Path $cerPath)) {
         Write-Host "  Generating self-signed certificate for '$Subject'..." -ForegroundColor DarkGray
         $cert = New-SelfSignedCertificate `
             -Subject $Subject `
@@ -65,14 +414,14 @@ function Get-OrCreateSigningCertificate {
             -HashAlgorithm SHA256 `
             -NotAfter (Get-Date).AddYears(5)
 
-        $pfxPassword = [System.Security.SecureString]::new()
-        Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $pfxPassword | Out-Null
+        $securePassword = ConvertTo-SecureString $pfxPassword -AsPlainText -Force
+        Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $securePassword | Out-Null
         Export-Certificate -Cert $cert -FilePath $cerPath -Type CERT | Out-Null
         Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force -ErrorAction SilentlyContinue
         Write-Host "  Certificate created: $pfxPath" -ForegroundColor DarkGray
     }
 
-    return [pscustomobject]@{ PfxPath = $pfxPath; CerPath = $cerPath }
+    return [pscustomobject]@{ PfxPath = $pfxPath; CerPath = $cerPath; Password = $pfxPassword }
 }
 
 # Installs the signing cert into TrustedPeople and Root stores on the remote machine.
@@ -128,6 +477,32 @@ function Install-RemoteMsix {
         if (Test-Path $depRoot) {
             $depPaths = @(Get-ChildItem $depRoot -Recurse -Include *.appx, *.msix |
                 Select-Object -ExpandProperty FullName)
+        }
+
+        # Try direct install in the WinRM session first. On some machines this works
+        # reliably and is faster than scheduled-task indirection.
+        try {
+            $existingDirect = Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -ErrorAction SilentlyContinue
+            if ($existingDirect) { $existingDirect | Remove-AppxPackage -ErrorAction SilentlyContinue }
+
+            if ($depPaths.Count -gt 0) {
+                Add-AppxPackage -Path $msixPath -DependencyPath $depPaths -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop
+            }
+            else {
+                Add-AppxPackage -Path $msixPath -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop
+            }
+
+            $packageDirect = Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' |
+                Sort-Object Version -Descending | Select-Object -First 1
+            if ($null -eq $packageDirect) {
+                throw "Package 'JohnDonnelly.SmrtPad' was not found after direct installation."
+            }
+
+            Write-Output "AUMID=$($packageDirect.PackageFamilyName)!App"
+            return
+        }
+        catch {
+            Write-Host "  Direct Add-AppxPackage failed in WinRM session; falling back to scheduled task. Reason: $($_.Exception.Message)" -ForegroundColor DarkGray
         }
 
         # Paths for the helper script and result sentinel files.
@@ -270,6 +645,12 @@ else {
 
 # ── Local deployment (no remote host) ────────────────────────────────────────
 if ([string]::IsNullOrWhiteSpace($RemoteHost)) {
+    $ensureFoundry = $env:SMRTPAD_ENSURE_FOUNDRY
+    $ensureFoundryEnabled = [string]::IsNullOrWhiteSpace($ensureFoundry) -or $ensureFoundry -match '^(1|true|yes)$'
+    if ($ensureFoundryEnabled) {
+        Ensure-FoundryInstalledLocal
+    }
+
     Write-Host '==> Registering loose package locally...' -ForegroundColor Cyan
     Add-AppxPackage -Register $manifest -ForceUpdateFromAnyVersion
     $aumid = Get-AppUserModelId -PackageName 'JohnDonnelly.SmrtPad'
@@ -307,10 +688,14 @@ $dependencyFiles = Get-ChildItem $packageOutputDirectory.FullName -Recurse -Incl
 Write-Host '==> Ensuring signing certificate...' -ForegroundColor Cyan
 $certDir  = Join-Path $PSScriptRoot 'TestCerts'
 New-Item -Path $certDir -ItemType Directory -Force | Out-Null
-$certInfo = Get-OrCreateSigningCertificate -Subject 'CN=John_' -OutputDir $certDir
+$publisherSubject = Get-PackagePublisherFromManifest -ManifestPath $manifest
+Write-Host "  Using package publisher subject: $publisherSubject" -ForegroundColor DarkGray
+$certInfo = Get-OrCreateSigningCertificate -Subject $publisherSubject -OutputDir $certDir
 
 Write-Host '==> Signing .msix...' -ForegroundColor Cyan
-& $signtool sign /fd SHA256 /a /f $certInfo.PfxPath $msixPath
+# /f specifies the PFX file; /p its password; /fd the digest algorithm.
+# /a is intentionally omitted — it selects from the cert store and conflicts with /f.
+& $signtool sign /fd SHA256 /f $certInfo.PfxPath /p $certInfo.Password $msixPath
 if ($LASTEXITCODE -ne 0) { throw "signtool sign failed with exit code $LASTEXITCODE." }
 
 # ── Copy files to remote and install ─────────────────────────────────────────
@@ -320,6 +705,8 @@ if ($null -ne $credential) { $sessionArgs.Credential = $credential }
 
 $session = New-PSSession @sessionArgs
 try {
+    $ensureFoundry = $env:SMRTPAD_ENSURE_FOUNDRY
+    $ensureFoundryEnabled = [string]::IsNullOrWhiteSpace($ensureFoundry) -or $ensureFoundry -match '^(1|true|yes)$'
     # Prepare a clean staging directory on the remote machine.
     $remoteRoot = Invoke-Command -Session $session -ScriptBlock {
         $stagingRoot = Join-Path $env:LOCALAPPDATA 'SmrtPadUITestAppX'
@@ -330,6 +717,21 @@ try {
         if ($runningRemote) { $runningRemote | Stop-Process -Force; Start-Sleep -Milliseconds 1000 }
 
         return $stagingRoot
+    }
+
+    $remoteFoundryInstallerPath = ''
+    if ($ensureFoundryEnabled) {
+        $localInstallerPath = Get-FoundryInstallerLocalPath
+        if (-not [string]::IsNullOrWhiteSpace($localInstallerPath)) {
+            $ext = [System.IO.Path]::GetExtension($localInstallerPath)
+            if ([string]::IsNullOrWhiteSpace($ext)) { $ext = '.bin' }
+            $remoteFoundryInstallerPath = Join-Path $remoteRoot ("foundry-installer$ext")
+            Copy-Item -Path $localInstallerPath -Destination $remoteFoundryInstallerPath -ToSession $session -Force
+            Write-Host "==> Copied Foundry installer to remote: $remoteFoundryInstallerPath" -ForegroundColor DarkGray
+        }
+
+        Write-Host '==> Ensuring Foundry Local is installed on remote machine...' -ForegroundColor Cyan
+        Ensure-FoundryInstalledRemote -Session $session -RemoteHost $RemoteHost -RemoteInstallerPath $remoteFoundryInstallerPath
     }
 
     Write-Host "==> Copying .msix + dependencies to $RemoteHost..." -ForegroundColor Cyan
