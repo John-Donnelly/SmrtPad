@@ -25,6 +25,12 @@ namespace SmrtPad.Controls;
 /// </summary>
 public sealed partial class SmartSidebar : UserControl
 {
+    private const string StatusCodePending = "PENDING";
+    private const string StatusCodeReady = "READY";
+    private const string StatusCodeUnavailable = "UNAVAILABLE";
+    private const string StatusCodeFoundryMissing = "PREREQ_FOUNDRY_MISSING";
+    private const string StatusCodeInitFailed = "PREREQ_DISPATCHER_INIT_FAILED";
+
     private readonly IAIDispatcher _dispatcher;
     private readonly ObservableCollection<SidebarChatEntry> _chatEntries = [];
     private CancellationTokenSource? _activeCts;
@@ -835,7 +841,10 @@ public sealed partial class SmartSidebar : UserControl
     private void ApplyDispatcherPendingState()
     {
         SetAiInteractionsEnabled(false);
-        SetInitializationStatus(ResourceHelper.GetString("SmartSidebarInitializationPending"), isVisible: true);
+        SetInitializationStatus(
+            ResourceHelper.GetString("SmartSidebarInitializationPending"),
+            isVisible: true,
+            statusCode: StatusCodePending);
         HardwareBadge.Text = "…";
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
             HardwareBadge,
@@ -850,7 +859,8 @@ public sealed partial class SmartSidebar : UserControl
         SetAiInteractionsEnabled(true);
         SetInitializationStatus(
             ResourceHelper.GetFormatted("SmartSidebarExecutionReady", _dispatcher.ExecutionTargetDisplayName),
-            isVisible: true);
+            isVisible: true,
+            statusCode: StatusCodeReady);
         HardwareBadge.Text = _dispatcher.ExecutionTargetDisplayName;
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
             HardwareBadge,
@@ -867,15 +877,15 @@ public sealed partial class SmartSidebar : UserControl
     private void ApplyDispatcherUnavailableState(string? failureMessage)
     {
         SetAiInteractionsEnabled(false);
-        var availabilityMessage = GetDispatcherUnavailableMessage(failureMessage);
-        SetInitializationStatus(availabilityMessage, isVisible: true);
+        var status = GetDispatcherUnavailableStatus(failureMessage);
+        SetInitializationStatus(status.Message, isVisible: true, statusCode: status.Code);
         HardwareBadge.Text = "⚠";
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
             HardwareBadge,
-            $"AI execution: {availabilityMessage}");
-        _hardwareModelValueText.Text = availabilityMessage;
+            $"AI execution: {status.Message}");
+        _hardwareModelValueText.Text = status.Message;
         _hardwareTokensValueText.Text = ResourceHelper.GetString("SmartSidebarExecutionPending");
-        ToolTipService.SetToolTip(HardwareBadge, availabilityMessage);
+        ToolTipService.SetToolTip(HardwareBadge, status.Message);
     }
 
     private void SetAiInteractionsEnabled(bool isEnabled)
@@ -886,36 +896,61 @@ public sealed partial class SmartSidebar : UserControl
         ChatInputBox.IsEnabled = isEnabled;
     }
 
-    private string GetDispatcherUnavailableMessage(string? failureMessage)
+    private (string Message, string Code) GetDispatcherUnavailableStatus(string? failureMessage)
     {
         if (!string.IsNullOrWhiteSpace(failureMessage))
-            return ResourceHelper.GetFormatted("SmartSidebarErrorFormat", failureMessage);
+        {
+            if (IsLikelyFoundryMissingMessage(failureMessage))
+            {
+                return (
+                    ResourceHelper.GetString("SmartSidebarPrerequisiteFoundryMissingStatus"),
+                    StatusCodeFoundryMissing);
+            }
+
+            return (
+                ResourceHelper.GetString("SmartSidebarPrerequisiteDispatcherInitFailedStatus"),
+                StatusCodeInitFailed);
+        }
 
         var availability = _dispatcher.Availability;
         return availability switch
         {
             { PhiSilica.Status: AIBackendAvailabilityStatus.RequiresPackageIdentity } =>
-                ResourceHelper.GetString("SmartSidebarExecutionPackageIdentityRequired"),
+                (ResourceHelper.GetString("SmartSidebarExecutionPackageIdentityRequired"), StatusCodeUnavailable),
             { PhiSilica.Status: AIBackendAvailabilityStatus.Unsupported, FoundryGpu.IsUsable: false } =>
-                ResourceHelper.GetString("SmartSidebarExecutionUnsupported"),
+                (ResourceHelper.GetString("SmartSidebarExecutionUnsupported"), StatusCodeUnavailable),
             { FoundryGpu.Status: AIBackendAvailabilityStatus.Error } =>
-                ResourceHelper.GetFormatted("SmartSidebarErrorFormat",
+                (ResourceHelper.GetFormatted("SmartSidebarErrorFormat",
                     availability.FoundryGpu.DiagnosticMessage ?? availability.FoundryGpu.DiagnosticCode ??
-                    ResourceHelper.GetString("SmartSidebarExecutionUnavailable")),
+                    ResourceHelper.GetString("SmartSidebarExecutionUnavailable")), StatusCodeUnavailable),
             { PhiSilica.Status: AIBackendAvailabilityStatus.Error } =>
-                ResourceHelper.GetFormatted("SmartSidebarErrorFormat",
+                (ResourceHelper.GetFormatted("SmartSidebarErrorFormat",
                     availability.PhiSilica.DiagnosticMessage ?? availability.PhiSilica.DiagnosticCode ??
-                    ResourceHelper.GetString("SmartSidebarExecutionUnavailable")),
+                    ResourceHelper.GetString("SmartSidebarExecutionUnavailable")), StatusCodeUnavailable),
             { FoundryGpu.Status: AIBackendAvailabilityStatus.Unavailable } =>
-                ResourceHelper.GetString("SmartSidebarExecutionUnavailable"),
-            _ => ResourceHelper.GetString("SmartSidebarExecutionUnavailable")
+                (ResourceHelper.GetString("SmartSidebarExecutionUnavailable"), StatusCodeUnavailable),
+            _ => (ResourceHelper.GetString("SmartSidebarExecutionUnavailable"), StatusCodeUnavailable)
         };
     }
 
-    private void SetInitializationStatus(string text, bool isVisible)
+    private static bool IsLikelyFoundryMissingMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return false;
+
+        return message.Contains("foundry", StringComparison.OrdinalIgnoreCase)
+            && (message.Contains("not found", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("not recognized", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("is unavailable", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("catalog", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void SetInitializationStatus(string text, bool isVisible, string? statusCode = null)
     {
         ArgumentNullException.ThrowIfNull(text);
         InitializationStatusTextControl.Text = text;
+        var automationName = string.IsNullOrWhiteSpace(statusCode) ? text : $"{statusCode}|{text}";
+        AutomationProperties.SetName(InitializationStatusTextControl, automationName);
         InitializationStatusTextControl.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
     }
 

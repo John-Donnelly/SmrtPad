@@ -1296,6 +1296,27 @@
     <value>Error: {0}</value>
     <comment>{0} = error message</comment>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>Local AI setup needed</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>Smart Sidebar is enabled, but the local AI runtime could not start. Restart SmrtPad and try again. If the issue persists, reinstall Foundry Local.</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>Smart Sidebar requires Foundry Local, but it was not detected on this PC. Install Foundry Local, then reopen SmrtPad.</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>Open setup guide</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local is missing. Install Foundry Local to use Smart Sidebar AI.</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>Local AI initialization failed. Check Foundry installation, then restart SmrtPad.</value>
+  </data>
   <data name="SessionRestoreTitle" xml:space="preserve">
     <value>Restore previous session</value>
   </data>

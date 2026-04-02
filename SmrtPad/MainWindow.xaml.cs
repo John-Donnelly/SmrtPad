@@ -3344,7 +3344,7 @@ namespace SmrtPad
                 {
                     SmartSidebarToggle.IsChecked = false;
                     SmrtSidebarToolbarButton.IsChecked = false;
-                    await ShowProUpsellAsync();
+                    await ShowAiPrerequisiteDialogAsync();
                     return;
                 }
 
@@ -3575,6 +3575,56 @@ namespace SmrtPad
                 await Windows.System.Launcher.LaunchUriAsync(
                     new Uri("ms-windows-store://pdp/?productid=SmrtPadPro"));
             }
+        }
+
+        private async Task ShowAiPrerequisiteDialogAsync()
+        {
+            var foundryPath = TryResolveFoundryExecutablePath();
+            var contentKey = string.IsNullOrWhiteSpace(foundryPath)
+                ? "SmartSidebarFoundryMissingContent"
+                : "SmartSidebarAIDispatcherUnavailableContent";
+
+            var dialog = new ContentDialog
+            {
+                Title = Res.GetString("SmartSidebarAIDispatcherUnavailableTitle"),
+                Content = Res.GetString(contentKey),
+                PrimaryButtonText = Res.GetString("SmartSidebarAIDispatcherUnavailableSetup"),
+                CloseButtonText = Res.GetString("SmartSidebarAIDispatcherUnavailableDismiss"),
+                XamlRoot = Content.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await Launcher.LaunchUriAsync(new Uri("https://learn.microsoft.com/azure/foundry-local/get-started"));
+            }
+        }
+
+        private static string? TryResolveFoundryExecutablePath()
+        {
+            var pathCandidates = new List<string>();
+
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (!string.IsNullOrWhiteSpace(localAppData))
+            {
+                pathCandidates.Add(Path.Combine(localAppData, "Microsoft", "FoundryLocal", "foundry.exe"));
+            }
+
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            if (!string.IsNullOrWhiteSpace(programFiles))
+            {
+                pathCandidates.Add(Path.Combine(programFiles, "Microsoft", "FoundryLocal", "foundry.exe"));
+            }
+
+            var path = Environment.GetEnvironmentVariable("PATH");
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                foreach (var part in path.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    pathCandidates.Add(Path.Combine(part, "foundry.exe"));
+                }
+            }
+
+            return pathCandidates.FirstOrDefault(File.Exists);
         }
 
         private void Ruler_Click(object sender, RoutedEventArgs e)
