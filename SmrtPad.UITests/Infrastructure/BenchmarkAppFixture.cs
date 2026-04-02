@@ -15,7 +15,7 @@ namespace SmrtPad.UITests.Infrastructure;
 /// SmrtPad AUMID from the locally deployed AppX package.  Does NOT use the remote
 /// deploy path in <see cref="SharedAppFixture"/> — designed for on-machine benchmarking.
 /// </summary>
-public sealed class BenchmarkAppFixture : IDisposable
+public sealed class BenchmarkAppFixture : IBenchmarkFixture, IDisposable
 {
     private const string LocalServerUrl = "http://127.0.0.1:4723/";
 

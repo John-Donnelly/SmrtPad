@@ -18,7 +18,7 @@ namespace SmrtPad.UITests.Benchmark;
 /// </summary>
 public sealed class SidebarAutomationHelper
 {
-    private readonly BenchmarkAppFixture _fixture;
+    private readonly IBenchmarkFixture _fixture;
     private readonly Action<string>? _log;
 
     /// <summary>Maximum time to wait for model initialization after switching (ms).</summary>
@@ -36,7 +36,10 @@ public sealed class SidebarAutomationHelper
     /// <summary>Maximum time to wait for a flyout menu item to become visible (ms).</summary>
     private const int FlyoutItemTimeoutMs = 15_000;
 
-    public SidebarAutomationHelper(BenchmarkAppFixture fixture, Action<string>? log = null)
+    /// <summary>Maximum time to wait for sidebar surface controls to appear (ms).</summary>
+    private const int SidebarOpenTimeoutMs = 20_000;
+
+    public SidebarAutomationHelper(IBenchmarkFixture fixture, Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(fixture);
         _fixture = fixture;
@@ -78,17 +81,17 @@ public sealed class SidebarAutomationHelper
 
         Log("Opening sidebar via toolbar button...");
         ClickToolbarButton();
-        Thread.Sleep(800);
-
-        // Retry once in case the first click was swallowed
-        if (!IsSidebarOpen())
+        if (WaitForSidebarOpen(SidebarOpenTimeoutMs))
         {
-            Log("Sidebar not open after first click, retrying...");
-            ClickToolbarButton();
-            Thread.Sleep(1000);
+            Log("Sidebar opened successfully");
+            return true;
         }
 
-        var isOpen = IsSidebarOpen();
+        // Retry once in case the first click was swallowed
+        Log("Sidebar not open after first click, retrying...");
+        ClickToolbarButton();
+
+        var isOpen = WaitForSidebarOpen(SidebarOpenTimeoutMs);
         Log(isOpen ? "Sidebar opened successfully" : "Failed to open sidebar");
         return isOpen;
     }
@@ -120,8 +123,16 @@ public sealed class SidebarAutomationHelper
     {
         try
         {
-            var elements = Driver.FindElements(MobileBy.AccessibilityId("SkillDropdown"));
-            return elements.Count > 0;
+            if (Driver.FindElements(MobileBy.AccessibilityId("SummarizeSectionButton")).Count > 0)
+                return true;
+
+            if (Driver.FindElements(MobileBy.AccessibilityId("SkillDropdown")).Count > 0)
+                return true;
+
+            if (Driver.FindElements(MobileBy.AccessibilityId("ChatInputBox")).Count > 0)
+                return true;
+
+            return false;
         }
         catch (InvalidOperationException)
         {
@@ -129,6 +140,24 @@ public sealed class SidebarAutomationHelper
             // yet ready; treat this as "not open" so the caller retries.
             return false;
         }
+    }
+
+    private bool WaitForSidebarOpen(int timeoutMs)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (IsSidebarOpen())
+                return true;
+
+            if (!IsSessionAlive)
+                return false;
+
+            DismissBlockingDialogs();
+            Thread.Sleep(PollIntervalMs);
+        }
+
+        return IsSidebarOpen();
     }
 
     private void ClickToolbarButton()
@@ -189,6 +218,9 @@ public sealed class SidebarAutomationHelper
 
         Log($"SwitchModel: clicking alias item '{modelAlias}'...");
         modelItem.Click();
+
+        // Re-anchor to main window after the model submenu popup closes
+        ReanchorMainWindow();
 
         // Wait up to 10s for the reload to start (controls go disabled)
         // ModelMenuItem_Click is async — it drains any active stream first, so there may be a short delay
@@ -251,6 +283,9 @@ public sealed class SidebarAutomationHelper
 
         Log($"SwitchExecutionTarget: clicking target item '{targetLabel}'...");
         targetItem.Click();
+
+        // Re-anchor to main window after the target submenu popup closes
+        ReanchorMainWindow();
 
         // ExecutionTargetMenuItem_Click resets the model and kicks off re-init — wait for it
         Log("SwitchExecutionTarget: waiting for reload to start (controls disabled)...");
@@ -389,6 +424,9 @@ public sealed class SidebarAutomationHelper
 
         // Click Apply Skill
         Driver.FindElement(MobileBy.AccessibilityId("ApplySkillButton")).Click();
+
+        // Re-anchor to main window after button click
+        ReanchorMainWindow();
 
         // Give the async click handler time to fire on the UI thread and set
         // StopChatButton visible before WaitForStreamingComplete starts polling.
@@ -532,11 +570,7 @@ public sealed class SidebarAutomationHelper
 
     private void SelectSkill(string skillKey)
     {
-        var dropdown = Driver.FindElement(MobileBy.AccessibilityId("SkillDropdown"));
-        dropdown.Click();
-        Thread.Sleep(300);
-
-        // Map skill key to display label index (matches InitializeSkillButtons order)
+        // Map skill key to display label (matches InitializeSkillButtons order)
         // The dropdown items are: Summarize, Tone/Rewrite, Rewrite for clarity,
         // Grammar fix, Shorten, Auto-complete
         var skillLabel = skillKey switch
@@ -550,11 +584,41 @@ public sealed class SidebarAutomationHelper
             _ => skillKey,
         };
 
-        var item = FindElementInFlyoutByName(skillLabel);
+        // Retry the dropdown interaction up to 3 times — WinAppDriver can lose
+        // context on the first attempt when a previous flyout drifted the HWND.
+        AppiumElement? item = null;
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                ReanchorMainWindow();
+                var dropdown = Driver.FindElement(MobileBy.AccessibilityId("SkillDropdown"));
+                dropdown.Click();
+                Thread.Sleep(400);
+
+                item = FindElementInFlyoutByName(skillLabel);
+                if (item is not null)
+                    break;
+
+                Log($"SelectSkill: '{skillLabel}' not found on attempt {attempt + 1}, dismissing and retrying...");
+                DismissFlyout();
+                Thread.Sleep(300);
+            }
+            catch (WebDriverException ex)
+            {
+                Log($"SelectSkill: attempt {attempt + 1} WebDriverException — {ex.Message[..Math.Min(80, ex.Message.Length)]}");
+                DismissFlyout();
+                Thread.Sleep(500);
+            }
+        }
+
         if (item is not null)
         {
             item.Click();
             Thread.Sleep(200);
+
+            // Re-anchor after the dropdown closes
+            ReanchorMainWindow();
 
             // Handle tone toggle for casual
             if (skillKey == "tone-casual")
@@ -565,6 +629,10 @@ public sealed class SidebarAutomationHelper
             {
                 SetToneToggle(isCasual: false);
             }
+        }
+        else
+        {
+            Log($"SelectSkill: skill '{skillLabel}' not found after all attempts");
         }
     }
 
@@ -892,11 +960,42 @@ public sealed class SidebarAutomationHelper
 
     /// <summary>
     /// Clicks the OptionsButton to open the flyout and waits for it to settle.
+    /// Retries up to 3 times if the flyout does not appear, re-anchoring the
+    /// session between attempts to recover from WinAppDriver HWND drift.
     /// </summary>
     private void OpenOptionsFlyout()
     {
-        Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
-        Thread.Sleep(600);
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                // Re-anchor before each attempt so we start from the main window
+                ReanchorMainWindow();
+                Driver.FindElement(MobileBy.AccessibilityId("OptionsButton")).Click();
+                Thread.Sleep(600);
+
+                // Verify the flyout actually appeared by checking for any sub-menu item
+                var items = Driver.FindElements(MobileBy.AccessibilityId("ModelSubMenu"));
+                if (items.Count > 0)
+                    return;
+
+                var execItems = Driver.FindElements(MobileBy.AccessibilityId("ExecutionTargetSubMenu"));
+                if (execItems.Count > 0)
+                    return;
+
+                var newSession = Driver.FindElements(MobileBy.AccessibilityId("NewSessionMenuItem"));
+                if (newSession.Count > 0)
+                    return;
+
+                Log($"OpenOptionsFlyout: flyout items not visible after attempt {attempt + 1}, retrying...");
+                Thread.Sleep(300);
+            }
+            catch (WebDriverException ex)
+            {
+                Log($"OpenOptionsFlyout: attempt {attempt + 1} WebDriverException — {ex.Message[..Math.Min(80, ex.Message.Length)]}");
+                if (attempt < 2) Thread.Sleep(500);
+            }
+        }
     }
 
     /// <summary>
@@ -972,6 +1071,26 @@ public sealed class SidebarAutomationHelper
         catch
         {
             // best-effort
+        }
+
+        // Re-anchor to main window after flyout closes to prevent HWND drift
+        ReanchorMainWindow();
+    }
+
+    /// <summary>
+    /// Re-anchors the WinAppDriver session to the main window after flyout popups.
+    /// WinAppDriver shifts its internal HWND to popup windows; re-anchoring
+    /// restores the context so subsequent FindElement calls succeed.
+    /// </summary>
+    private void ReanchorMainWindow()
+    {
+        if (_fixture is BenchmarkAppFixture local)
+        {
+            local.ReanchorMainWindow();
+        }
+        else if (_fixture is RemoteBenchmarkAppFixture remote)
+        {
+            remote.ReanchorMainWindow();
         }
     }
 

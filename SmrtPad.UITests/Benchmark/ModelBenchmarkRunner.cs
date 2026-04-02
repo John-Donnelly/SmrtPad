@@ -45,6 +45,7 @@ public sealed class ModelBenchmarkRunner
     private readonly SidebarAutomationHelper _sidebar;
     private readonly RuleBasedScorer _scorer;
     private readonly CostEstimator _costEstimator;
+    private readonly IReadOnlyList<string>? _explicitModels;
     private readonly Action<string> _log;
 
     /// <summary>
@@ -68,6 +69,35 @@ public sealed class ModelBenchmarkRunner
         _sidebar = sidebar;
         _scorer = scorer;
         _costEstimator = costEstimator;
+        _log = log;
+    }
+
+    /// <summary>
+    /// Initializes a new benchmark runner with an explicit model list.
+    /// Used by remote benchmarks where models are pre-filtered by hardware capability.
+    /// </summary>
+    /// <param name="sidebar">Automation helper for sidebar UI interactions.</param>
+    /// <param name="scorer">Rule-based quality scorer.</param>
+    /// <param name="costEstimator">Power cost estimator.</param>
+    /// <param name="explicitModels">Pre-filtered list of model aliases to benchmark.</param>
+    /// <param name="log">Logging callback for progress messages.</param>
+    public ModelBenchmarkRunner(
+        SidebarAutomationHelper sidebar,
+        RuleBasedScorer scorer,
+        CostEstimator costEstimator,
+        IReadOnlyList<string> explicitModels,
+        Action<string> log)
+    {
+        ArgumentNullException.ThrowIfNull(sidebar);
+        ArgumentNullException.ThrowIfNull(scorer);
+        ArgumentNullException.ThrowIfNull(costEstimator);
+        ArgumentNullException.ThrowIfNull(explicitModels);
+        ArgumentNullException.ThrowIfNull(log);
+
+        _sidebar = sidebar;
+        _scorer = scorer;
+        _costEstimator = costEstimator;
+        _explicitModels = explicitModels;
         _log = log;
     }
 
@@ -111,7 +141,7 @@ public sealed class ModelBenchmarkRunner
             ? (IReadOnlyList<BenchmarkPrompt>)prompts.Take(promptLimit.Value).ToList()
             : prompts;
 
-        var models = GetModelsToRun();
+        var models = _explicitModels ?? GetModelsToRun();
         _log($"Benchmark starting: {models.Count} models × {activePrompts.Count} prompts = {models.Count * activePrompts.Count} runs"
             + (promptLimit.HasValue ? $" (BENCHMARK_PROMPT_LIMIT={promptLimit})" : string.Empty));
 
