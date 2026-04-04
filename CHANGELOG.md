@@ -6,6 +6,35 @@ All notable changes to SmrtPad are documented in this file.
 
 ---
 
+## [0.7.5] - 2026-04-07
+
+### Added
+- **`CpuOnly` / `GpuOnly` sentinel constants** in `ModelSizeSelector` — `-1L` sentinels mark models that have no GPU or CPU execution provider in Foundry Local; all three selector methods (`SelectBestAliasAsync`, `GetEligibleAliases`, `GetBestAliasForCapability`) skip entries whose provider flag matches the requested path
+- **`qwen3-0.6b`** added to model catalog as CPU-only (594 MB RAM, no GPU execution provider in Foundry)
+- **`GetEligibleCpuModelAliases()`** on `IAIDispatcher` / `AIDispatcherProxy` — returns aliases eligible for CPU execution (VRAM budget zeroed); used to populate the model submenu when the CPU execution target is active
+- **NPU proxy tier** in `LiveBenchmarkTests` — `phi-3.5-mini` queued as `NpuProxy (GPU)` to approximate phi-silica performance on hardware without an NPU
+- **JSONL response log** — `BenchmarkRunner.RunAsync()` accepts an optional `responseLogPath`; when set, a JSONL record is appended after every case containing runId, model, backend, caseId, skillKey, input, rawOutput, insert/think content, scores, latency, and tokens-per-second
+- **`#status-line`** element on the live benchmark dashboard — shows the current CLI progress string above the progress bar; cleared with a ✅ completion message when the run finishes
+- **`modelBackends` / `modelHardwareTags`** dictionaries in the JS data sidecar — map each model key to its execution tier (GPU / CPU / NPU) for client-side filtering
+- **NPU filter chip** on the benchmark dashboard — sits alongside the existing GPU / CPU chips; `backendMatch()` dispatches by tier: NPU (`npu`), GPU (`gpu` without `npu`), CPU (fallback)
+- **Hardware tag prefix** (`[GPU]`, `[CPU]`, `[NPU]`) on every model label in the result table and all Chart.js axis labels / legend entries
+- **Persistent model-checkbox state** — `buildModelCbs()` saves and restores per-model check state in `localStorage` keyed by container; selections survive page reloads
+
+### Fixed
+- **`grandTotal` accuracy during benchmark runs** — `currentGrandTotal` is now mutable; decremented by `cases.Count` when a model fails to initialise, keeping the progress fraction correct (previously showed e.g. 949/1022 when models were skipped)
+- **CPU benchmark coverage** — `LiveBenchmarkTests` previously only ran CPU-exclusive models on the CPU path (~1 095 evaluations); now all CPU-eligible models run on CPU AND all GPU-eligible models run on GPU independently (~1 971 evaluations)
+- **7 missing localization keys** in all 8 satellite `.resw` files (`ar-SA`, `de-DE`, `es-ES`, `fr-FR`, `ja-JP`, `ru-RU`, `zh-Hans`, `ur-PK`): `SmartSidebarAIDispatcherUnavailableTitle`, `SmartSidebarAIDispatcherUnavailableContent`, `SmartSidebarFoundryMissingContent`, `SmartSidebarAIDispatcherUnavailableSetup`, `SmartSidebarAIDispatcherUnavailableDismiss`, `SmartSidebarPrerequisiteFoundryMissingStatus`, `SmartSidebarPrerequisiteDispatcherInitFailedStatus`
+
+### Changed
+- **Model catalog narrowed to ≤10B parameter models** — removed `mistral-7b-v0.2`, `deepseek-r1-14b`, `qwen2.5-14b`, `qwen2.5-coder-14b`, `gpt-oss-20b` (all exceed 10B or are not available in Foundry Local with a verified execution provider)
+- **`deepseek-r1-1.5b`** updated to GPU-only with corrected 1 464 MB footprint (trtrtx provider; no CPU execution provider exists in Foundry Local)
+- **`SmartSidebar.PopulateModelMenu()`** is now target-aware: CPU target uses `GetEligibleCpuModelAliases()`, NPU target hides the model submenu (phi-silica auto-selected), GPU / automatic uses `GetEligibleModelAliases()` as before
+- **Dashboard removes "Avg LLM Grade" KPI tile** and the LLM column from the per-result table; LLM scoring infrastructure remains in the runner
+- **Dashboard `getFilteredModels()`** filters the model key list by the active hardware tier before chart or checkbox builds, so GPU / CPU / NPU views are fully independent
+- **`currentStatus` passed to `BenchmarkDashboardGenerator.Generate()`** — live CLI progress line updates the dashboard status element on each refresh poll
+
+---
+
 ## [0.7.0] - 2026-04-04
 
 ### Added
