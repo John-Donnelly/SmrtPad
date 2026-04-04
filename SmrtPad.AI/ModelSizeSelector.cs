@@ -11,6 +11,18 @@ internal static class ModelSizeSelector
     private const int MaxContextTokens = 16384;
     private const int BaseContextTokens = 2048;
 
+    /// <summary>
+    /// Sentinel for <see cref="PreferredAliases"/> <c>GpuMb</c>. Model has no GPU execution provider
+    /// in Foundry Local (CPU-only); must be skipped on GPU paths.
+    /// </summary>
+    internal const long CpuOnly = -1;
+
+    /// <summary>
+    /// Sentinel for <see cref="PreferredAliases"/> <c>CpuMb</c>. Model has no CPU execution provider
+    /// in Foundry Local (GPU-only); must be skipped on CPU paths.
+    /// </summary>
+    internal const long GpuOnly = -1;
+
     // A model is eligible when its footprint × (1/0.9) ≤ budget,
     // i.e. the model occupies at most 90% of available memory, leaving ≥10% overhead free.
     private const double HeadroomFactor = 1.0 / 0.9;
@@ -18,34 +30,28 @@ internal static class ModelSizeSelector
     /// <summary>
     /// Ordered from largest (most capable) to smallest (most compatible).
     /// Alias names match Foundry Local catalog identifiers.
-    /// <c>GpuMb</c> = CUDA execution provider variant <c>fileSizeMb</c>.
-    /// <c>CpuMb</c> = CPU execution provider variant <c>fileSizeMb</c>.
-    /// Sizes taken from <c>foundry.modelinfo.json</c>.
-    /// Models without a GPU variant (e.g. qwen3-0.6b) are excluded to avoid
-    /// download failures when the GPU path is selected.
+    /// <c>GpuMb</c> = CUDA execution provider variant file size (or <see cref="CpuOnly"/> when no GPU provider exists).
+    /// <c>CpuMb</c> = CPU execution provider variant file size (or <see cref="GpuOnly"/> when no CPU provider exists).
+    /// Sizes taken from <c>foundry model list</c> CLI output.
     /// </summary>
     private static readonly (string Alias, long GpuMb, long CpuMb)[] PreferredAliases =
     [
-        //                         alias                  GPU       CPU
-        ("deepseek-r1-14b",     10_065,  11_786),
-        ("gpt-oss-20b",          9_882,  12_552),
-        ("qwen2.5-14b",          9_000,  11_325),
-        ("qwen2.5-coder-14b",    9_000,  11_325),
-        ("phi-4",                8_570,  10_403),
-        ("deepseek-r1-7b",       5_406,   6_584),
-        ("qwen2.5-7b",           4_843,   6_307),
-        ("qwen2.5-coder-7b",     4_843,   6_307),
-        ("mistral-7b-v0.2",      4_075,   4_167),
-        ("phi-4-mini",           3_686,   4_915),
-        ("phi-4-mini-reasoning", 3_225,   4_628),
-        ("phi-3.5-mini",         2_181,   2_590),
-        ("phi-3-mini-128k",      2_181,   2_600),
-        ("phi-3-mini-4k",        2_181,   2_590),
-        ("qwen2.5-coder-1.5b",   1_280,   1_822),
-        ("qwen2.5-1.5b",         1_280,   1_822),
-        ("deepseek-r1-1.5b",     1_028,   1_450),  // thinking model
-        ("qwen2.5-coder-0.5b",     528,     822),
-        ("qwen2.5-0.5b",           528,     822),
+        //                           alias                  GPU       CPU
+        ("phi-4",                  8_570,  10_403),
+        ("deepseek-r1-7b",         5_406,   6_584),
+        ("qwen2.5-7b",             4_843,   6_307),
+        ("qwen2.5-coder-7b",       4_843,   6_307),
+        ("phi-4-mini",             3_686,   4_915),
+        ("phi-4-mini-reasoning",   3_225,   4_628),
+        ("phi-3.5-mini",           2_181,   2_590),
+        ("phi-3-mini-128k",        2_181,   2_600),
+        ("phi-3-mini-4k",          2_181,   2_590),
+        ("deepseek-r1-1.5b",       1_464,  GpuOnly),   // GPU-only: trtrtx 1.43 GB; no CPU provider in Foundry
+        ("qwen2.5-coder-1.5b",     1_280,   1_822),
+        ("qwen2.5-1.5b",           1_280,   1_822),
+        ("qwen3-0.6b",           CpuOnly,     594),    // CPU-only: 0.58 GB; no GPU exec provider in Foundry
+        ("qwen2.5-coder-0.5b",       528,     822),
+        ("qwen2.5-0.5b",             528,     822),
     ];
 
     /// <summary>
@@ -65,6 +71,8 @@ internal static class ModelSizeSelector
 
         foreach (var (alias, gpuMb, cpuMb) in PreferredAliases)
         {
+            if (isGpu && gpuMb == CpuOnly) continue;   // no GPU execution provider
+            if (!isGpu && cpuMb == GpuOnly) continue;  // no CPU execution provider
             long footprintMb = isGpu ? gpuMb : cpuMb;
             if (IsAliasEligible(footprintMb, budgetMb))
             {
@@ -93,7 +101,9 @@ internal static class ModelSizeSelector
             return PreferredAliases.Select(static p => p.Alias).ToArray();
 
         return PreferredAliases
-            .Where(p => IsAliasEligible(isGpu ? p.GpuMb : p.CpuMb, budgetMb))
+            .Where(p => !(isGpu && p.GpuMb == CpuOnly)
+                     && !(!isGpu && p.CpuMb == GpuOnly)
+                     && IsAliasEligible(isGpu ? p.GpuMb : p.CpuMb, budgetMb))
             .Select(static p => p.Alias)
             .ToArray();
     }
@@ -161,6 +171,8 @@ internal static class ModelSizeSelector
 
         foreach (var (alias, gpuMb, cpuMb) in PreferredAliases)
         {
+            if (isGpu && gpuMb == CpuOnly) continue;   // no GPU execution provider
+            if (!isGpu && cpuMb == GpuOnly) continue;  // no CPU execution provider
             long footprintMb = isGpu ? gpuMb : cpuMb;
             if (IsAliasEligible(footprintMb, budgetMb))
                 return alias;
