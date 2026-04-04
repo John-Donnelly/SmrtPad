@@ -49,8 +49,21 @@ public sealed class SidebarChatEntry : INotifyPropertyChanged
     public string Text
     {
         get => _text;
-        set => SetField(ref _text, value);
+        set
+        {
+            if (SetField(ref _text, value))
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BubbleText)));
+        }
     }
+
+    /// <summary>
+    /// The text shown in the response bubble. Shows <see cref="Text"/> when non-empty;
+    /// falls back to <see cref="InsertText"/> so the user can see what will be inserted
+    /// even when the model put all its output inside &lt;insert&gt; tags.
+    /// </summary>
+    public string BubbleText => string.IsNullOrWhiteSpace(_text)
+        ? (_insertText ?? string.Empty)
+        : _text;
 
     public bool IsStreaming
     {
@@ -89,13 +102,18 @@ public sealed class SidebarChatEntry : INotifyPropertyChanged
     public string? InsertText
     {
         get => _insertText;
-        set => SetField(ref _insertText, value);
+        set
+        {
+            if (SetField(ref _insertText, value))
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BubbleText)));
+        }
     }
 
-    private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        return true;
     }
 }

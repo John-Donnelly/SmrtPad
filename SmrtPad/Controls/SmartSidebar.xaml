@@ -70,16 +70,31 @@
                         BorderThickness="1"
                         CornerRadius="12,12,12,2"
                         Padding="10,6">
-                    <TextBlock Text="{Binding Text}"
+                    <TextBlock Text="{Binding BubbleText}"
                                TextWrapping="Wrap"
                                IsTextSelectionEnabled="True"
                                FontSize="13" />
                 </Border>
                 <Button Content="Insert"
+                        AutomationProperties.AutomationId="InsertBubbleButton"
+                        Visibility="{Binding InsertText, Converter={StaticResource NonEmptyToVisible}}"
                         Click="InsertBubbleButton_Click"
                         Padding="8,4"
                         FontSize="12"
                         HorizontalAlignment="Left" />
+                <!--
+                    Hidden element that exposes InsertText to the UIA/Appium tree.
+                    Opacity=0 keeps it invisible while keeping it in the accessibility tree
+                    (Visibility=Collapsed would remove it from UIA).
+                    GetLastAssistantResponse() and TryGetInsertText() both find it via
+                    AutomationId="InsertContent".
+                -->
+                <TextBlock AutomationProperties.AutomationId="InsertContent"
+                           Text="{Binding InsertText}"
+                           Opacity="0"
+                           Height="1"
+                           IsHitTestVisible="False"
+                           IsTabStop="False" />
             </StackPanel>
         </DataTemplate>
 

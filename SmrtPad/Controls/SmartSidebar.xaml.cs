@@ -666,23 +666,40 @@ public sealed partial class SmartSidebar : UserControl
                 // Parse <think>…</think> and <insert>…</insert> tags out of the raw stream
                 ParseThinkingToken(rawBuffer, thinkBuilder, answerBuilder, insertBuilder, ref inThinkBlock, ref inInsertBlock);
 
+                var answerSnap = answerBuilder.ToString();
+                var thinkSnap = thinkBuilder.ToString();
+                var insertSnap = insertBuilder.Length > 0 ? insertBuilder.ToString() : null;
+                var thinkPhaseSnap = inThinkBlock;
+                // When the model puts all its content inside <insert> tags (e.g. summarize, tone),
+                // answerSnap is empty/whitespace. Promote the insert content to the visible bubble
+                // text so the response streams in full. InsertText is kept separately for the button.
+                var displaySnap = string.IsNullOrWhiteSpace(answerSnap) && insertSnap != null
+                    ? insertSnap
+                    : answerSnap;
                 DispatcherQueue.TryEnqueue(() =>
                     UpdateStreamingEntryWithThinking(
                         streamingIndex,
-                        answerBuilder.ToString(),
-                        thinkBuilder.ToString(),
-                        isThinkingPhase: inThinkBlock));
+                        displaySnap,
+                        thinkSnap,
+                        isThinkingPhase: thinkPhaseSnap,
+                        insertText: insertSnap));
             },
             onComplete: () => DispatcherQueue.TryEnqueue(() =>
             {
-                var finalText = skillKey == "freeform"
+                var insertContent = insertBuilder.Length > 0 ? insertBuilder.ToString() : null;
+                var trimmedAnswer = skillKey == "freeform"
                     ? ResponseCleaner.Clean(answerBuilder.ToString())
-                    : answerBuilder.ToString();
+                    : answerBuilder.ToString().Trim();
+                // If the model put all content in <insert> tags, show that in the bubble as the
+                // primary text so the full response is visible in chat.
+                var finalText = string.IsNullOrWhiteSpace(trimmedAnswer) && insertContent != null
+                    ? insertContent
+                    : trimmedAnswer;
                 FinalizeStreamingEntry(
                     streamingIndex,
                     finalText,
                     thinkBuilder.ToString(),
-                    insertBuilder.Length > 0 ? insertBuilder.ToString() : null);
+                    insertContent);
                 if (!ct.IsCancellationRequested)
                     UpdateInferenceMetrics(tokenCount, stopwatch.Elapsed);
                 SendChatButton.Visibility = Visibility.Visible;
@@ -728,9 +745,17 @@ public sealed partial class SmartSidebar : UserControl
                 i += "<think>".Length;
                 continue;
             }
-            // Check for </think> closing tag
-            if (inThinkBlock && raw.AsSpan(i).StartsWith("</think>", StringComparison.OrdinalIgnoreCase))
+            // Check for </think> closing tag.
+            // Also handles implicit thinking: phi-4-mini and similar models emit reasoning content
+            // with no opening <think> tag and only close with </think>. In that case, everything
+            // accumulated in answerBuilder so far was actually thinking content — move it over.
+            if (raw.AsSpan(i).StartsWith("</think>", StringComparison.OrdinalIgnoreCase))
             {
+                if (!inThinkBlock && answerBuilder.Length > 0)
+                {
+                    thinkBuilder.Append(answerBuilder);
+                    answerBuilder.Clear();
+                }
                 inThinkBlock = false;
                 i += "</think>".Length;
                 continue;
@@ -779,7 +804,7 @@ public sealed partial class SmartSidebar : UserControl
         ScrollChatToBottom();
     }
 
-    private void UpdateStreamingEntryWithThinking(int index, string text, string thinkingText, bool isThinkingPhase)
+    private void UpdateStreamingEntryWithThinking(int index, string text, string thinkingText, bool isThinkingPhase, string? insertText = null)
     {
         if (index < 0 || index >= _chatEntries.Count) return;
         var entry = _chatEntries[index];
@@ -789,6 +814,8 @@ public sealed partial class SmartSidebar : UserControl
         entry.ThinkingLabel = isThinkingPhase
             ? ResourceHelper.GetString("SmartSidebarThinkingLabel")
             : ResourceHelper.GetString("SmartSidebarThinkingDoneLabel");
+        if (insertText != null)
+            entry.InsertText = insertText;
         _pendingScroll = true;
     }
 
@@ -813,6 +840,12 @@ public sealed partial class SmartSidebar : UserControl
                 : string.Empty;
             entry.InsertText = insertText;
         }
+
+        // Expose the insert content to the UIA/Appium tree so that benchmark tests can
+        // read it without relying on DataTemplate bindings (which are not reliably reflected
+        // through WinAppDriver).  Same mechanism as UpdateInferenceMetrics / HardwareBadge.
+        AutomationProperties.SetHelpText(ChatHistoryList, insertText ?? string.Empty);
+
         ScrollChatToBottom();
     }
 
@@ -1035,7 +1068,9 @@ public sealed partial class SmartSidebar : UserControl
             return;
         _lastTokensPerSecond = $"{tokenCount / elapsed.TotalSeconds:0.0}";
         _hardwareTokensValueText.Text = _lastTokensPerSecond;
-        ToolTipService.SetToolTip(HardwareBadge, GetHardwareTooltip());
+        var tooltip = GetHardwareTooltip();
+        ToolTipService.SetToolTip(HardwareBadge, tooltip);
+        AutomationProperties.SetHelpText(HardwareBadge, tooltip);
     }
 
     private string GetHardwareTooltip()
