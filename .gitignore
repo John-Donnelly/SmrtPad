@@ -57,6 +57,8 @@ dlldata.c
 
 # Benchmark Results
 BenchmarkDotNet.Artifacts/
+SmrtPad.AI.Benchmarks/Reports/*.md
+SmrtPad.AI.Benchmarks/Reports/*.json
 
 # .NET Core
 project.lock.json

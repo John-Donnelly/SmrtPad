@@ -98,7 +98,24 @@ function Get-FoundryInstallerUrl {
         return $env:SMRTPAD_FOUNDRY_INSTALLER_URL
     }
 
-    return 'https://aka.ms/foundry-local-installer'
+    # Resolve the latest x64 MSIX from the GitHub releases API.
+    # The aka.ms/foundry-local-installer redirect points to the releases page, not a file.
+    try {
+        $apiUrl  = 'https://api.github.com/repos/microsoft/Foundry-Local/releases'
+        $headers = @{ 'User-Agent' = 'SmrtPad-Deploy' }
+        $releases = Invoke-RestMethod -Uri $apiUrl -Headers $headers -UseBasicParsing -ErrorAction Stop
+        $latest   = $releases | Sort-Object { [version]($_.tag_name -replace '^v','') } -Descending | Select-Object -First 1
+        $asset    = $latest.assets | Where-Object { $_.name -like 'FoundryLocal-x64-*.msix' } | Select-Object -First 1
+        if ($null -ne $asset) {
+            return $asset.browser_download_url
+        }
+    }
+    catch {
+        Write-Host "  Warning: could not resolve Foundry release from GitHub API: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+
+    # Fallback: direct link to the releases page so the error message is actionable.
+    return 'https://github.com/microsoft/Foundry-Local/releases'
 }
 
 function Get-FoundryInstallerLocalPath {
@@ -225,14 +242,28 @@ function Ensure-FoundryInstalledRemote {
     param(
         [System.Management.Automation.Runspaces.PSSession]$Session,
         [string]$RemoteHost,
-        [string]$RemoteInstallerPath
+        [string]$RemoteInstallerPath,
+        [string]$RemoteUserName
     )
 
     $candidateIds = Get-FoundryCandidatePackageIds
     $idsCsv = ($candidateIds -join ';')
 
+    # Resolve the active interactive user on the remote before entering the script block,
+    # since functions defined locally aren't available inside Invoke-Command.
+    $activeInteractiveUser = Invoke-Command -Session $Session -ScriptBlock {
+        try {
+            $cs = Get-WmiObject -Class Win32_ComputerSystem -ErrorAction SilentlyContinue
+            if ($cs -and -not [string]::IsNullOrWhiteSpace($cs.UserName)) {
+                return $cs.UserName -replace '^.*\\', ''
+            }
+        } catch {}
+        return $null
+    }
+    $taskPrincipalUser = if (-not [string]::IsNullOrWhiteSpace($activeInteractiveUser)) { $activeInteractiveUser } else { $RemoteUserName }
+
     $result = Invoke-Command -Session $Session -ScriptBlock {
-        param([string]$CandidateIdsCsv, [string]$PreferredInstallerPath)
+        param([string]$CandidateIdsCsv, [string]$PreferredInstallerPath, [string]$RemoteUser, [string]$TaskUser)
 
         function Get-RemoteFoundryPath {
             $foundry = Get-Command foundry -ErrorAction SilentlyContinue
@@ -240,15 +271,28 @@ function Ensure-FoundryInstalledRemote {
                 return $foundry.Source
             }
 
-            $candidates = @(
-                (Join-Path $env:LOCALAPPDATA 'Microsoft\FoundryLocal\foundry.exe'),
-                (Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe')
-            )
+            # Check the current session's profile first, then all user profiles.
+            # Foundry is a per-user MSIX; if installed under a different account (e.g.
+            # John_ when WinRM runs as John-Dev), it won't be in $env:LOCALAPPDATA.
+            $profileRoots = @($env:LOCALAPPDATA)
+            $usersRoot = Split-Path $env:USERPROFILE -Parent
+            if (Test-Path $usersRoot) {
+                Get-ChildItem $usersRoot -Directory -ErrorAction SilentlyContinue |
+                    ForEach-Object { $profileRoots += (Join-Path $_.FullName 'AppData\Local') }
+            }
 
-            foreach ($candidate in $candidates) {
-                if (Test-Path $candidate) {
-                    return $candidate
+            foreach ($root in ($profileRoots | Select-Object -Unique)) {
+                $candidates = @(
+                    (Join-Path $root 'Microsoft\FoundryLocal\foundry.exe'),
+                    (Join-Path $root 'Microsoft\WindowsApps\foundry.exe')
+                )
+                foreach ($c in $candidates) {
+                    if (Test-Path $c) { return $c }
                 }
+            }
+
+            if (Test-Path (Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe')) {
+                return (Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe')
             }
 
             return $null
@@ -260,7 +304,7 @@ function Ensure-FoundryInstalledRemote {
         }
 
         function Try-InstallFromPath {
-            param([string]$InstallerPath)
+            param([string]$InstallerPath, [string]$RemoteUserName, [string]$TaskUser)
 
             if ([string]::IsNullOrWhiteSpace($InstallerPath) -or -not (Test-Path $InstallerPath)) {
                 return $null
@@ -274,7 +318,54 @@ function Ensure-FoundryInstalledRemote {
                 switch -Regex ($ext)
                 {
                     '^\.msix$|^\.msixbundle$|^\.appx$|^\.appxbundle$' {
-                        Add-AppxPackage -Path $InstallerPath -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop
+                        # Add-AppxPackage requires an interactive token, which WinRM sessions
+                        # don't provide.  Use a scheduled task running under the interactive
+                        # user's logon session — the same pattern used by Install-RemoteMsix.
+                        $tempDir      = Join-Path $env:TEMP 'SmrtPadFoundryInstall'
+                        $scriptPath   = Join-Path $tempDir 'Install-Foundry.ps1'
+                        $exitCodePath = Join-Path $tempDir 'foundry-install.exitcode.txt'
+                        $logPath      = Join-Path $tempDir 'foundry-install.log.txt'
+                        New-Item -Path $tempDir -ItemType Directory -Force | Out-Null
+
+                        $scriptContent  = '$ErrorActionPreference = ''Stop''' + "`n"
+                        $scriptContent += 'try {' + "`n"
+                        $scriptContent += "    Add-AppxPackage -Path '$InstallerPath' -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop`n"
+                        $scriptContent += "    Set-Content -LiteralPath '$exitCodePath' -Value '0' -Encoding UTF8 -Force`n"
+                        $scriptContent += '} catch {' + "`n"
+                        $scriptContent += "    `$_ | Out-String | Set-Content -LiteralPath '$logPath' -Encoding UTF8 -Force`n"
+                        $scriptContent += "    Set-Content -LiteralPath '$exitCodePath' -Value '1' -Encoding UTF8 -Force`n"
+                        $scriptContent += '}'
+                        Set-Content -LiteralPath $scriptPath -Value $scriptContent -Encoding UTF8 -Force
+                        Remove-Item -LiteralPath $exitCodePath -Force -ErrorAction SilentlyContinue
+
+                        $taskName      = 'SmrtPadFoundryInstall'
+                        $taskArg       = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $scriptPath + '"'
+                        $taskAction    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $taskArg
+                        # The task must run under the user with an active desktop session.
+                        # $TaskUser was resolved via WMI before entering this script block.
+                        $taskPrincipal = New-ScheduledTaskPrincipal -UserId $TaskUser -LogonType Interactive -RunLevel Highest
+                        Register-ScheduledTask -TaskName $taskName -Action $taskAction -Principal $taskPrincipal -Force | Out-Null
+
+                        try {
+                            Start-ScheduledTask -TaskName $taskName
+                            $deadline = (Get-Date).AddMinutes(5)
+                            # Wait for the exit-code sentinel file (same pattern as Install-RemoteMsix).
+                            while (-not (Test-Path -LiteralPath $exitCodePath) -and (Get-Date) -lt $deadline) {
+                                Start-Sleep -Seconds 3
+                            }
+                        }
+                        finally {
+                            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+                        }
+
+                        if (-not (Test-Path -LiteralPath $exitCodePath)) {
+                            throw 'Timed out waiting for Foundry installer scheduled task to complete.'
+                        }
+                        $exitCode = Get-Content -LiteralPath $exitCodePath -ErrorAction SilentlyContinue
+                        if ($exitCode -ne '0') {
+                            $log = Get-Content -LiteralPath $logPath -Raw -ErrorAction SilentlyContinue
+                            throw "Scheduled-task Foundry MSIX install failed (exit $exitCode): $log"
+                        }
                         break
                     }
                     '^\.msi$' {
@@ -304,7 +395,7 @@ function Ensure-FoundryInstalledRemote {
             return $null
         }
 
-        $preferredInstallResult = Try-InstallFromPath -InstallerPath $PreferredInstallerPath
+        $preferredInstallResult = Try-InstallFromPath -InstallerPath $PreferredInstallerPath -RemoteUserName $RemoteUser -TaskUser $TaskUser
         if (-not [string]::IsNullOrWhiteSpace($preferredInstallResult)) {
             return $preferredInstallResult
         }
@@ -315,14 +406,14 @@ function Ensure-FoundryInstalledRemote {
         }
 
         $ids = $CandidateIdsCsv.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)
-        foreach ($source in @('winget', 'msstore')) {
-            foreach ($id in $ids) {
-                & $winget.Source install --id $id --source $source --accept-package-agreements --accept-source-agreements --silent --exact --disable-interactivity
-                if ($LASTEXITCODE -eq 0) {
-                    $installed = Get-RemoteFoundryPath
-                    if (-not [string]::IsNullOrWhiteSpace($installed)) {
-                        return "INSTALLED:$installed"
-                    }
+        foreach ($id in $ids) {
+            # Only use the 'winget' source — 'msstore' requires interactive geographic-region
+            # consent that cannot be provided in a WinRM session.
+            & $winget.Source install --id $id --source winget --accept-package-agreements --accept-source-agreements --silent --exact --disable-interactivity
+            if ($LASTEXITCODE -eq 0) {
+                $installed = Get-RemoteFoundryPath
+                if (-not [string]::IsNullOrWhiteSpace($installed)) {
+                    return "INSTALLED:$installed"
                 }
             }
         }
@@ -331,7 +422,15 @@ function Ensure-FoundryInstalledRemote {
             if (-not [string]::IsNullOrWhiteSpace($env:SMRTPAD_FOUNDRY_INSTALLER_URL)) {
                 return $env:SMRTPAD_FOUNDRY_INSTALLER_URL
             }
-            return 'https://aka.ms/foundry-local-installer'
+            # Resolve the real x64 MSIX URL from the GitHub releases API.
+            try {
+                $releases = Invoke-RestMethod -Uri 'https://api.github.com/repos/microsoft/Foundry-Local/releases' `
+                    -Headers @{ 'User-Agent' = 'SmrtPad-Deploy' } -UseBasicParsing -ErrorAction Stop
+                $latest = $releases | Sort-Object { [version]($_.tag_name -replace '^v','') } -Descending | Select-Object -First 1
+                $asset  = $latest.assets | Where-Object { $_.name -like 'FoundryLocal-x64-*.msix' } | Select-Object -First 1
+                if ($null -ne $asset) { return $asset.browser_download_url }
+            } catch {}
+            return $null
         }
 
         try {
@@ -352,7 +451,7 @@ function Ensure-FoundryInstalledRemote {
                 Move-Item -Path $installerPath -Destination $finalPath -Force
             }
 
-            $downloadInstallResult = Try-InstallFromPath -InstallerPath $finalPath
+            $downloadInstallResult = Try-InstallFromPath -InstallerPath $finalPath -RemoteUserName $RemoteUser -TaskUser $TaskUser
             if (-not [string]::IsNullOrWhiteSpace($downloadInstallResult)) {
                 return $downloadInstallResult
             }
@@ -367,7 +466,7 @@ function Ensure-FoundryInstalledRemote {
         }
 
         return 'MISSING:install_failed'
-    } -ArgumentList $idsCsv, $RemoteInstallerPath
+    } -ArgumentList $idsCsv, $RemoteInstallerPath, $RemoteUserName, $taskPrincipalUser
 
     if ($result -like 'FOUND:*' -or $result -like 'INSTALLED:*') {
         Write-Host "==> Foundry available on ${RemoteHost}: $($result.Split(':', 2)[1])" -ForegroundColor Green
@@ -388,6 +487,21 @@ function Get-AppUserModelId {
     }
 
     return "$($package.PackageFamilyName)!App"
+}
+
+# Returns the username of the currently active interactive (console/RDP) session on the
+# local machine.  Used to identify the correct task principal for scheduled-task MSIX
+# installs, which require a real interactive token — not the WinRM network logon token.
+function Get-ActiveInteractiveUser {
+    try {
+        # Win32_ComputerSystem.UserName returns the interactively logged-on user.
+        $cs = Get-WmiObject -Class Win32_ComputerSystem -ErrorAction SilentlyContinue
+        if ($cs -and -not [string]::IsNullOrWhiteSpace($cs.UserName)) {
+            # Strip the DOMAIN\ prefix so we get just the username.
+            return $cs.UserName -replace '^.*\\', ''
+        }
+    } catch {}
+    return $null
 }
 
 # Ensures a self-signed PFX exists for the given publisher subject and returns its path.
@@ -465,6 +579,19 @@ function Install-RemoteMsix {
         [string]$RemoteUserName
     )
 
+    # Resolve the active interactive user before entering Invoke-Command, since
+    # local functions (Get-ActiveInteractiveUser) are not available in remote sessions.
+    $activeInteractiveUser = Invoke-Command -Session $Session -ScriptBlock {
+        try {
+            $cs = Get-WmiObject -Class Win32_ComputerSystem -ErrorAction SilentlyContinue
+            if ($cs -and -not [string]::IsNullOrWhiteSpace($cs.UserName)) {
+                return $cs.UserName -replace '^.*\\', ''
+            }
+        } catch {}
+        return $null
+    }
+    $taskUser = if (-not [string]::IsNullOrWhiteSpace($activeInteractiveUser)) { $activeInteractiveUser } else { $RemoteUserName }
+
     Invoke-Command -Session $Session -ScriptBlock {
         param([string]$RootPath, [string]$MsixFile, [string]$UserName)
 
@@ -482,8 +609,8 @@ function Install-RemoteMsix {
         # Try direct install in the WinRM session first. On some machines this works
         # reliably and is faster than scheduled-task indirection.
         try {
-            $existingDirect = Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -ErrorAction SilentlyContinue
-            if ($existingDirect) { $existingDirect | Remove-AppxPackage -ErrorAction SilentlyContinue }
+            Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -AllUsers -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
 
             if ($depPaths.Count -gt 0) {
                 Add-AppxPackage -Path $msixPath -DependencyPath $depPaths -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop
@@ -528,13 +655,12 @@ function Install-RemoteMsix {
             $depArgs = " -DependencyPath @($depList)"
         }
 
-        # Remove the existing package (if any) before installing the new one.
-        # Add-AppxPackage -ForceUpdateFromAnyVersion can fail with 0x80073CFB when
-        # the version number is identical but the contents differ (e.g. different
-        # signing certificate or a rebuild without a version bump).  Removing first
-        # avoids that error entirely.
-        $scriptLines += "    `$existing = Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -ErrorAction SilentlyContinue"
-        $scriptLines += "    if (`$existing) { `$existing | Remove-AppxPackage -ErrorAction SilentlyContinue }"
+        # Remove ALL existing versions of the package before installing the new one.
+        # Add-AppxPackage fails with 0x80073CFB when any installed version has the same
+        # identity but different content (e.g. Debug vs Release, or a rebuild without
+        # a version bump).  Using -AllUsers with elevation removes it for every user.
+        $scriptLines += "    Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -AllUsers -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue"
+        $scriptLines += "    Get-AppxPackage -Name 'JohnDonnelly.SmrtPad' -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue"
 
         $scriptLines += "    Add-AppxPackage -Path '$msixPath'$depArgs -ForceUpdateFromAnyVersion -ForceApplicationShutdown -ErrorAction Stop"
         $scriptLines += "    Set-Content -LiteralPath '$exitCodePath' -Value '0' -Encoding UTF8 -Force"
@@ -549,6 +675,7 @@ function Install-RemoteMsix {
 
         # Register and run a scheduled task under the interactive user's token so that
         # Add-AppxPackage receives the desktop session context it requires.
+        # $UserName is the active interactive user resolved via WMI before this block.
         $taskName      = 'SmrtPadUiTestsInstall'
         $taskArg       = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $scriptPath + '"'
         $taskAction    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $taskArg
@@ -583,13 +710,70 @@ function Install-RemoteMsix {
         }
 
         Write-Output "AUMID=$($package.PackageFamilyName)!App"
-    } -ArgumentList $RemoteRootPath, $MsixFileName, $RemoteUserName
+    } -ArgumentList $RemoteRootPath, $MsixFileName, $taskUser
+}
+
+# ── Tool path resolution ─────────────────────────────────────────────────────
+
+# Resolves signtool.exe by checking the Windows Kits registry, then PATH, then the
+# developer-machine hardcoded fallback.  Throws if the tool cannot be found anywhere.
+function Get-SignToolPath {
+    # 1. Registry: Windows SDK installed roots
+    try {
+        $kitRoot = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots' `
+            -ErrorAction SilentlyContinue).'KitsRoot10'
+        if ($kitRoot) {
+            $found = Get-ChildItem (Join-Path $kitRoot 'bin') -Recurse -Filter 'signtool.exe' `
+                -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match '\\x64\\' } |
+                Sort-Object FullName -Descending |
+                Select-Object -First 1 -ExpandProperty FullName
+            if ($found) { return $found }
+        }
+    } catch {}
+
+    # 2. PATH
+    $inPath = Get-Command signtool.exe -ErrorAction SilentlyContinue
+    if ($inPath) { return $inPath.Source }
+
+    # 3. Developer-machine fallback
+    $fallback = 'A:\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe'
+    if (Test-Path $fallback) { return $fallback }
+
+    throw 'signtool.exe not found. Install the Windows 10 SDK or add it to PATH.'
+}
+
+# Resolves MSBuild.exe by using vswhere (preferred), then the developer-machine fallback.
+function Get-MSBuildPath {
+    # 1. vswhere: works on any machine with VS installed
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (-not (Test-Path $vswhere)) {
+        $vswhere = Join-Path $env:ProgramFiles 'Microsoft Visual Studio\Installer\vswhere.exe'
+    }
+    if (Test-Path $vswhere) {
+        $vsPath = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -property installationPath 2>$null
+        if ($vsPath) {
+            $candidates = @(
+                (Join-Path $vsPath 'MSBuild\Current\Bin\amd64\MSBuild.exe'),
+                (Join-Path $vsPath 'MSBuild\Current\Bin\MSBuild.exe')
+            )
+            foreach ($c in $candidates) {
+                if (Test-Path $c) { return $c }
+            }
+        }
+    }
+
+    # 2. Developer-machine fallback
+    $fallback = 'A:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Current\Bin\amd64\MSBuild.exe'
+    if (Test-Path $fallback) { return $fallback }
+
+    throw 'MSBuild.exe not found. Install Visual Studio with the MSBuild component.'
 }
 
 # ── Script body ──────────────────────────────────────────────────────────────
 
-$signtool = 'A:\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe'
-$msBuild  = 'A:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Current\Bin\amd64\MSBuild.exe'
+$signtool = Get-SignToolPath
+$msBuild  = Get-MSBuildPath
 $root     = Split-Path -Parent $PSScriptRoot
 $wap      = Join-Path $PSScriptRoot 'SmrtPad (Package).wapproj'
 
@@ -663,12 +847,12 @@ if ([string]::IsNullOrWhiteSpace($RemoteHost)) {
 
 # Locate the AppPackages output folder produced by the WAP build.
 $packageOutputDirectory = Get-ChildItem (Join-Path $PSScriptRoot 'AppPackages') -Directory |
-    Where-Object { $_.Name -like 'SmrtPad (Package)_*_x64_Test' -and $_.Name -notlike '*Debug*' } |
+    Where-Object { $_.Name -like 'SmrtPad (Package)_*_x64_Test' } |
     Sort-Object LastWriteTimeUtc -Descending |
     Select-Object -First 1
 
 if ($null -eq $packageOutputDirectory) {
-    throw "Could not locate AppPackages output for Release|x64."
+    throw "Could not locate AppPackages output folder matching 'SmrtPad (Package)_*_x64_Test'."
 }
 
 $msixPath = Get-ChildItem $packageOutputDirectory.FullName -Filter '*.msix' |
@@ -721,17 +905,66 @@ try {
 
     $remoteFoundryInstallerPath = ''
     if ($ensureFoundryEnabled) {
-        $localInstallerPath = Get-FoundryInstallerLocalPath
-        if (-not [string]::IsNullOrWhiteSpace($localInstallerPath)) {
-            $ext = [System.IO.Path]::GetExtension($localInstallerPath)
-            if ([string]::IsNullOrWhiteSpace($ext)) { $ext = '.bin' }
-            $remoteFoundryInstallerPath = Join-Path $remoteRoot ("foundry-installer$ext")
-            Copy-Item -Path $localInstallerPath -Destination $remoteFoundryInstallerPath -ToSession $session -Force
-            Write-Host "==> Copied Foundry installer to remote: $remoteFoundryInstallerPath" -ForegroundColor DarkGray
+        # Quick remote check: skip the expensive download if Foundry is already installed.
+        $remoteFoundryCheck = Invoke-Command -Session $session -ScriptBlock {
+            $f = Get-Command foundry -ErrorAction SilentlyContinue
+            if ($f) { return $f.Source }
+            $usersRoot = Split-Path $env:USERPROFILE -Parent
+            $roots = @($env:LOCALAPPDATA)
+            if (Test-Path $usersRoot) {
+                Get-ChildItem $usersRoot -Directory -ErrorAction SilentlyContinue |
+                    ForEach-Object { $roots += (Join-Path $_.FullName 'AppData\Local') }
+            }
+            foreach ($r in ($roots | Select-Object -Unique)) {
+                foreach ($c in @(
+                    (Join-Path $r 'Microsoft\FoundryLocal\foundry.exe'),
+                    (Join-Path $r 'Microsoft\WindowsApps\foundry.exe')
+                )) { if (Test-Path $c) { return $c } }
+            }
+            $prog = Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe'
+            if (Test-Path $prog) { return $prog }
+            return $null
         }
 
-        Write-Host '==> Ensuring Foundry Local is installed on remote machine...' -ForegroundColor Cyan
-        Ensure-FoundryInstalledRemote -Session $session -RemoteHost $RemoteHost -RemoteInstallerPath $remoteFoundryInstallerPath
+        if (-not [string]::IsNullOrWhiteSpace($remoteFoundryCheck)) {
+            Write-Host "==> Foundry already installed on remote: $remoteFoundryCheck (skipping download)" -ForegroundColor Green
+        }
+        else {
+            $localInstallerPath = Get-FoundryInstallerLocalPath
+            if ([string]::IsNullOrWhiteSpace($localInstallerPath)) {
+                # No pre-staged installer: download the Foundry MSIX locally so we can
+                # copy it to the remote over the PSSession (avoids GitHub API calls inside
+                # the WinRM session, which may be blocked or lack interactive consent).
+                $foundryInstallerUrl = Get-FoundryInstallerUrl
+                if (-not [string]::IsNullOrWhiteSpace($foundryInstallerUrl) -and $foundryInstallerUrl -notlike '*/releases') {
+                    $localTempDir = Join-Path $env:TEMP 'SmrtPadFoundryInstall'
+                    New-Item -Path $localTempDir -ItemType Directory -Force | Out-Null
+                    $ext = [System.IO.Path]::GetExtension($foundryInstallerUrl)
+                    if ([string]::IsNullOrWhiteSpace($ext)) { $ext = '.msix' }
+                    $downloadedPath = Join-Path $localTempDir "foundry-installer$ext"
+                    try {
+                        Write-Host "==> Downloading Foundry installer locally: $foundryInstallerUrl" -ForegroundColor DarkGray
+                        Invoke-WebRequest -Uri $foundryInstallerUrl -OutFile $downloadedPath -UseBasicParsing -ErrorAction Stop
+                        $localInstallerPath = $downloadedPath
+                        Write-Host "  Downloaded to: $localInstallerPath" -ForegroundColor DarkGray
+                    }
+                    catch {
+                        Write-Host "  Warning: could not download Foundry installer: $($_.Exception.Message)" -ForegroundColor Yellow
+                    }
+                }
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($localInstallerPath)) {
+                $ext = [System.IO.Path]::GetExtension($localInstallerPath)
+                if ([string]::IsNullOrWhiteSpace($ext)) { $ext = '.bin' }
+                $remoteFoundryInstallerPath = Join-Path $remoteRoot ("foundry-installer$ext")
+                Copy-Item -Path $localInstallerPath -Destination $remoteFoundryInstallerPath -ToSession $session -Force
+                Write-Host "==> Copied Foundry installer to remote: $remoteFoundryInstallerPath" -ForegroundColor DarkGray
+            }
+
+            Write-Host '==> Ensuring Foundry Local is installed on remote machine...' -ForegroundColor Cyan
+            Ensure-FoundryInstalledRemote -Session $session -RemoteHost $RemoteHost -RemoteInstallerPath $remoteFoundryInstallerPath -RemoteUserName $RemoteUser
+        }
     }
 
     Write-Host "==> Copying .msix + dependencies to $RemoteHost..." -ForegroundColor Cyan
