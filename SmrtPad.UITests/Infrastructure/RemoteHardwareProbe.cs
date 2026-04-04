@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 
 namespace SmrtPad.UITests.Infrastructure;
 
@@ -12,7 +13,9 @@ namespace SmrtPad.UITests.Infrastructure;
 internal static class RemoteHardwareProbe
 {
     /// <summary>
-    /// Queries the remote machine for GPU VRAM (via <c>nvidia-smi</c>) and total system RAM.
+    /// Queries the remote machine for GPU VRAM and total system RAM.
+    /// Tries <c>nvidia-smi</c> first (NVIDIA GPUs), then falls back to
+    /// <c>Win32_VideoController</c> for Intel/AMD integrated or discrete GPUs.
     /// Returns structured hardware info that can be fed into <see cref="RemoteModelFilter"/>.
     /// </summary>
     /// <param name="remoteHost">Hostname or IP of the remote machine.</param>
@@ -41,6 +44,18 @@ internal static class RemoteHardwareProbe
                     if ($parts.Length -gt 1) { $gpuName = $parts[1].Trim() }
                 }
             } catch {}
+
+            if ($gpu -eq 0) {
+                try {
+                    $vc = Get-CimInstance Win32_VideoController |
+                          Sort-Object AdapterRAM -Descending |
+                          Select-Object -First 1
+                    if ($vc -and $vc.AdapterRAM -gt 0) {
+                        $gpu = [math]::Round($vc.AdapterRAM / 1MB)
+                        $gpuName = $vc.Name
+                    }
+                } catch {}
+            }
 
             $ram = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB)
             $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Name
@@ -109,12 +124,11 @@ internal static class RemoteHardwareProbe
 
         var credArg = string.IsNullOrWhiteSpace(credentialSetup) ? "" : " -Credential $cred";
 
-        // Escape the script block for embedding in a PowerShell command
-        var escapedScript = scriptBlock.Replace("\"", "\\\"");
         var command = $"{credentialSetup}Invoke-Command -ComputerName '{remoteHost}'{credArg} -ScriptBlock {{ {scriptBlock} }}";
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
 
         var psi = new ProcessStartInfo("powershell.exe",
-            $"-NoProfile -Command \"{command}\"")
+            $"-NoProfile -NonInteractive -EncodedCommand {encoded}")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -131,9 +145,13 @@ internal static class RemoteHardwareProbe
 
         var stdout = process.StandardOutput.ReadToEnd();
         var stderr = process.StandardError.ReadToEnd();
-        process.WaitForExit();
-
-        if (process.ExitCode != 0)
+        var exited = process.WaitForExit(30_000);
+        if (!exited)
+        {
+            log?.Invoke("[HardwareProbe] Remote probe timed out after 30 s; killing process.");
+            try { process.Kill(entireProcessTree: true); } catch { }
+        }
+        else if (process.ExitCode != 0)
         {
             log?.Invoke($"[HardwareProbe] Remote probe failed (exit {process.ExitCode}): {stderr}");
         }
@@ -145,9 +163,9 @@ internal static class RemoteHardwareProbe
 /// <summary>
 /// Hardware capabilities of the remote test machine.
 /// </summary>
-/// <param name="GpuVramMb">Total GPU VRAM in megabytes (0 if no NVIDIA GPU).</param>
+/// <param name="GpuVramMb">Total GPU VRAM in megabytes (0 if no GPU detected).</param>
 /// <param name="SystemRamMb">Total system RAM in megabytes.</param>
-/// <param name="GpuName">GPU model name (e.g. "NVIDIA GeForce RTX 4060").</param>
+/// <param name="GpuName">GPU model name (e.g. "NVIDIA GeForce RTX 4060" or "Intel(R) UHD Graphics 605").</param>
 /// <param name="CpuName">CPU model name.</param>
 public sealed record RemoteHardwareInfo(
     long GpuVramMb,
@@ -155,6 +173,6 @@ public sealed record RemoteHardwareInfo(
     string GpuName,
     string CpuName)
 {
-    /// <summary>Returns <c>true</c> when the remote machine has a usable NVIDIA GPU.</summary>
+    /// <summary>Returns <c>true</c> when the remote machine has a usable GPU (NVIDIA, Intel, or AMD).</summary>
     public bool HasGpu => GpuVramMb > 0;
 }

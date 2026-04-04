@@ -45,21 +45,45 @@ public sealed class BenchmarkAppFixture : IBenchmarkFixture, IDisposable
             return;
         }
 
+        // Kill any lingering SmrtPad instances before launching so Appium doesn't
+        // create a second window on top of an already-running process.
+        KillExistingSmrtPad();
+        Thread.Sleep(800);
+
         try
         {
-            _appId = DiscoverLocalAumid();
-            if (string.IsNullOrWhiteSpace(_appId))
+            // Use the exe path + COM activation + appTopLevelWindow attach path.
+            // WinAppDriver 1.2.x rejects fresh W3C sessions created via the `app` capability
+            // (sent as `appium:app` by Appium.WebDriver 8.x) when running without an Appium
+            // proxy.  The hwnd path is always accepted because appTopLevelWindow is a base
+            // WinAppDriver capability with no namespace prefix issue.
+            var exePath = AppiumSession.FindSmrtPadExe();
+            if (string.IsNullOrWhiteSpace(exePath))
             {
-                InitializationFailure = "SmrtPad AppX package not found locally. Build and deploy the WAP project first.";
-                return;
-            }
+                // Fallback: discover AUMID and use launchViaAppId path (requires Appium proxy)
+                _appId = DiscoverLocalAumid();
+                if (string.IsNullOrWhiteSpace(_appId))
+                {
+                    InitializationFailure = "SmrtPad AppX package not found locally. Build and deploy the WAP project first.";
+                    return;
+                }
 
-            _session = new AppiumSession(
-                _appId,
-                launchArgument: null,
-                forceUnpackaged: false,
-                launchViaAppId: true,
-                serverUrl: LocalServerUrl);
+                _session = new AppiumSession(
+                    _appId,
+                    launchArgument: null,
+                    forceUnpackaged: false,
+                    launchViaAppId: true,
+                    serverUrl: LocalServerUrl);
+            }
+            else
+            {
+                _session = new AppiumSession(
+                    exePath,
+                    launchArgument: null,
+                    forceUnpackaged: false,
+                    launchViaAppId: false,
+                    serverUrl: LocalServerUrl);
+            }
             Driver = _session.Driver;
 
             Thread.Sleep(2000);
@@ -180,14 +204,36 @@ public sealed class BenchmarkAppFixture : IBenchmarkFixture, IDisposable
             _session = null;
             Driver = null;
 
-            if (!AppiumSession.IsAvailable() || string.IsNullOrWhiteSpace(_appId)) return false;
+            // Ensure the old process is gone before launching a new one.
+            KillExistingSmrtPad();
+            Thread.Sleep(800);
 
-            _session = new AppiumSession(
-                _appId,
-                launchArgument: null,
-                forceUnpackaged: false,
-                launchViaAppId: true,
-                serverUrl: LocalServerUrl);
+            if (!AppiumSession.IsAvailable()) return false;
+
+            var exePath = AppiumSession.FindSmrtPadExe();
+            if (!string.IsNullOrWhiteSpace(exePath))
+            {
+                _session = new AppiumSession(
+                    exePath,
+                    launchArgument: null,
+                    forceUnpackaged: false,
+                    launchViaAppId: false,
+                    serverUrl: LocalServerUrl);
+            }
+            else if (!string.IsNullOrWhiteSpace(_appId))
+            {
+                _session = new AppiumSession(
+                    _appId,
+                    launchArgument: null,
+                    forceUnpackaged: false,
+                    launchViaAppId: true,
+                    serverUrl: LocalServerUrl);
+            }
+            else
+            {
+                return false;
+            }
+
             Driver = _session.Driver;
             Thread.Sleep(2000);
             DismissSessionRestoreDialogIfPresent();
@@ -426,8 +472,23 @@ public sealed class BenchmarkAppFixture : IBenchmarkFixture, IDisposable
 
     public void Dispose()
     {
-        _session?.Dispose();
+        try { _session?.Dispose(); } catch { }
         _session = null;
         Driver = null;
+        KillExistingSmrtPad();
+    }
+
+    /// <summary>
+    /// Terminates all running SmrtPad.exe processes. Called before launching a new
+    /// Appium session and on disposal to prevent stale instances from accumulating.
+    /// </summary>
+    private static void KillExistingSmrtPad()
+    {
+        foreach (var p in Process.GetProcessesByName("SmrtPad"))
+        {
+            try { p.Kill(entireProcessTree: true); }
+            catch { }
+            finally { p.Dispose(); }
+        }
     }
 }

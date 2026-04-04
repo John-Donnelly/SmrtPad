@@ -674,6 +674,15 @@ public sealed class SidebarAutomationHelper
         var phase1Start = DateTime.UtcNow;
         bool stopSeen = false;
 
+        // When requireStopFirst=true, we still allow early-exit if Send is visible
+        // for several consecutive polls. This handles the case where a short response
+        // finishes before our polling starts (Stop appeared and disappeared during the
+        // 800 ms sleep), so the Stop button is never seen but streaming is done.
+        // 4 × PollIntervalMs (500 ms) = 2 s of continuous Send visibility is enough
+        // to distinguish "stream already done" from "click handler not yet fired".
+        const int SendStableExitPolls = 4;
+        int sendVisibleCount = 0;
+
         // Phase 1 — wait for StopChatButton to appear (streaming started)
         Log($"WaitForStreaming: phase 1 — waiting for Stop button (requireStopFirst={requireStopFirst})...");
         while (DateTime.UtcNow < deadline)
@@ -682,18 +691,36 @@ public sealed class SidebarAutomationHelper
             if (stopBtns.Count > 0 && stopBtns[0].Displayed)
             {
                 stopSeen = true;
+                sendVisibleCount = 0;
                 Log($"WaitForStreaming: Stop button appeared after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
                 break;
             }
 
             // Send still visible may mean the stream completed before we started polling,
-            // OR that the async click handler hasn't fired yet. Only treat it as
-            // "already done" when requireStopFirst is not set.
+            // OR that the async click handler hasn't fired yet.
             var sendBtns = Driver.FindElements(MobileBy.Name("Send"));
-            if (sendBtns.Count > 0 && sendBtns[0].Displayed && !requireStopFirst)
+            if (sendBtns.Count > 0 && sendBtns[0].Displayed)
             {
-                Log($"WaitForStreaming: Send visible and requireStopFirst=false — treating as already complete after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
-                return;
+                if (!requireStopFirst)
+                {
+                    Log($"WaitForStreaming: Send visible and requireStopFirst=false — treating as already complete after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
+                    return;
+                }
+
+                sendVisibleCount++;
+                if (sendVisibleCount >= SendStableExitPolls)
+                {
+                    // Send has been continuously visible for ~2 s since polling started.
+                    // The click handler would have fired by now; streaming must have
+                    // completed before phase 1 polling began.
+                    Log($"WaitForStreaming: Send stable for {sendVisibleCount} polls — streaming already complete after {(DateTime.UtcNow - phase1Start).TotalSeconds:F1}s");
+                    return;
+                }
+            }
+            else
+            {
+                // Send disappeared (Stop may have appeared and gone already) — reset counter.
+                sendVisibleCount = 0;
             }
 
             DismissBlockingDialogs();
@@ -796,6 +823,63 @@ public sealed class SidebarAutomationHelper
 
         Log($"GetLastAssistantResponse: TIMEOUT — no response of ≥{MinResponseLength} chars found after {attempt} attempt(s)");
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if any "Insert" button is currently visible in the chat history,
+    /// indicating that the last assistant response contained <c>&lt;insert&gt;</c> tag content.
+    /// Call this immediately after <see cref="ExecutePrompt"/> returns, before the next
+    /// prompt starts a new session and clears the history.
+    /// </summary>
+    public bool HasInsertButton()
+    {
+        try
+        {
+            var chatLists = Driver.FindElements(MobileBy.AccessibilityId("ChatHistoryList"));
+            if (chatLists.Count == 0)
+                return false;
+
+            // Prefer the AutomationId set in the XAML template (InsertBubbleButton);
+            // fall back to Name("Insert") for older deployed packages.
+            var insertButtons = chatLists[0].FindElements(MobileBy.AccessibilityId("InsertBubbleButton"));
+            if (insertButtons.Count == 0)
+                insertButtons = chatLists[0].FindElements(MobileBy.Name("Insert"));
+
+            var found = insertButtons.Count > 0 && insertButtons.Any(b => b.Displayed);
+            Log($"HasInsertButton: {found} ({insertButtons.Count} button(s) found in ChatHistoryList)");
+            return found;
+        }
+        catch (Exception ex)
+        {
+            Log($"HasInsertButton: EXCEPTION {ex.GetType().Name}: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Tries to read the insert content text exposed by <c>SmartSidebar.FinalizeStreamingEntry</c>
+    /// via <c>AutomationProperties.SetHelpText(ChatHistoryList, insertText)</c>.
+    /// Returns <c>null</c> if no insert content is present or the element is not found.
+    /// </summary>
+    public string? TryGetInsertText()
+    {
+        try
+        {
+            var chatLists = Driver.FindElements(MobileBy.AccessibilityId("ChatHistoryList"));
+            if (chatLists.Count == 0)
+                return null;
+
+            // FinalizeStreamingEntry sets AutomationProperties.HelpText on ChatHistoryList
+            // to the insert content.  This is the same mechanism used by HardwareBadge TPS.
+            var helpText = chatLists[0].GetAttribute("HelpText");
+            Log($"TryGetInsertText: HelpText length={helpText?.Length ?? 0}");
+            return string.IsNullOrEmpty(helpText) ? null : helpText;
+        }
+        catch (Exception ex)
+        {
+            Log($"TryGetInsertText: EXCEPTION {ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
     }
 
     // ── Hardware badge / metrics ─────────────────────────────────────────────

@@ -24,6 +24,8 @@ $AppiumAddress  = '127.0.0.1'
 $AppiumPort     = 4723
 $AppiumUrl      = "http://${AppiumAddress}:${AppiumPort}"
 $StatusEndpoint = "${AppiumUrl}/status"
+# WinAppDriver runs on a dedicated port so Appium can occupy 4723.
+$WinAppDriverPort = 4727
 $WinAppDriverPath = 'C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe'
 
 # Locate Appium executable — check PATH first, then common npm global locations
@@ -62,17 +64,23 @@ if ($wadProcess) {
         Write-Error "WinAppDriver not found at '$WinAppDriverPath'. Install from https://github.com/microsoft/WinAppDriver/releases"
         exit 1
     }
-    Write-Host "Starting WinAppDriver..." -ForegroundColor Yellow
-    Start-Process -FilePath $WinAppDriverPath -WindowStyle Minimized
+    Write-Host "Starting WinAppDriver on port $WinAppDriverPort..." -ForegroundColor Yellow
+    # Specify port explicitly so WinAppDriver does NOT occupy port 4723 (reserved for Appium).
+    Start-Process -FilePath $WinAppDriverPath -ArgumentList "$WinAppDriverPort" -WindowStyle Minimized
     Start-Sleep -Seconds 2
-    Write-Host "[OK] WinAppDriver started." -ForegroundColor Green
+    Write-Host "[OK] WinAppDriver started on port $WinAppDriverPort." -ForegroundColor Green
 }
 
 # ── 2. Start Appium ─────────────────────────────────────────────────────────
 function Test-AppiumReady {
+    # Distinguish real Appium (returns {"value":{"ready":...}}) from WinAppDriver
+    # (returns {"status":0,"build":{...}}) which also responds on this port.
     try {
-        $response = Invoke-WebRequest -Uri $StatusEndpoint -TimeoutSec 3 -ErrorAction SilentlyContinue
-        return $response.StatusCode -eq 200
+        $response = Invoke-WebRequest -Uri $StatusEndpoint -TimeoutSec 3 -ErrorAction SilentlyContinue -UseBasicParsing
+        if ($response.StatusCode -ne 200) { return $false }
+        $json = $response.Content | ConvertFrom-Json
+        # Appium 2.x returns {"value":{"ready":true,...}}
+        return ($json.value -ne $null -and $json.value.ready -ne $null)
     } catch {
         return $false
     }

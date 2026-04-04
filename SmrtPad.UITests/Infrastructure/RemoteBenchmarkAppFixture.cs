@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
@@ -369,9 +370,7 @@ public sealed class RemoteBenchmarkAppFixture : IBenchmarkFixture, IDisposable
         // Set-Clipboard requires an interactive session — use a scheduled task like deploy.ps1
         var script = $"""
             $scriptPath = Join-Path $env:TEMP 'SmrtPadSetClipboard.ps1'
-            $exitCodePath = Join-Path $env:TEMP 'SmrtPadSetClipboard.exitcode'
             Set-Content -LiteralPath $scriptPath -Value "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::SetText('{escaped}')" -Encoding UTF8 -Force
-            Remove-Item -LiteralPath $exitCodePath -Force -ErrorAction SilentlyContinue
             $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
             $principal = New-ScheduledTaskPrincipal -UserId '{remoteUser}' -LogonType Interactive
             Register-ScheduledTask -TaskName 'SmrtPadClipboard' -Action $action -Principal $principal -Force | Out-Null
@@ -381,9 +380,10 @@ public sealed class RemoteBenchmarkAppFixture : IBenchmarkFixture, IDisposable
             """;
 
         var command = $"{credentialSetup}Invoke-Command -ComputerName '{remoteHost}'{credArg} -ScriptBlock {{ {script} }}";
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
 
         var psi = new ProcessStartInfo("powershell.exe",
-            $"-NoProfile -Command \"{command}\"")
+            $"-NoProfile -NonInteractive -EncodedCommand {encoded}")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -392,7 +392,11 @@ public sealed class RemoteBenchmarkAppFixture : IBenchmarkFixture, IDisposable
         };
 
         using var process = Process.Start(psi);
-        process?.WaitForExit();
+        if (process is not null)
+        {
+            var exited = process.WaitForExit(15_000);
+            if (!exited) try { process.Kill(entireProcessTree: true); } catch { }
+        }
     }
 
     /// <summary>Returns the status text from the sidebar.</summary>
@@ -421,7 +425,8 @@ public sealed class RemoteBenchmarkAppFixture : IBenchmarkFixture, IDisposable
             """;
 
         var command = $"{credentialSetup}Invoke-Command -ComputerName '{remoteHost}'{credArg} -ScriptBlock {{ {script} }}";
-        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -Command \"{command}\"")
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
+        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -EncodedCommand {encoded}")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -430,7 +435,11 @@ public sealed class RemoteBenchmarkAppFixture : IBenchmarkFixture, IDisposable
         };
 
         using var process = Process.Start(psi);
-        process?.WaitForExit();
+        if (process is not null)
+        {
+            var exited = process.WaitForExit(10_000);
+            if (!exited) try { process.Kill(entireProcessTree: true); } catch { }
+        }
     }
 
     public void Dispose()

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
@@ -253,9 +254,22 @@ namespace SmrtPad.UITests.Infrastructure
             using var process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Failed to start deploy.ps1 for remote UI test setup.");
 
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+            // Read both streams concurrently — sequential ReadToEnd() deadlocks when both
+            // stdout and stderr buffers fill before WaitForExit returns.
+            var stdoutTask = Task.Run(() => process.StandardOutput.ReadToEnd());
+            var stderrTask = Task.Run(() => process.StandardError.ReadToEnd());
+
+            const int deployTimeoutMs = 15 * 60 * 1000; // 15 minutes
+            var exited = process.WaitForExit(deployTimeoutMs);
+            if (!exited)
+            {
+                try { process.Kill(entireProcessTree: true); } catch { }
+                throw new InvalidOperationException(
+                    "Remote deploy timed out after 15 minutes and was killed.");
+            }
+
+            string output = stdoutTask.GetAwaiter().GetResult();
+            string error = stderrTask.GetAwaiter().GetResult();
 
             if (process.ExitCode != 0)
             {

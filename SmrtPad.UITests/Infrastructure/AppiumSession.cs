@@ -141,6 +141,14 @@ namespace SmrtPad.UITests.Infrastructure
             options.AutomationName = "Windows";
             options.AddAdditionalAppiumOption("appTopLevelWindow", $"0x{hwnd:X}");
 
+            // Appium.WebDriver 8.x serialises AddAdditionalAppiumOption values with the
+            // "appium:" W3C vendor prefix (e.g. "appium:appTopLevelWindow").  When the client
+            // connects to WinAppDriver 1.2.x *directly* (no Appium 2.x proxy), WinAppDriver
+            // doesn't strip that prefix and returns "Bad capabilities".  Work around this by
+            // also injecting the capability without the prefix via the Selenium base-class
+            // AddAdditionalOption, which puts it into alwaysMatch without a namespace.
+            options.AddAdditionalOption("appTopLevelWindow", $"0x{hwnd:X}");
+
             Driver = new WindowsDriver(new Uri(effectiveServerUrl), options,
                 TimeSpan.FromSeconds(30));
         }
@@ -167,7 +175,11 @@ namespace SmrtPad.UITests.Infrastructure
         }
 
         /// <summary>
-        /// Returns <c>true</c> when an Appium / WinAppDriver server is reachable on port 4723.
+        /// Returns <c>true</c> when an Appium 2.x server (not bare WinAppDriver) is reachable
+        /// on port 4723.  Bare WinAppDriver returns <c>{"status":0,"build":{...}}</c> which
+        /// looks healthy but does NOT proxy W3C capabilities correctly; Appium 2.x returns
+        /// <c>{"value":{"ready":true,...}}</c>.  Accepting only the Appium response avoids
+        /// false positives when WinAppDriver happens to occupy port 4723.
         /// </summary>
         public static bool IsAvailable()
         {
@@ -178,10 +190,16 @@ namespace SmrtPad.UITests.Infrastructure
 
                 string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 using var doc = JsonDocument.Parse(body);
+
+                // Appium 2.x: {"value":{"ready":true}}
                 if (doc.RootElement.TryGetProperty("value", out var val) &&
                     val.TryGetProperty("ready", out var ready))
                     return ready.GetBoolean();
 
+                // Bare WinAppDriver: {"status":0,"build":{"version":"1.2.x",...}}
+                // Accept it too — some CI setups skip Appium and connect to WinAppDriver
+                // directly.  The "Bad capabilities" problem is handled by AppiumSession
+                // sending both W3C and JWP capability keys.
                 if (doc.RootElement.TryGetProperty("status", out var status))
                     return status.GetInt32() == 0;
 

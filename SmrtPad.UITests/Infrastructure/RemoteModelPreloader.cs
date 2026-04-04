@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace SmrtPad.UITests.Infrastructure;
 
@@ -138,15 +140,29 @@ internal static class RemoteModelPreloader
                 try {
                     $foundry = Get-Command foundry -ErrorAction SilentlyContinue
                     if (-not $foundry) {
-                        $candidates = @(
-                            (Join-Path $env:LOCALAPPDATA 'Microsoft\FoundryLocal\foundry.exe'),
-                            (Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe')
-                        )
-                        foreach ($c in $candidates) {
-                            if (Test-Path $c) { $foundry = Get-Item $c; break }
+                        # Foundry is a per-user MSIX; check all user profiles since the
+                        # interactive user may differ from the WinRM session user.
+                        $profileRoots = @($env:LOCALAPPDATA)
+                        $usersDir = Split-Path $env:USERPROFILE -Parent
+                        if (Test-Path $usersDir) {
+                            Get-ChildItem $usersDir -Directory -ErrorAction SilentlyContinue |
+                                ForEach-Object { $profileRoots += (Join-Path $_.FullName 'AppData\Local') }
+                        }
+                        foreach ($root in ($profileRoots | Select-Object -Unique)) {
+                            $checks = @(
+                                (Join-Path $root 'Microsoft\FoundryLocal\foundry.exe'),
+                                (Join-Path $root 'Microsoft\WindowsApps\foundry.exe')
+                            )
+                            foreach ($c in $checks) {
+                                if (Test-Path $c) { $foundry = Get-Item $c; break }
+                            }
+                            if ($foundry) { break }
                         }
                     }
-
+                    if (-not $foundry) {
+                        $prog = Join-Path $env:ProgramFiles 'Microsoft\FoundryLocal\foundry.exe'
+                        if (Test-Path $prog) { $foundry = Get-Item $prog }
+                    }
                     if (-not $foundry) {
                         Write-Output 'RESULT=SKIP_NO_CLI'
                         return
@@ -210,9 +226,10 @@ internal static class RemoteModelPreloader
 
         var credArg = string.IsNullOrWhiteSpace(credentialSetup) ? "" : " -Credential $cred";
         var command = $"{credentialSetup}Invoke-Command -ComputerName '{remoteHost}'{credArg} -ScriptBlock {{ {scriptBlock} }}";
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
 
         var psi = new ProcessStartInfo("powershell.exe",
-            $"-NoProfile -Command \"{command}\"")
+            $"-NoProfile -NonInteractive -EncodedCommand {encoded}")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -227,8 +244,26 @@ internal static class RemoteModelPreloader
             return string.Empty;
         }
 
-        var stdout = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
+        // Read stdout and stderr concurrently to prevent deadlock when both buffers fill
+        var stdoutTask = Task.Run(() => process.StandardOutput.ReadToEnd());
+        var stderrTask = Task.Run(() => process.StandardError.ReadToEnd());
+
+        int timeoutMs = SingleModelTimeoutMinutes * 60 * 1000;
+        var exited = process.WaitForExit(timeoutMs);
+        if (!exited)
+        {
+            log?.Invoke($"[ModelPreloader] Model pull timed out after {SingleModelTimeoutMinutes} min; killing process.");
+            try { process.Kill(entireProcessTree: true); } catch { }
+        }
+
+        var stdout = stdoutTask.GetAwaiter().GetResult();
+        var stderr = stderrTask.GetAwaiter().GetResult();
+
+        if (exited && process.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
+        {
+            log?.Invoke($"[ModelPreloader] Remote script stderr: {stderr[..Math.Min(300, stderr.Length)]}");
+        }
+
         return stdout;
     }
 }
