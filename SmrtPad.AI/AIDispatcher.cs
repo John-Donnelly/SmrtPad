@@ -147,6 +147,7 @@ public sealed class AIDispatcher : IAsyncDisposable
             "semantic"     => PromptTemplates.SemanticQuery(prompt),
             "ocr"          => PromptTemplates.OcrFallback(prompt),
             "freeform"     => PromptTemplates.FreeformChat(prompt),
+            "grade"        => prompt, // GradeResponse builds the full prompt externally
             _              => prompt,
         };
 

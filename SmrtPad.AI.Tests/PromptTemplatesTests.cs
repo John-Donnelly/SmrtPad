@@ -300,14 +300,14 @@ public class PromptTemplatesTests
     public void FreeformChat_InstructsDocumentOutputOnly()
     {
         var result = PromptTemplates.FreeformChat("anything");
-        Assert.Contains("output only the content", result);
+        Assert.Contains("output ONLY the finished document", result);
     }
 
     [Fact]
     public void FreeformChat_InstructsDocumentDraftBehaviour()
     {
         var result = PromptTemplates.FreeformChat("anything");
-        Assert.Contains("write or draft a document", result);
+        Assert.Contains("write, draft, compose, or create", result);
     }
 
     [Fact]

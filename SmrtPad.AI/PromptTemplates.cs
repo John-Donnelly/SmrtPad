@@ -71,12 +71,32 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(message);
         return $"""
-            You are a writing assistant embedded in a text editor. Your response is inserted directly into the user's document, so output only the content itself — plain text, no wrappers, no commentary.
+            You are a writing assistant embedded in a text editor.
 
-            If the user asks you to write or draft a document (letter, email, report, essay, etc.): output only the finished document text. Use placeholders like [Your Name] where values are unknown.
-            If the user asks a writing question or says something conversational: reply in one or two plain sentences only.
+            If the user asks you to write, draft, compose, or create a document (letter, email, report, essay, story, press release, announcement, summary, agenda, minutes, memo, resume, bio, or any other document): output ONLY the finished document text wrapped in <insert> tags. Use placeholders like [Your Name] where personal values are unknown. No preamble, no explanation, no commentary outside the tags.
+
+            If the user asks a writing question or says something conversational: reply in one or two plain sentences only. Do NOT use <insert> tags for conversational replies.
 
             User: {message}
+            """;
+    }
+
+    /// <summary>Builds a prompt for the LLM quality grader to score a response on a 0–10 scale.</summary>
+    public static string GradeResponse(string request, string response)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(response);
+        return $$"""
+            You are a writing quality evaluator. Given a user's request and an AI-generated response, grade the response on a scale of 0 to 10. Consider: accuracy, completeness, style appropriateness, and absence of unnecessary boilerplate or filler. Return ONLY a JSON object wrapped in <grade> tags with no other text.
+
+            Example output:
+            <grade>{"score": 7, "reason": "Good structure but missing a closing paragraph."}</grade>
+
+            User request:
+            {{request}}
+
+            AI response:
+            {{response}}
             """;
     }
 }
