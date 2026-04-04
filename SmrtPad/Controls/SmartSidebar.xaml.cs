@@ -291,7 +291,33 @@ public sealed partial class SmartSidebar : UserControl
 
     private void PopulateModelMenu()
     {
-        var aliases = _dispatcher.GetEligibleModelAliases();
+        // Choose the eligible model list based on the current execution target:
+        //   CPU target → RAM-eligible models (CPU footprints)
+        //   NPU target → phi-silica is auto-selected by the runtime; no user-picker needed
+        //   GPU / auto → VRAM-eligible models (GPU footprints, default)
+        var target = _dispatcher.PreferredExecutionTarget
+            ?? _dispatcher.Availability.SelectedTarget;
+
+        IReadOnlyList<string> aliases;
+        if (string.Equals(target, "FoundryLocalCpu", StringComparison.Ordinal))
+        {
+            aliases = _dispatcher.GetEligibleCpuModelAliases();
+        }
+        else if (string.Equals(target, "PhiSilicaNpu", StringComparison.Ordinal))
+        {
+            // NPU uses Phi Silica which is auto-selected; hide the model sub-menu entirely.
+            var npuSubMenu = (MenuFlyoutSubItem)OptionsFlyout.Items
+                .OfType<MenuFlyoutSubItem>().First();
+            npuSubMenu.Items.Clear();
+            npuSubMenu.Visibility = Visibility.Collapsed;
+            OptionsFlyout.Items.OfType<MenuFlyoutSeparator>().First().Visibility = Visibility.Collapsed;
+            return;
+        }
+        else
+        {
+            aliases = _dispatcher.GetEligibleModelAliases();
+        }
+
         if (aliases.Count == 0)
             return;
 

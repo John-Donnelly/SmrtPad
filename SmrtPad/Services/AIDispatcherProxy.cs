@@ -167,6 +167,16 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public IReadOnlyList<string> GetEligibleCpuModelAliases()
+    {
+        dynamic results = _dispatcher.GetEligibleCpuModelAliases();
+        var list = new List<string>();
+        foreach (var item in results)
+            list.Add((string)item);
+        return list;
+    }
+
+    /// <inheritdoc/>
     public Task ResetAsync() =>
         (Task)_dispatcher.ResetAsync();
 

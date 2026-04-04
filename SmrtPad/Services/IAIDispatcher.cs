@@ -69,6 +69,12 @@ public interface IAIDispatcher
     IReadOnlyList<string> GetEligibleModelAliases();
 
     /// <summary>
+    /// Returns model aliases that fit within the CPU RAM budget (GPU VRAM ignored), ordered best-first.
+    /// Use this to populate the model selector when the CPU execution target is selected.
+    /// </summary>
+    IReadOnlyList<string> GetEligibleCpuModelAliases();
+
+    /// <summary>
     /// Sets the preferred execution target for the next initialization.
     /// Pass <c>null</c> to revert to automatic hardware-based selection.
     /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"FoundryLocalGpu"</c>, <c>"FoundryLocalCpu"</c>.
