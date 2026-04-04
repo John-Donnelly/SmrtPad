@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Benchmark Dashboard — bench-20260404-162147-multimodel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--green:#2ea043;--yellow:#d29922;--red:#f85149;--blue:#58a6ff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);padding:24px}
+  h1{font-size:1.6rem;margin-bottom:4px}
+  .subtitle{color:var(--muted);font-size:.85rem;margin-bottom:4px}
+  #status{color:var(--muted);font-size:.75rem;margin-bottom:10px}
+  .filter-bar{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+  .filter-btn{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;padding:6px 14px;font-size:.8rem;transition:background .15s,border-color .15s}
+  .filter-btn.active{background:var(--blue);border-color:var(--blue);color:#0d1117;font-weight:600}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:24px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center}
+  .kpi .value{font-size:1.6rem;font-weight:700}
+  .kpi .label{color:var(--muted);font-size:.72rem;margin-top:4px}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(480px,1fr));gap:16px;margin-bottom:16px}
+  .charts-sm{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:24px}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:hidden}
+  .chart-card h3{font-size:.95rem;margin-bottom:8px}
+  .chart-wrap{position:relative;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:24px}
+  th,td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+  th{background:var(--card);position:sticky;top:0;z-index:1}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .progress{height:6px;background:var(--border);border-radius:3px;margin-bottom:16px}
+  .progress .bar{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+</style>
+</head>
+<body>
+<h1>🏋️ AI Benchmark Dashboard</h1>
+<p class="subtitle">Run: bench-20260404-162147-multimodel &middot; Model: deepseek-r1-7b &middot; Backend: FoundryLocalGpu</p>
+<p id="status">Loading…</p>
+<div class="filter-bar">
+  <span style="color:var(--muted);font-size:.8rem">Show:</span>
+  <button class="filter-btn" data-filter="all" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" data-filter="gpu" onclick="setFilter('gpu')">GPU only</button>
+  <button class="filter-btn" data-filter="cpu" onclick="setFilter('cpu')">CPU only</button>
+</div>
+<div class="progress"><div class="bar" id="progressBar" style="width:0%"></div></div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="value" id="kpi-completed">—</div><div class="label">Completed</div></div>
+  <div class="kpi"><div class="value" style="color:var(--green)" id="kpi-passed">—</div><div class="label" id="kpi-passed-lbl">Passed</div></div>
+  <div class="kpi"><div class="value" style="color:var(--red)" id="kpi-failed">—</div><div class="label">Failed</div></div>
+  <div class="kpi"><div class="value" id="kpi-passrate">—</div><div class="label">Pass Rate</div></div>
+  <div class="kpi"><div class="value" id="kpi-avgrule">—</div><div class="label">Avg Rule Score</div></div>
+  <div class="kpi"><div class="value" id="kpi-avgllm">—</div><div class="label">Avg LLM Grade</div></div>
+  <div class="kpi"><div class="value" id="kpi-tokspersec">—</div><div class="label">Avg Tok/s</div></div>
+  <div class="kpi"><div class="value" id="kpi-tokens">—</div><div class="label">Total Tokens</div></div>
+  <div class="kpi"><div class="value" id="kpi-tokencost">—</div><div class="label">Token Cost</div></div>
+  <div class="kpi"><div class="value" id="kpi-eleccost">—</div><div class="label">Electricity Cost</div></div>
+  <div class="kpi"><div class="value" id="kpi-totalcost">—</div><div class="label">Total Cost</div></div>
+  <div class="kpi"><div class="value" id="kpi-elapsed">—</div><div class="label">Elapsed</div></div>
+  <div class="kpi"><div class="value" id="kpi-eta">—</div><div class="label">ETA</div></div>
+  <div class="kpi"><div class="value" id="kpi-model" style="font-size:1rem">—</div><div class="label">Current Model</div></div>
+</div>
+
+<div class="charts">
+  <div class="chart-card"><h3>Rule Score by Case</h3><div class="chart-wrap" id="scoreWrap" style="height:200px"><canvas id="scoreChart"></canvas></div></div>
+  <div class="chart-card"><h3>Throughput (tok/s) by Case</h3><div class="chart-wrap" id="tpsWrap" style="height:200px"><canvas id="tpsChart"></canvas></div></div>
+  <div class="chart-card"><h3>Latency (ms) by Case</h3><div class="chart-wrap" id="latencyWrap" style="height:200px"><canvas id="latencyChart"></canvas></div></div>
+  <div class="chart-card"><h3>Running Average Score</h3><div class="chart-wrap" style="height:200px"><canvas id="avgChart"></canvas></div></div>
+</div>
+<div class="charts-sm">
+  <div class="chart-card"><h3>Average Score by Skill</h3><div class="chart-wrap" style="height:280px"><canvas id="radarChart"></canvas></div></div>
+  <div class="chart-card"><h3>Pass / Fail</h3><div class="chart-wrap" style="height:280px"><canvas id="pieChart"></canvas></div></div>
+  <div class="chart-card"><h3>Results by Category</h3><div class="chart-wrap" style="height:280px"><canvas id="categoryChart"></canvas></div></div>
+  <div class="chart-card" id="modelCompareCard" style="display:none"><h3>Model Comparison</h3><div class="chart-wrap" style="height:280px"><canvas id="modelChart"></canvas></div></div>
+</div>
+
+<h3 style="margin-bottom:8px">Detailed Results</h3>
+<div style="overflow-x:auto">
+<table>
+<thead><tr>
+  <th>Case</th><th>Skill</th><th>Description</th><th>Model</th><th>Backend</th>
+  <th>Rule Score</th><th>LLM</th><th>Latency</th><th>Tok/s</th>
+  <th>In Tokens</th><th>Out Tokens</th><th>Total Tokens</th>
+  <th>Token Cost</th><th>Elec Cost</th><th>Total Cost</th>
+</tr></thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+<script>
+const DATA_FILE="bench-20260404-162147-multimodel-data.js";
+let sC,lC,rC,pC,tpsC,avgC,catC,modC,pollTimer;
+const grid={color:'#30363d'};
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function eta(s){if(s<=0)return'—';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.floor(s%60);return(h>0?h+'h ':'')+m+'m '+sec+'s';}
+function applyFilter(){
+  const f=localStorage.getItem('benchFilter')||'all';
+  document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
+  document.querySelectorAll('#tableBody tr').forEach(row=>{
+    const be=(row.dataset.backend||'').toLowerCase();
+    const show=f==='all'||(f==='gpu'&&be.includes('gpu'))||(f==='cpu'&&!be.includes('gpu'));
+    row.style.display=show?'':'none';
+  });
+}
+function setFilter(f){localStorage.setItem('benchFilter',f);applyFilter();}
+function destroyCharts(){[sC,lC,rC,pC,tpsC,avgC,catC,modC].forEach(c=>{if(c)c.destroy();});}
+function update(d){
+  if(!d)return;
+  set('status','Updated: '+d.updatedAt+(d.done?' — ✅ Complete':''));
+  document.getElementById('progressBar').style.width=d.progressPct+'%';
+  set('kpi-completed',d.completed+'/'+d.totalCases);
+  set('kpi-passed',d.passed);
+  set('kpi-passed-lbl','Passed (≥'+d.threshold+')');
+  set('kpi-failed',d.failed);
+  set('kpi-passrate',d.passRatePct+'%');
+  set('kpi-avgrule',d.avgRule+'/100');
+  set('kpi-avgllm',d.avgLlm!=null?String(d.avgLlm):'—');
+  set('kpi-tokspersec',d.avgToksPerSec+' tok/s');
+  set('kpi-tokens',d.totalTokens.toLocaleString());
+  set('kpi-tokencost','£'+d.totalTokenCost.toFixed(4));
+  set('kpi-eleccost','£'+d.totalElecCost.toFixed(4));
+  set('kpi-totalcost','£'+d.totalCost.toFixed(4));
+  set('kpi-elapsed',d.elapsed);
+  set('kpi-eta',eta(d.etaSeconds));
+  set('kpi-model',d.currentModel||'—');
+  document.getElementById('tableBody').innerHTML=d.tableRows;
+  applyFilter();
+  const barH=Math.max(200,d.caseIds.length*22)+'px';
+  document.getElementById('scoreWrap').style.height=barH;
+  document.getElementById('latencyWrap').style.height=barH;
+  document.getElementById('tpsWrap').style.height=barH;
+  destroyCharts();
+  sC=new Chart(document.getElementById('scoreChart'),{type:'bar',data:{labels:d.caseIds,datasets:[{label:'Score',data:d.caseScores,backgroundColor:d.barColors}]},options:{indexAxis:'y',scales:{x:{min:0,max:100,grid:grid},y:{ticks:{font:{size:9}},grid:grid}},plugins:{legend:{display:false}},maintainAspectRatio:false}});
+  tpsC=new Chart(document.getElementById('tpsChart'),{type:'bar',data:{labels:d.caseIds,datasets:[{label:'tok/s',data:d.caseToksPerSec,backgroundColor:'#3fb950'}]},options:{indexAxis:'y',scales:{x:{grid:grid},y:{ticks:{font:{size:9}},grid:grid}},plugins:{legend:{display:false}},maintainAspectRatio:false}});
+  lC=new Chart(document.getElementById('latencyChart'),{type:'bar',data:{labels:d.caseIds,datasets:[{label:'ms',data:d.caseLatencies,backgroundColor:'#58a6ff'}]},options:{indexAxis:'y',scales:{x:{grid:grid},y:{ticks:{font:{size:9}},grid:grid}},plugins:{legend:{display:false}},maintainAspectRatio:false}});
+  if(d.runningAvgScores&&d.runningAvgScores.length>0){avgC=new Chart(document.getElementById('avgChart'),{type:'line',data:{labels:d.caseIds,datasets:[{label:'Running Avg',data:d.runningAvgScores,borderColor:'#f0883e',backgroundColor:'rgba(240,136,62,.1)',tension:.3,pointRadius:2}]},options:{scales:{x:{grid:grid,ticks:{font:{size:9},maxRotation:0}},y:{min:0,max:100,grid:grid}},plugins:{legend:{display:false}},maintainAspectRatio:false}});}
+  if(d.skillLabels&&d.skillLabels.length>0){rC=new Chart(document.getElementById('radarChart'),{type:'radar',data:{labels:d.skillLabels,datasets:[{label:'Avg',data:d.skillAvgs,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.15)',pointBackgroundColor:'#58a6ff'}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:20,color:'#8b949e'},grid:grid,pointLabels:{color:'#e6edf3'}}},plugins:{legend:{display:false}},maintainAspectRatio:false}});}
+  pC=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:['Passed','Failed','Remaining'],datasets:[{data:[d.passed,d.failed,d.remaining],backgroundColor:['#2ea043','#f85149','#30363d']}]},options:{plugins:{legend:{labels:{color:'#e6edf3'}}},maintainAspectRatio:false}});
+  if(d.categoryLabels&&d.categoryLabels.length>0){catC=new Chart(document.getElementById('categoryChart'),{type:'bar',data:{labels:d.categoryLabels,datasets:[{label:'Pass',data:d.categoryPasses,backgroundColor:'#2ea043',stack:'c'},{label:'Fail',data:d.categoryFails,backgroundColor:'#f85149',stack:'c'}]},options:{scales:{x:{stacked:true,grid:grid,ticks:{color:'#e6edf3'}},y:{stacked:true,grid:grid,ticks:{color:'#e6edf3'}}},plugins:{legend:{labels:{color:'#e6edf3'}}},maintainAspectRatio:false}});}
+  const mc=document.getElementById('modelCompareCard');
+  if(d.modelLabels&&d.modelLabels.length>1){mc.style.display='';modC=new Chart(document.getElementById('modelChart'),{type:'bar',data:{labels:d.modelLabels,datasets:[{label:'Avg Score',data:d.modelAvgScores,backgroundColor:'#58a6ff'},{label:'Pass Rate %',data:d.modelPassRates,backgroundColor:'#2ea043'}]},options:{scales:{x:{grid:grid,ticks:{color:'#e6edf3'}},y:{min:0,max:100,grid:grid}},plugins:{legend:{labels:{color:'#e6edf3'}}},maintainAspectRatio:false}});}else{mc.style.display='none';}
+  if(d.done&&pollTimer){clearInterval(pollTimer);pollTimer=null;}
+}
+function poll(){
+  const old=document.getElementById('__dp');if(old)old.remove();
+  window.__benchData=null;
+  const s=document.createElement('script');
+  s.id='__dp';
+  s.src=DATA_FILE+'?_='+Date.now();
+  s.onload=()=>{update(window.__benchData);};
+  s.onerror=()=>{set('status','Waiting for data…');};
+  document.head.appendChild(s);
+}
+applyFilter();
+poll();
+pollTimer=setInterval(poll,5000);
+</script>
+
+</body>
+</html>

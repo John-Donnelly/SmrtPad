@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- Pure .NET project — no WinUI SDK needed; tests drive the app from outside -->
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -37,6 +37,10 @@
 
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmrtPad.AI.Benchmarks\SmrtPad.AI.Benchmarks.csproj" />
   </ItemGroup>
 
 </Project>

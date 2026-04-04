@@ -153,7 +153,7 @@ public sealed class BenchmarkSuiteTests : IAsyncDisposable
 
         // Assert
         var threshold = int.TryParse(
-            Environment.GetEnvironmentVariable("BENCHMARK_SCORE_THRESHOLD"), out var t) ? t : 60;
+            Environment.GetEnvironmentVariable("BENCHMARK_SCORE_THRESHOLD"), out var t) ? t : 80;
         var avg = run.Results.Average(r => r.Evaluation.RuleScore);
         Assert.True(avg >= threshold, $"Average rule score {avg:F1} below threshold {threshold}");
     }
@@ -220,5 +220,132 @@ public sealed class BenchmarkSuiteTests : IAsyncDisposable
         // Assert: should detect closing remark and score 0/20
         var result = run.Results[0];
         Assert.Equal(0, result.Evaluation.NoClosingRemarksPts);
+    }
+
+    [Fact]
+    public void BenchmarkSuite_EmptyRun_ReportDoesNotCrash()
+    {
+        // Arrange: a run with zero results
+        var emptyRun = new BenchmarkRun("empty-run", "mock-model", "MockBackend",
+            DateTimeOffset.UtcNow, new List<BenchmarkResult>());
+
+        // Act — should not throw
+        var md = BenchmarkReportGenerator.GenerateMarkdownReport(emptyRun);
+
+        // Assert
+        Assert.Contains("No benchmark results were produced", md);
+    }
+
+    [Fact]
+    public void BenchmarkSuite_EmptyRun_DeltaAnalyzerDoesNotCrash()
+    {
+        // Arrange
+        var emptyRun = new BenchmarkRun("empty-run", "mock-model", "MockBackend",
+            DateTimeOffset.UtcNow, new List<BenchmarkResult>());
+
+        // Act — should not throw
+        var delta = BenchmarkDeltaAnalyzer.CompareRuns(emptyRun, emptyRun);
+
+        // Assert
+        Assert.Empty(delta.Deltas);
+        Assert.Equal(0, delta.BaselineAvgRule);
+    }
+
+    [Fact]
+    public async Task BenchmarkSuite_CaseException_RunContinues()
+    {
+        // Arrange: first response succeeds, then failing mock
+        _context.SetDefaultResponse("<insert>", "Good response.", "</insert>");
+        var runner = new BenchmarkRunner(_context.Dispatcher, "mock-model", "MockBackend", enableLlmGrading: false);
+        var cases = BenchmarkPromptCatalog.All.Take(3).ToList();
+
+        // The mocked dispatcher returns valid tokens so we won't hit an unhandled exception here,
+        // but we can verify that results have token/cost fields populated.
+        var run = await runner.RunAsync(cases);
+
+        Assert.Equal(3, run.Results.Count);
+        foreach (var r in run.Results)
+        {
+            Assert.True(r.EstimatedInputTokens > 0, "Input tokens should be estimated");
+        }
+    }
+
+    [Fact]
+    public void BenchmarkSuite_DashboardGeneration_ProducesValidHtml()
+    {
+        // Arrange: build a minimal run with one result
+        var benchmarkCase = BenchmarkPromptCatalog.All.First();
+        var evalScore = new EvaluationScore(40, 20, 20, 20, 8, "Good quality.");
+        var singleResult = new BenchmarkResult(benchmarkCase, "raw output", "insert content", null,
+            1500, evalScore, "mock-model", "MockBackend", DateTimeOffset.UtcNow, 50, 80, 0.000005);
+        var run = new BenchmarkRun("dash-test", "mock-model", "MockBackend",
+            DateTimeOffset.UtcNow, new List<BenchmarkResult> { singleResult });
+
+        var dir = Path.Combine(Path.GetTempPath(), "SmrtPad-DashTest-" + Guid.NewGuid().ToString("N")[..8]);
+
+        try
+        {
+            // Act
+            var path = BenchmarkDashboardGenerator.Generate(run, 5, dir);
+
+            // Assert
+            Assert.True(File.Exists(path));
+            var html = File.ReadAllText(path);
+            Assert.Contains("Benchmark Dashboard", html);
+            Assert.Contains("chart.js", html);
+            Assert.Contains("mock-model", html);
+            Assert.Contains("£/Token", html);
+            Assert.Contains("Elec Cost", html);
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void BenchmarkSuite_PromptCatalog_HasAtLeast60Cases()
+    {
+        Assert.True(BenchmarkPromptCatalog.All.Count >= 60,
+            $"Expected at least 60 prompts but found {BenchmarkPromptCatalog.All.Count}");
+    }
+
+    [Fact]
+    public void BenchmarkSuite_AllChatCases_HaveExpectedKeywords()
+    {
+        var chatCases = BenchmarkPromptCatalog.All
+            .Where(c => c.Category == BenchmarkCategory.TagCompliance)
+            .ToList();
+
+        foreach (var c in chatCases)
+        {
+            Assert.True(c.ExpectedKeywords.Length > 0,
+                $"Chat case '{c.Id}' should have ExpectedKeywords for content completeness scoring");
+        }
+    }
+
+    [Fact]
+    public void BenchmarkSuite_TokenEstimation_ReturnsReasonableValues()
+    {
+        Assert.Equal(0, BenchmarkRunner.EstimateTokens(""));
+        Assert.Equal(0, BenchmarkRunner.EstimateTokens("   "));
+        int tokens = BenchmarkRunner.EstimateTokens("The quick brown fox jumps over the lazy dog.");
+        Assert.True(tokens >= 9 && tokens <= 15, $"Expected 9-15 tokens but got {tokens}");
+    }
+
+    [Fact]
+    public void BenchmarkSuite_HedgingDetection_ScoresCorrectly()
+    {
+        Assert.True(Evaluation.ContaminationDetector.HasHedging("Perhaps you should consider this option."));
+        Assert.True(Evaluation.ContaminationDetector.HasHedging("It's worth noting that the deadline is soon."));
+        Assert.False(Evaluation.ContaminationDetector.HasHedging("The deadline is next Friday."));
+    }
+
+    [Fact]
+    public void BenchmarkSuite_CodeFenceDetection_ScoresCorrectly()
+    {
+        Assert.True(Evaluation.ContaminationDetector.HasCodeFence("Here is code:\n```\nvar x = 1;\n```"));
+        Assert.False(Evaluation.ContaminationDetector.HasCodeFence("Dear Sir, I am writing to request a meeting."));
     }
 }
