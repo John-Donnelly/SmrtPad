@@ -5,6 +5,9 @@ namespace SmrtPad.AI.Benchmarks.Reporting;
 /// </summary>
 public static class BenchmarkReportGenerator
 {
+    /// <summary>Pass threshold — cases scoring at or above this value are considered passing.</summary>
+    internal const int PassThreshold = 80;
+
     /// <summary>Generates a human-readable Markdown report.</summary>
     public static string GenerateMarkdownReport(BenchmarkRun run)
     {
@@ -20,10 +23,16 @@ public static class BenchmarkReportGenerator
         sb.AppendLine($"| Total Cases | {run.Results.Count} |");
         sb.AppendLine();
 
+        if (run.Results.Count == 0)
+        {
+            sb.AppendLine("**No benchmark results were produced.** All cases may have failed to execute.");
+            return sb.ToString();
+        }
+
         // Summary table by category
         sb.AppendLine("## Summary");
         sb.AppendLine();
-        sb.AppendLine("| Category | Tests | Pass (≥70) | Fail | Avg Rule | Avg LLM |");
+        sb.AppendLine($"| Category | Tests | Pass (≥{PassThreshold}) | Fail | Avg Rule | Avg LLM |");
         sb.AppendLine("|----------|------:|----------:|-----:|---------:|--------:|");
 
         foreach (var category in Enum.GetValues<BenchmarkCategory>())
@@ -31,7 +40,7 @@ public static class BenchmarkReportGenerator
             var group = run.Results.Where(r => r.Case.Category == category).ToList();
             if (group.Count == 0) continue;
 
-            int pass = group.Count(r => r.Evaluation.RuleScore >= 70);
+            int pass = group.Count(r => r.Evaluation.RuleScore >= PassThreshold);
             int fail = group.Count - pass;
             double avgRule = group.Average(r => r.Evaluation.RuleScore);
             var llmScores = group.Where(r => r.Evaluation.LlmQualityScore.HasValue).ToList();
@@ -44,9 +53,32 @@ public static class BenchmarkReportGenerator
 
         sb.AppendLine();
 
+        // Multi-model comparison (shown when results span two or more distinct model+backend combinations)
+        var modelGroups = run.Results
+            .GroupBy(r => new { r.ModelAlias, r.BackendTarget })
+            .OrderByDescending(g => g.Average(r => r.Evaluation.RuleScore))
+            .ToList();
+        if (modelGroups.Count > 1)
+        {
+            sb.AppendLine("## Model Comparison");
+            sb.AppendLine();
+            sb.AppendLine($"| Model | Backend | Tests | Pass Rate | Avg Score | Avg Tok/s | Total £ Cost |");
+            sb.AppendLine("|-------|---------|------:|----------:|----------:|----------:|-------------:|");
+            foreach (var g in modelGroups)
+            {
+                int pass = g.Count(r => r.Evaluation.RuleScore >= PassThreshold);
+                double passRate = g.Count() > 0 ? 100.0 * pass / g.Count() : 0;
+                double avgScore = g.Average(r => r.Evaluation.RuleScore);
+                double avgTok = g.Average(r => r.TokensPerSecond);
+                double cost = g.Sum(r => r.TotalCostUsd);
+                sb.AppendLine($"| `{g.Key.ModelAlias}` | {g.Key.BackendTarget} | {g.Count()} | {passRate:F0}% | {avgScore:F1} | {avgTok:F1} | £{cost:F4} |");
+            }
+            sb.AppendLine();
+        }
+
         // Overall stats
         double overallAvg = run.Results.Average(r => r.Evaluation.RuleScore);
-        int overallPass = run.Results.Count(r => r.Evaluation.RuleScore >= 70);
+        int overallPass = run.Results.Count(r => r.Evaluation.RuleScore >= PassThreshold);
         sb.AppendLine($"**Overall: {overallPass}/{run.Results.Count} passing, avg rule score {overallAvg:F1}/100**");
         sb.AppendLine();
 
@@ -56,7 +88,7 @@ public static class BenchmarkReportGenerator
 
         foreach (var result in run.Results)
         {
-            var status = result.Evaluation.RuleScore >= 70 ? "✅" : "❌";
+            var status = result.Evaluation.RuleScore >= PassThreshold ? "✅" : "❌";
             sb.AppendLine($"### {status} {result.Case.Id}: {result.Case.Description}");
             sb.AppendLine();
             sb.AppendLine($"| Metric | Score |");
@@ -71,6 +103,13 @@ public static class BenchmarkReportGenerator
             else
                 sb.AppendLine($"| LLM Grade | N/A |");
             sb.AppendLine($"| Latency | {result.LatencyMs}ms |");
+            sb.AppendLine($"| TTFT | {result.TimeToFirstTokenMs}ms |");
+            sb.AppendLine($"| Generation Time | {result.GenerationMs}ms |");
+            sb.AppendLine($"| Throughput | {result.TokensPerSecond:F1} tok/s |");
+            sb.AppendLine($"| Tokens (in/out) | {result.EstimatedInputTokens}/{result.EstimatedOutputTokens} |");
+            sb.AppendLine($"| £/Token | £{result.TokenCostUsd:F8} |");
+            sb.AppendLine($"| Electricity Cost | £{result.ElectricityCostUsd:F6} |");
+            sb.AppendLine($"| Total Cost | £{result.TotalCostUsd:F6} |");
             sb.AppendLine();
 
             if (result.Evaluation.LlmQualityReason is not null)

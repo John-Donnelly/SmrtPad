@@ -150,8 +150,8 @@ internal sealed class InlineTagParser
 }
 
 /// <summary>
-/// Detects common model contamination patterns (preamble, closing remarks)
-/// matching the patterns used in the production ResponseCleaner.
+/// Detects common model contamination patterns (preamble, closing remarks, markdown leaks,
+/// hedging language) matching the patterns used in the production ResponseCleaner.
 /// </summary>
 internal static partial class ContaminationDetector
 {
@@ -167,6 +167,16 @@ internal static partial class ContaminationDetector
         @"^(if you (need|have|want|require)|let me know|please (let me|feel free|contact)|feel free to|i hope this|this should|hope this helps|don't hesitate|should you (need|have|require)).*$",
         RegexOptions.Multiline | RegexOptions.IgnoreCase)]
     private static partial Regex ClosingRemarkLine();
+
+    // Strict: detects markdown code fences (``` or ~~~)
+    [GeneratedRegex(@"^(`{3}|~{3})", RegexOptions.Multiline)]
+    private static partial Regex CodeFenceLine();
+
+    // Strict: detects hedging language that a capable assistant should avoid
+    [GeneratedRegex(
+        @"\b(perhaps|maybe|it('s| is) worth noting|it('s| is) important to note|as you (may|might) know|I would suggest)\b",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex HedgingPhrase();
 
     /// <summary>Returns true if the first non-blank line matches a preamble or reasoning leak pattern.</summary>
     public static bool HasPreamble(string text)
@@ -196,5 +206,19 @@ internal static partial class ContaminationDetector
         }
 
         return false;
+    }
+
+    /// <summary>Returns true if the text contains markdown code fences.</summary>
+    public static bool HasCodeFence(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        return CodeFenceLine().IsMatch(text);
+    }
+
+    /// <summary>Returns true if the text contains hedging/filler language.</summary>
+    public static bool HasHedging(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        return HedgingPhrase().IsMatch(text);
     }
 }

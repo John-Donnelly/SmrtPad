@@ -37,8 +37,9 @@ public static class BenchmarkDeltaAnalyzer
 
             int baseRule = baseResult.Evaluation.RuleScore;
             int curRule = cur.Evaluation.RuleScore;
-            bool newlyPassing = baseRule < 70 && curRule >= 70;
-            bool newlyFailing = baseRule >= 70 && curRule < 70;
+            const int threshold = BenchmarkReportGenerator.PassThreshold;
+            bool newlyPassing = baseRule < threshold && curRule >= threshold;
+            bool newlyFailing = baseRule >= threshold && curRule < threshold;
 
             deltas.Add(new CaseDelta(
                 cur.Case.Id,
@@ -52,8 +53,8 @@ public static class BenchmarkDeltaAnalyzer
                 newlyFailing));
         }
 
-        double baseAvg = baseline.Results.Average(r => r.Evaluation.RuleScore);
-        double curAvg = current.Results.Average(r => r.Evaluation.RuleScore);
+        double baseAvg = baseline.Results.Count > 0 ? baseline.Results.Average(r => r.Evaluation.RuleScore) : 0;
+        double curAvg = current.Results.Count > 0 ? current.Results.Average(r => r.Evaluation.RuleScore) : 0;
 
         return new DeltaReport(baseline.RunId, current.RunId, deltas, baseAvg, curAvg);
     }
