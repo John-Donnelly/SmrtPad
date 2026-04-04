@@ -231,6 +231,13 @@ public sealed class AIDispatcher : IAsyncDisposable
         ModelSizeSelector.GetEligibleAliases(ProbeResult.FoundryGpu);
 
     /// <summary>
+    /// Returns model aliases that fit within the CPU RAM budget (GPU VRAM ignored), ordered best-first.
+    /// Used to enumerate models for CPU-path benchmarking.
+    /// </summary>
+    public IReadOnlyList<string> GetEligibleCpuModelAliases() =>
+        ModelSizeSelector.GetEligibleAliases(ProbeResult.FoundryGpu with { GpuVramMb = 0 });
+
+    /// <summary>
     /// Disposes the current model and resets initialization state so the dispatcher can be
     /// re-initialized (e.g. after the user selects a different model alias).
     /// Unlike <see cref="DisposeAsync"/>, the lock and hardware probe are kept alive.

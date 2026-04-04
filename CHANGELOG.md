@@ -18,6 +18,28 @@ All notable changes to SmrtPad are documented in this file.
 - **`SmrtPad.AI.Benchmarks` project** — standalone benchmark runner with rule-based and LLM-driven quality scoring; `BenchmarkPromptCatalog` covers document composition (15 prompts), edit skills (22 prompts), and tag-compliance (3 prompts); `EvaluationScore` per-result breakdown; JSON reports written to `Reports/`
 - **AI model benchmark suite** (`AiModelBenchmarkRunner`, `AiBenchmarkCatalog`, `AiBenchmarkSuiteTests`) — end-to-end UI benchmark that drives the live app via Appium/WinAppDriver; measures per-prompt latency, tokens per second, insert compliance, and keyword score; writes JSON reports to `BenchmarkResults/`; supports `BENCHMARK_MODEL_FILTER`, `BENCHMARK_PROMPT_LIMIT`, and `SMRTPAD_APPIUM_SERVER` environment variables
 - **VS Code launch/task configuration** (`.vscode/`) — `C#: SmrtPad` attach-mode debug configuration activates the app via AUMID then attaches vsdbg; `build` task compiles x64 Debug; `launch-smrtpad` task stops any running instance, activates via `shell:AppsFolder`, and waits for the process to appear
+- **`GetEligibleCpuModelAliases()`** on `AIDispatcher` — returns model aliases that fit within the CPU RAM budget (VRAM budget zeroed); used to enumerate models for CPU-path benchmarking separate from the GPU-eligible set
+- **`deepseek-r1-1.5b` model entry** in `ModelSizeSelector` — adds the DeepSeek-R1 1.5B thinking model (GPU 1 028 MB / CPU 1 450 MB footprint) to the ordered alias table
+- **`StripResidualTags()` helper** in `SmartSidebar` — removes residual `<insert>`, `</insert>`, `<think>`, and `</think>` tag text that can leak through the streaming parser due to token-boundary edge cases; applied as a safety net to both `trimmedAnswer` and `insertContent` in the stream-completion callback
+- **Expanded `BenchmarkPromptCatalog`** — catalog grows from ~40 to **73 cases** across five tones/types:
+  - Document Composition: formal letters (×7 inc. apology, termination, legal disclaimer, board resolution), business reports (×4), technical docs (×3 inc. bug report, ADR), casual/personal (×4), creative (×4 inc. poem, taglines, dialogue), professional (×1 resume)
+  - Edit Skills: minimum 5 cases per skill — Summarize ×5, Rewrite ×5, Grammar Fix ×5, Tone Professional ×5, Tone Casual ×5, Shorten ×5, Autocomplete ×5, OCR Fallback ×3
+  - Tag Compliance: 7 chat Q&A cases (writing tips, grammar rules, word choice, style guide + the original 3)
+- **`BenchmarkResult` performance fields** — `EstimatedInputTokens`, `EstimatedOutputTokens`, `ElectricityCostUsd`, `TimeToFirstTokenMs` added as optional record parameters; computed properties `TotalTokens`, `TokenCostUsd`, `TotalCostUsd`, `GenerationMs`, `TokensPerSecond` derived from them
+- **`BenchmarkRun.Combine()`** — static factory that merges results from multiple per-model runs into a single aggregated run for multi-model dashboards; each result retains its own `ModelAlias`/`BackendTarget` for per-row filtering
+- **`BenchmarkRunner` resilience** — individual case exceptions are caught, recorded with zero scores, and the run continues; `OperationCanceledException` still propagates; dashboard writes are guarded inside the try-chain
+- **`BenchmarkRunner` live dashboard integration** — `RunAsync` accepts `dashboardOutputDir` and `onResultAdded` callbacks; opens the dashboard HTML in the default browser at run start and writes the sidecar JSON after every case; final Markdown/JSON reports written via `BenchmarkReportGenerator.WriteReports` on completion
+- **`BenchmarkRunner` performance instrumentation** — time-to-first-token (TTFT) measured per case; token counts estimated via `EstimateTokens` (word count × 1.3); electricity cost estimated from `BENCHMARK_GPU_WATTS` (default 115 W) and `BENCHMARK_ELECTRICITY_RATE` (default £0.2015/kWh) env vars
+- **`BenchmarkDashboardGenerator`** (`Reporting/BenchmarkDashboardGenerator.cs`) — generates a live benchmark dashboard: static HTML shell (written once) + a `.js` data sidecar (updated after every case); uses a JSONP-style polling approach (5 s interval) that works on `file://` origins where `fetch()` is blocked by CORS; shows progress ring, pass rate, avg score, throughput, elapsed time, and per-case result rows with category and GPU/CPU filter chips
+- **`PassThreshold` constant** on `BenchmarkReportGenerator` — centrally-defined pass threshold (80); used by `BenchmarkDeltaAnalyzer`, `BenchmarkReportGenerator`, and `BenchmarkSuiteTests` so the threshold is a single source of truth
+- **Model comparison table** in Markdown report — when results span two or more distinct model+backend combinations, `GenerateMarkdownReport` emits a `## Model Comparison` section with pass rate, avg score, avg tok/s, and total electricity cost per model
+- **Detailed per-result metrics** in Markdown report — per-case stat table now includes TTFT, generation time, throughput (tok/s), input/output token counts, per-token cost, electricity cost, and total cost columns
+- **`ContaminationDetector.HasCodeFence()` / `HasHedging()`** — two new static detectors; `HasCodeFence` flags markdown code fence lines (``` or ~~~); `HasHedging` flags filler phrases like "perhaps", "it's worth noting", "as you may know"
+- **Partial scoring in `RuleBasedEvaluator`** — code-fence violations score 10/20 in the NoPreamble bucket (half credit: content present but formatted wrong); hedging violations score 10/20 in the NoClosingRemarks bucket
+- **`LiveBenchmarkTests`** (`Tests/LiveBenchmarkTests.cs`) — full end-to-end benchmark that iterates all hardware-eligible models (≤10B params) on both GPU and CPU paths, accumulates results into a single combined live dashboard with GPU/CPU filter support; 12-hour ceiling; run via `dotnet test --filter "Category=LiveBenchmark"`
+- **`AIBenchmarkLiveDashboardUITests`** (`SmrtPad.UITests/Tests/`) — Appium-driven benchmark suite that submits all 73 catalog cases via the live app, evaluates each response with `RuleBasedEvaluator`, and streams live output to the test output pane; updates the live dashboard HTML after every case
+- **`InternalsVisibleTo("SmrtPad.UITests")`** added to `SmrtPad.AI.Benchmarks` assembly so the UITests project can access internal benchmark types
+- **Benchmark result artifacts** (`BenchmarkResults/`) — HTML dashboards and JS data sidecars from multi-model benchmark runs committed to repo for historical reference
 
 ### Fixed
 - **Implicit `<think>` blocks** — phi-4-mini and similar reasoning models emit their chain-of-thought without an opening `<think>` tag, closing only with `</think>`; the stream parser now retroactively moves all accumulated answer content to `thinkBuilder` on `</think>`, keeping the chat bubble clean during reasoning
@@ -25,12 +47,24 @@ All notable changes to SmrtPad are documented in this file.
 - **`BubbleText` whitespace fallback** — `IsNullOrEmpty` → `IsNullOrWhiteSpace`; model-generated newlines between `</think>` and `<insert>` tags no longer prevent the fallback to `InsertText`
 - **Benchmark WinAppDriver/Appium port conflict** — `start-benchmark.ps1` now starts WinAppDriver on port 4727 (was default 4723); Appium health check distinguishes Appium 2.x (`{"value":{"ready":true}}`) from WinAppDriver (`{"status":0,...}`) responses, preventing false-positive "already running" detection that caused Appium to never start
 - **Benchmark session creation** (`BenchmarkAppFixture`) — primary session path uses the published exe with `launchViaAppId: false` (COM activation → hwnd attach) to avoid W3C `appium:` capability prefix rejection by WinAppDriver 1.2.x; AUMID launch is used as fallback
+- **`HeadroomFactor` arithmetic** in `ModelSizeSelector` — was `1.10` (10% overhead), now `1.0 / 0.9` (correctly reserves ≥10% of the budget; 90% occupancy ceiling)
+- **Residual streaming buffer not flushed** in `SmartSidebar.onComplete` — any content remaining in `rawBuffer` at stream end is now appended to `answerBuilder` before the final tag-stripping and display logic runs, preventing partial responses from being silently discarded
+- **`BenchmarkDeltaAnalyzer` crash on empty result sets** — `Average()` on an empty sequence threw `InvalidOperationException`; guarded with `Count > 0` checks before averaging
+- **`BenchmarkSuiteTests` default score threshold** raised from 60 to 80 to match `PassThreshold`
+- **`RuleBasedEvaluator` keyword scoring edge case** — removed the `ExpectedKeywords.Length > 0` guard that returned 20/20 when no keywords were listed; the formula now always evaluates proportionally (zero keywords → zero content points)
 
 ### Changed
 - **`FinalizeStreamingEntry`** trims whitespace-only answer text (`.Trim()`) for non-freeform skills before storing in `entry.Text`
 - **`UpdateStreamingEntryWithThinking`** accepts optional `insertText` parameter to update `entry.InsertText` live during streaming
 - **`SetField<T>`** on `SidebarChatEntry` now returns `bool` to allow chained `PropertyChanged` notifications for `BubbleText`
 - **`HardwareBadge`** automation help text updated on each inference metrics update so benchmark tooling can read tokens-per-second via UIA without relying on tooltip visibility
+- **`BenchmarkReportGenerator` pass threshold** moved from hard-coded `70` to `PassThreshold = 80` constant; all pass/fail formatting, category tables, overall stats, and per-result status icons updated
+- **`BenchmarkSuiteTests` default threshold** changed from `60` to `80` (aligns with `PassThreshold`)
+- **`BenchmarkRunner.RunAsync` signature** extended with `dashboardOutputDir`, `onResultAdded` parameters (both optional, non-breaking)
+- **`SmrtPad.UITests` target framework** bumped from `net10.0-windows10.0.19041.0` to `net10.0-windows10.0.26100.0`
+- **`SmrtPad.UITests` project references** — added reference to `SmrtPad.AI.Benchmarks` to enable sharing of `BenchmarkPromptCatalog`, `RuleBasedEvaluator`, and `BenchmarkDashboardGenerator` with the UITest benchmark suite
+- **`BenchmarkPromptCatalog` object initializer style** — `new BenchmarkCase(…)` → `new(…)` throughout for readability; prompt descriptions tightened
+- **Tag-compliance cases** — `ExpectedKeywords` changed from empty arrays to meaningful hint words (e.g. `["name","title"]`, `["page","paragraph"]`), allowing the keyword completeness score to validate chat answers meaningfully
 
 ---
 

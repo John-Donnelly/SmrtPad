@@ -686,10 +686,23 @@ public sealed partial class SmartSidebar : UserControl
             },
             onComplete: () => DispatcherQueue.TryEnqueue(() =>
             {
+                // Flush any remaining buffered content (e.g. a partial tag at stream end)
+                if (rawBuffer.Length > 0)
+                {
+                    answerBuilder.Append(rawBuffer);
+                    rawBuffer.Clear();
+                }
+
                 var insertContent = insertBuilder.Length > 0 ? insertBuilder.ToString() : null;
                 var trimmedAnswer = skillKey == "freeform"
                     ? ResponseCleaner.Clean(answerBuilder.ToString())
                     : answerBuilder.ToString().Trim();
+
+                // Safety net: strip any tag text the parser missed due to token-boundary edge cases.
+                trimmedAnswer = StripResidualTags(trimmedAnswer);
+                if (insertContent is not null)
+                    insertContent = StripResidualTags(insertContent);
+
                 // If the model put all content in <insert> tags, show that in the bubble as the
                 // primary text so the full response is visible in chat.
                 var finalText = string.IsNullOrWhiteSpace(trimmedAnswer) && insertContent != null
@@ -796,6 +809,21 @@ public sealed partial class SmartSidebar : UserControl
 
             i++;
         }
+    }
+
+    /// <summary>
+    /// Strips residual &lt;insert&gt;, &lt;/insert&gt;, &lt;think&gt;, and &lt;/think&gt; tag
+    /// text that may have leaked through the streaming parser due to token-boundary edge cases.
+    /// </summary>
+    private static string StripResidualTags(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        // Case-insensitive removal of our known tags
+        return System.Text.RegularExpressions.Regex.Replace(
+            text,
+            @"</?(?:insert|think)>",
+            string.Empty,
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
     }
 
     private void AppendChatEntry(SidebarChatEntry entry)

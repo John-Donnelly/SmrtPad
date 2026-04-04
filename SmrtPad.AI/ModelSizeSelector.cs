@@ -11,9 +11,9 @@ internal static class ModelSizeSelector
     private const int MaxContextTokens = 16384;
     private const int BaseContextTokens = 2048;
 
-    // A model is eligible when its footprint × 1.10 ≤ budget,
-    // i.e. the model occupies at most ~91% of available memory, leaving ≥10% overhead free.
-    private const double HeadroomFactor = 1.10;
+    // A model is eligible when its footprint × (1/0.9) ≤ budget,
+    // i.e. the model occupies at most 90% of available memory, leaving ≥10% overhead free.
+    private const double HeadroomFactor = 1.0 / 0.9;
 
     /// <summary>
     /// Ordered from largest (most capable) to smallest (most compatible).
@@ -43,6 +43,7 @@ internal static class ModelSizeSelector
         ("phi-3-mini-4k",        2_181,   2_590),
         ("qwen2.5-coder-1.5b",   1_280,   1_822),
         ("qwen2.5-1.5b",         1_280,   1_822),
+        ("deepseek-r1-1.5b",     1_028,   1_450),  // thinking model
         ("qwen2.5-coder-0.5b",     528,     822),
         ("qwen2.5-0.5b",           528,     822),
     ];
