@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using SmrtPad.AI.Benchmarks.Evaluation;
 using SmrtPad.AI.Benchmarks.Reporting;
 
@@ -33,12 +34,15 @@ public sealed class BenchmarkRunner
     /// Individual case failures are recorded with zero scores; the run always continues.
     /// When <paramref name="dashboardOutputDir"/> is set the live dashboard HTML is generated
     /// (and opened in the default browser) before the first case and updated after every case.
+    /// When <paramref name="responseLogPath"/> is set every case result is appended as a
+    /// JSONL line to that file so responses can be reviewed for skill refinement.
     /// </summary>
     public async Task<BenchmarkRun> RunAsync(
         IReadOnlyList<BenchmarkCase> cases,
         Action<string>? onProgress = null,
         string? dashboardOutputDir = null,
         Action<BenchmarkResult>? onResultAdded = null,
+        string? responseLogPath = null,
         CancellationToken ct = default)
     {
         var runId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
@@ -79,6 +83,36 @@ public sealed class BenchmarkRunner
 
             results.Add(result);
             onResultAdded?.Invoke(result);
+
+            // Append JSONL response log for skill-refinement analysis.
+            if (responseLogPath is not null)
+            {
+                try
+                {
+                    var logEntry = JsonSerializer.Serialize(new
+                    {
+                        runId = runId,
+                        model = result.ModelAlias,
+                        backend = result.BackendTarget,
+                        caseId = result.Case.Id,
+                        skillKey = result.Case.SkillKey,
+                        input = result.Case.InputText,
+                        rawOutput = result.RawOutput,
+                        insertContent = result.InsertContent,
+                        thinkContent = result.ThinkContent,
+                        ruleScore = result.Evaluation.RuleScore,
+                        llmScore = result.Evaluation.LlmQualityScore,
+                        latencyMs = result.LatencyMs,
+                        tokensPerSecond = result.TokensPerSecond,
+                        timestamp = result.RunTimestamp.ToString("o"),
+                    });
+                    await File.AppendAllTextAsync(responseLogPath, logEntry + "\n", ct).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Response logging is non-fatal
+                }
+            }
 
             // Persist live dashboard after every case.
             if (dashboardOutputDir is not null)

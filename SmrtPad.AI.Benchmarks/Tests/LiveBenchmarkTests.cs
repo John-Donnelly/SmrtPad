@@ -38,29 +38,33 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         var gpuAliases = _probeDispatcher.GetEligibleModelAliases();       // VRAM-eligible
         var cpuAliases = _probeDispatcher.GetEligibleCpuModelAliases();    // RAM-eligible
 
-        // Run GPU-eligible models on GPU; CPU-exclusive models (fit RAM but not VRAM) on CPU
-        var gpuSet = new HashSet<string>(gpuAliases, StringComparer.OrdinalIgnoreCase);
-        var cpuExclusive = cpuAliases.Where(a => !gpuSet.Contains(a)).ToList();
-
         // Filter to models ≤10B params (parse from alias, e.g. "deepseek-r1-7b" → 7)
         static double ParseBillionParams(string alias)
         {
-            // Match patterns like "-7b", "-1.5b", "-14b", "-0.5b"
             var m = Regex.Match(alias, @"(\d+(?:\.\d+)?)b", RegexOptions.IgnoreCase);
             if (m.Success) return double.Parse(m.Groups[1].Value);
-            // Known models without explicit param count in alias
             if (alias.StartsWith("phi-4-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
             if (alias.StartsWith("phi-3.5-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
             if (alias.StartsWith("phi-3-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
             if (alias.StartsWith("phi-4", StringComparison.OrdinalIgnoreCase)) return 14;
+            if (alias.StartsWith("qwen3", StringComparison.OrdinalIgnoreCase)) return 0.6;
             return 0; // unknown — include by default
         }
-
         bool IsWithinParamLimit(string alias) => ParseBillionParams(alias) is 0 or <= 10;
 
+        // Run GPU-eligible models on GPU AND CPU-eligible models on CPU (full cross-platform coverage).
+        // Models that are eligible on both platforms are benchmarked on both.
         var targets = new List<(string Alias, string Target)>();
-        foreach (var a in gpuAliases.Where(IsWithinParamLimit))   targets.Add((a, "FoundryLocalGpu"));
-        foreach (var a in cpuExclusive.Where(IsWithinParamLimit)) targets.Add((a, "FoundryLocalCpu"));
+        foreach (var a in gpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "FoundryLocalGpu"));
+        foreach (var a in cpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "FoundryLocalCpu"));
+
+        // NPU proxy tier: run phi-3.5-mini on GPU to simulate what NPU would produce
+        // (phi-silica / phi-3.5-mini is the NPU target model on qualifying hardware)
+        foreach (var a in new[] { "phi-3.5-mini" })
+        {
+            if (gpuAliases.Any(g => g.Equals(a, StringComparison.OrdinalIgnoreCase)))
+                targets.Add((a, "NpuProxy (GPU)"));
+        }
 
         if (targets.Count == 0)
         {
@@ -69,17 +73,19 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         }
 
         var cases = BenchmarkPromptCatalog.All;
-        int grandTotal = targets.Count * cases.Count;
+        int currentGrandTotal = targets.Count * cases.Count;
 
         Console.WriteLine($"GPU-eligible models : {gpuAliases.Count}");
-        Console.WriteLine($"CPU-exclusive models: {cpuExclusive.Count}");
-        Console.WriteLine($"Total evaluations   : {targets.Count} models \u00d7 {cases.Count} cases = {grandTotal}");
+        Console.WriteLine($"CPU-eligible models : {cpuAliases.Count}");
+        Console.WriteLine($"Total evaluations   : {targets.Count} models \u00d7 {cases.Count} cases = {currentGrandTotal}");
 
         // Shared combined-dashboard state
         var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-multimodel";
         var startedAt = DateTimeOffset.UtcNow;
-        var allResults = new List<BenchmarkResult>(grandTotal);
+        var allResults = new List<BenchmarkResult>(currentGrandTotal);
         string? dashPath = null;
+        string currentStatus = string.Empty;
+        var responseLogPath = Path.Combine(outputDir, combinedRunId + "-responses.jsonl");
 
         foreach (var (alias, target) in targets)
         {
@@ -87,7 +93,9 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
             await using var dispatcher = new AIDispatcherFactory().Create();
             dispatcher.SetPreferredModelAlias(alias);
-            dispatcher.SetPreferredExecutionTarget(target);
+            // NpuProxy runs on GPU; all other targets map directly
+            var execTarget = target == "NpuProxy (GPU)" ? "FoundryLocalGpu" : target;
+            dispatcher.SetPreferredExecutionTarget(execTarget);
 
             try
             {
@@ -96,35 +104,42 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
             catch (Exception ex)
             {
                 Console.WriteLine($"  \u26a0\ufe0f  Skipped \u2014 init failed: {ex.Message}");
+                currentGrandTotal -= cases.Count;
                 continue;
             }
 
             var activeAlias  = dispatcher.ActiveModelAlias ?? alias;
-            var activeTarget = dispatcher.ExecutionTarget.ToString();
+            // Use the display target (NpuProxy label preserved) for dashboard tagging
+            var activeTarget = target;
 
             // LLM grading disabled for multi-model run speed; re-enable for single-model deep analysis
             var runner = new BenchmarkRunner(dispatcher, activeAlias, activeTarget, enableLlmGrading: false);
 
             await runner.RunAsync(
                 cases,
-                onProgress: msg => Console.WriteLine($"  {msg}"),
+                onProgress: msg =>
+                {
+                    currentStatus = msg;
+                    Console.WriteLine($"  {msg}");
+                },
                 onResultAdded: result =>
                 {
                     allResults.Add(result);
                     var snap = new BenchmarkRun(combinedRunId, activeAlias, activeTarget, startedAt, allResults);
-                    var path = BenchmarkDashboardGenerator.Generate(snap, grandTotal, outputDir);
+                    var path = BenchmarkDashboardGenerator.Generate(snap, currentGrandTotal, outputDir, currentStatus: currentStatus);
                     if (dashPath is null)
                     {
                         dashPath = path;
                         try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); } catch { /* browser optional */ }
                     }
-                });
+                },
+                responseLogPath: responseLogPath);
         }
 
         // Write final Markdown + JSON reports from combined results
         var finalRun = new BenchmarkRun(combinedRunId, "multi-model", "CPU+GPU", startedAt, allResults);
         BenchmarkReportGenerator.WriteReports(finalRun, outputDir);
-        BenchmarkDashboardGenerator.Generate(finalRun, grandTotal, outputDir);
+        BenchmarkDashboardGenerator.Generate(finalRun, currentGrandTotal, outputDir);
 
         int passed = finalRun.Results.Count(r => r.Evaluation.RuleScore >= BenchmarkReportGenerator.PassThreshold);
         double avg  = finalRun.Results.Count > 0 ? finalRun.Results.Average(r => r.Evaluation.RuleScore) : 0;
@@ -132,7 +147,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         Console.WriteLine();
         Console.WriteLine($"=== BENCHMARK COMPLETE ===");
         Console.WriteLine($"  Models tested : {targets.Count}");
-        Console.WriteLine($"  Results       : {finalRun.Results.Count}/{grandTotal}");
+        Console.WriteLine($"  Results       : {finalRun.Results.Count}/{currentGrandTotal}");
         Console.WriteLine($"  Passed        : {passed}");
         Console.WriteLine($"  Avg score     : {avg:F1}/100");
         Console.WriteLine($"  Reports       : {outputDir}");
