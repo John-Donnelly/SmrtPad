@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>Требуется настройка локального ИИ</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>Умная боковая панель включена, но локальная среда выполнения ИИ не запустилась. Перезапустите SmrtPad и попробуйте снова. Если проблема не исчезнет, переустановите Foundry Local.</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>Для умной боковой панели требуется Foundry Local, но на этом компьютере он не обнаружен. Установите Foundry Local и снова откройте SmrtPad.</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>Открыть руководство по настройке</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>Не сейчас</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local отсутствует. Установите Foundry Local для использования ИИ умной боковой панели.</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>Ошибка инициализации локального ИИ. Проверьте установку Foundry и перезапустите SmrtPad.</value>
+  </data>
 </root>

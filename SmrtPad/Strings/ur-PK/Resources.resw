@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>مقامی AI کا سیٹ اپ درکار ہے</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>سمارٹ سائڈ بار فعال ہے، لیکن مقامی AI رن ٹائم شروع نہیں ہو سکا۔ SmrtPad کو دوبارہ شروع کریں اور دوبارہ کوشش کریں۔ اگر مسئلہ برقرار رہے تو Foundry Local دوبارہ انسٹال کریں۔</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>سمارٹ سائڈ بار کو Foundry Local کی ضرورت ہے، لیکن اسے اس PC پر نہیں پایا گیا۔ Foundry Local انسٹال کریں، پھر SmrtPad دوبارہ کھولیں۔</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>سیٹ اپ گائیڈ کھولیں</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>ابھی نہیں</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local غائب ہے۔ سمارٹ سائڈ بار AI استعمال کرنے کے لیے Foundry Local انسٹال کریں۔</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>مقامی AI کی ابتداء ناکام رہی۔ Foundry کی تنصیب جانچیں، پھر SmrtPad دوبارہ شروع کریں۔</value>
+  </data>
 </root>

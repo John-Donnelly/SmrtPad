@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>Se necesita configuración de IA local</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>La barra lateral inteligente está habilitada, pero el tiempo de ejecución de IA local no se pudo iniciar. Reinicia SmrtPad e inténtalo de nuevo. Si el problema persiste, reinstala Foundry Local.</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>La barra lateral inteligente requiere Foundry Local, pero no se detectó en este PC. Instala Foundry Local y vuelve a abrir SmrtPad.</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>Abrir guía de configuración</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>Ahora no</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local no está instalado. Instala Foundry Local para usar la IA de la barra lateral inteligente.</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>Error al inicializar la IA local. Comprueba la instalación de Foundry y reinicia SmrtPad.</value>
+  </data>
 </root>

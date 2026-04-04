@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>Lokale KI-Einrichtung benötigt</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>Smart Sidebar ist aktiviert, aber die lokale KI-Laufzeit konnte nicht gestartet werden. Starte SmrtPad neu und versuche es erneut. Falls das Problem weiterhin besteht, installiere Foundry Local neu.</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>Smart Sidebar benötigt Foundry Local, aber es wurde auf diesem PC nicht gefunden. Installiere Foundry Local, und öffne SmrtPad erneut.</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>Einrichtungshandbuch öffnen</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>Nicht jetzt</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local fehlt. Installiere Foundry Local, um Smart Sidebar KI zu nutzen.</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>Lokale KI-Initialisierung fehlgeschlagen. Überprüfe die Foundry-Installation und starte SmrtPad neu.</value>
+  </data>
 </root>

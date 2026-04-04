@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>مطلوب إعداد الذكاء الاصطناعي المحلي</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>الشريط الجانبي الذكي مُفعَّل، لكن تعذَّر تشغيل وقت تشغيل الذكاء الاصطناعي المحلي. أعِد تشغيل SmrtPad وحاول مجدداً. إذا استمرت المشكلة، أعِد تثبيت Foundry Local.</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>يتطلب الشريط الجانبي الذكي Foundry Local، إلا أنه لم يُكتشف على هذا الجهاز. ثبِّت Foundry Local، ثم أعِد فتح SmrtPad.</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>فتح دليل الإعداد</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>ليس الآن</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local مفقود. ثبِّت Foundry Local لاستخدام ذكاء الشريط الجانبي الذكي الاصطناعي.</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>فشل تهيئة الذكاء الاصطناعي المحلي. تحقق من تثبيت Foundry، ثم أعِد تشغيل SmrtPad.</value>
+  </data>
 </root>

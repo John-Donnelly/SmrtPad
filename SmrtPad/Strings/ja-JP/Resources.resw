@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>ローカル AI のセットアップが必要です</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>スマートサイドバーは有効ですが、ローカル AI ランタイムを起動できませんでした。SmrtPad を再起動してもう一度お試しください。問題が解決しない場合は、Foundry Local を再インストールしてください。</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>スマートサイドバーには Foundry Local が必要ですが、この PC で検出されませんでした。Foundry Local をインストールしてから、SmrtPad を再度開いてください。</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>セットアップ ガイドを開く</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>後で</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local がありません。スマートサイドバー AI を使用するには Foundry Local をインストールしてください。</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>ローカル AI の初期化に失敗しました。Foundry のインストールを確認してから SmrtPad を再起動してください。</value>
+  </data>
 </root>

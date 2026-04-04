@@ -1263,4 +1263,25 @@
   <data name="SmartSidebarInsertGeneratedText" xml:space="preserve">
     <value>Insert into document</value>
   </data>
+  <data name="SmartSidebarAIDispatcherUnavailableTitle" xml:space="preserve">
+    <value>需要设置本地 AI</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableContent" xml:space="preserve">
+    <value>智能侧边栏已启用，但本地 AI 运行时无法启动。请重启 SmrtPad 后重试。如果问题仍然存在，请重新安装 Foundry Local。</value>
+  </data>
+  <data name="SmartSidebarFoundryMissingContent" xml:space="preserve">
+    <value>智能侧边栏需要 Foundry Local，但在此 PC 上未检测到该软件。请安装 Foundry Local，然后重新打开 SmrtPad。</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableSetup" xml:space="preserve">
+    <value>打开设置指南</value>
+  </data>
+  <data name="SmartSidebarAIDispatcherUnavailableDismiss" xml:space="preserve">
+    <value>稍后</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteFoundryMissingStatus" xml:space="preserve">
+    <value>Foundry Local 缺失。请安装 Foundry Local 以使用智能侧边栏 AI。</value>
+  </data>
+  <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
+    <value>本地 AI 初始化失败。请检查 Foundry 安装，然后重启 SmrtPad。</value>
+  </data>
 </root>
