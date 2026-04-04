@@ -40,17 +40,18 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 
 ### Smart Sidebar (on-device AI)
 - Collapsible AI panel that operates entirely on-device using Windows AI APIs (Phi Silica NPU) or Foundry Local (GPU/CPU)
-- **Chat-bubble UI** — user and assistant messages rendered as distinct bubbles in a scrollable history; real-time token streaming
-- **Thinking/reasoning display** — reasoning tokens emitted between `<think>…</think>` tags shown in a collapsible expander labelled "Thinking…" / "Thought process" once complete
+- **Chat-bubble UI** — user and assistant messages rendered as distinct bubbles in a scrollable history; responses stream token-by-token into the chat bubble in real time so the full output is always visible in the conversation
+- **Insert button** — appears on assistant bubbles that contain insertable content (rewrites, summaries, drafts); clicking it inserts the AI-generated text directly into the active document at the cursor position
+- **Thinking/reasoning display** — reasoning tokens emitted between `<think>…</think>` tags (including implicit pre-`</think>` reasoning from phi-4-mini) shown in a collapsible expander labelled "Thinking…"; collapses automatically once reasoning is complete so the response is front and centre
 - **Skill dropdown** — one unified `ComboBox` selects the active skill (Summarize, Professional tone, Rewrite for clarity, Grammar fix, Shorten, Complete at cursor); single **Apply** button dispatches to the correct prompt template
 - **Tone toggle** shown only when the tone skill is active (professional / casual)
+- **Freeform chat** — open-ended writing questions answered in plain text; document-drafting requests (letter, email, report, essay, story, press release, etc.) produce a full draft inserted via the Insert button
 - **Hardware-adaptive model selection** (`ModelSizeSelector`) — probes GPU VRAM via DXGI (WMI fallback) and available system RAM; selects the largest model alias that fits within the hardware budget with headroom; scales the context-token window proportionally (512–16 384 tokens)
 - **Model selector** — options flyout lets the user override the automatically chosen model; lists all hardware-eligible aliases ordered best-first; selecting a model resets and re-initializes the dispatcher with the chosen alias
 - **Execution target selector** — same flyout offers NPU / GPU / CPU override; selecting a target resets and re-initializes the dispatcher; unavailable targets are hidden automatically
 - **Live initialization progress** — sidebar status text and app status bar both update in real time as the AI initializes: detecting hardware → selecting model → starting service → downloading `{model}` (`{n} MB`) at `{n}%` → loading into memory; download percentage is computed by polling the model cache directory every 800 ms
 - **ResponseCleaner** strips preamble lines, code-fence delimiters, closing remarks, and reasoning-leak fragments from model output before text is shown or inserted
 - Prompt templates hardened with explicit persona instructions so the model returns clean text only
-- Freeform chat mode for open-ended writing questions and document drafting
 - New-session button clears chat history
 
 ### Macros

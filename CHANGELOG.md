@@ -6,6 +6,34 @@ All notable changes to SmrtPad are documented in this file.
 
 ---
 
+## [0.7.0] - 2026-04-04
+
+### Added
+- **Smart Sidebar full-response streaming** — insert-only responses (Summarize, Tone, Rewrite, Grammar Fix, Shorten, Autocomplete) now stream into the chat bubble in real time; the complete output is visible in the conversation history before the user clicks Insert
+- **Insert button** (`InsertBubbleButton`) on assistant bubbles — shown only when a response contains insertable content (`InsertText` non-empty); a hidden `InsertContent` UIA element exposes the insert text to accessibility and benchmark tooling without occupying visual space
+- **`BubbleText` computed property** on `SidebarChatEntry` — falls back to `InsertText` when `Text` is empty or whitespace, ensuring a response is always visible; XAML bubble now binds to `BubbleText` instead of `Text`
+- **`PromptTemplates.GradeResponse(request, response)`** — LLM quality-evaluator prompt that returns `{"score": N, "reason": "..."}` JSON wrapped in `<grade>` tags; used by the AI benchmark LLM scorer
+- **`AIDispatcher` "grade" skill key** — passes the fully-formed grader prompt through to the model unchanged
+- **FreeformChat `<insert>` tag instructions** — document-writing requests (letter, email, report, essay, story, press release, etc.) now produce output wrapped in `<insert>` tags so the result can be inserted into the editor; conversational questions reply in plain text without tags
+- **`SmrtPad.AI.Benchmarks` project** — standalone benchmark runner with rule-based and LLM-driven quality scoring; `BenchmarkPromptCatalog` covers document composition (15 prompts), edit skills (22 prompts), and tag-compliance (3 prompts); `EvaluationScore` per-result breakdown; JSON reports written to `Reports/`
+- **AI model benchmark suite** (`AiModelBenchmarkRunner`, `AiBenchmarkCatalog`, `AiBenchmarkSuiteTests`) — end-to-end UI benchmark that drives the live app via Appium/WinAppDriver; measures per-prompt latency, tokens per second, insert compliance, and keyword score; writes JSON reports to `BenchmarkResults/`; supports `BENCHMARK_MODEL_FILTER`, `BENCHMARK_PROMPT_LIMIT`, and `SMRTPAD_APPIUM_SERVER` environment variables
+- **VS Code launch/task configuration** (`.vscode/`) — `C#: SmrtPad` attach-mode debug configuration activates the app via AUMID then attaches vsdbg; `build` task compiles x64 Debug; `launch-smrtpad` task stops any running instance, activates via `shell:AppsFolder`, and waits for the process to appear
+
+### Fixed
+- **Implicit `<think>` blocks** — phi-4-mini and similar reasoning models emit their chain-of-thought without an opening `<think>` tag, closing only with `</think>`; the stream parser now retroactively moves all accumulated answer content to `thinkBuilder` on `</think>`, keeping the chat bubble clean during reasoning
+- **Streaming thread safety** — `answerBuilder`, `thinkBuilder`, and `insertBuilder` were read inside `DispatcherQueue.TryEnqueue` closures while being mutated on the model thread; replaced with snapshots captured on the model thread before enqueuing
+- **`BubbleText` whitespace fallback** — `IsNullOrEmpty` → `IsNullOrWhiteSpace`; model-generated newlines between `</think>` and `<insert>` tags no longer prevent the fallback to `InsertText`
+- **Benchmark WinAppDriver/Appium port conflict** — `start-benchmark.ps1` now starts WinAppDriver on port 4727 (was default 4723); Appium health check distinguishes Appium 2.x (`{"value":{"ready":true}}`) from WinAppDriver (`{"status":0,...}`) responses, preventing false-positive "already running" detection that caused Appium to never start
+- **Benchmark session creation** (`BenchmarkAppFixture`) — primary session path uses the published exe with `launchViaAppId: false` (COM activation → hwnd attach) to avoid W3C `appium:` capability prefix rejection by WinAppDriver 1.2.x; AUMID launch is used as fallback
+
+### Changed
+- **`FinalizeStreamingEntry`** trims whitespace-only answer text (`.Trim()`) for non-freeform skills before storing in `entry.Text`
+- **`UpdateStreamingEntryWithThinking`** accepts optional `insertText` parameter to update `entry.InsertText` live during streaming
+- **`SetField<T>`** on `SidebarChatEntry` now returns `bool` to allow chained `PropertyChanged` notifications for `BubbleText`
+- **`HardwareBadge`** automation help text updated on each inference metrics update so benchmark tooling can read tokens-per-second via UIA without relying on tooltip visibility
+
+---
+
 ## [0.6.0] - 2026-03-27
 
 ### Added
