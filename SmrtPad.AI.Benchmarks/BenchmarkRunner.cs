@@ -43,6 +43,7 @@ public sealed class BenchmarkRunner
         string? dashboardOutputDir = null,
         Action<BenchmarkResult>? onResultAdded = null,
         string? responseLogPath = null,
+        TimeSpan? perCaseTimeout = null,
         CancellationToken ct = default)
     {
         var runId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
@@ -67,7 +68,7 @@ public sealed class BenchmarkRunner
             BenchmarkResult result;
             try
             {
-                result = await RunSingleCaseAsync(benchmarkCase, ct).ConfigureAwait(false);
+                result = await RunSingleCaseAsync(benchmarkCase, perCaseTimeout, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -134,28 +135,44 @@ public sealed class BenchmarkRunner
         return finalRun;
     }
 
-    private async Task<BenchmarkResult> RunSingleCaseAsync(BenchmarkCase benchmarkCase, CancellationToken ct)
+    private async Task<BenchmarkResult> RunSingleCaseAsync(BenchmarkCase benchmarkCase, TimeSpan? perCaseTimeout, CancellationToken ct)
     {
+        using var caseCts = perCaseTimeout.HasValue
+            ? CancellationTokenSource.CreateLinkedTokenSource(ct)
+            : null;
+        if (perCaseTimeout.HasValue) caseCts!.CancelAfter(perCaseTimeout.Value);
+        var caseToken = caseCts?.Token ?? ct;
+
         var parser = new InlineTagParser();
         var sw = Stopwatch.StartNew();
         var tcs = new TaskCompletionSource();
         Exception? streamError = null;
         long ttftMs = 0;
         bool firstTokenSeen = false;
+        bool timedOut = false;
 
-        await _dispatcher.StreamResponseAsync(
-            benchmarkCase.SkillKey,
-            benchmarkCase.InputText,
-            token =>
-            {
-                if (!firstTokenSeen) { ttftMs = sw.ElapsedMilliseconds; firstTokenSeen = true; }
-                parser.Feed(token);
-            },
-            () => tcs.TrySetResult(),
-            ex => { streamError = ex; tcs.TrySetResult(); },
-            ct).ConfigureAwait(false);
+        try
+        {
+            await _dispatcher.StreamResponseAsync(
+                benchmarkCase.SkillKey,
+                benchmarkCase.InputText,
+                token =>
+                {
+                    if (!firstTokenSeen) { ttftMs = sw.ElapsedMilliseconds; firstTokenSeen = true; }
+                    parser.Feed(token);
+                },
+                () => tcs.TrySetResult(),
+                ex => { streamError = ex; tcs.TrySetResult(); },
+                caseToken).ConfigureAwait(false);
 
-        await tcs.Task.ConfigureAwait(false);
+            await tcs.Task.WaitAsync(caseToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (perCaseTimeout.HasValue && !ct.IsCancellationRequested)
+        {
+            timedOut = true;
+        }
+
+        ct.ThrowIfCancellationRequested();
         sw.Stop();
 
         var rawOutput = parser.GetRawOutput();
@@ -171,6 +188,15 @@ public sealed class BenchmarkRunner
 
         double elapsedHours = sw.Elapsed.TotalHours;
         double electricityCost = (gpuWatts * elapsedHours / 1000.0) * electricityRate;
+
+        if (timedOut)
+        {
+            var timeoutEval = new EvaluationScore(0, 0, 0, 0, null,
+                $"Timed out after {perCaseTimeout!.Value.TotalSeconds:F0}s");
+            return new BenchmarkResult(benchmarkCase, rawOutput, null, null,
+                sw.ElapsedMilliseconds, timeoutEval, _modelAlias, _backendTarget, DateTimeOffset.UtcNow,
+                estInputTokens, estOutputTokens, electricityCost, ttftMs);
+        }
 
         if (streamError is not null)
         {
