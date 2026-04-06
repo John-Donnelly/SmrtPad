@@ -314,7 +314,7 @@ public class PromptTemplatesTests
     public void FreeformChat_InstructsConversationalBehaviour()
     {
         var result = PromptTemplates.FreeformChat("anything");
-        Assert.Contains("one or two plain sentences", result);
+        Assert.Contains("1 to 3 sentences", result);
     }
 
     [Fact]
