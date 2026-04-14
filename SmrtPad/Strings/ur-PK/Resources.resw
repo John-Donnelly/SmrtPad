@@ -463,6 +463,9 @@
   <data name="StatusDrawingInserted" xml:space="preserve">
     <value>ڈرائنگ داخل ہو گئی۔</value>
   </data>
+  <data name="StatusSmrtDoodleWaiting" xml:space="preserve">
+    <value>SmrtDoodle کا انتظار ہے...</value>
+  </data>
   <data name="StatusDrawingCancelled" xml:space="preserve">
     <value>ڈرائنگ منسوخ ہو گئی۔</value>
   </data>

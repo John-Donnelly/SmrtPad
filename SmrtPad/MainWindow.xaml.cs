@@ -3579,15 +3579,10 @@ namespace SmrtPad
 
         private async Task ShowAiPrerequisiteDialogAsync()
         {
-            var foundryPath = TryResolveFoundryExecutablePath();
-            var contentKey = string.IsNullOrWhiteSpace(foundryPath)
-                ? "SmartSidebarFoundryMissingContent"
-                : "SmartSidebarAIDispatcherUnavailableContent";
-
             var dialog = new ContentDialog
             {
                 Title = Res.GetString("SmartSidebarAIDispatcherUnavailableTitle"),
-                Content = Res.GetString(contentKey),
+                Content = Res.GetString("SmartSidebarAIDispatcherUnavailableContent"),
                 PrimaryButtonText = Res.GetString("SmartSidebarAIDispatcherUnavailableSetup"),
                 CloseButtonText = Res.GetString("SmartSidebarAIDispatcherUnavailableDismiss"),
                 XamlRoot = Content.XamlRoot
@@ -3595,36 +3590,8 @@ namespace SmrtPad
 
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
             {
-                await Launcher.LaunchUriAsync(new Uri("https://learn.microsoft.com/azure/foundry-local/get-started"));
+                await Launcher.LaunchUriAsync(new Uri("https://huggingface.co/microsoft"));
             }
-        }
-
-        private static string? TryResolveFoundryExecutablePath()
-        {
-            var pathCandidates = new List<string>();
-
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            if (!string.IsNullOrWhiteSpace(localAppData))
-            {
-                pathCandidates.Add(Path.Combine(localAppData, "Microsoft", "FoundryLocal", "foundry.exe"));
-            }
-
-            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            if (!string.IsNullOrWhiteSpace(programFiles))
-            {
-                pathCandidates.Add(Path.Combine(programFiles, "Microsoft", "FoundryLocal", "foundry.exe"));
-            }
-
-            var path = Environment.GetEnvironmentVariable("PATH");
-            if (!string.IsNullOrWhiteSpace(path))
-            {
-                foreach (var part in path.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                {
-                    pathCandidates.Add(Path.Combine(part, "foundry.exe"));
-                }
-            }
-
-            return pathCandidates.FirstOrDefault(File.Exists);
         }
 
         private void Ruler_Click(object sender, RoutedEventArgs e)
@@ -3887,20 +3854,52 @@ namespace SmrtPad
 
         private async void PaintDrawing_Click(object sender, RoutedEventArgs e)
         {
-            SetInkMode(true);
-            await Task.CompletedTask;
-        }
+            if (SmrtDoodleIpcService.FindExecutable() is null)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = Res.GetString("SmrtDoodleNotFound"),
+                    Content = Res.GetString("SmrtDoodleNotFoundMessage"),
+                    PrimaryButtonText = Res.GetString("SmrtDoodleGetFromStore"),
+                    CloseButtonText = Res.GetString("ButtonCancel"),
+                    XamlRoot = Content.XamlRoot,
+                    DefaultButton = ContentDialogButton.Primary
+                };
+                if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                    await Launcher.LaunchUriAsync(new Uri("ms-windows-store://search/?query=SmrtDoodle"));
+                return;
+            }
 
-        private static bool IsSmrtDoodleInstalled()
-        {
-            var windowsAppsPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Microsoft", "WindowsApps", "SmrtDoodle.exe");
-            if (File.Exists(windowsAppsPath)) return true;
+            SmrtDoodleButton.IsEnabled = false;
+            ViewModel.UpdateStatus(Res.GetString("StatusSmrtDoodleWaiting"));
+            try
+            {
+                string? imagePath = await new SmrtDoodleIpcService().LaunchAndAwaitAsync();
 
-            var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? [];
-            return pathDirs.Any(dir => !string.IsNullOrWhiteSpace(dir) &&
-                File.Exists(Path.Combine(dir.Trim(), "SmrtDoodle.exe")));
+                if (imagePath is null)
+                {
+                    ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
+                    return;
+                }
+
+                var file = await StorageFile.GetFileFromPathAsync(imagePath);
+                using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                {
+                    Editor.Document.Selection.InsertImage(
+                        0, 0, 0, VerticalCharacterAlignment.Baseline, "drawing.png", stream);
+                }
+                ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
+
+                try { File.Delete(imagePath); } catch { /* best-effort */ }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                await ShowErrorDialogAsync(Res.GetString("ErrorGeneric"), ex.Message);
+            }
+            finally
+            {
+                SmrtDoodleButton.IsEnabled = true;
+            }
         }
 
         private async void InsertObject_Click(object sender, RoutedEventArgs e)

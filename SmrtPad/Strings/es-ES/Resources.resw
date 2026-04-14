@@ -463,6 +463,9 @@
   <data name="StatusDrawingInserted" xml:space="preserve">
     <value>Dibujo insertado.</value>
   </data>
+  <data name="StatusSmrtDoodleWaiting" xml:space="preserve">
+    <value>Esperando SmrtDoodle...</value>
+  </data>
   <data name="StatusDrawingCancelled" xml:space="preserve">
     <value>Dibujo cancelado.</value>
   </data>

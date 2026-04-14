@@ -497,6 +497,9 @@
   <data name="StatusDrawingCancelled" xml:space="preserve">
     <value>Drawing cancelled.</value>
   </data>
+  <data name="StatusSmrtDoodleWaiting" xml:space="preserve">
+    <value>Waiting for SmrtDoodle...</value>
+  </data>
   <data name="SmrtDoodleNotFound" xml:space="preserve">
     <value>SmrtDoodle Not Found</value>
   </data>

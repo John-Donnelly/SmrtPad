@@ -463,6 +463,9 @@
   <data name="StatusDrawingInserted" xml:space="preserve">
     <value>تم إدراج الرسم.</value>
   </data>
+  <data name="StatusSmrtDoodleWaiting" xml:space="preserve">
+    <value>في انتظار SmrtDoodle...</value>
+  </data>
   <data name="StatusDrawingCancelled" xml:space="preserve">
     <value>تم إلغاء الرسم.</value>
   </data>
