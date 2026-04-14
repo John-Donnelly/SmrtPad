@@ -1,4 +1,3 @@
-using Microsoft.AI.Foundry.Local;
 using Microsoft.Windows.AI;
 using Microsoft.Windows.AI.MachineLearning;
 using System.Runtime.InteropServices;
@@ -85,7 +84,7 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
     }
 
     /// <inheritdoc/>
-    public Task<AIBackendCapability> ProbeFoundryGpuAsync(CancellationToken ct)
+    public Task<AIBackendCapability> ProbeOnnxRuntimeGpuAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -100,7 +99,7 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
             if (providers.Any(p => p.ReadyState == ExecutionProviderReadyState.Ready))
             {
                 return Task.FromResult(new AIBackendCapability(
-                    "Foundry Local GPU",
+                    "ORT GenAI GPU",
                     AIBackendAvailabilityStatus.Available,
                     DiagnosticCode: "READY",
                     GpuVramMb: vramMb,
@@ -111,9 +110,9 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
         catch (InvalidOperationException) { }
 
         // Second: NVIDIA CUDA — nvcuda.dll in System32 is present whenever the CUDA driver
-        // is installed. Foundry Local downloads its own CUDA execution provider and does not
-        // rely on the Windows AI catalog, so the catalog returning no ready providers does not
-        // mean CUDA is unavailable.
+        // is installed. ORT GenAI uses its own CUDA execution provider and does not rely on
+        // the Windows AI catalog, so the catalog returning no ready providers does not mean
+        // CUDA is unavailable.
         if (HasCudaDriver())
         {
             // WMI fallback for VRAM when DXGI returned nothing (can happen on some NVIDIA configs)
@@ -121,7 +120,7 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
                 vramMb = HardwareProbeService.QueryWmiVramMb();
 
             return Task.FromResult(new AIBackendCapability(
-                "Foundry Local GPU",
+                "ORT GenAI GPU",
                 AIBackendAvailabilityStatus.Available,
                 DiagnosticCode: "CUDA_DRIVER",
                 DiagnosticMessage: "NVIDIA CUDA driver detected.",
@@ -130,7 +129,7 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
         }
 
         return Task.FromResult(new AIBackendCapability(
-            "Foundry Local GPU",
+            "ORT GenAI GPU",
             AIBackendAvailabilityStatus.Unavailable,
             DiagnosticCode: "NO_GPU",
             DiagnosticMessage: "No GPU found via Windows AI catalog or CUDA driver check.",
@@ -176,9 +175,36 @@ public sealed class AIDispatcherFactory
             if (target == AIExecutionTarget.PhiSilicaNpu)
                 return await CreatePhiSilicaModelAdapterAsync(ct).ConfigureAwait(false);
 
-            return await CreateFoundryModelAdapterAsync(target, probeResult.FoundryGpu, dispatcher!.PreferredAlias, onProgress, ct).ConfigureAwait(false);
+            return await CreateOrtGenAiModelAdapterAsync(target, probeResult.Gpu, dispatcher!.PreferredAlias, onProgress, ct).ConfigureAwait(false);
         });
         return dispatcher;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="AIDispatcher"/> that loads a model directly from
+    /// <paramref name="modelDirectory"/> via the ORT GenAI adapter, bypassing
+    /// the alias/download pipeline. Intended for benchmarking local model directories.
+    /// </summary>
+    /// <param name="modelDirectory">
+    /// Absolute path to a directory containing <c>genai_config.json</c> and <c>model.onnx</c>.
+    /// </param>
+    /// <param name="maxContextTokens">Maximum context window size in tokens.</param>
+    public static AIDispatcher CreateFromLocalPath(string modelDirectory, int maxContextTokens = 4096)
+    {
+        ArgumentNullException.ThrowIfNull(modelDirectory);
+        if (!File.Exists(Path.Combine(modelDirectory, "genai_config.json")))
+            throw new ArgumentException(
+                $"Directory does not contain genai_config.json: {modelDirectory}", nameof(modelDirectory));
+
+        var stubCatalog = new StubCatalogAdapter();
+        var probe = new HardwareProbeService(stubCatalog);
+
+        return new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+        {
+            return await ConcreteOrtGenAiModelAdapter
+                .CreateAsync(modelDirectory, maxContextTokens, onProgress, ct)
+                .ConfigureAwait(false);
+        });
     }
 
     private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)
@@ -186,57 +212,105 @@ public sealed class AIDispatcherFactory
         return await ConcretePhiSilicaModelAdapter.CreateAsync(ct).ConfigureAwait(false);
     }
 
-    private static async Task<ILanguageModelAdapter> CreateFoundryModelAdapterAsync(
+    private static async Task<ILanguageModelAdapter> CreateOrtGenAiModelAdapterAsync(
         AIExecutionTarget target,
         AIBackendCapability gpuCapability,
         string? preferredAlias,
         Action<string>? onProgress,
         CancellationToken ct)
     {
-        string alias;
-        int maxContextTokens;
+        bool isGpu = target == AIExecutionTarget.OnnxRuntimeGpu;
 
-        if (preferredAlias is not null && ModelSizeSelector.TryGetAlias(preferredAlias, out var gpuMb, out var cpuMb))
+        // Build the ordered list of aliases to try.
+        IReadOnlyList<string> aliases;
+        if (preferredAlias is not null && ModelSizeSelector.TryGetAlias(preferredAlias, out _, out _))
         {
-            alias = preferredAlias;
-            long footprintMb = target == AIExecutionTarget.FoundryLocalCpu ? cpuMb : gpuMb;
-            maxContextTokens = ModelSizeSelector.PickContextTokens(footprintMb);
+            aliases = [preferredAlias];
         }
         else
         {
-            // When the CPU target is forced, evaluate model sizes against system RAM, not VRAM
-            var capabilityForSelection = target == AIExecutionTarget.FoundryLocalCpu
-                ? gpuCapability with { GpuVramMb = 0 }
-                : gpuCapability;
-
-            (alias, maxContextTokens) = await ModelSizeSelector
-                .SelectBestAliasAsync(capabilityForSelection, ct)
-                .ConfigureAwait(false);
+            // When the CPU target is forced, evaluate model sizes against system RAM, not VRAM.
+            var capabilityForSelection = isGpu ? gpuCapability : gpuCapability with { GpuVramMb = 0 };
+            aliases = ModelSizeSelector.GetEligibleAliases(capabilityForSelection);
+            if (aliases.Count == 0)
+                aliases = [ModelSizeSelector.FallbackAlias];
         }
 
-        if (target == AIExecutionTarget.FoundryLocalGpu)
+        // Try GPU first; if loading fails for every alias fall through to CPU.
+        if (isGpu)
         {
+            var gpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: true, onProgress, ct)
+                .ConfigureAwait(false);
+            if (gpuAdapter is not null)
+                return gpuAdapter;
+
+            // GPU variants unavailable — fall back to CPU.
+        }
+
+        var cpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: false, onProgress, ct)
+            .ConfigureAwait(false);
+        if (cpuAdapter is not null)
+            return cpuAdapter;
+
+        throw new InvalidOperationException(
+            "No eligible ORT GenAI model could be loaded for the current hardware configuration. " +
+            "Ensure model files are present in the SmrtPad local model cache or have a registered HuggingFace source.");
+    }
+
+    private static async Task<ILanguageModelAdapter?> TryLoadAliasesAsync(
+        IReadOnlyList<string> aliases,
+        bool isGpu,
+        Action<string>? onProgress,
+        CancellationToken ct)
+    {
+        foreach (var alias in aliases)
+        {
+            ct.ThrowIfCancellationRequested();
+
             try
             {
-                return await ConcreteFoundryModelAdapter
-                    .CreateAsync(AIExecutionTarget.FoundryLocalGpu, alias, maxContextTokens, onProgress, ct)
+                if (!ModelSizeSelector.TryGetAlias(alias, out var gpuMb, out var cpuMb))
+                    continue;
+
+                // Skip if this execution path has no variant for the alias.
+                long footprintMb = isGpu ? gpuMb : cpuMb;
+                if (footprintMb == ModelSizeSelector.CpuOnly || footprintMb == ModelSizeSelector.GpuOnly)
+                    continue;
+
+                int maxContextTokens = ModelSizeSelector.PickContextTokens(footprintMb);
+
+                var modelDir = await ModelDownloadService
+                    .EnsureModelAsync(alias, isGpu, onProgress, ct)
+                    .ConfigureAwait(false);
+
+                return await ConcreteOrtGenAiModelAdapter
+                    .CreateAsync(modelDir, maxContextTokens, onProgress, ct)
                     .ConfigureAwait(false);
             }
-            catch (FoundryLocalException) { }     // GPU model failed to load
-            catch (InvalidOperationException) { } // No GPU variant in catalog
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                // This alias/variant failed — try the next one.
+            }
         }
 
-        try
-        {
-            return await ConcreteFoundryModelAdapter
-                .CreateAsync(AIExecutionTarget.FoundryLocalCpu, alias, maxContextTokens, onProgress, ct)
-                .ConfigureAwait(false);
-        }
-        catch (FoundryLocalException ex)
-        {
-            // FoundryLocalException is internal to SmrtPad.AI — wrap it so callers
-            // across the assembly boundary receive a well-known exception type.
-            throw new InvalidOperationException(ex.Message, ex);
-        }
+        return null;
+    }
+
+    /// <summary>
+    /// Minimal <see cref="IExecutionProviderCatalogAdapter"/> that reports no NPU and no GPU.
+    /// Used by <see cref="CreateFromLocalPath"/> where the model factory loads directly from
+    /// a known path and hardware probing is not needed.
+    /// </summary>
+    private sealed class StubCatalogAdapter : IExecutionProviderCatalogAdapter
+    {
+        public Task<AIBackendCapability> ProbePhiSilicaAsync(CancellationToken ct) =>
+            Task.FromResult(new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
+
+        public Task<AIBackendCapability> ProbeOnnxRuntimeGpuAsync(CancellationToken ct) =>
+            Task.FromResult(new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unavailable));
     }
 }

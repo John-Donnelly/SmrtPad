@@ -1,5 +1,11 @@
 namespace SmrtPad.AI;
 
+/// <summary>HuggingFace Hub source information for an ONNX GenAI model variant.</summary>
+/// <param name="Repo">HuggingFace repository ID (e.g. <c>microsoft/Phi-4-mini-instruct-onnx</c>).</param>
+/// <param name="GpuSubdir">Subdirectory inside the repo containing the CUDA/GPU variant files, or <c>null</c> if unavailable.</param>
+/// <param name="CpuSubdir">Subdirectory inside the repo containing the CPU variant files, or <c>null</c> if unavailable.</param>
+internal record HuggingFaceModelInfo(string Repo, string? GpuSubdir, string? CpuSubdir);
+
 /// <summary>
 /// Selects the best local model alias and an appropriate context-token limit
 /// based on the hardware capabilities reported by <see cref="AIBackendCapability"/>.
@@ -12,14 +18,12 @@ internal static class ModelSizeSelector
     private const int BaseContextTokens = 2048;
 
     /// <summary>
-    /// Sentinel for <see cref="PreferredAliases"/> <c>GpuMb</c>. Model has no GPU execution provider
-    /// in Foundry Local (CPU-only); must be skipped on GPU paths.
+    /// Sentinel for <see cref="PreferredAliases"/> <c>GpuMb</c>: model has no GPU ONNX variant.
     /// </summary>
     internal const long CpuOnly = -1;
 
     /// <summary>
-    /// Sentinel for <see cref="PreferredAliases"/> <c>CpuMb</c>. Model has no CPU execution provider
-    /// in Foundry Local (GPU-only); must be skipped on CPU paths.
+    /// Sentinel for <see cref="PreferredAliases"/> <c>CpuMb</c>: model has no CPU ONNX variant.
     /// </summary>
     internal const long GpuOnly = -1;
 
@@ -29,10 +33,9 @@ internal static class ModelSizeSelector
 
     /// <summary>
     /// Ordered from largest (most capable) to smallest (most compatible).
-    /// Alias names match Foundry Local catalog identifiers.
-    /// <c>GpuMb</c> = CUDA execution provider variant file size (or <see cref="CpuOnly"/> when no GPU provider exists).
-    /// <c>CpuMb</c> = CPU execution provider variant file size (or <see cref="GpuOnly"/> when no CPU provider exists).
-    /// Sizes taken from <c>foundry model list</c> CLI output.
+    /// <c>GpuMb</c> = CUDA int-4 variant file size in MB (or <see cref="CpuOnly"/> when no GPU variant exists).
+    /// <c>CpuMb</c> = CPU int-4 variant file size in MB (or <see cref="GpuOnly"/> when no CPU variant exists).
+    /// Sizes measured from published HuggingFace ONNX repos.
     /// </summary>
     private static readonly (string Alias, long GpuMb, long CpuMb)[] PreferredAliases =
     [
@@ -46,13 +49,49 @@ internal static class ModelSizeSelector
         ("phi-3.5-mini",           2_181,   2_590),
         ("phi-3-mini-128k",        2_181,   2_600),
         ("phi-3-mini-4k",          2_181,   2_590),
-        ("deepseek-r1-1.5b",       1_464,  GpuOnly),   // GPU-only: trtrtx 1.43 GB; no CPU provider in Foundry
+        ("deepseek-r1-1.5b",       1_464,  GpuOnly),   // GPU-only: no CPU int-4 ONNX variant published
         ("qwen2.5-coder-1.5b",     1_280,   1_822),
         ("qwen2.5-1.5b",           1_280,   1_822),
-        ("qwen3-0.6b",           CpuOnly,     594),    // CPU-only: 0.58 GB; no GPU exec provider in Foundry
+        ("qwen3-0.6b",           CpuOnly,     594),    // CPU-only: no GPU ONNX variant published
         ("qwen2.5-coder-0.5b",       528,     822),
         ("qwen2.5-0.5b",             528,     822),
+        ("ernie-4.5-0.3b",           320,     490),
     ];
+
+    /// <summary>
+    /// HuggingFace Hub source information keyed by alias.
+    /// Aliases without an entry have no auto-download support; models must be placed manually
+    /// in the local cache directory returned by <see cref="ModelDownloadService.GetLocalModelDirectory"/>.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, HuggingFaceModelInfo> HuggingFaceInfos =
+        new Dictionary<string, HuggingFaceModelInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["phi-4"]               = new("microsoft/phi-4-onnx",
+                                         GpuSubdir: "cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu-int4-rtn-block-32-acc-level-4"),
+            ["phi-4-mini"]          = new("microsoft/Phi-4-mini-instruct-onnx",
+                                         GpuSubdir: "cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu-int4-rtn-block-32-acc-level-4"),
+            ["phi-4-mini-reasoning"]= new("microsoft/Phi-4-mini-reasoning-onnx",
+                                         GpuSubdir: "cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu-int4-rtn-block-32-acc-level-4"),
+            ["phi-3.5-mini"]        = new("microsoft/Phi-3.5-mini-instruct-onnx",
+                                         GpuSubdir: "cuda/cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
+            ["phi-3-mini-128k"]     = new("microsoft/Phi-3-mini-128k-instruct-onnx",
+                                         GpuSubdir: "cuda/cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
+            ["phi-3-mini-4k"]       = new("microsoft/Phi-3-mini-4k-instruct-onnx",
+                                         GpuSubdir: "cuda/cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
+        };
+
+    /// <summary>
+    /// Returns the HuggingFace Hub source information for <paramref name="alias"/>,
+    /// or <c>null</c> when no auto-download source is configured.
+    /// </summary>
+    internal static HuggingFaceModelInfo? GetHuggingFaceInfo(string alias) =>
+        HuggingFaceInfos.TryGetValue(alias, out var info) ? info : null;
 
     /// <summary>
     /// Selects the best alias and max context tokens for the given hardware capability.

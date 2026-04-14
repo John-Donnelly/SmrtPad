@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
     <OutputType>Library</OutputType>
     <RootNamespace>SmrtPad.AI</RootNamespace>
@@ -34,27 +34,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AI.Foundry.Local" />
     <!--
       Direct reference required so the package's build/ MSBuild targets activate and copy
-      runtimes/win-x64(arm64)/native/Microsoft.AI.Foundry.Local.Core.dll to the output dir.
-      The buildTransitive/ variant that propagates from the parent package does not include
-      the native-copy target.
+      runtimes/win-x64(arm64)/native/ CUDA-enabled onnxruntime-genai.dll to the output dir.
     -->
-    <PackageReference Include="Microsoft.AI.Foundry.Local.Core" />
-    <!--
-      Direct reference required for the same reason as Microsoft.AI.Foundry.Local.Core above:
-      Microsoft.ML.OnnxRuntimeGenAI is only a transitive dependency of
-      Microsoft.AI.Foundry.Local.Core, so its build/ targets never fire and
-      onnxruntime-genai.dll is never copied to the output dir.
-      Note: the .Foundry variant does not ship onnxruntime-genai.dll as a native asset;
-      the base package must be referenced directly.
-    -->
-    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Cuda" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Managed" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="System.Management" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="SmrtPad.AI.Tests" />
+    <InternalsVisibleTo Include="SmrtPad.AI.Benchmarks" />
   </ItemGroup>
 </Project>
