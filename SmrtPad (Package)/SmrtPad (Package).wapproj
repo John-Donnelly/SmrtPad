@@ -25,7 +25,7 @@
     <WapProjPath Condition="'$(WapProjPath)'==''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
     <PathToXAMLWinRTImplementations>SmrtPad\</PathToXAMLWinRTImplementations>
     <WinUISDKReferences>false</WinUISDKReferences>
-    <AITargetFramework>net10.0-windows10.0.26100.0</AITargetFramework>
+    <AITargetFramework>net8.0-windows10.0.26100.0</AITargetFramework>
     <AIProjectPath>$(MSBuildThisFileDirectory)..\SmrtPad.AI\SmrtPad.AI.csproj</AIProjectPath>
     <AIPackageOutputDir>$(MSBuildProjectDirectory)\bin\$(Platform)\$(Configuration)\AppX\SmrtPad\AI\</AIPackageOutputDir>
     <AIPlatform Condition="'$(AIPlatform)' == ''">$(Platform)</AIPlatform>
@@ -53,7 +53,7 @@
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
     <AppxOSMinVersionReplaceManifestVersion>false</AppxOSMinVersionReplaceManifestVersion>
     <AppxOSMaxVersionTestedReplaceManifestVersion>false</AppxOSMaxVersionTestedReplaceManifestVersion>
-    <AssetTargetFallback>net10.0-windows$(TargetPlatformVersion);$(AssetTargetFallback)</AssetTargetFallback>
+    <AssetTargetFallback>net8.0-windows$(TargetPlatformVersion);$(AssetTargetFallback)</AssetTargetFallback>
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\SmrtPad\SmrtPad.csproj</EntryPointProjectUniqueName>

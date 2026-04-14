@@ -781,7 +781,7 @@ $wap      = Join-Path $PSScriptRoot 'SmrtPad (Package).wapproj'
 $appxRoot = Join-Path $PSScriptRoot "bin\x64\$configuration\AppX"
 $appx     = Join-Path $appxRoot 'SmrtPad'
 $manifest = Join-Path $appxRoot 'AppxManifest.xml'
-$tfm      = Join-Path $root "SmrtPad\bin\x64\$configuration\net10.0-windows10.0.26100.0\win-x64"
+$tfm      = Join-Path $root "SmrtPad\bin\x64\$configuration\net8.0-windows10.0.26100.0\win-x64"
 $publish  = Join-Path $root 'SmrtPad\bin\win-x64\publish'
 
 # Stop any running SmrtPad instance — required before touching the AppX layout.
