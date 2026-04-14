@@ -6,7 +6,32 @@ All notable changes to SmrtPad are documented in this file.
 
 ---
 
-## [0.7.5] - 2026-04-07
+## [0.8.0] - 2026-04-08
+
+### Added
+- **ORT GenAI in-process inference** — replaced Foundry Local with direct `Microsoft.ML.OnnxRuntimeGenAI.Cuda` 0.12.2; the AI engine now runs ONNX GenAI models in-process with CUDA GPU acceleration and CPU fallback
+- **`ConcreteOrtGenAiModelAdapter`** — new `ILanguageModelAdapter` implementation for ORT GenAI; supports streaming, automatic chat-template detection (phi/qwen/deepseek families), and CUDA runtime library resolution
+- **`ModelDownloadService`** — downloads ONNX GenAI model files from HuggingFace Hub with progress reporting; integrates with the Smart Sidebar download progress UI
+- **`AIDispatcherFactory.CreateFromLocalPath()`** — public factory method for direct local-model loading; bypasses the alias/download pipeline for benchmarking and development
+- **CUDA GPU support** — CUDA execution provider enabled via `Microsoft.ML.OnnxRuntimeGenAI.Cuda`; runtime libraries are symlinked/copied from `%USERPROFILE%\.SmrtPad\ep\cuda-ep\` into the ORT provider directory at startup
+- **Local model benchmark test** (`LocalModelBenchmarkTests`) — scans local directories for ONNX GenAI models and benchmarks them with live dashboard output; uses `CreateFromLocalPath` public API
+- **SmrtDoodle IPC service** (`SmrtDoodleIpcService`) — named-pipe IPC integration; launches SmrtDoodle, awaits exit, and retrieves the drawing result for document insertion
+- **3 new SmrtDoodle localization strings** across all 9 locale `.resw` files
+
+### Changed
+- **Target framework** migrated from .NET 10 preview to .NET 8 across all 7 projects, MSIX packaging, CI workflow, and deploy scripts
+- **AI engine naming** — all `Foundry`/`FoundryLocal`/`FoundryGpu` references renamed to `OnnxRuntime`/`OnnxRuntimeGpu`/`Gpu` throughout the codebase (public API, tests, UI layer, comments)
+- **`HardwareProbeService.ProbeFoundryGpuAsync()`** renamed to `ProbeOnnxRuntimeGpuAsync()`
+- **`AIDispatcher`** execution-path enum values renamed: `FoundryLocalGpu` → `OnnxRuntimeGpu`, `FoundryLocalCpu` → `OnnxRuntimeCpu`
+- **`SmartSidebar`** — removed `IsLikelyFoundryMissingMessage` and `StatusCodeFoundryMissing` (no longer applicable with in-process inference)
+- **`ModelSizeSelector`** — added `HuggingFaceModelInfo` record and HuggingFace source registry for model download resolution
+- **CI workflow** (`.github/workflows/ci.yml`) — switched from .NET 10 preview SDK to .NET 8 stable
+- **Deploy script** — updated published output path from `net10.0-windows*` to `net8.0-windows*`
+- **`MainWindow.PaintDrawing_Click`** — rewritten to use `SmrtDoodleIpcService` named-pipe IPC instead of direct process launch
+
+### Removed
+- **`ConcreteFoundryModelAdapter`** — deleted; replaced by `ConcreteOrtGenAiModelAdapter`
+- **`Microsoft.AI.Foundry.Local`** NuGet package dependency — removed from `Directory.Packages.props`
 
 ### Added
 - **`CpuOnly` / `GpuOnly` sentinel constants** in `ModelSizeSelector` — `-1L` sentinels mark models that have no GPU or CPU execution provider in Foundry Local; all three selector methods (`SelectBestAliasAsync`, `GetEligibleAliases`, `GetBestAliasForCapability`) skip entries whose provider flag matches the requested path
@@ -90,7 +115,7 @@ All notable changes to SmrtPad are documented in this file.
 - **`BenchmarkReportGenerator` pass threshold** moved from hard-coded `70` to `PassThreshold = 80` constant; all pass/fail formatting, category tables, overall stats, and per-result status icons updated
 - **`BenchmarkSuiteTests` default threshold** changed from `60` to `80` (aligns with `PassThreshold`)
 - **`BenchmarkRunner.RunAsync` signature** extended with `dashboardOutputDir`, `onResultAdded` parameters (both optional, non-breaking)
-- **`SmrtPad.UITests` target framework** bumped from `net10.0-windows10.0.19041.0` to `net10.0-windows10.0.26100.0`
+- **`SmrtPad.UITests` target framework** bumped from `net10.0-windows10.0.19041.0` to `net8.0-windows10.0.26100.0`
 - **`SmrtPad.UITests` project references** — added reference to `SmrtPad.AI.Benchmarks` to enable sharing of `BenchmarkPromptCatalog`, `RuleBasedEvaluator`, and `BenchmarkDashboardGenerator` with the UITest benchmark suite
 - **`BenchmarkPromptCatalog` object initializer style** — `new BenchmarkCase(…)` → `new(…)` throughout for readability; prompt descriptions tightened
 - **Tag-compliance cases** — `ExpectedKeywords` changed from empty arrays to meaningful hint words (e.g. `["name","title"]`, `["page","paragraph"]`), allowing the keyword completeness score to validate chat answers meaningfully

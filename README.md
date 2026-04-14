@@ -1,6 +1,6 @@
 # SmrtPad
 
-A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by Foundry Local / Windows AI APIs.
+A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by ONNX Runtime GenAI (CUDA/CPU) / Windows AI APIs.
 
 ## Features
 
@@ -39,7 +39,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 - Pre-launch installation check; if not installed a dialog offers a **Get from Store** button that opens the Microsoft Store search for SmrtDoodle
 
 ### Smart Sidebar (on-device AI)
-- Collapsible AI panel that operates entirely on-device using Windows AI APIs (Phi Silica NPU) or Foundry Local (GPU/CPU)
+- Collapsible AI panel that operates entirely on-device using Windows AI APIs (Phi Silica NPU) or ONNX Runtime GenAI (GPU/CPU)
 - **Chat-bubble UI** — user and assistant messages rendered as distinct bubbles in a scrollable history; responses stream token-by-token into the chat bubble in real time so the full output is always visible in the conversation
 - **Insert button** — appears on assistant bubbles that contain insertable content (rewrites, summaries, drafts); clicking it inserts the AI-generated text directly into the active document at the cursor position
 - **Thinking/reasoning display** — reasoning tokens emitted between `<think>…</think>` tags (including implicit pre-`</think>` reasoning from phi-4-mini) shown in a collapsible expander labelled "Thinking…"; collapses automatically once reasoning is complete so the response is front and centre
@@ -74,10 +74,10 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 10, featu
 ## Requirements
 
 - Windows 10 version 1809 (build 17763) or later
-- .NET 10 SDK
+- .NET 8 SDK
 - Windows App SDK 1.8+
 - (Optional) [SmrtDoodle](https://www.microsoft.com/store/apps) for in-document drawing
-- (Optional) [Foundry Local](https://aka.ms/foundry-local) or a Copilot+ PC (NPU) for on-device AI features
+- (Optional) A Copilot+ PC (NPU) for on-device AI features; GPU/CPU inference uses ONNX Runtime GenAI with automatic model download
 
 ## Building
 
@@ -181,7 +181,8 @@ SmrtPad/
 │   │                        # ResponseCleaner, RtfHelper, RulerHelper
 │   ├── Models/              # DocumentTemplate
 │   ├── Services/            # AIDispatcherProxy, DialogService, FileService,
-│   │                        # IAIDispatcher, SettingsService
+│   │                        # IAIDispatcher, SettingsService,
+│   │                        # SmrtDoodleIpcService
 │   │                        # (+ IDialogService, IFileService, ISettingsService)
 │   ├── Strings/             # 9 locale .resw files (en-US, de-DE, es-ES, fr-FR,
 │   │                        # ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK)
@@ -196,7 +197,8 @@ SmrtPad/
 │   │                        # ShortenSkill, SummarizerSkill, ToneShifterSkill
 │   ├── AIDispatcher.cs      # Core streaming dispatcher with skill-key routing
 │   ├── AIDispatcherFactory.cs # DI factory — hardware probing, model selection
-│   ├── ConcreteFoundryModelAdapter.cs  # Foundry Local chat client wrapper
+│   ├── ConcreteOrtGenAiModelAdapter.cs # ORT GenAI in-process inference adapter
+│   ├── ModelDownloadService.cs  # HuggingFace Hub model downloader
 │   ├── HardwareProbeService.cs # DXGI VRAM + system RAM detection
 │   ├── ModelSizeSelector.cs # Hardware-budget → alias + context-token selection
 │   └── PromptTemplates.cs   # Hardened per-skill prompt templates + FreeformChat
