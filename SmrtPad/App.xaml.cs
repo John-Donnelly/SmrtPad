@@ -399,12 +399,11 @@ namespace SmrtPad
                 // Pre-load native ORT DLLs from the AI subdirectory before any managed or native
                 // code triggers a LoadLibrary("onnxruntime.dll") search. Without this, the Windows
                 // App Runtime's onnxruntime.dll (1.23) is found on the activation-context search
-                // path before the AI-directory copy (1.24). Microsoft.AI.Foundry.Local.Core then
-                // runs against ORT 1.23 while the CUDA EP it downloads is built for ORT 1.24,
-                // causing an internal vtable mismatch and a 0xC0000005 access violation during
-                // model load. Once a DLL is resident in the process by base name, a subsequent
-                // LoadLibrary("onnxruntime.dll") from native code returns the already-loaded
-                // module instead of walking the search path again.
+                // path before the AI-directory copy (1.24). ORT GenAI then runs against ORT 1.23
+                // while the CUDA EP is built for ORT 1.24, causing an internal vtable mismatch
+                // and a 0xC0000005 access violation during model load. Once a DLL is resident in
+                // the process by base name, a subsequent LoadLibrary("onnxruntime.dll") from native
+                // code returns the already-loaded module instead of walking the search path again.
                 PreloadNativeOrtDlls(Path.GetDirectoryName(aiDllPath)!);
 
                 var alc = new AIAssemblyLoadContext(aiDllPath);
@@ -433,12 +432,10 @@ namespace SmrtPad
         private static void PreloadNativeOrtDlls(string aiDir)
         {
             // Load order matters:
-            // 1. Microsoft.AI.Foundry.Local.Core.dll — native core P/Invoked by the managed SDK.
-            // 2. onnxruntime_providers_shared.dll    — ORT validates this handle during its own init.
-            // 3. onnxruntime.dll                     — core runtime; genai depends on it.
-            // 4. onnxruntime-genai.dll               — GenAI layer; must follow onnxruntime.dll.
+            // 1. onnxruntime_providers_shared.dll — ORT validates this handle during its own init.
+            // 2. onnxruntime.dll                  — core runtime; genai depends on it.
+            // 3. onnxruntime-genai.dll             — GenAI layer; must follow onnxruntime.dll.
             foreach (var name in (ReadOnlySpan<string>)[
-                "Microsoft.AI.Foundry.Local.Core.dll",
                 "onnxruntime_providers_shared.dll",
                 "onnxruntime.dll",
                 "onnxruntime-genai.dll"])

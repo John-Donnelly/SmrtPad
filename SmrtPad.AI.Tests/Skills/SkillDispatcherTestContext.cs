@@ -13,8 +13,8 @@ internal sealed class SkillDispatcherTestContext : IAsyncDisposable
         _tokens = tokens;
         _catalog.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
-        _catalog.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
+        _catalog.Setup(c => c.ProbeOnnxRuntimeGpuAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unavailable));
 
         Model = new Mock<ILanguageModelAdapter>();
         Model.Setup(m => m.StreamAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

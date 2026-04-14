@@ -37,6 +37,7 @@ public sealed class ModelBenchmarkRunner
         "deepseek-r1-1.5b",
         "qwen2.5-1.5b",
         "qwen2.5-0.5b",
+        "ernie-4.5-0.3b",
     ];
 
     private const string PhiSilicaAlias = "phi-silica";

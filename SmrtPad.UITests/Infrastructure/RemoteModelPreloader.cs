@@ -46,6 +46,7 @@ internal static class RemoteModelFilter
         ("qwen2.5-1.5b",         1_280,   1_822),
         ("qwen2.5-coder-0.5b",     528,     822),
         ("qwen2.5-0.5b",           528,     822),
+        ("ernie-4.5-0.3b",          320,     490),
     ];
 
     /// <summary>

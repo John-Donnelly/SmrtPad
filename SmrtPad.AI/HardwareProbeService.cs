@@ -9,11 +9,11 @@ public enum AIExecutionTarget
     /// <summary>On-device NPU via Phi Silica (Copilot+ PCs).</summary>
     PhiSilicaNpu,
 
-    /// <summary>Local GPU via Foundry Local SDK.</summary>
-    FoundryLocalGpu,
+    /// <summary>Local GPU via ORT GenAI (DirectML / CUDA).</summary>
+    OnnxRuntimeGpu,
 
-    /// <summary>Local CPU via Foundry Local SDK (fallback).</summary>
-    FoundryLocalCpu,
+    /// <summary>Local CPU via ORT GenAI (fallback).</summary>
+    OnnxRuntimeCpu,
 }
 
 /// <summary>Describes the availability state for an AI backend.</summary>
@@ -59,13 +59,13 @@ public sealed record AIBackendCapability(
 public sealed record HardwareProbeResult(
     AIExecutionTarget SelectedTarget,
     AIBackendCapability PhiSilica,
-    AIBackendCapability FoundryGpu)
+    AIBackendCapability Gpu)
 {
     /// <summary>Default probe state before any detection has run.</summary>
     public static HardwareProbeResult Uninitialized { get; } = new(
-        AIExecutionTarget.FoundryLocalCpu,
+        AIExecutionTarget.OnnxRuntimeCpu,
         new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unknown),
-        new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unknown));
+        new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unknown));
 }
 
 /// <summary>Abstracts hardware capability queries for testability.</summary>
@@ -74,8 +74,8 @@ public interface IExecutionProviderCatalogAdapter
     /// <summary>Returns the capability result for the Phi Silica NPU path.</summary>
     Task<AIBackendCapability> ProbePhiSilicaAsync(CancellationToken ct);
 
-    /// <summary>Returns the capability result for the Foundry Local GPU path.</summary>
-    Task<AIBackendCapability> ProbeFoundryGpuAsync(CancellationToken ct);
+    /// <summary>Returns the capability result for the ORT GenAI GPU path.</summary>
+    Task<AIBackendCapability> ProbeOnnxRuntimeGpuAsync(CancellationToken ct);
 }
 
 /// <summary>
@@ -105,18 +105,18 @@ public sealed class HardwareProbeService
             return new HardwareProbeResult(
                 AIExecutionTarget.PhiSilicaNpu,
                 phiSilica,
-                new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unknown));
+                new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unknown));
         }
 
         ct.ThrowIfCancellationRequested();
 
-        var foundryGpu = await _catalog.ProbeFoundryGpuAsync(ct).ConfigureAwait(false);
-        if (foundryGpu.IsUsable)
+        var gpu = await _catalog.ProbeOnnxRuntimeGpuAsync(ct).ConfigureAwait(false);
+        if (gpu.IsUsable)
         {
-            return new HardwareProbeResult(AIExecutionTarget.FoundryLocalGpu, phiSilica, foundryGpu);
+            return new HardwareProbeResult(AIExecutionTarget.OnnxRuntimeGpu, phiSilica, gpu);
         }
 
-        return new HardwareProbeResult(AIExecutionTarget.FoundryLocalCpu, phiSilica, foundryGpu);
+        return new HardwareProbeResult(AIExecutionTarget.OnnxRuntimeCpu, phiSilica, gpu);
     }
 
     /// <summary>Queries dedicated GPU VRAM via DXGI. Returns 0 on failure.</summary>

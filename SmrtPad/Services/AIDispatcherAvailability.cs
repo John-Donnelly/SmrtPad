@@ -43,11 +43,11 @@ public sealed record AIBackendAvailability(
 public sealed record AIDispatcherAvailability(
     string SelectedTarget,
     AIBackendAvailability PhiSilica,
-    AIBackendAvailability FoundryGpu)
+    AIBackendAvailability Gpu)
 {
     /// <summary>Default state before AI capabilities have been evaluated.</summary>
     public static AIDispatcherAvailability Uninitialized { get; } = new(
-        SelectedTarget: "FoundryLocalCpu",
+        SelectedTarget: "OnnxRuntimeCpu",
         PhiSilica: new AIBackendAvailability("Phi Silica", AIBackendAvailabilityStatus.Unknown, null, null),
-        FoundryGpu: new AIBackendAvailability("Foundry Local GPU", AIBackendAvailabilityStatus.Unknown, null, null));
+        Gpu: new AIBackendAvailability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unknown, null, null));
 }

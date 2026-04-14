@@ -56,8 +56,8 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         // Run GPU-eligible models on GPU AND CPU-eligible models on CPU (full cross-platform coverage).
         // Models that are eligible on both platforms are benchmarked on both.
         var targets = new List<(string Alias, string Target)>();
-        foreach (var a in gpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "FoundryLocalGpu"));
-        foreach (var a in cpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "FoundryLocalCpu"));
+        foreach (var a in gpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "OnnxRuntimeGpu"));
+        foreach (var a in cpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "OnnxRuntimeCpu"));
 
         // NPU proxy tier: run phi-3.5-mini on GPU to simulate what NPU would produce
         // (phi-silica / phi-3.5-mini is the NPU target model on qualifying hardware)
@@ -69,7 +69,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
         if (targets.Count == 0)
         {
-            Assert.Fail("No eligible models found. Ensure Foundry Local has models downloaded.");
+            Assert.Fail("No eligible models found. Ensure ORT GenAI models are downloaded.");
             return;
         }
 
@@ -95,7 +95,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
             await using var dispatcher = new AIDispatcherFactory().Create();
             dispatcher.SetPreferredModelAlias(alias);
             // NpuProxy runs on GPU; all other targets map directly
-            var execTarget = target == "NpuProxy (GPU)" ? "FoundryLocalGpu" : target;
+            var execTarget = target == "NpuProxy (GPU)" ? "OnnxRuntimeGpu" : target;
             dispatcher.SetPreferredExecutionTarget(execTarget);
 
             try
@@ -188,7 +188,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
         var targets = new List<(string Alias, string Target)>();
         foreach (var a in gpuAliases.Where(IsWithinParamLimit))
-            targets.Add((a, "FoundryLocalGpu"));
+            targets.Add((a, "OnnxRuntimeGpu"));
 
         // NPU proxy tier
         foreach (var a in new[] { "phi-3.5-mini" })
@@ -199,7 +199,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
         if (targets.Count == 0)
         {
-            Assert.Fail("No GPU-eligible models found. Ensure Foundry Local has models downloaded.");
+            Assert.Fail("No GPU-eligible models found. Ensure ORT GenAI models are downloaded.");
             return;
         }
 
@@ -222,7 +222,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
             await using var dispatcher = new AIDispatcherFactory().Create();
             dispatcher.SetPreferredModelAlias(alias);
-            var execTarget = target == "NpuProxy (GPU)" ? "FoundryLocalGpu" : target;
+            var execTarget = target == "NpuProxy (GPU)" ? "OnnxRuntimeGpu" : target;
             dispatcher.SetPreferredExecutionTarget(execTarget);
 
             try
@@ -279,6 +279,123 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         Console.WriteLine($"  Reports       : {outputDir}");
 
         Assert.True(finalRun.Results.Count > 0, "Expected at least one result from the GPU benchmark run.");
+    }
+
+    /// <summary>
+    /// Targeted benchmark: runs only qwen2.5-7b and ernie-4.5-0.3b on both GPU and CPU paths.
+    /// ernie-4.5-0.3b is loaded via the ORT GenAI model cache (direct path).
+    /// Run with: dotnet test --filter "Category=TargetedBenchmark"
+    /// </summary>
+    [Fact(Timeout = 7_200_000)] // 2-hour ceiling
+    [Trait("Category", "TargetedBenchmark")]
+    public async Task TargetedBenchmarkRun_Qwen25_7b_And_Ernie_0_3b_WithLiveDashboard()
+    {
+        var outputDir = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "BenchmarkResults"));
+        Directory.CreateDirectory(outputDir);
+
+        await _probeDispatcher.InitializeAsync(msg => Console.WriteLine($"[probe] {msg}"));
+
+        var gpuAliases = _probeDispatcher.GetEligibleModelAliases();
+        var cpuAliases = _probeDispatcher.GetEligibleCpuModelAliases();
+
+        var targetedAliases = new[] { "qwen2.5-7b", "ernie-4.5-0.3b" };
+
+        var targets = new List<(string Alias, string Target)>();
+        foreach (var a in targetedAliases)
+        {
+            if (gpuAliases.Any(g => g.Equals(a, StringComparison.OrdinalIgnoreCase)))
+                targets.Add((a, "OnnxRuntimeGpu"));
+            else
+                targets.Add((a, "OnnxRuntimeGpu")); // ernie loads via direct cache path; attempt GPU
+        }
+        foreach (var a in targetedAliases)
+        {
+            if (cpuAliases.Any(c => c.Equals(a, StringComparison.OrdinalIgnoreCase)))
+                targets.Add((a, "OnnxRuntimeCpu"));
+        }
+
+        if (targets.Count == 0)
+        {
+            Assert.Fail("No targeted models found. Ensure ORT GenAI has qwen2.5-7b and ernie-4.5-0.3b downloaded.");
+            return;
+        }
+
+        var cases = BenchmarkPromptCatalog.All;
+        int totalEvals = targets.Count * cases.Count;
+
+        Console.WriteLine($"Targeted models : {string.Join(", ", targetedAliases)}");
+        Console.WriteLine($"Total evaluations: {targets.Count} targets × {cases.Count} cases = {totalEvals}");
+
+        var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-targeted-qwen-ernie";
+        var startedAt = DateTimeOffset.UtcNow;
+        var allResults = new List<BenchmarkResult>(totalEvals);
+        string? dashPath = null;
+        string currentStatus = string.Empty;
+        var responseLogPath = Path.Combine(outputDir, combinedRunId + "-responses.jsonl");
+
+        foreach (var (alias, target) in targets)
+        {
+            Console.WriteLine($"\n=== {alias} ({target}) ===");
+
+            await using var dispatcher = new AIDispatcherFactory().Create();
+            dispatcher.SetPreferredModelAlias(alias);
+            dispatcher.SetPreferredExecutionTarget(target);
+
+            try
+            {
+                await dispatcher.InitializeAsync(msg => Console.WriteLine($"  [init] {msg}"));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  ⚠️  Skipped — init failed: {ex.Message}");
+                totalEvals -= cases.Count;
+                continue;
+            }
+
+            var activeAlias  = dispatcher.ActiveModelAlias ?? alias;
+            var activeTarget = target;
+
+            var runner = new BenchmarkRunner(dispatcher, activeAlias, activeTarget, enableLlmGrading: false);
+
+            await runner.RunAsync(
+                cases,
+                onProgress: msg =>
+                {
+                    currentStatus = msg;
+                    Console.WriteLine($"  {msg}");
+                },
+                onResultAdded: result =>
+                {
+                    allResults.Add(result);
+                    var snap = new BenchmarkRun(combinedRunId, activeAlias, activeTarget, startedAt, allResults);
+                    var path = BenchmarkDashboardGenerator.Generate(snap, totalEvals, outputDir, currentStatus: currentStatus);
+                    if (dashPath is null)
+                    {
+                        dashPath = path;
+                        try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); } catch { /* browser optional */ }
+                    }
+                },
+                responseLogPath: responseLogPath,
+                perCaseTimeout: TimeSpan.FromSeconds(300));
+        }
+
+        var finalRun = new BenchmarkRun(combinedRunId, "targeted", "CPU+GPU", startedAt, allResults);
+        BenchmarkReportGenerator.WriteReports(finalRun, outputDir);
+        BenchmarkDashboardGenerator.Generate(finalRun, totalEvals, outputDir);
+
+        int passed = finalRun.Results.Count(r => r.Evaluation.RuleScore >= BenchmarkReportGenerator.PassThreshold);
+        double avg  = finalRun.Results.Count > 0 ? finalRun.Results.Average(r => r.Evaluation.RuleScore) : 0;
+
+        Console.WriteLine();
+        Console.WriteLine($"=== TARGETED BENCHMARK COMPLETE ===");
+        Console.WriteLine($"  Models tested : {targets.Count}");
+        Console.WriteLine($"  Results       : {finalRun.Results.Count}/{totalEvals}");
+        Console.WriteLine($"  Passed        : {passed}");
+        Console.WriteLine($"  Avg score     : {avg:F1}/100");
+        Console.WriteLine($"  Reports       : {outputDir}");
+
+        Assert.True(finalRun.Results.Count > 0, "Expected at least one result from the targeted benchmark run.");
     }
 }
 

@@ -77,7 +77,7 @@ public interface IAIDispatcher
     /// <summary>
     /// Sets the preferred execution target for the next initialization.
     /// Pass <c>null</c> to revert to automatic hardware-based selection.
-    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"FoundryLocalGpu"</c>, <c>"FoundryLocalCpu"</c>.
+    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"OnnxRuntimeGpu"</c>, <c>"OnnxRuntimeCpu"</c>.
     /// </summary>
     void SetPreferredExecutionTarget(string? target);
 

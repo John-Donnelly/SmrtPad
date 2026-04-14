@@ -181,7 +181,6 @@ public sealed class AIBenchmarkLiveDashboardUITests
                 RunTimestamp: DateTimeOffset.UtcNow,
                 EstimatedInputTokens: estIn,
                 EstimatedOutputTokens: estOut,
-                TokenCostUsd: tokenCost,
                 ElectricityCostUsd: elecCost);
 
             allResults.Add(result);

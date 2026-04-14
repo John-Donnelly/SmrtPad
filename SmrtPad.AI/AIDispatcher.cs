@@ -45,7 +45,7 @@ public sealed class AIDispatcher : IAsyncDisposable
 
     /// <summary>
     /// User-selected execution target override. When set, overrides automatic hardware-based target selection.
-    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"FoundryLocalGpu"</c>, <c>"FoundryLocalCpu"</c>.
+    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"OnnxRuntimeGpu"</c>, <c>"OnnxRuntimeCpu"</c>.
     /// </summary>
     public string? PreferredExecutionTarget { get; private set; }
 
@@ -95,8 +95,8 @@ public sealed class AIDispatcher : IAsyncDisposable
             ExecutionTarget = PreferredExecutionTarget switch
             {
                 "PhiSilicaNpu" when ProbeResult.PhiSilica.IsUsable => AIExecutionTarget.PhiSilicaNpu,
-                "FoundryLocalGpu" when ProbeResult.FoundryGpu.IsUsable => AIExecutionTarget.FoundryLocalGpu,
-                "FoundryLocalCpu" => AIExecutionTarget.FoundryLocalCpu,
+                "OnnxRuntimeGpu" when ProbeResult.Gpu.IsUsable => AIExecutionTarget.OnnxRuntimeGpu,
+                "OnnxRuntimeCpu" => AIExecutionTarget.OnnxRuntimeCpu,
                 _ => ProbeResult.SelectedTarget,
             };
 
@@ -107,9 +107,9 @@ public sealed class AIDispatcher : IAsyncDisposable
             ActiveModelAlias = ExecutionTarget == AIExecutionTarget.PhiSilicaNpu
                 ? "Phi Silica"
                 : PreferredAlias ?? ModelSizeSelector.GetBestAliasForCapability(
-                    ExecutionTarget == AIExecutionTarget.FoundryLocalCpu
-                        ? ProbeResult.FoundryGpu with { GpuVramMb = 0 }
-                        : ProbeResult.FoundryGpu);
+                    ExecutionTarget == AIExecutionTarget.OnnxRuntimeCpu
+                        ? ProbeResult.Gpu with { GpuVramMb = 0 }
+                        : ProbeResult.Gpu);
 
             IsInitialized = true;
         }
@@ -228,14 +228,14 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// Returns all known aliases when called before initialization.
     /// </summary>
     public IReadOnlyList<string> GetEligibleModelAliases() =>
-        ModelSizeSelector.GetEligibleAliases(ProbeResult.FoundryGpu);
+        ModelSizeSelector.GetEligibleAliases(ProbeResult.Gpu);
 
     /// <summary>
     /// Returns model aliases that fit within the CPU RAM budget (GPU VRAM ignored), ordered best-first.
     /// Used to enumerate models for CPU-path benchmarking.
     /// </summary>
     public IReadOnlyList<string> GetEligibleCpuModelAliases() =>
-        ModelSizeSelector.GetEligibleAliases(ProbeResult.FoundryGpu with { GpuVramMb = 0 });
+        ModelSizeSelector.GetEligibleAliases(ProbeResult.Gpu with { GpuVramMb = 0 });
 
     /// <summary>
     /// Disposes the current model and resets initialization state so the dispatcher can be

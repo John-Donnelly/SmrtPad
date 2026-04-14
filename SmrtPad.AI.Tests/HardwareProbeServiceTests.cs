@@ -6,9 +6,9 @@ public class HardwareProbeServiceTests
 {
     private static Mock<IExecutionProviderCatalogAdapter> CreateCatalog(
         AIBackendCapability? phiSilica = null,
-        AIBackendCapability? foundryGpu = null,
+        AIBackendCapability? gpu = null,
         Exception? phiSilicaException = null,
-        Exception? foundryGpuException = null)
+        Exception? gpuException = null)
     {
         var mock = new Mock<IExecutionProviderCatalogAdapter>();
 
@@ -18,11 +18,11 @@ public class HardwareProbeServiceTests
             mock.Setup(c => c.ProbePhiSilicaAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(phiSilica ?? new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
 
-        if (foundryGpuException is not null)
-            mock.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>())).ThrowsAsync(foundryGpuException);
+        if (gpuException is not null)
+            mock.Setup(c => c.ProbeOnnxRuntimeGpuAsync(It.IsAny<CancellationToken>())).ThrowsAsync(gpuException);
         else
-            mock.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(foundryGpu ?? new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
+            mock.Setup(c => c.ProbeOnnxRuntimeGpuAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(gpu ?? new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unavailable));
 
         return mock;
     }
@@ -32,7 +32,7 @@ public class HardwareProbeServiceTests
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Available),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
@@ -42,29 +42,29 @@ public class HardwareProbeServiceTests
     }
 
     [Fact]
-    public async Task DetectAsync_NpuUnavailable_GpuAvailable_ReturnsFoundryLocalGpu()
+    public async Task DetectAsync_NpuUnavailable_GpuAvailable_ReturnsOnnxRuntimeGpu()
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, result.SelectedTarget);
+        Assert.Equal(AIExecutionTarget.OnnxRuntimeGpu, result.SelectedTarget);
     }
 
     [Fact]
-    public async Task DetectAsync_NpuUnavailable_GpuUnavailable_ReturnsFoundryLocalCpu()
+    public async Task DetectAsync_NpuUnavailable_GpuUnavailable_ReturnsOnnxRuntimeCpu()
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unavailable));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, result.SelectedTarget);
+        Assert.Equal(AIExecutionTarget.OnnxRuntimeCpu, result.SelectedTarget);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class HardwareProbeServiceTests
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.InstallRequired),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
@@ -88,12 +88,12 @@ public class HardwareProbeServiceTests
                 "Phi Silica",
                 AIBackendAvailabilityStatus.RequiresPackageIdentity,
                 DiagnosticCode: "PACKAGE_IDENTITY_REQUIRED"),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result = await service.DetectAsync();
 
-        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, result.SelectedTarget);
+        Assert.Equal(AIExecutionTarget.OnnxRuntimeGpu, result.SelectedTarget);
         Assert.Equal(AIBackendAvailabilityStatus.RequiresPackageIdentity, result.PhiSilica.Status);
     }
 
@@ -112,7 +112,7 @@ public class HardwareProbeServiceTests
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
-            foundryGpuException: new InvalidOperationException("GPU error"));
+            gpuException: new InvalidOperationException("GPU error"));
         var service = new HardwareProbeService(catalog.Object);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.DetectAsync());
@@ -124,7 +124,7 @@ public class HardwareProbeServiceTests
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Available),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
         var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -143,8 +143,8 @@ public class HardwareProbeServiceTests
                 cts.Cancel();
                 return new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported);
             });
-        catalog.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+        catalog.Setup(c => c.ProbeOnnxRuntimeGpuAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
 
         var service = new HardwareProbeService(catalog.Object);
 
@@ -156,14 +156,14 @@ public class HardwareProbeServiceTests
     {
         var catalog = CreateCatalog(
             phiSilica: new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported),
-            foundryGpu: new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available));
+            gpu: new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available));
         var service = new HardwareProbeService(catalog.Object);
 
         var result1 = await service.DetectAsync();
         var result2 = await service.DetectAsync();
 
         Assert.Equal(result1.SelectedTarget, result2.SelectedTarget);
-        Assert.Equal(result1.FoundryGpu.Status, result2.FoundryGpu.Status);
+        Assert.Equal(result1.Gpu.Status, result2.Gpu.Status);
     }
 
     [Fact]

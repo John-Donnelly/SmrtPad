@@ -223,7 +223,7 @@ namespace SmrtPad.UITests.Infrastructure
                 foreach (var config in new[] { "Debug", "Release" })
                 {
                     string candidate = Path.Combine(dir, "SmrtPad", "bin", "x64",
-                        config, "net10.0-windows10.0.19041.0", "SmrtPad.exe");
+                        config, "net8.0-windows10.0.26100.0", "SmrtPad.exe");
                     if (File.Exists(candidate)) return candidate;
                 }
                 dir = Directory.GetParent(dir)?.FullName;

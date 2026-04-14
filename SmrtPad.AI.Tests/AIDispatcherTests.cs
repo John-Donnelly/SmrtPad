@@ -19,10 +19,10 @@ public sealed class AIDispatcherTests : IAsyncDisposable
             .ReturnsAsync(target == AIExecutionTarget.PhiSilicaNpu
                 ? new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Available)
                 : new AIBackendCapability("Phi Silica", AIBackendAvailabilityStatus.Unsupported));
-        mock.Setup(c => c.ProbeFoundryGpuAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(target == AIExecutionTarget.FoundryLocalGpu
-                ? new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Available)
-                : new AIBackendCapability("Foundry Local GPU", AIBackendAvailabilityStatus.Unavailable));
+        mock.Setup(c => c.ProbeOnnxRuntimeGpuAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(target == AIExecutionTarget.OnnxRuntimeGpu
+                ? new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Available)
+                : new AIBackendCapability("ORT GenAI GPU", AIBackendAvailabilityStatus.Unavailable));
         return mock;
     }
 
@@ -38,7 +38,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
     }
 
     private AIDispatcher CreateDispatcher(
-        AIExecutionTarget target = AIExecutionTarget.FoundryLocalCpu,
+        AIExecutionTarget target = AIExecutionTarget.OnnxRuntimeCpu,
         Mock<ILanguageModelAdapter>? modelMock = null)
     {
         var catalog = CreateCatalog(target);
@@ -75,7 +75,7 @@ public sealed class AIDispatcherTests : IAsyncDisposable
     public async Task InitializeAsync_CalledTwice_InitializesOnce()
     {
         int factoryCallCount = 0;
-        var catalog = CreateCatalog(AIExecutionTarget.FoundryLocalCpu);
+        var catalog = CreateCatalog(AIExecutionTarget.OnnxRuntimeCpu);
         var probe = new HardwareProbeService(catalog.Object);
         var model = CreateModelAdapter();
 
@@ -101,20 +101,20 @@ public sealed class AIDispatcherTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task InitializeAsync_CpuTarget_SetsExecutionTargetFoundryLocalCpu()
+    public async Task InitializeAsync_CpuTarget_SetsExecutionTargetOnnxRuntimeCpu()
     {
-        var dispatcher = CreateDispatcher(AIExecutionTarget.FoundryLocalCpu);
+        var dispatcher = CreateDispatcher(AIExecutionTarget.OnnxRuntimeCpu);
         await dispatcher.InitializeAsync();
-        Assert.Equal(AIExecutionTarget.FoundryLocalCpu, dispatcher.ExecutionTarget);
+        Assert.Equal(AIExecutionTarget.OnnxRuntimeCpu, dispatcher.ExecutionTarget);
     }
 
     [Fact]
-    public async Task InitializeAsync_GpuTarget_SetsExecutionTargetFoundryLocalGpu()
+    public async Task InitializeAsync_GpuTarget_SetsExecutionTargetOnnxRuntimeGpu()
     {
-        var dispatcher = CreateDispatcher(AIExecutionTarget.FoundryLocalGpu);
+        var dispatcher = CreateDispatcher(AIExecutionTarget.OnnxRuntimeGpu);
         await dispatcher.InitializeAsync();
-        Assert.Equal(AIExecutionTarget.FoundryLocalGpu, dispatcher.ExecutionTarget);
-        Assert.Equal(AIBackendAvailabilityStatus.Available, dispatcher.ProbeResult.FoundryGpu.Status);
+        Assert.Equal(AIExecutionTarget.OnnxRuntimeGpu, dispatcher.ExecutionTarget);
+        Assert.Equal(AIBackendAvailabilityStatus.Available, dispatcher.ProbeResult.Gpu.Status);
     }
 
     [Fact]

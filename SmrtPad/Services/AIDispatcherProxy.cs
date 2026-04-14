@@ -89,8 +89,8 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
             return target.ToString() switch
             {
                 "PhiSilicaNpu" => "⚡ NPU",
-                "FoundryLocalGpu" => "🖥️ GPU",
-                "FoundryLocalCpu" => "🐢 CPU",
+                "OnnxRuntimeGpu" => "🖥️ GPU",
+                "OnnxRuntimeCpu" => "🐢 CPU",
                 _ => target.ToString()!,
             };
         }
@@ -194,7 +194,7 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
         return new AIDispatcherAvailability(
             SelectedTarget: probeResult.SelectedTarget.ToString(),
             PhiSilica: MapBackendAvailability(probeResult.PhiSilica),
-            FoundryGpu: MapBackendAvailability(probeResult.FoundryGpu));
+            Gpu: MapBackendAvailability(probeResult.Gpu));
     }
 
     private static AIBackendAvailability MapBackendAvailability(dynamic capability)

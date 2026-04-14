@@ -28,7 +28,6 @@ public sealed partial class SmartSidebar : UserControl
     private const string StatusCodePending = "PENDING";
     private const string StatusCodeReady = "READY";
     private const string StatusCodeUnavailable = "UNAVAILABLE";
-    private const string StatusCodeFoundryMissing = "PREREQ_FOUNDRY_MISSING";
     private const string StatusCodeInitFailed = "PREREQ_DISPATCHER_INIT_FAILED";
 
     private readonly IAIDispatcher _dispatcher;
@@ -299,7 +298,7 @@ public sealed partial class SmartSidebar : UserControl
             ?? _dispatcher.Availability.SelectedTarget;
 
         IReadOnlyList<string> aliases;
-        if (string.Equals(target, "FoundryLocalCpu", StringComparison.Ordinal))
+        if (string.Equals(target, "OnnxRuntimeCpu", StringComparison.Ordinal))
         {
             aliases = _dispatcher.GetEligibleCpuModelAliases();
         }
@@ -371,8 +370,8 @@ public sealed partial class SmartSidebar : UserControl
         (string Key, string Label, bool IsEnabled)[] targets =
         [
             ("PhiSilicaNpu",    ResourceHelper.GetString("SmartSidebarNpu"), availability.PhiSilica.IsUsable),
-            ("FoundryLocalGpu", ResourceHelper.GetString("SmartSidebarGpu"), availability.FoundryGpu.IsUsable),
-            ("FoundryLocalCpu", ResourceHelper.GetString("SmartSidebarCpu"), true),
+            ("OnnxRuntimeGpu", ResourceHelper.GetString("SmartSidebarGpu"), availability.Gpu.IsUsable),
+            ("OnnxRuntimeCpu", ResourceHelper.GetString("SmartSidebarCpu"), true),
         ];
 
         foreach (var (key, label, isEnabled) in targets)
@@ -987,13 +986,6 @@ public sealed partial class SmartSidebar : UserControl
     {
         if (!string.IsNullOrWhiteSpace(failureMessage))
         {
-            if (IsLikelyFoundryMissingMessage(failureMessage))
-            {
-                return (
-                    ResourceHelper.GetString("SmartSidebarPrerequisiteFoundryMissingStatus"),
-                    StatusCodeFoundryMissing);
-            }
-
             return (
                 ResourceHelper.GetString("SmartSidebarPrerequisiteDispatcherInitFailedStatus"),
                 StatusCodeInitFailed);
@@ -1004,32 +996,20 @@ public sealed partial class SmartSidebar : UserControl
         {
             { PhiSilica.Status: AIBackendAvailabilityStatus.RequiresPackageIdentity } =>
                 (ResourceHelper.GetString("SmartSidebarExecutionPackageIdentityRequired"), StatusCodeUnavailable),
-            { PhiSilica.Status: AIBackendAvailabilityStatus.Unsupported, FoundryGpu.IsUsable: false } =>
+            { PhiSilica.Status: AIBackendAvailabilityStatus.Unsupported, Gpu.IsUsable: false } =>
                 (ResourceHelper.GetString("SmartSidebarExecutionUnsupported"), StatusCodeUnavailable),
-            { FoundryGpu.Status: AIBackendAvailabilityStatus.Error } =>
+            { Gpu.Status: AIBackendAvailabilityStatus.Error } =>
                 (ResourceHelper.GetFormatted("SmartSidebarErrorFormat",
-                    availability.FoundryGpu.DiagnosticMessage ?? availability.FoundryGpu.DiagnosticCode ??
+                    availability.Gpu.DiagnosticMessage ?? availability.Gpu.DiagnosticCode ??
                     ResourceHelper.GetString("SmartSidebarExecutionUnavailable")), StatusCodeUnavailable),
             { PhiSilica.Status: AIBackendAvailabilityStatus.Error } =>
                 (ResourceHelper.GetFormatted("SmartSidebarErrorFormat",
                     availability.PhiSilica.DiagnosticMessage ?? availability.PhiSilica.DiagnosticCode ??
                     ResourceHelper.GetString("SmartSidebarExecutionUnavailable")), StatusCodeUnavailable),
-            { FoundryGpu.Status: AIBackendAvailabilityStatus.Unavailable } =>
+            { Gpu.Status: AIBackendAvailabilityStatus.Unavailable } =>
                 (ResourceHelper.GetString("SmartSidebarExecutionUnavailable"), StatusCodeUnavailable),
             _ => (ResourceHelper.GetString("SmartSidebarExecutionUnavailable"), StatusCodeUnavailable)
         };
-    }
-
-    private static bool IsLikelyFoundryMissingMessage(string message)
-    {
-        if (string.IsNullOrWhiteSpace(message))
-            return false;
-
-        return message.Contains("foundry", StringComparison.OrdinalIgnoreCase)
-            && (message.Contains("not found", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("not recognized", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("is unavailable", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("catalog", StringComparison.OrdinalIgnoreCase));
     }
 
     private void SetInitializationStatus(string text, bool isVisible, string? statusCode = null)
