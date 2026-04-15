@@ -14,22 +14,57 @@ namespace SmrtPad.AI;
 /// </summary>
 internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
 {
-    // Runs once per process. Must complete before any LLamaWeights.LoadFromFile call.
-    // WithCuda(true)  → prefer the cuda12 backend over the CPU variants.
-    // WithSearchDirectory → tells LLamaSharp where to find llama.dll/ggml-cuda.dll;
-    //   the NuGet package copies them to runtimes/win-x64/native/cuda12/ relative to
-    //   the assembly, so we resolve that path from the assembly location at runtime.
-    // WithAutoFallback(true) → silently fall back to CPU if CUDA initialisation fails
-    //   (e.g. CUDA runtime not installed) rather than throwing.
+    // Runs once per process before any LLamaWeights.LoadFromFile call.
+    //
+    // Strategy: when CUDA is available, point NativeLibraryConfig directly at the
+    // cuda12/llama.dll via WithLibrary (full path).  This bypasses the selecting
+    // policy entirely and tells the OS loader exactly which binary to open.
+    // We also call AddDllDirectory so Windows resolves ggml-cuda.dll (which llama.dll
+    // depends on) from the same subfolder without needing it on PATH.
+    //
+    // Fallback: when CUDA is absent, WithAutoFallback(true) lets LLamaSharp pick the
+    // best CPU variant (avx512 → avx2 → avx → noavx).
     static ConcreteLlamaSharpModelAdapter()
     {
         var assemblyDir = Path.GetDirectoryName(
             typeof(ConcreteLlamaSharpModelAdapter).Assembly.Location) ?? string.Empty;
-        var cuda12Dir = Path.Combine(assemblyDir, "runtimes", "win-x64", "native", "cuda12");
 
+        if (IsCudaAvailable())
+        {
+            var cuda12Dir = Path.Combine(assemblyDir, "runtimes", "win-x64", "native", "cuda12");
+            var llamaCuda = Path.Combine(cuda12Dir, "llama.dll");
+
+            if (File.Exists(llamaCuda))
+            {
+                // NativeLibrary.Load with an absolute path uses LOAD_WITH_ALTERED_SEARCH_PATH
+                // which ignores SetDllDirectory.  Pre-load every dependency in dependency order
+                // so Windows finds them in the loader cache before ggml.dll's static imports
+                // are resolved.  This sidesteps all DLL search path issues.
+                foreach (var dep in new[]
+                {
+                    "cudart64_12.dll", "cublas64_12.dll", "cublasLt64_12.dll",  // CUDA runtime
+                    "ggml-base.dll", "ggml-cpu.dll",                              // GGML base
+                    "ggml-cuda.dll",                                               // CUDA backend
+                    "ggml.dll",                                                    // GGML dispatcher
+                })
+                {
+                    var depPath = Path.Combine(cuda12Dir, dep);
+                    if (File.Exists(depPath))
+                        System.Runtime.InteropServices.NativeLibrary.Load(depPath);
+                }
+
+                NativeLibraryConfig.All
+                    .WithLibrary(llamaCuda, null)
+                    .WithAutoFallback(false);
+                return;
+            }
+        }
+
+        // CPU path: let LLamaSharp pick the best AVX variant automatically.
+        var cpuDir = Path.Combine(assemblyDir, "runtimes", "win-x64", "native");
         NativeLibraryConfig.All
-            .WithCuda(hasCuda: IsCudaAvailable())
-            .WithSearchDirectory(cuda12Dir)
+            .WithCuda(false)
+            .WithSearchDirectory(cpuDir)
             .WithAutoFallback(true);
     }
 

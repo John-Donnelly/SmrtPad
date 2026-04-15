@@ -52,4 +52,42 @@
     <InternalsVisibleTo Include="SmrtPad.AI.Tests" />
     <InternalsVisibleTo Include="SmrtPad.AI.Benchmarks" />
   </ItemGroup>
+
+  <!--
+    Copy CUDA 12 runtime DLLs (cudart64_12, cublas64_12, cublasLt64_12) from the Python
+    NVIDIA packages into the cuda12 output subdirectory alongside ggml-cuda.dll.
+    These are required transitive dependencies of ggml-cuda.dll that are not bundled with
+    LLamaSharp.Backend.Cuda12 — they ship with the CUDA Toolkit or the pip nvidia-* packages.
+    Installing the full CUDA Toolkit is not required; the three DLLs are sufficient.
+    The pip packages (nvidia-cuda-runtime-cu12, nvidia-cublas-cu12) must be installed:
+      pip install nvidia-cuda-runtime-cu12 nvidia-cublas-cu12
+    The LOCALAPPDATA path below is the default for a per-user Python 3.10 install on Windows.
+    Update $(PythonSitePackages) in Directory.Build.props if your Python path differs.
+  -->
+  <PropertyGroup>
+    <PythonSitePackages Condition="'$(PythonSitePackages)' == ''">$(LOCALAPPDATA)\Programs\Python\Python310\Lib\site-packages</PythonSitePackages>
+    <CudaRuntimeSrc>$(PythonSitePackages)\nvidia\cuda_runtime\bin</CudaRuntimeSrc>
+    <CublasSrc>$(PythonSitePackages)\nvidia\cublas\bin</CublasSrc>
+    <Cuda12OutDir>$(OutputPath)runtimes\win-x64\native\cuda12\</Cuda12OutDir>
+  </PropertyGroup>
+
+  <Target Name="CopyCudaRuntimeDlls" AfterTargets="Build"
+          Condition="'$(RuntimeIdentifier)' == 'win-x64' OR '$(Platform)' == 'x64'">
+    <ItemGroup>
+      <_CudaRuntimeDlls Include="$(CudaRuntimeSrc)\cudart64_12.dll"
+                        Condition="Exists('$(CudaRuntimeSrc)\cudart64_12.dll')" />
+      <_CudaRuntimeDlls Include="$(CublasSrc)\cublas64_12.dll"
+                        Condition="Exists('$(CublasSrc)\cublas64_12.dll')" />
+      <_CudaRuntimeDlls Include="$(CublasSrc)\cublasLt64_12.dll"
+                        Condition="Exists('$(CublasSrc)\cublasLt64_12.dll')" />
+    </ItemGroup>
+    <MakeDir Directories="$(Cuda12OutDir)" />
+    <Copy SourceFiles="@(_CudaRuntimeDlls)"
+          DestinationFolder="$(Cuda12OutDir)"
+          SkipUnchangedFiles="true"
+          Condition="'@(_CudaRuntimeDlls)' != ''" />
+    <Warning Text="CUDA runtime DLLs not found at $(CudaRuntimeSrc) / $(CublasSrc). GPU inference will fall back to CPU. Install with: pip install nvidia-cuda-runtime-cu12 nvidia-cublas-cu12"
+             Condition="'@(_CudaRuntimeDlls)' == ''" />
+  </Target>
+
 </Project>
