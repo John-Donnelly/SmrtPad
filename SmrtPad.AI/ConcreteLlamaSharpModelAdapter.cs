@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Channels;
 using LLama;
 using LLama.Common;
+using LLama.Native;
 using LLama.Sampling;
 
 namespace SmrtPad.AI;
@@ -13,6 +14,25 @@ namespace SmrtPad.AI;
 /// </summary>
 internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
 {
+    // Runs once per process. Must complete before any LLamaWeights.LoadFromFile call.
+    // WithCuda(true)  → prefer the cuda12 backend over the CPU variants.
+    // WithSearchDirectory → tells LLamaSharp where to find llama.dll/ggml-cuda.dll;
+    //   the NuGet package copies them to runtimes/win-x64/native/cuda12/ relative to
+    //   the assembly, so we resolve that path from the assembly location at runtime.
+    // WithAutoFallback(true) → silently fall back to CPU if CUDA initialisation fails
+    //   (e.g. CUDA runtime not installed) rather than throwing.
+    static ConcreteLlamaSharpModelAdapter()
+    {
+        var assemblyDir = Path.GetDirectoryName(
+            typeof(ConcreteLlamaSharpModelAdapter).Assembly.Location) ?? string.Empty;
+        var cuda12Dir = Path.Combine(assemblyDir, "runtimes", "win-x64", "native", "cuda12");
+
+        NativeLibraryConfig.All
+            .WithCuda(hasCuda: IsCudaAvailable())
+            .WithSearchDirectory(cuda12Dir)
+            .WithAutoFallback(true);
+    }
+
     private readonly LLamaWeights _weights;
     private readonly ModelParams _modelParams;
     private readonly int _maxContextTokens;
@@ -51,9 +71,15 @@ internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
 
         var modelParams = new ModelParams(ggufPath)
         {
-            ContextSize = (uint)maxContextTokens,
-            GpuLayerCount = gpuLayers,
-            MainGpu = 0,
+            ContextSize    = (uint)maxContextTokens,
+            GpuLayerCount  = gpuLayers,
+            MainGpu        = 0,
+            // Flash attention halves KV-cache memory bandwidth and roughly doubles TPS on GPU.
+            FlashAttention = gpuLayers > 0,
+            // Larger physical batch = more parallelism per GPU kernel launch.
+            // 512 is a safe default for models up to 7B on 8 GiB VRAM.
+            BatchSize      = 512,
+            UBatchSize     = 512,
         };
 
         var weights = await Task.Run(
@@ -204,30 +230,33 @@ internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
 
     /// <summary>
     /// Returns the number of transformer layers to offload to GPU.
-    /// Uses all layers (999) when a CUDA driver is present; 0 for pure CPU.
+    /// Offloads all layers (999) when CUDA is available and the model fits in VRAM;
+    /// uses partial offload when the model is too large; falls back to 0 (CPU) otherwise.
     /// </summary>
     private static int DetermineGpuLayerCount(string ggufPath)
     {
-        // Check for NVIDIA CUDA driver (same heuristic as ConcreteOrtGenAiModelAdapter)
-        var system32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
-        bool hasCuda = File.Exists(Path.Combine(system32, "nvcuda.dll"));
-        if (!hasCuda)
+        if (!IsCudaAvailable())
             return 0;
 
-        // Estimate model file size to decide if we can fit it fully on GPU.
-        // RTX 4060 has 8188 MiB usable; leave 512 MiB headroom for activations/KV cache.
-        const long GpuBudgetMb = 8188 - 512;
+        // RTX 4060 has 8 188 MiB VRAM.  Reserve 1 GiB for KV-cache and activations;
+        // the rest is available for model weights.
+        const long GpuBudgetMb = 8188 - 1024;
         long modelMb = new FileInfo(ggufPath).Length / (1024 * 1024);
 
-        // If the model fits comfortably, offload everything (999 = all layers)
         if (modelMb <= GpuBudgetMb)
-            return 999;
+            return 999;  // all layers on GPU
 
-        // Partial offload: estimate layers proportional to budget
-        // Typical: 32 layers for 1B-4B, 40 for 7B. Use a conservative 40.
-        const int EstimatedLayers = 40;
+        // Partial offload: scale layer count proportionally.
+        // Use 40 as a conservative upper bound (covers 1B-7B models).
         double ratio = (double)GpuBudgetMb / modelMb;
-        return Math.Max(1, (int)(EstimatedLayers * ratio));
+        return Math.Max(1, (int)(40 * ratio));
+    }
+
+    /// <summary>Returns <c>true</c> when an NVIDIA CUDA driver is present on this machine.</summary>
+    private static bool IsCudaAvailable()
+    {
+        var system32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        return File.Exists(Path.Combine(system32, "nvcuda.dll"));
     }
 
     // ── Async token stream bridging ───────────────────────────────────────────
