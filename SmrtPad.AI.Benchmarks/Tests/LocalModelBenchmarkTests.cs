@@ -4,21 +4,30 @@ using SmrtPad.AI.Benchmarks.Reporting;
 namespace SmrtPad.AI.Benchmarks.Tests;
 
 /// <summary>
-/// Benchmarks all ONNX GenAI models discovered on local drives (B:\Models, etc.).
-/// Each subdirectory containing <c>genai_config.json</c> + <c>model.onnx</c> is treated
-/// as a loadable model and benchmarked via the ORT GenAI adapter with a live dashboard.
+/// Benchmarks all locally available models — ORT GenAI (ONNX) and llama.cpp (GGUF) — found
+/// under the configured search roots.
+/// <list type="bullet">
+///   <item>ORT GenAI: directories containing <c>genai_config.json</c> + <c>model.onnx</c>.</item>
+///   <item>llama.cpp: <c>.gguf</c> files inside any subdirectory of a GGUF root.</item>
+/// </list>
 /// Run with: dotnet test --filter "Category=LocalModelBenchmark"
 /// </summary>
 [Collection("LiveBenchmarks")]
 public sealed class LocalModelBenchmarkTests
 {
-    /// <summary>
-    /// Root directories to scan recursively for ONNX GenAI model folders.
-    /// A valid model folder must contain both <c>genai_config.json</c> and <c>model.onnx</c>.
-    /// </summary>
-    private static readonly string[] ModelSearchRoots =
+    /// <summary>Root directories containing ORT GenAI ONNX model subdirectories.</summary>
+    private static readonly string[] OnnxSearchRoots =
     [
         @"B:\Models\benchmark-models",
+    ];
+
+    /// <summary>
+    /// Root directories containing GGUF model subdirectories.
+    /// Each immediate subdirectory of these roots is expected to hold one <c>.gguf</c> file.
+    /// </summary>
+    private static readonly string[] GgufSearchRoots =
+    [
+        @"B:\Models\benchmark-models-gguf",
     ];
 
     private const int MaxContextTokens = 4096;
@@ -35,9 +44,10 @@ public sealed class LocalModelBenchmarkTests
 
         if (discoveredModels.Count == 0)
         {
+            var allRoots = OnnxSearchRoots.Concat(GgufSearchRoots);
             Assert.Fail(
-                $"No ONNX GenAI models found. Searched: {string.Join(", ", ModelSearchRoots)}. " +
-                "Each model directory must contain genai_config.json and model.onnx.");
+                $"No models found. Searched: {string.Join(", ", allRoots)}. " +
+                "ONNX: directories with genai_config.json + model.onnx. GGUF: *.gguf files.");
             return;
         }
 
@@ -128,31 +138,45 @@ public sealed class LocalModelBenchmarkTests
     }
 
     /// <summary>
-    /// Recursively scans <see cref="ModelSearchRoots"/> for directories containing
-    /// both <c>genai_config.json</c> and <c>model.onnx</c>.
-    /// Returns a list of (friendly name, absolute directory path) tuples ordered by name.
+    /// Discovers all loadable models from both ORT GenAI (ONNX) and GGUF roots.
+    /// For ONNX roots: scans recursively for directories with genai_config.json + model.onnx.
+    /// For GGUF roots: scans immediate subdirectories for a single *.gguf file.
+    /// Returns (friendly name, absolute path to dir-or-gguf-file) ordered by name.
     /// </summary>
     private static List<(string Name, string Path)> DiscoverLocalModels()
     {
         var models = new List<(string Name, string Path)>();
 
-        foreach (var root in ModelSearchRoots)
+        // ORT GenAI ONNX directories
+        foreach (var root in OnnxSearchRoots)
         {
             if (!Directory.Exists(root))
                 continue;
 
-            // Check if the root itself is a model directory
             if (IsOnnxGenAiModelDirectory(root))
             {
                 models.Add((DeriveFriendlyName(root), root));
                 continue;
             }
 
-            // Recurse into subdirectories
             foreach (var dir in Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories))
             {
                 if (IsOnnxGenAiModelDirectory(dir))
                     models.Add((DeriveFriendlyName(dir), dir));
+            }
+        }
+
+        // GGUF files — each immediate subdirectory of a GGUF root holds one .gguf file
+        foreach (var root in GgufSearchRoots)
+        {
+            if (!Directory.Exists(root))
+                continue;
+
+            foreach (var subdir in Directory.EnumerateDirectories(root))
+            {
+                var gguf = Directory.EnumerateFiles(subdir, "*.gguf").FirstOrDefault();
+                if (gguf is not null)
+                    models.Add((System.IO.Path.GetFileName(subdir) + " [GGUF]", gguf));
             }
         }
 
@@ -165,15 +189,13 @@ public sealed class LocalModelBenchmarkTests
         File.Exists(System.IO.Path.Combine(dir, "model.onnx"));
 
     /// <summary>
-    /// Derives a human-readable model name from the directory path.
-    /// Uses the leaf directory name, or parent+leaf for deeply nested models
-    /// (e.g. "Microsoft/qwen2.5-7b-instruct-cuda-gpu-4/v4" → "qwen2.5-7b-instruct-cuda-gpu-4").
+    /// Derives a human-readable model name from a directory path.
+    /// Uses the leaf name, or parent+leaf for version-tagged leaves like "v4".
     /// </summary>
     private static string DeriveFriendlyName(string modelDir)
     {
         var leaf = System.IO.Path.GetFileName(modelDir);
 
-        // If the leaf is a version tag like "v4" or "v2", use the parent directory name
         if (leaf is not null && leaf.StartsWith('v') && leaf.Length <= 3 && leaf.Skip(1).All(char.IsDigit))
         {
             var parent = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(modelDir));

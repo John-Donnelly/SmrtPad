@@ -62,6 +62,10 @@ internal static class ModelSizeSelector
         ("qwen2.5-coder-0.5b",          528,     822),
         ("qwen2.5-0.5b",                544,     822),
         ("ernie-4.5-0.3b",              320,     490),
+        // Gemma 4 — GGUF/llama.cpp only; ORT GenAI has no Gemma4ForConditionalGeneration support.
+        // These entries are excluded from the ONNX selection path (both sentinels = -1).
+        ("gemma-4-e2b",             CpuOnly, GpuOnly),
+        ("gemma-4-e4b",             CpuOnly, GpuOnly),
     ];
 
     /// <summary>

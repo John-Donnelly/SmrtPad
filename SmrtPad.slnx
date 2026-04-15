@@ -12,6 +12,11 @@
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x64" Build="false" />
   </Project>
+  <Project Path="SmrtPad.AI/SmrtPad.AI.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x64" Build="false" />
+  </Project>
   <Project Path="SmrtPad.AI.Benchmarks/SmrtPad.AI.Benchmarks.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />

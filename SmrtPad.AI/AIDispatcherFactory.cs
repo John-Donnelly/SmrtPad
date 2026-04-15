@@ -182,29 +182,44 @@ public sealed class AIDispatcherFactory
 
     /// <summary>
     /// Creates an <see cref="AIDispatcher"/> that loads a model directly from
-    /// <paramref name="modelDirectory"/> via the ORT GenAI adapter, bypassing
-    /// the alias/download pipeline. Intended for benchmarking local model directories.
+    /// <paramref name="modelPath"/> bypassing the alias/download pipeline.
+    /// <list type="bullet">
+    ///   <item>If <paramref name="modelPath"/> is a <c>.gguf</c> file, the llama.cpp (LLamaSharp) runner is used.</item>
+    ///   <item>If <paramref name="modelPath"/> is a directory containing <c>genai_config.json</c>, the ORT GenAI runner is used.</item>
+    /// </list>
+    /// Intended for benchmarking local model directories and GGUF files.
     /// </summary>
-    /// <param name="modelDirectory">
-    /// Absolute path to a directory containing <c>genai_config.json</c> and <c>model.onnx</c>.
+    /// <param name="modelPath">
+    /// Absolute path to either a <c>.gguf</c> file or a directory containing <c>genai_config.json</c> + <c>model.onnx</c>.
     /// </param>
     /// <param name="maxContextTokens">Maximum context window size in tokens.</param>
-    public static AIDispatcher CreateFromLocalPath(string modelDirectory, int maxContextTokens = 4096)
+    public static AIDispatcher CreateFromLocalPath(string modelPath, int maxContextTokens = 4096)
     {
-        ArgumentNullException.ThrowIfNull(modelDirectory);
-        if (!File.Exists(Path.Combine(modelDirectory, "genai_config.json")))
+        ArgumentNullException.ThrowIfNull(modelPath);
+
+        bool isGguf = modelPath.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase)
+                   && File.Exists(modelPath);
+
+        if (!isGguf && !File.Exists(Path.Combine(modelPath, "genai_config.json")))
             throw new ArgumentException(
-                $"Directory does not contain genai_config.json: {modelDirectory}", nameof(modelDirectory));
+                $"Path must be a .gguf file or a directory containing genai_config.json: {modelPath}",
+                nameof(modelPath));
 
         var stubCatalog = new StubCatalogAdapter();
         var probe = new HardwareProbeService(stubCatalog);
 
-        return new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+        if (isGguf)
         {
-            return await ConcreteOrtGenAiModelAdapter
-                .CreateAsync(modelDirectory, maxContextTokens, onProgress, ct)
-                .ConfigureAwait(false);
-        });
+            return new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+                await ConcreteLlamaSharpModelAdapter
+                    .CreateAsync(modelPath, maxContextTokens, onProgress, ct)
+                    .ConfigureAwait(false));
+        }
+
+        return new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+            await ConcreteOrtGenAiModelAdapter
+                .CreateAsync(modelPath, maxContextTokens, onProgress, ct)
+                .ConfigureAwait(false));
     }
 
     private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)

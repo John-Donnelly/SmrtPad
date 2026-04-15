@@ -80,13 +80,24 @@
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
+    <!-- SmrtPad.AI is built as a separate solution project in its own NuGet context.
+         This reference is order-only: ReferenceOutputAssembly=false so the wapproj does
+         not try to link against it, but it guarantees SmrtPad.AI builds before
+         CopySmrtPadAiOutputs runs and copies its outputs into AppX. -->
+    <ProjectReference Include="$(AIProjectPath)">
+      <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SetPlatform>Platform=$(AIPlatform)</SetPlatform>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
   <Target Name="CopySmrtPadAiOutputs" AfterTargets="Build">
-    <MSBuild Projects="$(AIProjectPath)" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(AIPlatform)" />
+    <!-- SmrtPad.AI is built by the solution before this target fires (via the order-only
+         ProjectReference above).  This target only copies the already-built outputs into
+         the AppX layout — no nested MSBuild Build call needed or wanted here. -->
     <ItemGroup>
       <SmrtPadAiOutputs Include="$(AIOutputDir)*" />
       <!-- Native DLLs from the runtimes layout (present when RuntimeIdentifier is not set during

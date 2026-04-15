@@ -42,6 +42,11 @@
     <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.Managed" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="System.Management" />
+    <!-- LLamaSharp: llama.cpp GGUF runner (CPU + CUDA 12). Both backends included so the
+         correct native library is selected at runtime based on hardware availability. -->
+    <PackageReference Include="LLamaSharp" />
+    <PackageReference Include="LLamaSharp.Backend.Cpu" />
+    <PackageReference Include="LLamaSharp.Backend.Cuda12" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="SmrtPad.AI.Tests" />
