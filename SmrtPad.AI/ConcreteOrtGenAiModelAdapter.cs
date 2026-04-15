@@ -144,6 +144,8 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
     {
         "qwen"     => $"<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n",
         "deepseek" => $"<|User|>{prompt}<|Assistant|>",
+        "llama"    => $"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+        "gemma3"   => $"<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n",
         _          => $"<|user|>\n{prompt}<|end|>\n<|assistant|>\n",   // Phi default
     };
 
@@ -167,10 +169,14 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
                 modelProp.TryGetProperty("type", out var typeProp))
             {
                 var type = typeProp.GetString() ?? string.Empty;
-                if (type.Contains("qwen", StringComparison.OrdinalIgnoreCase))
-                    return "qwen";
-                if (type.Contains("deepseek", StringComparison.OrdinalIgnoreCase))
-                    return "deepseek";
+                    if (type.Contains("qwen", StringComparison.OrdinalIgnoreCase))
+                        return "qwen";
+                    if (type.Contains("deepseek", StringComparison.OrdinalIgnoreCase))
+                        return "deepseek";
+                    if (type.Equals("llama", StringComparison.OrdinalIgnoreCase))
+                        return "llama";
+                    if (type.Contains("gemma", StringComparison.OrdinalIgnoreCase))
+                        return "gemma3";
             }
 
             // Also try checking the EOS tokens for Qwen-style markers

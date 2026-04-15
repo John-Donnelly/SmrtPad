@@ -18,8 +18,7 @@ public sealed class LocalModelBenchmarkTests
     /// </summary>
     private static readonly string[] ModelSearchRoots =
     [
-        @"B:\Models\qwen3.5-cache",
-        @"B:\Models\qwen35test",
+        @"B:\Models\benchmark-models",
     ];
 
     private const int MaxContextTokens = 4096;

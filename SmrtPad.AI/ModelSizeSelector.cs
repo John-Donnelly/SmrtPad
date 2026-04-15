@@ -39,23 +39,29 @@ internal static class ModelSizeSelector
     /// </summary>
     private static readonly (string Alias, long GpuMb, long CpuMb)[] PreferredAliases =
     [
-        //                           alias                  GPU       CPU
-        ("phi-4",                  8_570,  10_403),
-        ("deepseek-r1-7b",         5_406,   6_584),
-        ("qwen2.5-7b",             4_843,   6_307),
-        ("qwen2.5-coder-7b",       4_843,   6_307),
-        ("phi-4-mini",             3_686,   4_915),
-        ("phi-4-mini-reasoning",   3_225,   4_628),
-        ("phi-3.5-mini",           2_181,   2_590),
-        ("phi-3-mini-128k",        2_181,   2_600),
-        ("phi-3-mini-4k",          2_181,   2_590),
-        ("deepseek-r1-1.5b",       1_464,  GpuOnly),   // GPU-only: no CPU int-4 ONNX variant published
-        ("qwen2.5-coder-1.5b",     1_280,   1_822),
-        ("qwen2.5-1.5b",           1_280,   1_822),
-        ("qwen3-0.6b",           CpuOnly,     594),    // CPU-only: no GPU ONNX variant published
-        ("qwen2.5-coder-0.5b",       528,     822),
-        ("qwen2.5-0.5b",             528,     822),
-        ("ernie-4.5-0.3b",           320,     490),
+        //                              alias                  GPU       CPU
+        ("phi-4",                     8_570,  10_403),
+        ("deepseek-r1-7b",            5_406,   6_584),
+        ("qwen2.5-7b",                4_843,   6_307),
+        ("qwen2.5-coder-7b",          4_843,   6_307),
+        // Benchmark models — measured from downloaded ORT GenAI int-4 ONNX files
+        ("phi-4-mini",                3_276,   4_702),
+        ("phi-4-mini-reasoning",      3_276,   4_702),
+        ("gemma-3-4b",                2_608, CpuOnly),   // GPU only: MiCkSoftware flat ONNX GenAI repo
+        ("llama-3.2-3b",              2_516,   3_491),
+        ("phi-3.5-mini",              2_214,   2_590),
+        ("phi-3-mini-128k",           2_181,   2_600),
+        ("phi-3-mini-4k",             2_181,   2_590),
+        ("qwen3-1.7b",                1_542, CpuOnly),   // GPU only: colli-ai flat ONNX GenAI repo
+        ("llama-3.2-1b",              1_189, CpuOnly),   // GPU only: no CPU int-4 ONNX variant downloaded
+        ("deepseek-r1-1.5b",          1_464, GpuOnly),   // GPU only: no CPU int-4 ONNX variant published
+        ("qwen2.5-coder-1.5b",        1_280,   1_822),
+        ("qwen2.5-1.5b",              1_280,   1_822),
+        ("gemma-3-1b",                  699, CpuOnly),   // GPU only: MiCkSoftware flat ONNX GenAI repo
+        ("qwen3-0.6b",              CpuOnly,     387),   // CPU only: no GPU ONNX variant downloaded
+        ("qwen2.5-coder-0.5b",          528,     822),
+        ("qwen2.5-0.5b",                544,     822),
+        ("ernie-4.5-0.3b",              320,     490),
     ];
 
     /// <summary>
@@ -82,6 +88,26 @@ internal static class ModelSizeSelector
                                          GpuSubdir: "cuda/cuda-int4-rtn-block-32",
                                          CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
             ["phi-3-mini-4k"]       = new("microsoft/Phi-3-mini-4k-instruct-onnx",
+                                         GpuSubdir: "cuda/cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
+            // Benchmark models sourced from HuggingFace in ORT GenAI int-4 format
+            ["llama-3.2-3b"]        = new("onnx-community/Llama-3.2-3B-Instruct-GENAI-ONNX",
+                                         GpuSubdir: "cuda/cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
+            ["llama-3.2-1b"]        = new("onnx-community/Llama-3.2-1B-Instruct-GENAI-ONNX",
+                                         GpuSubdir: "cuda/cuda-int4-rtn-block-32",
+                                         CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
+            // Flat repos (no subdirectory; files are at root of the HuggingFace repo)
+            ["gemma-3-4b"]          = new("MiCkSoftware/gemma-3-4b-it-abliterated-onnx-genai-int4-rtn-block-32-acc-level-4-20260213-233056",
+                                         GpuSubdir: null,
+                                         CpuSubdir: null),
+            ["gemma-3-1b"]          = new("MiCkSoftware/gemma-3-1b-it-abliterated-onnx-genai-int4-rtn-block-32-acc-level-4-20260213-230409",
+                                         GpuSubdir: null,
+                                         CpuSubdir: null),
+            ["qwen3-1.7b"]          = new("colli-ai/Qwen-1.7B-ONNX-genai-cuda-int4",
+                                         GpuSubdir: null,
+                                         CpuSubdir: null),
+            ["qwen3-0.6b"]          = new("xiaoyao9184/Qwen3-0.6B-onnx-genai",
                                          GpuSubdir: "cuda/cuda-int4-rtn-block-32",
                                          CpuSubdir: "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4"),
         };
