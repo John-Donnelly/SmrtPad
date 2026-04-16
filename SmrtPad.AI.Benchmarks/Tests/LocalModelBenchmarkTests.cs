@@ -4,23 +4,12 @@ using SmrtPad.AI.Benchmarks.Reporting;
 namespace SmrtPad.AI.Benchmarks.Tests;
 
 /// <summary>
-/// Benchmarks all locally available models — ORT GenAI (ONNX) and llama.cpp (GGUF) — found
-/// under the configured search roots.
-/// <list type="bullet">
-///   <item>ORT GenAI: directories containing <c>genai_config.json</c> + <c>model.onnx</c>.</item>
-///   <item>llama.cpp: <c>.gguf</c> files inside any subdirectory of a GGUF root.</item>
-/// </list>
+/// Benchmarks all locally available llama.cpp GGUF models found under the configured GGUF roots.
 /// Run with: dotnet test --filter "Category=LocalModelBenchmark"
 /// </summary>
 [Collection("LiveBenchmarks")]
 public sealed class LocalModelBenchmarkTests
 {
-    /// <summary>Root directories containing ORT GenAI ONNX model subdirectories.</summary>
-    private static readonly string[] OnnxSearchRoots =
-    [
-        @"B:\Models\benchmark-models",
-    ];
-
     /// <summary>
     /// Root directories containing GGUF model subdirectories.
     /// Each immediate subdirectory of these roots is expected to hold one <c>.gguf</c> file.
@@ -32,33 +21,63 @@ public sealed class LocalModelBenchmarkTests
 
     private const int MaxContextTokens = 4096;
 
+    private const string BenchmarkModeEnv = "SMRTPAD_BENCHMARK_MODE";
+    private const string LlamaBackendDirEnv = "SMRTPAD_LLAMA_BACKEND_DIR";
+    private static readonly string[] KnownLlamaBackendDirs =
+    [
+        @"B:\Tools\llama-gemma4-backend",
+    ];
+
+    private enum BenchmarkMode
+    {
+        Gpu,
+        Cpu,
+    }
+
     [Fact(Timeout = 43_200_000)] // 12-hour ceiling
     [Trait("Category", "LocalModelBenchmark")]
     public async Task LocalModelBenchmark_AllDiscoveredModels_WithLiveDashboard()
     {
+        var mode = ResolveBenchmarkMode();
+        string? backendOverride = ResolveLlamaBackendDirectoryOverride();
+
         var outputDir = Path.GetFullPath(
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "BenchmarkResults"));
         Directory.CreateDirectory(outputDir);
 
         var discoveredModels = DiscoverLocalModels();
+        var benchmarkRuns = CreateBenchmarkRuns(discoveredModels, mode);
 
-        if (discoveredModels.Count == 0)
+        if (benchmarkRuns.Count == 0)
         {
-            var allRoots = OnnxSearchRoots.Concat(GgufSearchRoots);
             Assert.Fail(
-                $"No models found. Searched: {string.Join(", ", allRoots)}. " +
-                "ONNX: directories with genai_config.json + model.onnx. GGUF: *.gguf files.");
+                $"No GGUF models found. Searched: {string.Join(", ", GgufSearchRoots)}. " +
+                "Expected subdirectories each containing one *.gguf file.");
+            return;
+        }
+
+        if (discoveredModels.Any(m => m.Name.Contains("gemma-4", StringComparison.OrdinalIgnoreCase))
+            && !SelectedBackendSupportsArchitecture(backendOverride, "gemma4"))
+        {
+            Assert.Fail(
+                $"Gemma 4 models were discovered but the selected llama backend does not support architecture 'gemma4'. " +
+                $"Set {LlamaBackendDirEnv} to a Gemma4-capable backend directory or place one at a known path.");
             return;
         }
 
         Console.WriteLine($"=== LOCAL MODEL BENCHMARK ===");
+        Console.WriteLine($"  Mode: {mode}");
+        Console.WriteLine($"  Backend override ({LlamaBackendDirEnv}): {backendOverride ?? "<none>"}");
         Console.WriteLine($"  Discovered {discoveredModels.Count} model(s):");
-        foreach (var (name, path) in discoveredModels)
-            Console.WriteLine($"    {name,-35} {path}");
+        foreach (var (name, path, _) in discoveredModels)
+            Console.WriteLine($"    {name,-40}  {path}");
+        Console.WriteLine($"  Planned runs: {benchmarkRuns.Count}");
+        foreach (var run in benchmarkRuns)
+            Console.WriteLine($"    {run.DisplayName,-55} [{run.BackendLabel}] ({run.ReasoningTag})");
         Console.WriteLine();
 
         var cases = BenchmarkPromptCatalog.All;
-        int totalEvals = discoveredModels.Count * cases.Count;
+        int totalEvals = benchmarkRuns.Count * cases.Count;
 
         var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-local-models";
         var startedAt = DateTimeOffset.UtcNow;
@@ -67,15 +86,22 @@ public sealed class LocalModelBenchmarkTests
         string currentStatus = string.Empty;
         var responseLogPath = Path.Combine(outputDir, combinedRunId + "-responses.jsonl");
 
-        foreach (var (modelName, modelDir) in discoveredModels)
+        foreach (var benchmarkRun in benchmarkRuns)
         {
-            Console.WriteLine($"\n=== {modelName} ===");
-            Console.WriteLine($"    Path: {modelDir}");
+            Console.WriteLine($"\n=== {benchmarkRun.DisplayName} ===");
+            Console.WriteLine($"    Path: {benchmarkRun.ModelPath}");
+            Console.WriteLine($"    Backend: {benchmarkRun.BackendLabel}");
+            Console.WriteLine($"    Reasoning: {benchmarkRun.ReasoningTag}");
 
             AIDispatcher? dispatcher = null;
             try
             {
-                dispatcher = AIDispatcherFactory.CreateFromLocalPath(modelDir, MaxContextTokens);
+                dispatcher = AIDispatcherFactory.CreateFromLocalPath(
+                    benchmarkRun.ModelPath,
+                    MaxContextTokens,
+                    benchmarkRun.ForceCpu,
+                    backendOverride);
+                dispatcher.SetPreferredReasoningMode(benchmarkRun.ReasoningMode);
                 await dispatcher.InitializeAsync(msg => Console.WriteLine($"  [init] {msg}"));
             }
             catch (Exception ex)
@@ -93,7 +119,12 @@ public sealed class LocalModelBenchmarkTests
 
             await using (dispatcher)
             {
-                var runner = new BenchmarkRunner(dispatcher, modelName, "LocalDirect", enableLlmGrading: false);
+                var runner = new BenchmarkRunner(
+                    dispatcher,
+                    benchmarkRun.ModelName,
+                    benchmarkRun.BackendLabel,
+                    enableLlmGrading: false,
+                    benchmarkRun.ReasoningTag);
 
                 await runner.RunAsync(
                     cases,
@@ -105,7 +136,7 @@ public sealed class LocalModelBenchmarkTests
                     onResultAdded: result =>
                     {
                         allResults.Add(result);
-                        var snap = new BenchmarkRun(combinedRunId, modelName, "LocalDirect", startedAt, allResults);
+                        var snap = new BenchmarkRun(combinedRunId, benchmarkRun.ModelName, benchmarkRun.BackendLabel, startedAt, allResults, benchmarkRun.ReasoningTag);
                         var path = BenchmarkDashboardGenerator.Generate(snap, totalEvals, outputDir, currentStatus: currentStatus);
                         if (dashPath is null)
                         {
@@ -119,7 +150,7 @@ public sealed class LocalModelBenchmarkTests
         }
 
         // Final reports
-        var finalRun = new BenchmarkRun(combinedRunId, "local-models", "LocalDirect", startedAt, allResults);
+        var finalRun = new BenchmarkRun(combinedRunId, "local-models", mode == BenchmarkMode.Cpu ? "LlamaCpp CPU" : "LlamaCpp GPU+CPU", startedAt, allResults, "NoThink/Think");
         BenchmarkReportGenerator.WriteReports(finalRun, outputDir);
         BenchmarkDashboardGenerator.Generate(finalRun, totalEvals, outputDir);
 
@@ -134,39 +165,30 @@ public sealed class LocalModelBenchmarkTests
         Console.WriteLine($"  Avg score     : {avg:F1}/100");
         Console.WriteLine($"  Reports       : {outputDir}");
 
-        Assert.True(finalRun.Results.Count > 0, "Expected at least one result from the local model benchmark run.");
+        Assert.NotEmpty(finalRun.Results);
     }
 
+    private sealed record LocalBenchmarkRun(
+        string ModelName,
+        string ModelPath,
+        string BackendLabel,
+        bool ForceCpu,
+        ModelReasoningMode ReasoningMode,
+        string ReasoningTag,
+        string DisplayName);
+
     /// <summary>
-    /// Discovers all loadable models from both ORT GenAI (ONNX) and GGUF roots.
-    /// For ONNX roots: scans recursively for directories with genai_config.json + model.onnx.
-    /// For GGUF roots: scans immediate subdirectories for a single *.gguf file.
-    /// Returns (friendly name, absolute path to dir-or-gguf-file) ordered by name.
+    /// Discovers all GGUF models from the configured roots.
+    /// Each immediate subdirectory of a GGUF root is expected to hold one <c>.gguf</c> file.
+    /// All models run fully on GPU via llama.cpp (<c>GpuLayerCount=999</c>).
+    /// Returns <c>(friendly name, absolute path, backendTarget)</c> ordered Gemma-4 first, then alphabetically.
     /// </summary>
-    private static List<(string Name, string Path)> DiscoverLocalModels()
+    private static List<(string Name, string Path, bool SupportsThinking)> DiscoverLocalModels()
     {
-        var models = new List<(string Name, string Path)>();
+        var models = new List<(string Name, string Path, bool SupportsThinking)>();
 
-        // ORT GenAI ONNX directories
-        foreach (var root in OnnxSearchRoots)
-        {
-            if (!Directory.Exists(root))
-                continue;
-
-            if (IsOnnxGenAiModelDirectory(root))
-            {
-                models.Add((DeriveFriendlyName(root), root));
-                continue;
-            }
-
-            foreach (var dir in Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories))
-            {
-                if (IsOnnxGenAiModelDirectory(dir))
-                    models.Add((DeriveFriendlyName(dir), dir));
-            }
-        }
-
-        // GGUF files — each immediate subdirectory of a GGUF root holds one .gguf file
+        // GGUF files — each immediate subdirectory of a GGUF root holds one .gguf file.
+        // All GGUF models run fully on GPU (GpuLayerCount=999).
         foreach (var root in GgufSearchRoots)
         {
             if (!Directory.Exists(root))
@@ -176,32 +198,134 @@ public sealed class LocalModelBenchmarkTests
             {
                 var gguf = Directory.EnumerateFiles(subdir, "*.gguf").FirstOrDefault();
                 if (gguf is not null)
-                    models.Add((System.IO.Path.GetFileName(subdir) + " [GGUF]", gguf));
+                {
+                    var modelName = System.IO.Path.GetFileName(subdir) + " [GGUF]";
+                    models.Add((modelName, gguf, SupportsThinkingMode(gguf, modelName)));
+                }
             }
         }
 
-        models.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        models.Sort((a, b) =>
+        {
+            int rankA = a.Name.Contains("gemma-4", StringComparison.OrdinalIgnoreCase) ? 0 : 1;
+            int rankB = b.Name.Contains("gemma-4", StringComparison.OrdinalIgnoreCase) ? 0 : 1;
+            int rankCmp = rankA.CompareTo(rankB);
+            return rankCmp != 0 ? rankCmp : string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+        });
         return models;
     }
 
-    private static bool IsOnnxGenAiModelDirectory(string dir) =>
-        File.Exists(System.IO.Path.Combine(dir, "genai_config.json")) &&
-        File.Exists(System.IO.Path.Combine(dir, "model.onnx"));
-
-    /// <summary>
-    /// Derives a human-readable model name from a directory path.
-    /// Uses the leaf name, or parent+leaf for version-tagged leaves like "v4".
-    /// </summary>
-    private static string DeriveFriendlyName(string modelDir)
+    private static List<LocalBenchmarkRun> CreateBenchmarkRuns(
+        IReadOnlyList<(string Name, string Path, bool SupportsThinking)> discoveredModels,
+        BenchmarkMode mode)
     {
-        var leaf = System.IO.Path.GetFileName(modelDir);
+        var runs = new List<LocalBenchmarkRun>();
 
-        if (leaf is not null && leaf.StartsWith('v') && leaf.Length <= 3 && leaf.Skip(1).All(char.IsDigit))
+        void AddRuns(bool forceCpu, string backendLabel)
         {
-            var parent = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(modelDir));
-            return parent ?? leaf;
+            foreach (var (name, path, supportsThinking) in discoveredModels)
+            {
+                runs.Add(new LocalBenchmarkRun(
+                    name,
+                    path,
+                    backendLabel,
+                    forceCpu,
+                    ModelReasoningMode.NoThinking,
+                    "NoThink",
+                    $"{name} - {backendLabel} - NoThink"));
+
+                if (supportsThinking)
+                {
+                    runs.Add(new LocalBenchmarkRun(
+                        name,
+                        path,
+                        backendLabel,
+                        forceCpu,
+                        ModelReasoningMode.Thinking,
+                        "Think",
+                        $"{name} - {backendLabel} - Think"));
+                }
+            }
         }
 
-        return leaf ?? modelDir;
+        if (mode == BenchmarkMode.Gpu)
+        {
+            AddRuns(forceCpu: false, backendLabel: "LlamaCpp GPU");
+            AddRuns(forceCpu: true, backendLabel: "LlamaCpp CPU");
+        }
+        else
+        {
+            AddRuns(forceCpu: true, backendLabel: "LlamaCpp CPU");
+        }
+
+        return runs;
+    }
+
+    private static bool SupportsThinkingMode(string modelPath, string modelName)
+    {
+        var alias = ModelPromptPolicy.DetectAliasFromPath(modelPath);
+        if (ModelPromptPolicy.SupportsThinkingMode(alias))
+            return true;
+
+        if (modelName.Contains("reasoning", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private static BenchmarkMode ResolveBenchmarkMode()
+    {
+        var raw = Environment.GetEnvironmentVariable(BenchmarkModeEnv);
+        if (string.IsNullOrWhiteSpace(raw))
+            return BenchmarkMode.Gpu;
+
+        return raw.Trim().ToUpperInvariant() switch
+        {
+            "GPU" => BenchmarkMode.Gpu,
+            "CPU" => BenchmarkMode.Cpu,
+            _ => throw new InvalidOperationException(
+                $"Invalid {BenchmarkModeEnv} value '{raw}'. Expected 'GPU' or 'CPU'."),
+        };
+    }
+
+    private static string? ResolveLlamaBackendDirectoryOverride()
+    {
+        var configured = Environment.GetEnvironmentVariable(LlamaBackendDirEnv);
+        if (!string.IsNullOrWhiteSpace(configured))
+            return configured;
+
+        return KnownLlamaBackendDirs.FirstOrDefault(IsValidLlamaBackendDirectory);
+    }
+
+    private static bool SelectedBackendSupportsArchitecture(string? backendDirectory, string architecture)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(architecture);
+
+        string? llamaDllPath = backendDirectory is not null
+            ? Path.Combine(backendDirectory, "llama.dll")
+            : Path.Combine(AppContext.BaseDirectory, "runtimes", "win-x64", "native", "cuda12", "llama.dll");
+
+        if (!File.Exists(llamaDllPath))
+            return false;
+
+        try
+        {
+            var text = System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(llamaDllPath));
+            return text.Contains(architecture, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsValidLlamaBackendDirectory(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        return File.Exists(Path.Combine(path, "llama.dll"))
+            && File.Exists(Path.Combine(path, "ggml.dll"));
     }
 }
+
