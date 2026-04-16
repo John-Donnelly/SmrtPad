@@ -35,6 +35,7 @@ public sealed class BenchmarkSuiteTests : IAsyncDisposable
         Assert.NotNull(result.InsertContent);
         Assert.Contains("Dear", result.InsertContent);
         Assert.Equal(40, result.Evaluation.TagCompliancePts); // insert tag present = 40/40
+        Assert.Equal("NoThink", result.ReasoningTag);
         Assert.True(result.Evaluation.RuleScore >= 60, $"Rule score was {result.Evaluation.RuleScore}");
     }
 

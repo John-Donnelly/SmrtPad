@@ -53,13 +53,13 @@ public static class BenchmarkDashboardGenerator
         var elapsed = completed > 0 ? DateTimeOffset.UtcNow - run.StartedAt : TimeSpan.Zero;
         double secondsPerCase = elapsed.TotalSeconds / Math.Max(1, completed);
         int etaSeconds = completed > 0 && remaining > 0 ? (int)(secondsPerCase * remaining) : 0;
-        string currentModel = results.Count > 0 ? results[^1].ModelAlias : run.ModelAlias;
+        string currentModel = results.Count > 0 ? results[^1].ModelDisplayLabel : $"{run.ModelAlias} [{run.ReasoningTag}]";
 
         double avgCostPerToken = totalTokens > 0 ? elecCost / totalTokens : 0;
-        double currentModelCost = results.Where(r => r.ModelAlias == currentModel).Sum(r => r.ElectricityCostUsd);
+        double currentModelCost = results.Where(r => r.ModelDisplayLabel == currentModel).Sum(r => r.ElectricityCostUsd);
 
         // ── Per-model data for multi-model charts ────────────────────────
-        var modelKeys = results.Select(r => r.ModelAlias).Distinct().ToList();
+        var modelKeys = results.Select(r => r.ModelDisplayLabel).Distinct().ToList();
         var allSkillKeys = results.Select(r => r.Case.SkillKey).Distinct().OrderBy(k => k).ToList();
         var allCatKeys = results.Select(r => r.Case.Category.ToString()).Distinct().OrderBy(k => k).ToList();
 
@@ -78,7 +78,7 @@ public static class BenchmarkDashboardGenerator
 
         foreach (var mk in modelKeys)
         {
-            var mr = results.Where(r => r.ModelAlias == mk).ToList();
+            var mr = results.Where(r => r.ModelDisplayLabel == mk).ToList();
 
             // Running average
             var ra = new List<double>();
@@ -132,8 +132,12 @@ public static class BenchmarkDashboardGenerator
 
         // Per-model: the primary backend target (first seen per alias)
         var modelBackends = results
-            .GroupBy(r => r.ModelAlias)
+            .GroupBy(r => r.ModelDisplayLabel)
             .ToDictionary(g => g.Key, g => g.First().BackendTarget);
+
+        var modelReasoningTags = results
+            .GroupBy(r => r.ModelDisplayLabel)
+            .ToDictionary(g => g.Key, g => g.First().ReasoningTag);
 
         // Per-model hardware tier tag ([GPU] / [CPU] / [NPU])
         static string HardwareTag(string backend)
@@ -148,16 +152,16 @@ public static class BenchmarkDashboardGenerator
 
         // Overall model comparison
         var modelGroups = results
-            .GroupBy(r => r.ModelAlias)
+            .GroupBy(r => r.ModelDisplayLabel)
             .OrderByDescending(g => g.Average(r => r.Evaluation.RuleScore))
             .ToList();
 
         // ── Detailed results table (grouped by model) ────────────────────
         var tableRows = new StringBuilder();
-        var modelOrder = results.Select(r => (r.ModelAlias, r.BackendTarget)).Distinct().ToList();
-        foreach (var (grAlias, grBackend) in modelOrder)
+        var modelOrder = results.Select(r => (r.ModelDisplayLabel, r.ModelAlias, r.BackendTarget, r.ReasoningTag)).Distinct().ToList();
+        foreach (var (grDisplay, grAlias, grBackend, grReasoning) in modelOrder)
         {
-            var gr = results.Where(r => r.ModelAlias == grAlias && r.BackendTarget == grBackend).ToList();
+            var gr = results.Where(r => r.ModelDisplayLabel == grDisplay && r.BackendTarget == grBackend).ToList();
             int grPass = gr.Count(r => r.Evaluation.RuleScore >= threshold);
             double grElec = gr.Sum(r => r.ElectricityCostUsd);
             double grAvg = gr.Count > 0 ? gr.Average(r => r.Evaluation.RuleScore) : 0;
@@ -166,9 +170,9 @@ public static class BenchmarkDashboardGenerator
             double grPassPct = gr.Count > 0 ? 100.0 * grPass / gr.Count : 0;
             double grAvgTps = gr.Count > 0 ? gr.Average(r => r.TokensPerSecond) : 0;
             var grTag = HardwareTag(grBackend);
-            tableRows.Append($"<tr class=\"model-group-header\" data-backend=\"{HtmlEncode(grBackend)}\" data-model=\"{HtmlEncode(grAlias)}\">")
+            tableRows.Append($"<tr class=\"model-group-header\" data-backend=\"{HtmlEncode(grBackend)}\" data-model=\"{HtmlEncode(grDisplay)}\">")
                 .AppendLine($"<td colspan=\"15\" style=\"background:#21262d;color:#f0883e;font-weight:600;padding:8px 10px\">" +
-                    $"{grTag} \U0001f4e6 {HtmlEncode(grAlias)} \u2013 {HtmlEncode(grBackend)}" +
+                    $"{grTag} [{HtmlEncode(grReasoning)}] \U0001f4e6 {HtmlEncode(grAlias)} \u2013 {HtmlEncode(grBackend)}" +
                     $" &nbsp;|&nbsp; {gr.Count} cases" +
                     $" &nbsp;|&nbsp; Passed: {grPass}/{gr.Count} ({grPassPct:F0}%)" +
                     $" &nbsp;|&nbsp; Avg: {grAvg:F1}" +
@@ -183,11 +187,11 @@ public static class BenchmarkDashboardGenerator
                                : r.Evaluation.RuleScore >= 60 ? "color:#d29922"
                                : "color:#f85149";
                 var rTag = HardwareTag(r.BackendTarget);
-                tableRows.Append($"<tr data-backend=\"{HtmlEncode(r.BackendTarget)}\" data-model=\"{HtmlEncode(r.ModelAlias)}\">")
+                tableRows.Append($"<tr data-backend=\"{HtmlEncode(r.BackendTarget)}\" data-model=\"{HtmlEncode(r.ModelDisplayLabel)}\">")
                     .Append($"<td>{icon} {HtmlEncode(r.Case.Id)}</td>")
                     .Append($"<td>{HtmlEncode(r.Case.SkillKey)}</td>")
                     .Append($"<td>{HtmlEncode(Truncate(r.Case.Description, 50))}</td>")
-                    .Append($"<td>{rTag} {HtmlEncode(r.ModelAlias)}</td>")
+                    .Append($"<td>{rTag} [{HtmlEncode(r.ReasoningTag)}] {HtmlEncode(r.ModelAlias)}</td>")
                     .Append($"<td>{HtmlEncode(r.BackendTarget)}</td>")
                     .Append($"<td class=\"num\" style=\"{scoreStyle}\">{r.Evaluation.RuleScore}/100</td>")
                     .Append($"<td class=\"num\">{r.LatencyMs}ms</td>")
@@ -231,6 +235,7 @@ public static class BenchmarkDashboardGenerator
             modelKeys,
             modelBackends,       // alias → backendTarget (for filter matching in JS)
             modelHardwareTags,   // alias → [GPU]/[CPU]/[NPU]
+            modelReasoningTags,
             modelCaseData,
             modelRunAvgs,
             skillLabels = allSkillKeys,

@@ -16,17 +16,19 @@ public sealed class BenchmarkRunner
     private readonly AIDispatcher _dispatcher;
     private readonly string _modelAlias;
     private readonly string _backendTarget;
+    private readonly string _reasoningTag;
     private readonly bool _enableLlmGrading;
 
     /// <summary>
     /// Creates a runner using an externally-provided dispatcher (for testability).
     /// </summary>
-    public BenchmarkRunner(AIDispatcher dispatcher, string modelAlias, string backendTarget, bool enableLlmGrading = true)
+    public BenchmarkRunner(AIDispatcher dispatcher, string modelAlias, string backendTarget, bool enableLlmGrading = true, string reasoningTag = "NoThink")
     {
         _dispatcher = dispatcher;
         _modelAlias = modelAlias;
         _backendTarget = backendTarget;
         _enableLlmGrading = enableLlmGrading;
+        _reasoningTag = reasoningTag;
     }
 
     /// <summary>
@@ -54,7 +56,7 @@ public sealed class BenchmarkRunner
         string? dashboardPath = null;
         if (dashboardOutputDir is not null)
         {
-            var emptyRun = new BenchmarkRun(runId, _modelAlias, _backendTarget, startedAt, results);
+            var emptyRun = new BenchmarkRun(runId, _modelAlias, _backendTarget, startedAt, results, _reasoningTag);
             dashboardPath = BenchmarkDashboardGenerator.Generate(emptyRun, cases.Count, dashboardOutputDir);
             try { Process.Start(new ProcessStartInfo(dashboardPath) { UseShellExecute = true }); } catch { }
         }
@@ -79,7 +81,7 @@ public sealed class BenchmarkRunner
                 // Record failure but keep running the remaining cases.
                 var failEval = new EvaluationScore(0, 0, 0, 0, null, $"Unhandled error: {ex.Message}");
                 result = new BenchmarkResult(benchmarkCase, string.Empty, null, null,
-                    0, failEval, _modelAlias, _backendTarget, DateTimeOffset.UtcNow, 0, 0, 0);
+                    0, failEval, _modelAlias, _backendTarget, DateTimeOffset.UtcNow, 0, 0, 0, 0, _reasoningTag);
             }
 
             results.Add(result);
@@ -118,12 +120,12 @@ public sealed class BenchmarkRunner
             // Persist live dashboard after every case.
             if (dashboardOutputDir is not null)
             {
-                var partialRun = new BenchmarkRun(runId, _modelAlias, _backendTarget, startedAt, results);
+                var partialRun = new BenchmarkRun(runId, _modelAlias, _backendTarget, startedAt, results, _reasoningTag);
                 BenchmarkDashboardGenerator.Generate(partialRun, cases.Count, dashboardOutputDir);
             }
         }
 
-        var finalRun = new BenchmarkRun(runId, _modelAlias, _backendTarget, startedAt, results);
+        var finalRun = new BenchmarkRun(runId, _modelAlias, _backendTarget, startedAt, results, _reasoningTag);
 
         // Write final reports (Markdown + JSON) alongside the dashboard.
         if (dashboardOutputDir is not null)
@@ -195,7 +197,7 @@ public sealed class BenchmarkRunner
                 $"Timed out after {perCaseTimeout!.Value.TotalSeconds:F0}s");
             return new BenchmarkResult(benchmarkCase, rawOutput, null, null,
                 sw.ElapsedMilliseconds, timeoutEval, _modelAlias, _backendTarget, DateTimeOffset.UtcNow,
-                estInputTokens, estOutputTokens, electricityCost, ttftMs);
+                estInputTokens, estOutputTokens, electricityCost, ttftMs, _reasoningTag);
         }
 
         if (streamError is not null)
@@ -203,7 +205,7 @@ public sealed class BenchmarkRunner
             var failEval = new EvaluationScore(0, 0, 0, 0, null, $"Stream error: {streamError.Message}");
             return new BenchmarkResult(benchmarkCase, rawOutput, insertContent, thinkContent,
                 sw.ElapsedMilliseconds, failEval, _modelAlias, _backendTarget, DateTimeOffset.UtcNow,
-                estInputTokens, estOutputTokens, electricityCost, ttftMs);
+                estInputTokens, estOutputTokens, electricityCost, ttftMs, _reasoningTag);
         }
 
         // Rule-based evaluation
@@ -237,7 +239,7 @@ public sealed class BenchmarkRunner
 
         return new BenchmarkResult(benchmarkCase, rawOutput, insertContent, thinkContent,
             sw.ElapsedMilliseconds, finalEval, _modelAlias, _backendTarget, DateTimeOffset.UtcNow,
-            estInputTokens, estOutputTokens, electricityCost, ttftMs);
+            estInputTokens, estOutputTokens, electricityCost, ttftMs, _reasoningTag);
     }
 
     /// <summary>Estimates token count from text using word-count × 1.3 heuristic.</summary>

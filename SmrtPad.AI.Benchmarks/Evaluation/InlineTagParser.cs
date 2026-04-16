@@ -19,6 +19,10 @@ internal sealed class InlineTagParser
 
     public void Feed(string token)
     {
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        token = token.Replace("\uFEFF", string.Empty);
         _rawBuffer.Append(token);
 
         foreach (char c in token)
@@ -54,6 +58,14 @@ internal sealed class InlineTagParser
                         else if (tag.Equals("</insert>", StringComparison.OrdinalIgnoreCase) ||
                                  tag.Equals("</think>", StringComparison.OrdinalIgnoreCase))
                         {
+                            if (tag.Equals("</think>", StringComparison.OrdinalIgnoreCase)
+                                && _thinkBuilder.Length == 0
+                                && _answerBuilder.Length > 0)
+                            {
+                                _thinkBuilder.Append(_answerBuilder);
+                                _answerBuilder.Clear();
+                            }
+
                             _state = ParseState.Normal;
                         }
                         else
@@ -87,6 +99,9 @@ internal sealed class InlineTagParser
                             if (tag.Equals("</insert>", StringComparison.OrdinalIgnoreCase))
                             {
                                 _state = ParseState.Normal;
+                            }
+                            else if (tag.Equals("<insert>", StringComparison.OrdinalIgnoreCase))
+                            {
                             }
                             else
                             {
@@ -122,6 +137,9 @@ internal sealed class InlineTagParser
                             {
                                 _state = ParseState.Normal;
                             }
+                            else if (tag.Equals("<think>", StringComparison.OrdinalIgnoreCase))
+                            {
+                            }
                             else
                             {
                                 _thinkBuilder.Append(tag);
@@ -143,10 +161,10 @@ internal sealed class InlineTagParser
         }
     }
 
-    public string GetRawOutput() => _rawBuffer.ToString();
+    public string GetRawOutput() => _rawBuffer.ToString().Replace("\uFEFF", string.Empty);
     public string GetAnswerText() => _answerBuilder.ToString().Trim();
-    public string? GetInsertContent() => _insertBuilder.Length > 0 ? _insertBuilder.ToString().Trim() : null;
-    public string? GetThinkContent() => _thinkBuilder.Length > 0 ? _thinkBuilder.ToString().Trim() : null;
+    public string? GetInsertContent() => _insertBuilder.Length > 0 ? _insertBuilder.ToString().Replace("\uFEFF", string.Empty).Trim() : null;
+    public string? GetThinkContent() => _thinkBuilder.Length > 0 ? _thinkBuilder.ToString().Replace("\uFEFF", string.Empty).Trim() : null;
 }
 
 /// <summary>

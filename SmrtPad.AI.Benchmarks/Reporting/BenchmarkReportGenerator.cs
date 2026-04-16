@@ -19,6 +19,7 @@ public static class BenchmarkReportGenerator
         sb.AppendLine($"| Run ID | `{run.RunId}` |");
         sb.AppendLine($"| Model | `{run.ModelAlias}` |");
         sb.AppendLine($"| Backend | `{run.BackendTarget}` |");
+        sb.AppendLine($"| Mode | `{run.ReasoningTag}` |");
         sb.AppendLine($"| Started | {run.StartedAt:yyyy-MM-dd HH:mm:ss UTC} |");
         sb.AppendLine($"| Total Cases | {run.Results.Count} |");
         sb.AppendLine();
@@ -55,15 +56,15 @@ public static class BenchmarkReportGenerator
 
         // Multi-model comparison (shown when results span two or more distinct model+backend combinations)
         var modelGroups = run.Results
-            .GroupBy(r => new { r.ModelAlias, r.BackendTarget })
+            .GroupBy(r => new { r.ModelAlias, r.BackendTarget, r.ReasoningTag })
             .OrderByDescending(g => g.Average(r => r.Evaluation.RuleScore))
             .ToList();
         if (modelGroups.Count > 1)
         {
             sb.AppendLine("## Model Comparison");
             sb.AppendLine();
-            sb.AppendLine($"| Model | Backend | Tests | Pass Rate | Avg Score | Avg Tok/s | Total £ Cost |");
-            sb.AppendLine("|-------|---------|------:|----------:|----------:|----------:|-------------:|");
+            sb.AppendLine($"| Model | Backend | Mode | Tests | Pass Rate | Avg Score | Avg Tok/s | Total £ Cost |");
+            sb.AppendLine("|-------|---------|------|------:|----------:|----------:|----------:|-------------:|");
             foreach (var g in modelGroups)
             {
                 int pass = g.Count(r => r.Evaluation.RuleScore >= PassThreshold);
@@ -71,7 +72,7 @@ public static class BenchmarkReportGenerator
                 double avgScore = g.Average(r => r.Evaluation.RuleScore);
                 double avgTok = g.Average(r => r.TokensPerSecond);
                 double cost = g.Sum(r => r.TotalCostUsd);
-                sb.AppendLine($"| `{g.Key.ModelAlias}` | {g.Key.BackendTarget} | {g.Count()} | {passRate:F0}% | {avgScore:F1} | {avgTok:F1} | £{cost:F4} |");
+                sb.AppendLine($"| `{g.Key.ModelAlias}` | {g.Key.BackendTarget} | {g.Key.ReasoningTag} | {g.Count()} | {passRate:F0}% | {avgScore:F1} | {avgTok:F1} | £{cost:F4} |");
             }
             sb.AppendLine();
         }

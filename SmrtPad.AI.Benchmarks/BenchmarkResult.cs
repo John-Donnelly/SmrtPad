@@ -14,7 +14,8 @@ public sealed record BenchmarkResult(
     int EstimatedInputTokens = 0,
     int EstimatedOutputTokens = 0,
     double ElectricityCostUsd = 0,
-    long TimeToFirstTokenMs = 0)
+    long TimeToFirstTokenMs = 0,
+    string ReasoningTag = "NoThink")
 {
     /// <summary>Sum of input + output token estimates.</summary>
     public int TotalTokens => EstimatedInputTokens + EstimatedOutputTokens;
@@ -30,4 +31,7 @@ public sealed record BenchmarkResult(
 
     /// <summary>Output tokens per second based on generation time (excludes TTFT).</summary>
     public double TokensPerSecond => GenerationMs > 0 ? EstimatedOutputTokens / (GenerationMs / 1000.0) : 0;
+
+    /// <summary>Display label that distinguishes the same model across different reasoning modes.</summary>
+    public string ModelDisplayLabel => $"{ModelAlias} [{ReasoningTag}]";
 }
