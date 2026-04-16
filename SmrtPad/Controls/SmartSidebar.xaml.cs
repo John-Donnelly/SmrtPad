@@ -201,6 +201,9 @@ public sealed partial class SmartSidebar : UserControl
 
         ct.ThrowIfCancellationRequested();
         ApplyDispatcherReadyState();
+        PopulateModelMenu();
+        PopulateExecutionTargetMenu();
+        PopulateReasoningModeMenu();
     }
 
     /// <summary>Converts an internal stage token into a localized, user-facing progress string.</summary>
@@ -392,6 +395,55 @@ public sealed partial class SmartSidebar : UserControl
         targetSubMenu.Visibility = Visibility.Visible;
     }
 
+    private void PopulateReasoningModeMenu()
+    {
+        var reasoningSubMenu = OptionsFlyout.Items
+            .OfType<MenuFlyoutSubItem>()
+            .Skip(2)
+            .FirstOrDefault();
+        var reasoningSeparator = OptionsFlyout.Items
+            .OfType<MenuFlyoutSeparator>()
+            .Skip(2)
+            .FirstOrDefault();
+
+        if (reasoningSubMenu is null || reasoningSeparator is null)
+            return;
+
+        var currentModel = _dispatcher.PreferredModelAlias ?? _dispatcher.ActiveModelAlias;
+        if (!string.IsNullOrWhiteSpace(currentModel) && !SupportsThinkingMode(currentModel))
+        {
+            reasoningSubMenu.Items.Clear();
+            reasoningSubMenu.Visibility = Visibility.Collapsed;
+            reasoningSeparator.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        reasoningSubMenu.Items.Clear();
+
+        var currentMode = _dispatcher.PreferredReasoningMode;
+        (string Key, string Label)[] modes =
+        [
+            ("NoThinking", ResourceHelper.GetString("SmartSidebarReasoningModeNoThinking")),
+            ("Thinking", ResourceHelper.GetString("SmartSidebarReasoningModeThinking")),
+        ];
+
+        foreach (var (key, label) in modes)
+        {
+            var item = new RadioMenuFlyoutItem
+            {
+                Text = label,
+                Tag = key,
+                GroupName = "ReasoningMode",
+                IsChecked = string.Equals(key, currentMode, StringComparison.OrdinalIgnoreCase),
+            };
+            item.Click += ReasoningModeMenuItem_Click;
+            reasoningSubMenu.Items.Add(item);
+        }
+
+        reasoningSeparator.Visibility = Visibility.Visible;
+        reasoningSubMenu.Visibility = Visibility.Visible;
+    }
+
     private async void ExecutionTargetMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not RadioMenuFlyoutItem { Tag: string targetKey })
@@ -402,6 +454,53 @@ public sealed partial class SmartSidebar : UserControl
         CancelActive();
 
         // Drain any in-flight stream before disposing the model to prevent crashes
+        if (_activeStreamTask is not null)
+        {
+            try { await _activeStreamTask; } catch { }
+            _activeStreamTask = null;
+        }
+
+        _chatEntries.Clear();
+
+        if (_initializationCts is not null)
+        {
+            _initializationCts.Cancel();
+            _initializationCts.Dispose();
+            _initializationCts = null;
+        }
+        if (_initializationTask is not null)
+        {
+            try { await _initializationTask; } catch { }
+            _initializationTask = null;
+        }
+
+        await Task.Run(() => _dispatcher.ResetAsync());
+
+        _initializationCts = new CancellationTokenSource();
+        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
+        try
+        {
+            await _initializationTask;
+        }
+        catch (OperationCanceledException) { }
+        catch (InvalidOperationException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+        }
+        catch (COMException ex)
+        {
+            ApplyDispatcherUnavailableState(ex.Message);
+        }
+    }
+
+    private async void ReasoningModeMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioMenuFlyoutItem { Tag: string modeKey })
+            return;
+
+        _dispatcher.SetPreferredReasoningMode(modeKey);
+        CancelActive();
+
         if (_activeStreamTask is not null)
         {
             try { await _activeStreamTask; } catch { }
@@ -1085,9 +1184,20 @@ public sealed partial class SmartSidebar : UserControl
             executionTargetSubMenu.Text = ResourceHelper.GetString("SmartSidebarExecutionTarget");
             AutomationProperties.SetAutomationId(executionTargetSubMenu, "ExecutionTargetSubMenu");
         }
+        var reasoningModeSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().Skip(2).FirstOrDefault();
+        if (reasoningModeSubMenu is not null)
+        {
+            reasoningModeSubMenu.Text = ResourceHelper.GetString("SmartSidebarReasoningMode");
+            AutomationProperties.SetAutomationId(reasoningModeSubMenu, "ReasoningModeSubMenu");
+        }
         ToolTipService.SetToolTip(OptionsButton, ResourceHelper.GetString("SmartSidebarOptions"));
         ToolTipService.SetToolTip(ApplySkillButton, ResourceHelper.GetString("SmartSidebarApplySkill"));
     }
+
+    private static bool SupportsThinkingMode(string modelAlias)
+        => modelAlias.Contains("qwen3", StringComparison.OrdinalIgnoreCase)
+        || modelAlias.StartsWith("phi-", StringComparison.OrdinalIgnoreCase)
+        || modelAlias.Contains("deepseek-r1", StringComparison.OrdinalIgnoreCase);
 
     private static int EstimateTokenCount(string chunk)
     {

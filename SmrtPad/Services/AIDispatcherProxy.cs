@@ -157,6 +157,16 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
     public string? PreferredExecutionTarget => (string?)_dispatcher.PreferredExecutionTarget;
 
     /// <inheritdoc/>
+    public void SetPreferredReasoningMode(string mode)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(mode);
+        _dispatcher.SetPreferredReasoningMode(Enum.Parse(_dispatcher.PreferredReasoningMode.GetType(), mode, ignoreCase: true));
+    }
+
+    /// <inheritdoc/>
+    public string PreferredReasoningMode => _dispatcher.PreferredReasoningMode.ToString();
+
+    /// <inheritdoc/>
     public IReadOnlyList<string> GetEligibleModelAliases()
     {
         dynamic results = _dispatcher.GetEligibleModelAliases();

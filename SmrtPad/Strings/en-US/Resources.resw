@@ -1320,6 +1320,15 @@
   <data name="SmartSidebarPrerequisiteDispatcherInitFailedStatus" xml:space="preserve">
     <value>Local AI initialization failed. Check Foundry installation, then restart SmrtPad.</value>
   </data>
+  <data name="SmartSidebarReasoningMode" xml:space="preserve">
+    <value>Reasoning mode</value>
+  </data>
+  <data name="SmartSidebarReasoningModeNoThinking" xml:space="preserve">
+    <value>Fast (no thinking)</value>
+  </data>
+  <data name="SmartSidebarReasoningModeThinking" xml:space="preserve">
+    <value>Deliberate (thinking)</value>
+  </data>
   <data name="SessionRestoreTitle" xml:space="preserve">
     <value>Restore previous session</value>
   </data>

@@ -161,6 +161,12 @@
                                 <FontIcon Glyph="&#xE950;" FontSize="12" />
                             </MenuFlyoutSubItem.Icon>
                         </MenuFlyoutSubItem>
+                        <MenuFlyoutSeparator x:Name="ReasoningModeSeparator" Visibility="Collapsed" />
+                        <MenuFlyoutSubItem x:Name="ReasoningModeSubMenu" Visibility="Collapsed">
+                            <MenuFlyoutSubItem.Icon>
+                                <FontIcon Glyph="&#xE9D9;" FontSize="12" />
+                            </MenuFlyoutSubItem.Icon>
+                        </MenuFlyoutSubItem>
                     </MenuFlyout>
                 </DropDownButton.Flyout>
             </DropDownButton>

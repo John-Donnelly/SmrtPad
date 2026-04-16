@@ -85,6 +85,16 @@ public interface IAIDispatcher
     string? PreferredExecutionTarget { get; }
 
     /// <summary>
+    /// Sets the preferred reasoning mode for the next initialization.
+    /// Supported values: <c>"Default"</c>, <c>"NoThinking"</c>, <c>"Thinking"</c>.
+    /// Unsupported models will fall back to non-thinking behavior in the AI layer.
+    /// </summary>
+    void SetPreferredReasoningMode(string mode);
+
+    /// <summary>The preferred reasoning mode key for the next initialization.</summary>
+    string PreferredReasoningMode { get; }
+
+    /// <summary>
     /// Disposes the current model and resets the initialized state so the dispatcher can be
     /// re-initialized with a different model alias or execution target.
     /// </summary>
