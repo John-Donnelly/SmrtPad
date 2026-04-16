@@ -8,10 +8,10 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a writing assistant in a text editor. Summarise the following text into one concise paragraph that captures all key points. Do not add a label or heading.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the summary inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            Summarise the following text into one concise paragraph that keeps the key facts, names, numbers, and conclusions.
+            Preserve the original meaning and important specifics, but remove repetition and background detail.
+            Do not add a heading, bullets, commentary, markdown, code fences, or <think> tags.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -22,10 +22,9 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a writing assistant in a text editor. Rewrite the following text in a professional, formal tone. Preserve the original meaning exactly.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the rewritten text inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            Rewrite the following text in a professional, formal tone.
+            Preserve the original meaning exactly, keep it plain text, and do not add commentary, signatures, subject lines, or <think> tags unless they already belong in the source.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -36,10 +35,9 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a writing assistant in a text editor. Rewrite the following text in a casual, friendly, conversational tone. Preserve the original meaning exactly.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the rewritten text inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            Rewrite the following text in a casual, friendly, conversational tone.
+            Preserve the original meaning exactly, keep it plain text, and do not add commentary, emojis, sign-offs, or <think> tags unless they already belong in the source.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -50,10 +48,10 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a writing assistant in a text editor. Rewrite the following text to improve clarity and readability. Simplify complex sentences, remove ambiguity, and improve flow. Preserve the original meaning.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the rewritten text inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            Rewrite the following text for clarity and readability.
+            Simplify awkward wording, remove ambiguity, preserve the original meaning, and keep the result in plain text.
+            Do not add commentary, examples, headings, or <think> tags.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -64,10 +62,9 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a proofreading assistant in a text editor. Correct all grammar, punctuation, and spelling errors in the following text. Do not change the meaning, tone, or style.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the corrected text inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            Correct grammar, punctuation, and spelling errors in the following text.
+            Do not change the meaning, intended tone, point of view, or format, and do not add commentary or <think> tags.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -78,10 +75,9 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a writing assistant in a text editor. Shorten the following text by removing redundancy, filler words, and unnecessary detail. Preserve all key information and meaning.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the shortened text inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            Shorten the following text by removing redundancy, filler, and unnecessary detail.
+            Preserve the key information and meaning, keep the result in plain text, and do not add commentary, headings, or <think> tags.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -92,9 +88,9 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(text);
         return $"""
-            You are a writing assistant in a text editor. Continue the text below naturally, matching the existing style and tone. Write only the continuation — do not repeat any of the input text. Stay concise; do not start a new paragraph unless the context clearly calls for one.
-
-            Output ONLY the continuation inside <insert> and </insert> tags. No text outside the tags.
+            Continue the text below naturally, matching the existing style and tone.
+            Write only the continuation, do not repeat the input, stay concise, and do not add commentary, scene-setting, or <think> tags.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
             """;
@@ -112,10 +108,9 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(rawOcrText);
         return $"""
-            You are a proofreading assistant in a text editor. The following text was extracted via OCR and may contain recognition errors, missing spaces, or garbled characters. Correct any mistakes and return clean, readable text.
-
-            If you need to reason through the task, put all reasoning inside <think> and </think> tags before the result.
-            Then output ONLY the clean text inside <insert> and </insert> tags. No text outside these tags. Do not add sign-off lines such as "I hope this helps" or "Let me know if you need anything".
+            The following text came from OCR and may contain recognition errors, missing spaces, or garbled characters.
+            Correct it into clean, readable plain text while preserving the intended wording and structure. Do not add commentary, labels, or <think> tags.
+            Output exactly one <insert>...</insert> block and nothing else.
 
             {rawOcrText}
             """;
@@ -126,16 +121,23 @@ public static class PromptTemplates
     {
         ArgumentNullException.ThrowIfNull(message);
         return $"""
-            You are a writing assistant embedded in a text editor.
+            Decide whether the user wants ready-to-paste writing or a direct answer.
 
-            DOCUMENT REQUEST — write, draft, compose, or create a document (letter, email, report, essay, story, press release, memo, resume, bio, announcement, agenda, minutes, or any other document):
-            - If you need to plan, put reasoning inside <think> and </think> tags first.
-            - output ONLY the finished document inside <insert> and </insert> tags. Use [Placeholder] for unknown personal details. No text outside the tags.
+            If the user wants drafted or transformed document content:
+            - produce the finished writing only
+            - use plain text unless markdown is explicitly requested
+            - use [Placeholder] only for missing details that are not provided
+            - obey exact requested structure such as counts, headings, sections, word length, rhyme scheme, or required fields
+            - do not add commentary, preambles, sign-offs, subject lines, signatures, markdown fences, or <think> tags unless the requested document type clearly needs them
+            - output exactly one <insert>...</insert> block and nothing else
 
-            QUESTION OR CONVERSATION — a question, request for tips, grammar explanation, or any conversational message:
-            - Reply in plain text only, 1 to 3 sentences. Do NOT use <insert> or <think> tags.
-            - No preamble ("Sure!", "Of course!"). No sign-off lines ("I hope this helps", "Let me know if you need anything").
+            If the user is asking for advice, explanation, or comparison:
+            - answer directly in plain text
+            - use 1 to 3 concise sentences, or a short list only when the request explicitly asks for a list
+            - do not use <insert> or <think> tags
+            - do not add preambles, sign-offs, or commentary about what you are doing
 
+            User request:
             {message}
             """;
     }
