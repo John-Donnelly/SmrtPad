@@ -4,6 +4,37 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Reasoning mode selector in Smart Sidebar** — new *Reasoning mode* sub-menu in the options flyout for models that support chain-of-thought (Qwen3, Phi-4 Mini Reasoning, DeepSeek-R1); **Fast (no thinking)** suppresses the reasoning chain, **Deliberate (thinking)** enables it; sub-menu is hidden for models that do not support thinking; switching mode resets and reinitializes the dispatcher in place
+- **`IAIDispatcher.SetPreferredReasoningMode(string)` / `PreferredReasoningMode`** — new interface members so the proxy tier can round-trip the mode key as a plain string across the assembly boundary
+- **`AIDispatcherProxy.SetPreferredReasoningMode()` / `PreferredReasoningMode`** — proxy implementation that parses and forwards the mode string to the inner dynamic dispatcher
+- **`SidebarAutomationHelper.SwitchReasoningMode()`** — UI-test helper that opens the options flyout, navigates to the *ReasoningModeSubMenu*, and clicks the target mode item; waits for dispatcher reload to complete
+- **`ModelSizeSelector.AllAliases`** — exposes all registered alias names for enumeration without a hardware-budget filter
+- **Thinking/no-thinking benchmark matrix in `LocalModelBenchmarkTests`** — each discovered GGUF model now runs in both `NoThink` and `Think` modes where supported; GPU runs execute first (both modes), then CPU runs (both modes); models that do not support thinking receive one `NoThink` run per target
+- **`SMRTPAD_BENCHMARK_MODE` env var** — set to `CPU` to execute CPU-only runs; default (`GPU`) runs GPU first then CPU
+- **`SMRTPAD_LLAMA_BACKEND_DIR` env var** — override path to a custom llama.cpp backend directory; needed for architectures (e.g., Gemma 4) not supported by the default CUDA 12 build
+- **`LocalBenchmarkRun` record** — internal value type capturing model name, path, backend label, CPU flag, reasoning mode, reasoning tag, and display name for each planned benchmark slot
+- **Reasoning tag (`ReasoningTag`) on `BenchmarkResult` / `BenchmarkRun` / `BenchmarkRunner`** — every result and run now carries a `NoThink` or `Think` tag; the benchmark runner constructor accepts a reasoning tag parameter
+- **`BenchmarkRun.Combine()`** — merges multiple `BenchmarkRun` instances into one; combined `ReasoningTag` reflects the set of distinct tags across constituent runs
+- **`modelReasoningTags` dictionary in the JS data sidecar** — maps each model key to its reasoning tag for client-side rendering
+- **Mode column in Markdown reports** — `BenchmarkReportGenerator` now emits a `| Mode |` row in the run header and a `| Mode |` column in the multi-model comparison table; model groups are keyed by `(ModelAlias, BackendTarget, ReasoningTag)` so Think and NoThink runs are compared as separate rows
+- **Reasoning tag in dashboard result table** — each row shows `[Think]` / `[NoThink]` alongside the model alias
+- **`AiModelBenchmarkResult.ReasoningTag`** and surface in UI-test runner section headers and JSON summary output
+- **`SmrtSidebarPro` UI tests** — new `SmrtSidebarProUITests` covering sidebar availability and reasoning mode switching
+
+### Changed
+- **`AIDispatcherFactory.CreateFromLocalPath()`** — local-path dispatchers (GGUF and ORT) now honour `dispatcher.PreferredReasoningMode` when constructing the adapter; previously hardcoded to `ModelReasoningMode.Default`
+- **`ConcreteLlamaSharpModelAdapter.ConfigureNativeLibrary()`** — CUDA DLL pre-load list revised: dependency order is now `libomp140 → cudart64_12 → cublasLt64_12 → cublas64_12 → ggml-base → ggml`; each failed load logs diagnostics and throws instead of silently continuing; missing optional DLLs log `Missing dep (skipped)`
+- **`EnsureGgmlBackendsLoaded()`** extracted from the CUDA path into a standalone method; discovers `ggml_backend_load_all_from_path` before falling back to `ggml_backend_load_all`
+- **`LocalModelBenchmarkTests`** refactored — ORT GenAI search roots removed; test is now GGUF-only; discovery returns `(Name, Path, SupportsThinking)` tuples; run planning delegated to `CreateBenchmarkRuns()`
+- **Prompt templates** — all skill templates rewritten to be model-neutral: no persona preamble, explicit `<think>` tag suppression, and a consistent `output exactly one <insert>…</insert> block and nothing else` contract; `FreeformChat` template restructured with clearer document-vs-question branching
+- **Solution file (`SmrtPad.slnx`)** — `BenchmarkSuite1` project added; `SmrtPad.Tests` and `SmrtPad.UITests` platform entries simplified to `<Platform Project="x64" />`
+- **`Directory.Packages.props`** — `BenchmarkDotNet 0.15.2` and `Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers 18.3.36812.1` added as test-tier packages
+- **Copilot instructions** — benchmark policy documented: prefer LLamaSharp runner for live runs; run GPU (both modes) before CPU (both modes) for thinking-capable models
+
+### Fixed
+- **`GgufGpuDiagnosticTests`** trimmed of stale ORT/GenAI diagnostic paths that are no longer applicable
+
 ---
 
 ## [0.8.0] - 2026-04-08

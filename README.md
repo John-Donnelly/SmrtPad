@@ -49,9 +49,10 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 - **Hardware-adaptive model selection** (`ModelSizeSelector`) — probes GPU VRAM via DXGI (WMI fallback) and available system RAM; selects the largest model alias that fits within the hardware budget with headroom; scales the context-token window proportionally (512–16 384 tokens)
 - **Model selector** — options flyout lets the user override the automatically chosen model; lists all hardware-eligible aliases ordered best-first; selecting a model resets and re-initializes the dispatcher with the chosen alias
 - **Execution target selector** — same flyout offers NPU / GPU / CPU override; selecting a target resets and re-initializes the dispatcher; unavailable targets are hidden automatically
+- **Reasoning mode selector** — options flyout exposes a *Reasoning mode* sub-menu for models that support chain-of-thought: **Fast (no thinking)** suppresses the model's internal reasoning chain; **Deliberate (thinking)** enables it. The sub-menu is hidden automatically for models that do not support thinking. Switching mode resets and reinitializes the dispatcher in place
 - **Live initialization progress** — sidebar status text and app status bar both update in real time as the AI initializes: detecting hardware → selecting model → starting service → downloading `{model}` (`{n} MB`) at `{n}%` → loading into memory; download percentage is computed by polling the model cache directory every 800 ms
 - **ResponseCleaner** strips preamble lines, code-fence delimiters, closing remarks, and reasoning-leak fragments from model output before text is shown or inserted
-- Prompt templates hardened with explicit persona instructions so the model returns clean text only
+- Prompt templates hardened with explicit, model-neutral output instructions (no persona dependency; consistent `<insert>…</insert>` contract across all skills)
 - New-session button clears chat history
 
 ### Macros
@@ -77,7 +78,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 - .NET 8 SDK
 - Windows App SDK 1.8+
 - (Optional) [SmrtDoodle](https://www.microsoft.com/store/apps) for in-document drawing
-- (Optional) A Copilot+ PC (NPU) for on-device AI features; GPU/CPU inference uses ONNX Runtime GenAI with automatic model download
+- (Optional) A Copilot+ PC (NPU) for on-device AI features; GPU/CPU inference uses ONNX Runtime GenAI (ONNX models) or LLamaSharp / llama.cpp (GGUF models) with automatic model download
 
 ## Building
 
@@ -99,6 +100,8 @@ dotnet test SmrtPad.AI.Tests\SmrtPad.AI.Tests.csproj -c Debug -p:Platform=x64
 ### AI benchmark UI tests
 
 SmrtPad includes a local Appium-based benchmark suite for the Smart Sidebar AI models. The benchmark exercises all supported sidebar skills across a curated prompt set, records latency and throughput, applies rule-based scoring, estimates electricity cost, and generates report artifacts for qualitative review.
+
+For models that support reasoning (Qwen3, Phi-4 Mini Reasoning, DeepSeek-R1), each model is benchmarked in both **no-thinking** and **thinking** modes. GPU runs execute first (both modes), followed by CPU runs (both modes where applicable).
 
 #### Prerequisites
 
@@ -138,14 +141,17 @@ SmrtPad includes a local Appium-based benchmark suite for the Smart Sidebar AI m
 - `BENCHMARK_CPU_WATTS` — CPU power draw override, default `105`
 - `BENCHMARK_NPU_WATTS` — NPU power draw override, default `15`
 - `BENCHMARK_ELECTRICITY_RATE` — electricity cost in USD per kWh, default `0.12`
+- `SMRTPAD_BENCHMARK_MODE` — set to `CPU` to skip GPU runs and only execute CPU runs; omit (or set to `GPU`) for the default GPU-first-then-CPU matrix
+- `SMRTPAD_LLAMA_BACKEND_DIR` — absolute path to a custom llama.cpp backend directory (must contain `llama.dll` + `ggml.dll`); used when the default CUDA 12 build does not support a required model architecture (e.g., Gemma 4)
 
 #### Generated artifacts
 
 Each benchmark run produces:
 
-- `benchmark-report-*.md` — Markdown summary report
-- `benchmark-dashboard-*.html` — static Chart.js dashboard
+- `benchmark-report-*.md` — Markdown summary report (includes **Mode** column distinguishing Think / NoThink runs)
+- `benchmark-dashboard-*.html` — static Chart.js live dashboard (per-model series split by reasoning tag)
 - `benchmark-results-*.json` — raw machine-readable results
+- `bench-*-responses.jsonl` — per-case response log (JSONL)
 - `qualitative-assessment-prompt-*.md` — prompt for chat-based qualitative review
 
 Artifacts are written to `BenchmarkResults\` at the solution root when discoverable. If the solution root cannot be resolved from the test host, the suite falls back to `%TEMP%\SmrtPad-BenchmarkResults\`.
@@ -195,13 +201,21 @@ SmrtPad/
 ├── SmrtPad.AI/
 │   ├── Skills/              # AIRewriteSkill, AutoCompleteSkill, GrammarFixSkill,
 │   │                        # ShortenSkill, SummarizerSkill, ToneShifterSkill
-│   ├── AIDispatcher.cs      # Core streaming dispatcher with skill-key routing
-│   ├── AIDispatcherFactory.cs # DI factory — hardware probing, model selection
+│   ├── AIDispatcher.cs      # Core streaming dispatcher with skill-key routing;
+│   │                        # exposes PreferredReasoningMode / SetPreferredReasoningMode
+│   ├── AIDispatcherFactory.cs # DI factory — hardware probing, model selection;
+│   │                        # CreateFromLocalPath honours preferred reasoning mode
+│   ├── ConcreteLlamaSharpModelAdapter.cs # LLamaSharp (llama.cpp) GGUF inference adapter;
+│   │                        # CUDA 12 DLL pre-loading, ggml backend discovery,
+│   │                        # reasoning-mode-aware chat templating
 │   ├── ConcreteOrtGenAiModelAdapter.cs # ORT GenAI in-process inference adapter
+│   ├── GgufModelCatalog.cs  # GGUF model registry (alias → HuggingFace repo + GPU size)
 │   ├── ModelDownloadService.cs  # HuggingFace Hub model downloader
 │   ├── HardwareProbeService.cs # DXGI VRAM + system RAM detection
+│   ├── ModelPromptPolicy.cs # SupportsThinkingMode, NormalizeMode, BuildSystemPrompt,
+│   │                        # ApplyPromptControls, DetectAliasFromPath
 │   ├── ModelSizeSelector.cs # Hardware-budget → alias + context-token selection
-│   └── PromptTemplates.cs   # Hardened per-skill prompt templates + FreeformChat
+│   └── PromptTemplates.cs   # Model-neutral per-skill prompt templates + FreeformChat
 ├── SmrtPad.AI.Tests/        # Unit tests for AI engine components
 ├── SmrtPad (Package)/       # MSIX packaging project
 ├── SmrtPad.Tests/
