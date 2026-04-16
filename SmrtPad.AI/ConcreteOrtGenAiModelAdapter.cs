@@ -14,18 +14,24 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
     private readonly Model _model;
     private readonly Tokenizer _tokenizer;
     private readonly int _maxContextTokens;
+    private readonly string _modelAlias;
     private readonly string _chatTemplateFamily;
+    private readonly ModelReasoningMode _reasoningMode;
 
     private ConcreteOrtGenAiModelAdapter(
         Model model,
         Tokenizer tokenizer,
         int maxContextTokens,
-        string chatTemplateFamily)
+        string chatTemplateFamily,
+        string modelAlias,
+        ModelReasoningMode reasoningMode)
     {
         _model = model;
         _tokenizer = tokenizer;
         _maxContextTokens = maxContextTokens;
         _chatTemplateFamily = chatTemplateFamily;
+        _modelAlias = modelAlias;
+        _reasoningMode = reasoningMode;
     }
 
     /// <summary>
@@ -36,6 +42,8 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
         string modelDirectory,
         int maxContextTokens,
         Action<string>? onProgress = null,
+        ModelReasoningMode reasoningMode = ModelReasoningMode.Default,
+        string? modelAlias = null,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(modelDirectory);
@@ -50,8 +58,11 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
 
         var tokenizer = await Task.Run(() => new Tokenizer(model), ct).ConfigureAwait(false);
         var family = DetectChatTemplateFamily(modelDirectory);
+        var resolvedAlias = string.IsNullOrWhiteSpace(modelAlias)
+            ? ModelPromptPolicy.DetectAliasFromPath(modelDirectory)
+            : modelAlias;
 
-        return new ConcreteOrtGenAiModelAdapter(model, tokenizer, maxContextTokens, family);
+        return new ConcreteOrtGenAiModelAdapter(model, tokenizer, maxContextTokens, family, resolvedAlias, reasoningMode);
     }
 
     /// <inheritdoc/>
@@ -140,14 +151,21 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
 
     // ── Chat template formatting ──────────────────────────────────────────────
 
-    private string ApplyChatTemplate(string prompt) => _chatTemplateFamily switch
+    private string ApplyChatTemplate(string prompt)
     {
-        "qwen"     => $"<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n",
-        "deepseek" => $"<|User|>{prompt}<|Assistant|>",
-        "llama"    => $"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
-        "gemma3"   => $"<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n",
-        _          => $"<|user|>\n{prompt}<|end|>\n<|assistant|>\n",   // Phi default
-    };
+        var systemPrompt = ModelPromptPolicy.BuildSystemPrompt(_modelAlias, _chatTemplateFamily, _reasoningMode);
+        var userPrompt = ModelPromptPolicy.ApplyPromptControls(prompt, _modelAlias, _chatTemplateFamily, _reasoningMode);
+
+        return _chatTemplateFamily switch
+        {
+            "qwen3"   => $"<|im_start|>system\n{systemPrompt}<|im_end|>\n<|im_start|>user\n{userPrompt}<|im_end|>\n<|im_start|>assistant\n",
+            "qwen25"  => $"<|im_start|>system\n{systemPrompt}<|im_end|>\n<|im_start|>user\n{userPrompt}<|im_end|>\n<|im_start|>assistant\n",
+            "deepseek" => $"<|User|>{systemPrompt}\n\n{userPrompt}<|Assistant|>",
+            "llama"    => $"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{systemPrompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{userPrompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+            "gemma3"   => $"<start_of_turn>system\n{systemPrompt}<end_of_turn>\n<start_of_turn>user\n{userPrompt}<end_of_turn>\n<start_of_turn>model\n",
+            _           => $"<|system|>\n{systemPrompt}<|end|>\n<|user|>\n{userPrompt}<|end|>\n<|assistant|>\n",
+        };
+    }
 
     /// <summary>
     /// Reads <c>genai_config.json</c> from <paramref name="modelDirectory"/> to determine
@@ -160,7 +178,7 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
         {
             var configPath = Path.Combine(modelDirectory, "genai_config.json");
             if (!File.Exists(configPath))
-                return "phi";
+                return InferFamilyFromPath(modelDirectory);
 
             using var doc = JsonDocument.Parse(File.ReadAllText(configPath));
 
@@ -169,8 +187,12 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
                 modelProp.TryGetProperty("type", out var typeProp))
             {
                 var type = typeProp.GetString() ?? string.Empty;
+                    if (type.Contains("qwen3", StringComparison.OrdinalIgnoreCase))
+                        return "qwen3";
+                    if (type.Contains("qwen2.5", StringComparison.OrdinalIgnoreCase) || type.Contains("qwen25", StringComparison.OrdinalIgnoreCase))
+                        return "qwen25";
                     if (type.Contains("qwen", StringComparison.OrdinalIgnoreCase))
-                        return "qwen";
+                        return InferQwenFamilyFromPath(modelDirectory);
                     if (type.Contains("deepseek", StringComparison.OrdinalIgnoreCase))
                         return "deepseek";
                     if (type.Equals("llama", StringComparison.OrdinalIgnoreCase))
@@ -185,7 +207,7 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
             {
                 var eosString = eosEl.ToString();
                 if (eosString.Contains("151645", StringComparison.Ordinal)) // Qwen2 eos id
-                    return "qwen";
+                    return InferQwenFamilyFromPath(modelDirectory);
             }
         }
         catch
@@ -193,7 +215,25 @@ internal sealed class ConcreteOrtGenAiModelAdapter : ILanguageModelAdapter
             // Configuration unreadable; fall back to phi format
         }
 
+        return InferFamilyFromPath(modelDirectory);
+    }
+
+    private static string InferFamilyFromPath(string modelDirectory)
+    {
+        var path = modelDirectory.ToLowerInvariant();
+        if (path.Contains("qwen3")) return "qwen3";
+        if (path.Contains("qwen2.5") || path.Contains("qwen25")) return "qwen25";
+        if (path.Contains("qwen")) return "qwen25";
+        if (path.Contains("deepseek")) return "deepseek";
+        if (path.Contains("llama")) return "llama";
+        if (path.Contains("gemma")) return "gemma3";
         return "phi";
+    }
+
+    private static string InferQwenFamilyFromPath(string modelDirectory)
+    {
+        var path = modelDirectory.ToLowerInvariant();
+        return path.Contains("qwen3") ? "qwen3" : "qwen25";
     }
 
     // ── CUDA runtime library resolution ───────────────────────────────────────

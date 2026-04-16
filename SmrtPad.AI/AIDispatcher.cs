@@ -49,9 +49,19 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// </summary>
     public string? PreferredExecutionTarget { get; private set; }
 
+    /// <summary>
+    /// User-selected reasoning mode override for models that support both thinking and non-thinking behavior.
+    /// </summary>
+    public ModelReasoningMode PreferredReasoningMode { get; private set; } = ModelReasoningMode.Default;
+
     public void SetPreferredExecutionTarget(string? target)
     {
         PreferredExecutionTarget = target;
+    }
+
+    public void SetPreferredReasoningMode(ModelReasoningMode mode)
+    {
+        PreferredReasoningMode = mode;
     }
 
     public AIDispatcher(

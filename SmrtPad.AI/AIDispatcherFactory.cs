@@ -175,7 +175,7 @@ public sealed class AIDispatcherFactory
             if (target == AIExecutionTarget.PhiSilicaNpu)
                 return await CreatePhiSilicaModelAdapterAsync(ct).ConfigureAwait(false);
 
-            return await CreateOrtGenAiModelAdapterAsync(target, probeResult.Gpu, dispatcher!.PreferredAlias, onProgress, ct).ConfigureAwait(false);
+            return await CreateOrtGenAiModelAdapterAsync(target, probeResult.Gpu, dispatcher!.PreferredAlias, dispatcher.PreferredReasoningMode, onProgress, ct).ConfigureAwait(false);
         });
         return dispatcher;
     }
@@ -193,7 +193,18 @@ public sealed class AIDispatcherFactory
     /// Absolute path to either a <c>.gguf</c> file or a directory containing <c>genai_config.json</c> + <c>model.onnx</c>.
     /// </param>
     /// <param name="maxContextTokens">Maximum context window size in tokens.</param>
-    public static AIDispatcher CreateFromLocalPath(string modelPath, int maxContextTokens = 4096)
+    /// <summary>
+    /// Creates an <see cref="AIDispatcher"/> for a local model path with optional llama.cpp runtime overrides.
+    /// </summary>
+    /// <param name="modelPath">Absolute path to a GGUF file or ORT model directory.</param>
+    /// <param name="maxContextTokens">Maximum context window size in tokens.</param>
+    /// <param name="forceCpuForGguf">When <c>true</c>, GGUF models run with CPU-only layer offload.</param>
+    /// <param name="llamaBackendDirectoryOverride">Optional absolute directory containing llama.cpp backend DLLs (llama.dll + ggml*.dll).</param>
+    public static AIDispatcher CreateFromLocalPath(
+        string modelPath,
+        int maxContextTokens = 4096,
+        bool forceCpuForGguf = false,
+        string? llamaBackendDirectoryOverride = null)
     {
         ArgumentNullException.ThrowIfNull(modelPath);
 
@@ -208,18 +219,22 @@ public sealed class AIDispatcherFactory
         var stubCatalog = new StubCatalogAdapter();
         var probe = new HardwareProbeService(stubCatalog);
 
+        AIDispatcher? dispatcher = null;
+
         if (isGguf)
         {
-            return new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+            dispatcher = new AIDispatcher(probe, async (_, _, onProgress, ct) =>
                 await ConcreteLlamaSharpModelAdapter
-                    .CreateAsync(modelPath, maxContextTokens, onProgress, ct)
+                    .CreateAsync(modelPath, maxContextTokens, onProgress, forceCpuForGguf, llamaBackendDirectoryOverride, dispatcher!.PreferredReasoningMode, null, ct)
                     .ConfigureAwait(false));
+            return dispatcher;
         }
 
-        return new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+        dispatcher = new AIDispatcher(probe, async (_, _, onProgress, ct) =>
             await ConcreteOrtGenAiModelAdapter
-                .CreateAsync(modelPath, maxContextTokens, onProgress, ct)
+                .CreateAsync(modelPath, maxContextTokens, onProgress, dispatcher!.PreferredReasoningMode, null, ct)
                 .ConfigureAwait(false));
+        return dispatcher;
     }
 
     private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)
@@ -231,6 +246,7 @@ public sealed class AIDispatcherFactory
         AIExecutionTarget target,
         AIBackendCapability gpuCapability,
         string? preferredAlias,
+        ModelReasoningMode reasoningMode,
         Action<string>? onProgress,
         CancellationToken ct)
     {
@@ -254,7 +270,7 @@ public sealed class AIDispatcherFactory
         // Try GPU first; if loading fails for every alias fall through to CPU.
         if (isGpu)
         {
-            var gpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: true, onProgress, ct)
+            var gpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: true, reasoningMode, onProgress, ct)
                 .ConfigureAwait(false);
             if (gpuAdapter is not null)
                 return gpuAdapter;
@@ -262,7 +278,7 @@ public sealed class AIDispatcherFactory
             // GPU variants unavailable — fall back to CPU.
         }
 
-        var cpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: false, onProgress, ct)
+        var cpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: false, reasoningMode, onProgress, ct)
             .ConfigureAwait(false);
         if (cpuAdapter is not null)
             return cpuAdapter;
@@ -275,6 +291,7 @@ public sealed class AIDispatcherFactory
     private static async Task<ILanguageModelAdapter?> TryLoadAliasesAsync(
         IReadOnlyList<string> aliases,
         bool isGpu,
+        ModelReasoningMode reasoningMode,
         Action<string>? onProgress,
         CancellationToken ct)
     {
@@ -299,7 +316,7 @@ public sealed class AIDispatcherFactory
                     .ConfigureAwait(false);
 
                 return await ConcreteOrtGenAiModelAdapter
-                    .CreateAsync(modelDir, maxContextTokens, onProgress, ct)
+                    .CreateAsync(modelDir, maxContextTokens, onProgress, reasoningMode, alias, ct)
                     .ConfigureAwait(false);
             }
             catch (OperationCanceledException)

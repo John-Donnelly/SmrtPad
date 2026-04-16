@@ -68,6 +68,8 @@ internal static class ModelSizeSelector
         ("gemma-4-e4b",             CpuOnly, GpuOnly),
     ];
 
+    internal static IReadOnlyList<string> AllAliases => PreferredAliases.Select(static p => p.Alias).ToArray();
+
     /// <summary>
     /// HuggingFace Hub source information keyed by alias.
     /// Aliases without an entry have no auto-download support; models must be placed manually
