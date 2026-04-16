@@ -296,6 +296,66 @@ public sealed class SidebarAutomationHelper
         return true;
     }
 
+    /// <summary>
+    /// Switches the reasoning mode (thinking vs non-thinking) for supported models.
+    /// </summary>
+    public bool SwitchReasoningMode(string modeLabel)
+    {
+        ArgumentNullException.ThrowIfNull(modeLabel);
+
+        if (!IsSessionAlive)
+        {
+            Log("SwitchReasoningMode: session not alive — aborting");
+            return false;
+        }
+
+        EnsureSidebarOpen();
+
+        Log($"SwitchReasoningMode: waiting for dispatcher ready before opening flyout...");
+        if (!WaitForDispatcherReady(ModelInitTimeoutMs))
+        {
+            Log("SwitchReasoningMode: dispatcher did not become ready — aborting");
+            return false;
+        }
+
+        Log($"SwitchReasoningMode: opening Options flyout for mode '{modeLabel}'...");
+        OpenOptionsFlyout();
+
+        Log("SwitchReasoningMode: waiting for ReasoningModeSubMenu to become visible...");
+        var reasoningSubMenu = WaitForFlyoutItemByAccessibilityId("ReasoningModeSubMenu", FlyoutItemTimeoutMs);
+        if (reasoningSubMenu is null)
+        {
+            Log("SwitchReasoningMode: ReasoningModeSubMenu not visible after timeout — dismissing flyout");
+            DismissFlyout();
+            return false;
+        }
+
+        Log("SwitchReasoningMode: clicking ReasoningModeSubMenu...");
+        reasoningSubMenu.Click();
+        Thread.Sleep(400);
+
+        Log($"SwitchReasoningMode: locating mode item '{modeLabel}'...");
+        var modeItem = WaitForFlyoutItemByName(modeLabel, FlyoutItemTimeoutMs);
+        if (modeItem is null)
+        {
+            Log($"SwitchReasoningMode: mode item '{modeLabel}' not found after timeout — dismissing flyout");
+            DismissFlyout();
+            return false;
+        }
+
+        Log($"SwitchReasoningMode: clicking mode item '{modeLabel}'...");
+        modeItem.Click();
+
+        ReanchorMainWindow();
+
+        Log("SwitchReasoningMode: waiting for reload to start (controls disabled)...");
+        WaitForControlsDisabled(10_000);
+        Log("SwitchReasoningMode: waiting for reload to complete (controls re-enabled)...");
+        WaitForDispatcherReady(ModelInitTimeoutMs);
+
+        return true;
+    }
+
     // ── Start new session ────────────────────────────────────────────────────
 
     /// <summary>

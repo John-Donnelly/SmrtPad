@@ -154,6 +154,25 @@ public sealed class SmrtSidebarProUITests : IDisposable
         EnsureSidebarClosed();
     }
 
+    [SkippableFact]
+    public void Sidebar_ReasoningModeMenu_IsAvailable_ForSupportedModel()
+    {
+        RequireDriver();
+        EnsureSidebarClosed();
+        EnsureSidebarOpen();
+
+        var options = _driver!.FindElement(MobileBy.AccessibilityId("OptionsButton"));
+        options.Click();
+        Thread.Sleep(500);
+
+        var reasoningMenu = _driver.FindElements(MobileBy.AccessibilityId("ReasoningModeSubMenu"));
+        Assert.NotEmpty(reasoningMenu);
+
+        options.SendKeys(Keys.Escape);
+        Thread.Sleep(250);
+        EnsureSidebarClosed();
+    }
+
     /// <summary>
     /// After opening the sidebar via the toolbar button, clicking it again should close it.
     /// </summary>

@@ -62,6 +62,7 @@ public sealed class AIBenchmarkLiveDashboardUITests
                          ?? "active-model";
         var executionTarget = Environment.GetEnvironmentVariable("BENCHMARK_EXECUTION_TARGET")
                               ?? "GPU";
+        var reasoningTag = Environment.GetEnvironmentVariable("BENCHMARK_REASONING_TAG") ?? "NoThink";
 
         var cases = BenchmarkPromptCatalog.All;
         var promptLimit = int.TryParse(Environment.GetEnvironmentVariable("BENCHMARK_PROMPT_LIMIT"), out var lim)
@@ -77,14 +78,14 @@ public sealed class AIBenchmarkLiveDashboardUITests
         // Emit the initial empty-shell dashboard so the browser tab can be opened early
         var runId = $"ui-{runStart:yyyyMMdd-HHmmss}";
         BenchmarkDashboardGenerator.Generate(
-            new BenchmarkRun(runId, modelAlias, executionTarget, runStart, allResults),
+                new BenchmarkRun(runId, modelAlias, executionTarget, runStart, allResults, reasoningTag),
             caseList.Count, OutputDir);
 
         // Helper to rebuild snapshot and regenerate dashboard
         void UpdateDashboard()
         {
             BenchmarkDashboardGenerator.Generate(
-                new BenchmarkRun(runId, modelAlias, executionTarget, runStart, allResults),
+                new BenchmarkRun(runId, modelAlias, executionTarget, runStart, allResults, reasoningTag),
                 caseList.Count, OutputDir);
         }
 
@@ -130,7 +131,8 @@ public sealed class AIBenchmarkLiveDashboardUITests
                     Evaluation: failEval,
                     ModelAlias: modelAlias,
                     BackendTarget: executionTarget,
-                    RunTimestamp: DateTimeOffset.UtcNow));
+                    RunTimestamp: DateTimeOffset.UtcNow,
+                    ReasoningTag: reasoningTag));
                 UpdateDashboard();
                 continue;
             }
@@ -181,7 +183,8 @@ public sealed class AIBenchmarkLiveDashboardUITests
                 RunTimestamp: DateTimeOffset.UtcNow,
                 EstimatedInputTokens: estIn,
                 EstimatedOutputTokens: estOut,
-                ElectricityCostUsd: elecCost);
+                ElectricityCostUsd: elecCost,
+                ReasoningTag: reasoningTag);
 
             allResults.Add(result);
 

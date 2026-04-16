@@ -29,4 +29,8 @@ public sealed record BenchmarkResult(
     double TokensPerSecond,
     bool Succeeded,
     string? ErrorMessage = null,
-    string? HardwareBadgeTooltip = null);
+    string? HardwareBadgeTooltip = null,
+    string ReasoningTag = "NoThink")
+{
+    public string ModelDisplayLabel => $"{ModelAlias} [{ReasoningTag}]";
+}

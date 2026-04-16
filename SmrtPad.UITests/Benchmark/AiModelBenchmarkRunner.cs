@@ -48,6 +48,10 @@ public sealed partial class AiModelBenchmarkRunner
     private const string PhiSilicaAlias = "phi-silica";
     private const string PhiSilicaTarget = "NPU";
     private const string GpuTarget = "GPU";
+    private const string NoThinkTag = "NoThink";
+    private const string ThinkTag = "Think";
+    private const string NoThinkingLabel = "Fast (no thinking)";
+    private const string ThinkingLabel = "Deliberate (thinking)";
 
     /// <summary>
     /// Runs all catalog prompts against every available model and returns a full report.
@@ -69,12 +73,16 @@ public sealed partial class AiModelBenchmarkRunner
         {
             var isPhiSilica = modelAlias.Equals(PhiSilicaAlias, StringComparison.OrdinalIgnoreCase);
             var executionTarget = isPhiSilica ? PhiSilicaTarget : GpuTarget;
+            var reasoningModes = GetReasoningModes(modelAlias, isPhiSilica);
 
-            Log($"--- Starting model '{modelAlias}' on {executionTarget} ---");
-            var summary = RunModel(modelAlias, executionTarget, isPhiSilica, prompts);
-            modelSummaries.Add(summary);
-            Log($"--- Model '{modelAlias}' complete: {summary.Succeeded}/{summary.TotalPrompts} succeeded, " +
-                $"insert compliance={summary.InsertComplianceRate:P0}, avg score={summary.AvgBaseScore:F3} ---");
+            foreach (var (reasoningTag, reasoningLabel) in reasoningModes)
+            {
+                Log($"--- Starting model '{modelAlias}' on {executionTarget} [{reasoningTag}] ---");
+                var summary = RunModel(modelAlias, executionTarget, isPhiSilica, prompts, reasoningTag, reasoningLabel);
+                modelSummaries.Add(summary);
+                Log($"--- Model '{modelAlias}' [{reasoningTag}] complete: {summary.Succeeded}/{summary.TotalPrompts} succeeded, " +
+                    $"insert compliance={summary.InsertComplianceRate:P0}, avg score={summary.AvgBaseScore:F3} ---");
+            }
         }
 
         var report = new AiBenchmarkRunReport(startedAt, DateTimeOffset.UtcNow, modelSummaries);
@@ -84,7 +92,9 @@ public sealed partial class AiModelBenchmarkRunner
 
     private AiModelSummary RunModel(
         string modelAlias, string executionTarget, bool isPhiSilica,
-        IReadOnlyList<AiBenchmarkPrompt> prompts)
+        IReadOnlyList<AiBenchmarkPrompt> prompts,
+        string reasoningTag,
+        string reasoningLabel)
     {
         bool switchOk;
         if (isPhiSilica)
@@ -98,10 +108,13 @@ public sealed partial class AiModelBenchmarkRunner
             switchOk = _sidebar.SwitchModel(modelAlias);
         }
 
+        if (switchOk && !isPhiSilica && SupportsThinkingMode(modelAlias))
+            switchOk = _sidebar.SwitchReasoningMode(reasoningLabel);
+
         if (!switchOk)
         {
-            Log($"RunModel: switch to '{modelAlias}' failed — skipping");
-            return EmptySummary(modelAlias, executionTarget, prompts.Count);
+            Log($"RunModel: switch to '{modelAlias}' [{reasoningTag}] failed — skipping");
+            return EmptySummary(modelAlias, executionTarget, prompts.Count, reasoningTag);
         }
 
         var results = new List<AiModelBenchmarkResult>();
@@ -133,7 +146,8 @@ public sealed partial class AiModelBenchmarkRunner
                     EstimatedOutputTokens: 0,
                     TokensPerSecond: 0,
                     Succeeded: false,
-                    ErrorMessage: ex.Message);
+                    ErrorMessage: ex.Message,
+                    ReasoningTag: reasoningTag);
             }
 
             // Check for Insert button BEFORE starting the next session clears the history.
@@ -159,8 +173,12 @@ public sealed partial class AiModelBenchmarkRunner
                       OutputText = insertContent,
                       EstimatedOutputTokens = insertContent.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
                       Succeeded = true,
+                      ReasoningTag = reasoningTag,
                   }
                 : baseResult;
+
+            if (effectiveResult.ReasoningTag != reasoningTag)
+                effectiveResult = effectiveResult with { ReasoningTag = reasoningTag };
 
             if (effectiveResult != baseResult)
                 score = _scorer.Score(aiPrompt.Prompt, effectiveResult);
@@ -190,8 +208,25 @@ public sealed partial class AiModelBenchmarkRunner
                 $"score={score.OverallScore:F3}, latency={effectiveResult.ElapsedSeconds:F1}s");
         }
 
-        return BuildSummary(modelAlias, executionTarget, results);
+        return BuildSummary(modelAlias, executionTarget, results, reasoningTag);
     }
+
+    private static IReadOnlyList<(string ReasoningTag, string ReasoningLabel)> GetReasoningModes(string modelAlias, bool isPhiSilica)
+    {
+        if (isPhiSilica || !SupportsThinkingMode(modelAlias))
+            return [(NoThinkTag, NoThinkingLabel)];
+
+        return
+        [
+            (NoThinkTag, NoThinkingLabel),
+            (ThinkTag, ThinkingLabel),
+        ];
+    }
+
+    private static bool SupportsThinkingMode(string modelAlias)
+        => modelAlias.Contains("qwen3", StringComparison.OrdinalIgnoreCase)
+        || modelAlias.StartsWith("phi-", StringComparison.OrdinalIgnoreCase)
+        || modelAlias.Contains("deepseek-r1", StringComparison.OrdinalIgnoreCase);
 
     private static string[] FindKeywords(string output, string[] keywords)
     {
@@ -204,7 +239,7 @@ public sealed partial class AiModelBenchmarkRunner
     }
 
     private static AiModelSummary BuildSummary(
-        string modelAlias, string executionTarget, List<AiModelBenchmarkResult> results)
+        string modelAlias, string executionTarget, List<AiModelBenchmarkResult> results, string reasoningTag)
     {
         var succeeded = results.Count(r => r.Base.Succeeded);
         var insertCompliantCount = results.Count(r => r.InsertCompliant);
@@ -217,6 +252,7 @@ public sealed partial class AiModelBenchmarkRunner
         return new AiModelSummary(
             ModelAlias: modelAlias,
             ExecutionTarget: executionTarget,
+            ReasoningTag: results.FirstOrDefault()?.Base.ReasoningTag ?? reasoningTag,
             TotalPrompts: results.Count,
             Succeeded: succeeded,
             InsertCompliantCount: insertCompliantCount,
@@ -228,8 +264,8 @@ public sealed partial class AiModelBenchmarkRunner
             Results: results);
     }
 
-    private static AiModelSummary EmptySummary(string modelAlias, string executionTarget, int total) =>
-        new(modelAlias, executionTarget, total, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, []);
+    private static AiModelSummary EmptySummary(string modelAlias, string executionTarget, int total, string reasoningTag) =>
+        new(modelAlias, executionTarget, reasoningTag, total, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, []);
 
     // ── Report generation ────────────────────────────────────────────────────
 
@@ -267,13 +303,13 @@ public sealed partial class AiModelBenchmarkRunner
         // ── Model summary table ──
         sb.AppendLine("## Model Summary");
         sb.AppendLine();
-        sb.AppendLine("| Model | Target | Prompts | Succeeded | Insert Compliance | Avg Keywords | Avg Score | Avg Latency | Avg TPS |");
-        sb.AppendLine("|-------|--------|---------|-----------|-------------------|--------------|-----------|-------------|---------|");
+        sb.AppendLine("| Model | Target | Mode | Prompts | Succeeded | Insert Compliance | Avg Keywords | Avg Score | Avg Latency | Avg TPS |");
+        sb.AppendLine("|-------|--------|------|---------|-----------|-------------------|--------------|-----------|-------------|---------|");
 
         foreach (var m in report.ModelSummaries)
         {
             sb.AppendLine(
-                $"| {m.ModelAlias} | {m.ExecutionTarget} | {m.TotalPrompts} " +
+                $"| {m.ModelAlias} | {m.ExecutionTarget} | {m.ReasoningTag} | {m.TotalPrompts} " +
                 $"| {m.Succeeded}/{m.TotalPrompts} " +
                 $"| {m.InsertComplianceRate:P0} ({m.InsertCompliantCount}/{m.TotalPrompts}) " +
                 $"| {m.AvgKeywordScore:P0} " +
@@ -287,7 +323,7 @@ public sealed partial class AiModelBenchmarkRunner
         // ── Per-model detail sections ──
         foreach (var m in report.ModelSummaries)
         {
-            sb.AppendLine($"## {m.ModelAlias} ({m.ExecutionTarget})");
+            sb.AppendLine($"## {m.ModelAlias} ({m.ExecutionTarget}, {m.ReasoningTag})");
             sb.AppendLine();
             sb.AppendLine("| Prompt ID | Skill | Succeeded | Insert ✓ | Keywords | Score | Latency | TPS | Notes |");
             sb.AppendLine("|-----------|-------|-----------|----------|----------|-------|---------|-----|-------|");
@@ -346,6 +382,7 @@ public sealed partial class AiModelBenchmarkRunner
             {
                 model = m.ModelAlias,
                 target = m.ExecutionTarget,
+                reasoningTag = m.ReasoningTag,
                 totalPrompts = m.TotalPrompts,
                 succeeded = m.Succeeded,
                 insertCompliance = m.InsertComplianceRate,

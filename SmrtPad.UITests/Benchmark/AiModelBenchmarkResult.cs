@@ -35,6 +35,7 @@ public sealed record AiModelBenchmarkResult(
 public sealed record AiModelSummary(
     string ModelAlias,
     string ExecutionTarget,
+    string ReasoningTag,
     int TotalPrompts,
     int Succeeded,
     int InsertCompliantCount,
