@@ -13,6 +13,23 @@ public interface ILanguageModelAdapter : IAsyncDisposable
 }
 
 /// <summary>
+/// Ambient context used to pass the active skill key from <see cref="AIDispatcher"/> to
+/// <see cref="ConcreteLlamaSharpModelAdapter"/> without threading it through the
+/// <see cref="ILanguageModelAdapter"/> interface.
+/// </summary>
+internal static class SkillContext
+{
+    private static readonly AsyncLocal<string?> _current = new();
+
+    /// <summary>Active skill key for the current async call chain, or <c>null</c> if unset.</summary>
+    internal static string? Current
+    {
+        get => _current.Value;
+        set => _current.Value = value;
+    }
+}
+
+/// <summary>
 /// Orchestrates hardware detection and language model initialization,
 /// then dispatches streaming inference and embedding requests.
 /// </summary>
@@ -161,6 +178,7 @@ public sealed class AIDispatcher : IAsyncDisposable
             _              => prompt,
         };
 
+        SkillContext.Current = skillKey;
         try
         {
             if (!IsInitialized)
