@@ -5,7 +5,21 @@ All notable changes to SmrtPad are documented in this file.
 ## [Unreleased]
 
 ### Added
-- **Reasoning mode selector in Smart Sidebar** — new *Reasoning mode* sub-menu in the options flyout for models that support chain-of-thought (Qwen3, Phi-4 Mini Reasoning, DeepSeek-R1); **Fast (no thinking)** suppresses the reasoning chain, **Deliberate (thinking)** enables it; sub-menu is hidden for models that do not support thinking; switching mode resets and reinitializes the dispatcher in place
+- **`SkillContext` ambient carrier** — new `internal static class SkillContext` using `AsyncLocal<string?>` threads the active skill key from `AIDispatcher.StreamResponseAsync` through to `ConcreteLlamaSharpModelAdapter.BuildSamplingPipeline` without changing the `ILanguageModelAdapter` interface
+- **Skill-aware sampling pipeline** — `BuildSamplingPipeline` now reads `SkillContext.Current` and applies precision settings (Temperature 0.3, TopP 0.85, Seed 42) for `autocomplete` and `ocr` skills to reduce stochastic variance in tag wrapping and content fidelity; all other skills use LLamaSharp library defaults
+- **`TargetedBenchmarkRun_Gemma4E2b_WithLiveDashboard` benchmark test** — single-model focused benchmark for Gemma 4 E2B GGUF with live dashboard, per-case JSONL response logging, and a 300-second per-case timeout; opens the dashboard in the browser automatically on first result
+- **`ModelPromptPolicyTests`** — xUnit unit tests covering `SupportsThinkingMode`, `GetModelDirective`, `NormalizeMode`, and `BuildSystemPrompt` for all model families
+- **`BenchmarkSuite1` project** — Benchmark.NET project for `BenchmarkDashboardGeneratorBenchmarks` with CPU and memory diagnosers
+
+### Changed
+- **`PromptTemplates.ToneProfessional`** — added explicit guard against closing phrases (`"let me know"`, `"feel free to"`, `"I hope this helps"`, `"don't hesitate"`) that trigger the `ClosingRemarkLine` evaluator regex
+- **`PromptTemplates.ToneCasual`** — same closing-phrase guard as `ToneProfessional`
+- **`PromptTemplates.AutoComplete`** — prompt now explicitly forbids ellipsis (`"..."`) as a placeholder and requires the continuation text in full
+- **`PromptTemplates.OcrFallback`** — prompt now explicitly forbids ellipsis (`"..."`) as a placeholder and requires the corrected text in full
+- **`ConcreteLlamaSharpModelAdapter.ConsumeTokenStream`** — tokens are now scrubbed of chat-template turn markers (`<end_of_turn>`, `<start_of_turn>`, `</start_of_turn>`, `<|eot_id|>`, `<|im_end|>`, `<|end|>`) before being written to the channel, preventing occasional leakage into scored output
+- **`ConcreteLlamaSharpModelAdapter.DetectChatTemplateFamily`** — doc comment corrected (was missing leading `///`)
+
+
 - **`IAIDispatcher.SetPreferredReasoningMode(string)` / `PreferredReasoningMode`** — new interface members so the proxy tier can round-trip the mode key as a plain string across the assembly boundary
 - **`AIDispatcherProxy.SetPreferredReasoningMode()` / `PreferredReasoningMode`** — proxy implementation that parses and forwards the mode string to the inner dynamic dispatcher
 - **`SidebarAutomationHelper.SwitchReasoningMode()`** — UI-test helper that opens the options flyout, navigates to the *ReasoningModeSubMenu*, and clicks the target mode item; waits for dispatcher reload to complete
