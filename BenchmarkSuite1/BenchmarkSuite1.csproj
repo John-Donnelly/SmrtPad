@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Platforms>AnyCPU;x64;ARM64</Platforms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="VSDiagnostics.BenchmarkDotNet">
+      <HintPath>$(PkgMicrosoft_VisualStudio_DiagnosticsHub_BenchmarkDotNetDiagnosers)\lib\netstandard2.0\VSDiagnostics.BenchmarkDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Interop">
+      <HintPath>$(PkgMicrosoft_VisualStudio_DiagnosticsHub_BenchmarkDotNetDiagnosers)\lib\netstandard2.0\Microsoft.VisualStudio.Interop.dll</HintPath>
+    </Reference>
+    <Reference Include="DiagnosticsHub.StandardCollector.Host.Interop">
+      <HintPath>$(PkgMicrosoft_VisualStudio_DiagnosticsHub_BenchmarkDotNetDiagnosers)\lib\netstandard2.0\DiagnosticsHub.StandardCollector.Host.Interop.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SmrtPad.AI.Benchmarks\BenchmarkCase.cs" Link="BenchmarkCase.cs" />
+    <Compile Include="..\SmrtPad.AI.Benchmarks\BenchmarkRun.cs" Link="BenchmarkRun.cs" />
+    <Compile Include="..\SmrtPad.AI.Benchmarks\BenchmarkResult.cs" Link="BenchmarkResult.cs" />
+    <Compile Include="..\SmrtPad.AI.Benchmarks\EvaluationScore.cs" Link="EvaluationScore.cs" />
+    <Compile Include="..\SmrtPad.AI.Benchmarks\Reporting\BenchmarkDashboardGenerator.cs" Link="Reporting\BenchmarkDashboardGenerator.cs" />
+    <Compile Include="..\SmrtPad.AI.Benchmarks\Reporting\BenchmarkReportGenerator.cs" Link="Reporting\BenchmarkReportGenerator.cs" />
+  </ItemGroup>
+</Project>
