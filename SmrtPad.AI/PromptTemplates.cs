@@ -24,6 +24,7 @@ public static class PromptTemplates
         return $"""
             Rewrite the following text in a professional, formal tone.
             Preserve the original meaning exactly, keep it plain text, and do not add commentary, signatures, subject lines, or <think> tags unless they already belong in the source.
+            Do not end with phrases such as "let me know", "feel free to", "I hope this helps", or "don't hesitate".
             Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
@@ -37,6 +38,7 @@ public static class PromptTemplates
         return $"""
             Rewrite the following text in a casual, friendly, conversational tone.
             Preserve the original meaning exactly, keep it plain text, and do not add commentary, emojis, sign-offs, or <think> tags unless they already belong in the source.
+            Do not end with phrases such as "let me know", "feel free to", or "I hope this helps".
             Output exactly one <insert>...</insert> block and nothing else.
 
             {text}
@@ -89,8 +91,8 @@ public static class PromptTemplates
         ArgumentNullException.ThrowIfNull(text);
         return $"""
             Continue the text below naturally, matching the existing style and tone.
-            Write only the continuation, do not repeat the input, stay concise, and do not add commentary, scene-setting, or <think> tags.
-            Output exactly one <insert>...</insert> block and nothing else.
+            Write only the continuation — do not repeat the input, do not use ellipsis ("...") as a placeholder, stay concise, and do not add commentary, scene-setting, or <think> tags.
+            Output exactly one <insert>...</insert> block containing the continuation and nothing else.
 
             {text}
             """;
@@ -109,7 +111,7 @@ public static class PromptTemplates
         ArgumentNullException.ThrowIfNull(rawOcrText);
         return $"""
             The following text came from OCR and may contain recognition errors, missing spaces, or garbled characters.
-            Correct it into clean, readable plain text while preserving the intended wording and structure. Do not add commentary, labels, or <think> tags.
+            Correct it into clean, readable plain text while preserving the intended wording and structure. Do not add commentary, labels, or <think> tags. Do not use ellipsis ("...") as a placeholder — always output the corrected text in full.
             Output exactly one <insert>...</insert> block and nothing else.
 
             {rawOcrText}
