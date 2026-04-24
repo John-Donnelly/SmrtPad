@@ -327,5 +327,114 @@ public sealed class LocalModelBenchmarkTests
         return File.Exists(Path.Combine(path, "llama.dll"))
             && File.Exists(Path.Combine(path, "ggml.dll"));
     }
+
+    /// <summary>
+    /// Targeted benchmark: runs only gemma-4-e2b on GPU via the llama.cpp GGUF path.
+    /// Run with: dotnet test --filter "Category=Gemma4E2bBenchmark"
+    /// </summary>
+    [Fact(Timeout = 7_200_000)] // 2-hour ceiling
+    [Trait("Category", "Gemma4E2bBenchmark")]
+    public async Task TargetedBenchmarkRun_Gemma4E2b_WithLiveDashboard()
+    {
+        const string alias = "gemma-4-e2b";
+        var modelPath = GgufModelCatalog.GetLocalGgufPath(alias);
+
+        if (!File.Exists(modelPath))
+            Assert.Fail($"Model file not found: {modelPath}. Download it before running this benchmark.");
+
+        string? backendOverride = ResolveLlamaBackendDirectoryOverride();
+
+        if (!SelectedBackendSupportsArchitecture(backendOverride, "gemma4"))
+            Assert.Fail(
+                $"The selected llama backend does not support architecture 'gemma4'. " +
+                $"Set {LlamaBackendDirEnv} to a Gemma4-capable backend directory or place one at a known path.");
+
+        var outputDir = Path.GetFullPath(
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "BenchmarkResults"));
+        Directory.CreateDirectory(outputDir);
+
+        var cases = BenchmarkPromptCatalog.All;
+        var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-gemma4-e2b";
+        var startedAt = DateTimeOffset.UtcNow;
+        var allResults = new List<BenchmarkResult>(cases.Count);
+        string? dashPath = null;
+        string currentStatus = string.Empty;
+        var responseLogPath = Path.Combine(outputDir, combinedRunId + "-responses.jsonl");
+        const string backendLabel = "LlamaCpp GPU";
+        const string modelName = "gemma-4-e2b [GGUF]";
+        const string reasoningTag = "NoThink";
+        int totalEvals = cases.Count;
+
+        Console.WriteLine($"=== TARGETED BENCHMARK: {alias} ===");
+        Console.WriteLine($"  Path    : {modelPath}");
+        Console.WriteLine($"  Backend : {backendLabel}");
+        Console.WriteLine($"  Cases   : {cases.Count}");
+        Console.WriteLine();
+
+        AIDispatcher? dispatcher = null;
+        try
+        {
+            dispatcher = AIDispatcherFactory.CreateFromLocalPath(
+                modelPath,
+                MaxContextTokens,
+                forceCpuForGguf: false,
+                backendOverride);
+            dispatcher.SetPreferredReasoningMode(ModelReasoningMode.NoThinking);
+            await dispatcher.InitializeAsync(msg => Console.WriteLine($"  [init] {msg}"));
+        }
+        catch (Exception ex)
+        {
+            if (dispatcher is not null) await dispatcher.DisposeAsync();
+            Assert.Fail($"Dispatcher init failed: {ex.Message}");
+            return;
+        }
+
+        await using (dispatcher)
+        {
+            var runner = new BenchmarkRunner(
+                dispatcher,
+                modelName,
+                backendLabel,
+                enableLlmGrading: false,
+                reasoningTag);
+
+            await runner.RunAsync(
+                cases,
+                onProgress: msg =>
+                {
+                    currentStatus = msg;
+                    Console.WriteLine($"  {msg}");
+                },
+                onResultAdded: result =>
+                {
+                    allResults.Add(result);
+                    var snap = new BenchmarkRun(combinedRunId, modelName, backendLabel, startedAt, allResults, reasoningTag);
+                    var path = BenchmarkDashboardGenerator.Generate(snap, totalEvals, outputDir, currentStatus: currentStatus);
+                    if (dashPath is null)
+                    {
+                        dashPath = path;
+                        try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); } catch { }
+                    }
+                },
+                responseLogPath: responseLogPath,
+                perCaseTimeout: TimeSpan.FromSeconds(300));
+        }
+
+        var finalRun = new BenchmarkRun(combinedRunId, modelName, backendLabel, startedAt, allResults, reasoningTag);
+        BenchmarkReportGenerator.WriteReports(finalRun, outputDir);
+        BenchmarkDashboardGenerator.Generate(finalRun, totalEvals, outputDir);
+
+        int passed = finalRun.Results.Count(r => r.Evaluation.RuleScore >= BenchmarkReportGenerator.PassThreshold);
+        double avg = finalRun.Results.Count > 0 ? finalRun.Results.Average(r => r.Evaluation.RuleScore) : 0;
+
+        Console.WriteLine();
+        Console.WriteLine($"=== GEMMA 4 E2B BENCHMARK COMPLETE ===");
+        Console.WriteLine($"  Results : {finalRun.Results.Count}/{totalEvals}");
+        Console.WriteLine($"  Passed  : {passed}");
+        Console.WriteLine($"  Avg     : {avg:F1}/100");
+        Console.WriteLine($"  Reports : {outputDir}");
+
+        Assert.NotEmpty(finalRun.Results);
+    }
 }
 
