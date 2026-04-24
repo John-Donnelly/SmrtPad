@@ -346,7 +346,7 @@ internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
                 {
                     MaxTokens = _maxContextTokens,
                     AntiPrompts = GetAntiPrompts(_chatTemplateFamily),
-                    SamplingPipeline = new DefaultSamplingPipeline(),
+                    SamplingPipeline = BuildSamplingPipeline(_modelAlias, _chatTemplateFamily),
                 };
 
                 // InferAsync returns IAsyncEnumerable — bridge to our channel
@@ -423,8 +423,34 @@ internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
     };
 
     /// <summary>
-    /// Reads the GGUF metadata or filename to determine chat template family.
-    /// Falls back to inspecting the filename for well-known model names.
+    /// Builds a <see cref="DefaultSamplingPipeline"/> tuned for the active skill.
+    /// Precision skills (autocomplete, OCR) use a lower temperature and fixed seed to
+    /// reduce stochastic variance on tag wrapping and content fidelity.
+    /// All other skills use library defaults so established prose behaviour is not perturbed.
+    /// </summary>
+    private static DefaultSamplingPipeline BuildSamplingPipeline(string alias, string family)
+    {
+        var skill = SkillContext.Current;
+
+        // Precision skills: tighter sampling to stabilise <insert> wrapping and avoid ellipsis/repeat-input
+        if (skill is "autocomplete" or "ocr")
+        {
+            return new DefaultSamplingPipeline
+            {
+                Temperature = 0.3f,
+                TopP = 0.85f,
+                Seed = 42,
+            };
+        }
+
+        // All other skills: use LLamaSharp defaults — established behaviour is not perturbed
+        return new DefaultSamplingPipeline();
+    }
+
+    /// <summary>
+    /// Reads the GGUF metadata or filename to determine the chat-template family.
+    /// Checks a sibling <c>genai_config.json</c> first, then falls back to inspecting
+    /// the filename for well-known model name patterns.
     /// </summary>
     private static string DetectChatTemplateFamily(string ggufPath)
     {
@@ -522,8 +548,22 @@ internal sealed class ConcreteLlamaSharpModelAdapter : ILanguageModelAdapter
         {
             await foreach (var token in stream.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
-                if (!string.IsNullOrEmpty(token))
-                    w.TryWrite(token);
+                if (string.IsNullOrEmpty(token))
+                    continue;
+
+                // Strip chat-template artifacts that may slip through before the anti-prompt fires.
+                // These are Gemma/Llama turn markers that the model occasionally emits at the end of
+                // a generation before the stop token is recognised.
+                var clean = token
+                    .Replace("<end_of_turn>", string.Empty)
+                    .Replace("<start_of_turn>", string.Empty)
+                    .Replace("</start_of_turn>", string.Empty)
+                    .Replace("<|eot_id|>", string.Empty)
+                    .Replace("<|im_end|>", string.Empty)
+                    .Replace("<|end|>", string.Empty);
+
+                if (!string.IsNullOrEmpty(clean))
+                    w.TryWrite(clean);
             }
         }
     }
