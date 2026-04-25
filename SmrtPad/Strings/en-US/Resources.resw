@@ -509,6 +509,18 @@
   <data name="SmrtDoodleGetFromStore" xml:space="preserve">
     <value>Get from Store</value>
   </data>
+  <data name="SmrtDoodleReturnTitle" xml:space="preserve">
+    <value>Drawing Ready</value>
+  </data>
+  <data name="SmrtDoodleReturnPrompt" xml:space="preserve">
+    <value>Where should the drawing go?</value>
+  </data>
+  <data name="SmrtDoodleReturnReplace" xml:space="preserve">
+    <value>Replace selection</value>
+  </data>
+  <data name="SmrtDoodleReturnInsertNew" xml:space="preserve">
+    <value>Insert at cursor</value>
+  </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>Insert Hyperlink</value>
   </data>

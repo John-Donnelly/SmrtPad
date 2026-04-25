@@ -29,6 +29,9 @@
     <InternalsVisibleTo Include="SmrtPad.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SmrtAI.Core\SmrtAI.Core.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />

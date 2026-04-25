@@ -1,138 +1,104 @@
 using System;
-using System.Diagnostics;
-using System.IO;
-using System.Text.Json;
+using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.System;
 
 namespace SmrtPad.Services;
 
 /// <summary>
-/// Manages IPC between SmrtPad and SmrtDoodle for the Create A Drawing workflow.
+/// SmrtPad-side of the SmrtPad↔SmrtDoodle "Insert Drawing" workflow.
 ///
-/// IPC contract (file-based, accessible from both sandboxed MSIX processes via %TEMP%):
-///   1. SmrtPad writes <c>%TEMP%\SmrtSuite\pending-request.json</c> containing the
-///      path where SmrtDoodle should save the exported PNG.
-///   2. SmrtPad launches SmrtDoodle via its registered executable path.
-///   3. SmrtDoodle reads the request on startup and, when the user closes the window,
-///      saves the drawing as a PNG to <c>OutputPath</c>.
-///   4. SmrtPad detects the file and inserts it into the active document; if the file
-///      is absent after SmrtDoodle exits the user cancelled without saving.
+/// Flow:
+/// <list type="number">
+///   <item>SmrtPad creates a per-session named-pipe server.</item>
+///   <item>SmrtPad launches SmrtDoodle via <c>smrtdoodle://edit?pipe={name}&amp;v=1</c>.</item>
+///   <item>SmrtDoodle connects to the pipe and reads the optional source PNG frame.</item>
+///   <item>When the user inserts/cancels, SmrtDoodle writes back one frame and closes the pipe.</item>
+/// </list>
+/// Named pipes are used because Windows App SDK / WinUI 3 cannot host an
+/// <c>AppServiceConnection</c> (no <c>OnBackgroundActivated</c>).
 /// </summary>
-internal sealed class SmrtDoodleIpcService
+internal sealed class SmrtDoodleIpcService : IAsyncDisposable
 {
-    private static readonly string s_ipcDirectory =
-        Path.Combine(Path.GetTempPath(), "SmrtSuite");
+    private NamedPipeServerStream? _server;
 
-    private static readonly string s_requestFilePath =
-        Path.Combine(s_ipcDirectory, "pending-request.json");
-
-    private static readonly string s_windowsAppsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Microsoft", "WindowsApps");
-
-    /// <summary>
-    /// Finds the SmrtDoodle executable path, or <c>null</c> if SmrtDoodle is not installed.
-    /// </summary>
-    public static string? FindExecutable()
+    /// <summary>Whether SmrtDoodle's protocol handler is registered on this machine.</summary>
+    public static async Task<bool> IsSmrtDoodleAvailableAsync()
     {
-        var candidate = Path.Combine(s_windowsAppsPath, "SmrtDoodle.exe");
-        if (File.Exists(candidate)) return candidate;
-
-        foreach (var dir in Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? [])
-        {
-            if (string.IsNullOrWhiteSpace(dir)) continue;
-            candidate = Path.Combine(dir.Trim(), "SmrtDoodle.exe");
-            if (File.Exists(candidate)) return candidate;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Writes the IPC handshake, launches SmrtDoodle, and waits for it to close.
-    /// </summary>
-    /// <returns>
-    /// The absolute path of the PNG written by SmrtDoodle, or <c>null</c> when the
-    /// user closed SmrtDoodle without saving a drawing.
-    /// </returns>
-    /// <exception cref="InvalidOperationException">SmrtDoodle could not be found or started.</exception>
-    public async Task<string?> LaunchAndAwaitAsync(CancellationToken ct = default)
-    {
-        string? exe = FindExecutable()
-            ?? throw new InvalidOperationException("SmrtDoodle executable not found.");
-
-        Directory.CreateDirectory(s_ipcDirectory);
-        CleanupStaleFiles();
-
-        // Each session gets a unique output path so concurrent launches don't collide.
-        string outputPath = Path.Combine(s_ipcDirectory, $"{Guid.NewGuid():N}.png");
-
-        var request = new SmrtDoodleIpcRequest(outputPath, Version: 1);
-        string json = JsonSerializer.Serialize(
-            request, SmrtDoodleIpcRequestContext.Default.SmrtDoodleIpcRequest);
-        await File.WriteAllTextAsync(s_requestFilePath, json, ct);
-
-        var psi = new ProcessStartInfo(exe) { UseShellExecute = true };
-        using var launchProcess = Process.Start(psi)
-            ?? throw new InvalidOperationException("Failed to start SmrtDoodle.");
-
-        // MSIX apps are launched via a stub executable in WindowsApps\ that activates
-        // the packaged host and exits immediately.  In that case, poll for the real
-        // SmrtDoodle process; for a direct (non-MSIX) executable we can await it.
-        bool isMsixStub = exe.StartsWith(s_windowsAppsPath, StringComparison.OrdinalIgnoreCase);
-        if (isMsixStub)
-            await PollForCompletionAsync(outputPath, ct);
-        else
-            await launchProcess.WaitForExitAsync(ct);
-
-        TryDelete(s_requestFilePath);
-        return File.Exists(outputPath) ? outputPath : null;
-    }
-
-    // Polls until SmrtDoodle writes the output file or the SmrtDoodle process is gone.
-    private static async Task PollForCompletionAsync(string outputPath, CancellationToken ct)
-    {
-        // Allow time for the MSIX host process to activate before we start watching it.
-        await Task.Delay(TimeSpan.FromSeconds(2), ct);
-
-        while (!ct.IsCancellationRequested)
-        {
-            if (File.Exists(outputPath))
-                return;
-
-            if (Process.GetProcessesByName("SmrtDoodle").Length == 0)
-                return;
-
-            await Task.Delay(TimeSpan.FromMilliseconds(500), ct);
-        }
-    }
-
-    private static void CleanupStaleFiles()
-    {
-        TryDelete(s_requestFilePath);
         try
         {
-            foreach (var file in Directory.GetFiles(s_ipcDirectory, "*.png"))
+            var status = await Launcher.QueryUriSupportAsync(
+                new Uri($"{SmrtDoodleIpc.ProtocolScheme}://probe"),
+                LaunchQuerySupportType.Uri);
+            return status == LaunchQuerySupportStatus.Available;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Launches SmrtDoodle (handing off <paramref name="sourceImagePng"/> if provided) and
+    /// waits until it sends back the edited PNG or a cancellation frame.
+    /// </summary>
+    /// <returns>The PNG bytes returned by SmrtDoodle, or <c>null</c> when cancelled.</returns>
+    public async Task<byte[]?> EditImageAsync(byte[]? sourceImagePng, CancellationToken ct = default)
+    {
+        var pipeName = SmrtDoodleIpc.NewPipeName();
+
+        // Direction: in/out so SmrtPad can both push the source image and pull the result.
+        _server = new NamedPipeServerStream(
+            pipeName,
+            PipeDirection.InOut,
+            maxNumberOfServerInstances: 1,
+            PipeTransmissionMode.Byte,
+            PipeOptions.Asynchronous);
+
+        var launchUri = new Uri(SmrtDoodleIpc.BuildLaunchUri(pipeName));
+        if (!await Launcher.LaunchUriAsync(launchUri))
+            return null;
+
+        // SmrtDoodle has up to 90s to connect after the protocol activation. If the user
+        // dismisses the activation prompt or the launch fails silently, the wait completes
+        // when the operation is cancelled by the caller.
+        using (var connectCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+        {
+            connectCts.CancelAfter(TimeSpan.FromSeconds(90));
+            try
             {
-                if (File.GetLastWriteTimeUtc(file) < DateTime.UtcNow.AddHours(-1))
-                    TryDelete(file);
+                await _server.WaitForConnectionAsync(connectCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
             }
         }
-        catch { /* best-effort */ }
+
+        // Send the (optional) source image so SmrtDoodle can preload it into the canvas.
+        var openingFrame = new SmrtDoodleImageMessage(
+            Command: SmrtDoodleIpc.CommandEditImage,
+            SchemaVersion: SmrtDoodleIpc.CurrentSchemaVersion,
+            ImagePngBase64: sourceImagePng is null ? null : SmrtDoodleFrame.Encode(sourceImagePng));
+        await SmrtDoodleFrame.WriteAsync(_server, openingFrame, ct).ConfigureAwait(false);
+
+        // Wait for the reply frame from SmrtDoodle.
+        var reply = await SmrtDoodleFrame.ReadAsync(_server, ct).ConfigureAwait(false);
+        if (reply is null) return null;
+
+        return reply.Command == SmrtDoodleIpc.CommandImageReady
+            ? SmrtDoodleFrame.Decode(reply.ImagePngBase64)
+            : null;
     }
 
-    private static void TryDelete(string path)
+    public ValueTask DisposeAsync()
     {
-        try { File.Delete(path); }
-        catch { /* best-effort */ }
+        if (_server is not null)
+        {
+            try { _server.Dispose(); } catch { /* best-effort */ }
+            _server = null;
+        }
+        return ValueTask.CompletedTask;
     }
 }
-
-/// <param name="OutputPath">Absolute path where SmrtDoodle should save the exported PNG.</param>
-/// <param name="Version">Protocol version — currently always 1.</param>
-internal sealed record SmrtDoodleIpcRequest(string OutputPath, int Version);
-
-[System.Text.Json.Serialization.JsonSerializable(typeof(SmrtDoodleIpcRequest))]
-internal sealed partial class SmrtDoodleIpcRequestContext
-    : System.Text.Json.Serialization.JsonSerializerContext { }

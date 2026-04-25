@@ -3854,7 +3854,7 @@ namespace SmrtPad
 
         private async void PaintDrawing_Click(object sender, RoutedEventArgs e)
         {
-            if (SmrtDoodleIpcService.FindExecutable() is null)
+            if (!await SmrtDoodleIpcService.IsSmrtDoodleAvailableAsync())
             {
                 var dialog = new ContentDialog
                 {
@@ -3866,7 +3866,7 @@ namespace SmrtPad
                     DefaultButton = ContentDialogButton.Primary
                 };
                 if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-                    await Launcher.LaunchUriAsync(new Uri("ms-windows-store://search/?query=SmrtDoodle"));
+                    await Launcher.LaunchUriAsync(new Uri(SmrtDoodleIpc.StoreSearchUri));
                 return;
             }
 
@@ -3874,23 +3874,48 @@ namespace SmrtPad
             ViewModel.UpdateStatus(Res.GetString("StatusSmrtDoodleWaiting"));
             try
             {
-                string? imagePath = await new SmrtDoodleIpcService().LaunchAndAwaitAsync();
+                await using var bridge = new SmrtDoodleIpcService();
+                byte[]? png = await bridge.EditImageAsync(sourceImagePng: null);
 
-                if (imagePath is null)
+                if (png is null || png.Length == 0)
                 {
                     ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
                     return;
                 }
 
-                var file = await StorageFile.GetFileFromPathAsync(imagePath);
-                using (var stream = await file.OpenAsync(FileAccessMode.Read))
+                // Option (c): prompt the user where to put the returned drawing.
+                var insertDialog = new ContentDialog
                 {
-                    Editor.Document.Selection.InsertImage(
-                        0, 0, 0, VerticalCharacterAlignment.Baseline, "drawing.png", stream);
+                    Title = Res.GetString("SmrtDoodleReturnTitle"),
+                    Content = Res.GetString("SmrtDoodleReturnPrompt"),
+                    PrimaryButtonText = Res.GetString("SmrtDoodleReturnReplace"),
+                    SecondaryButtonText = Res.GetString("SmrtDoodleReturnInsertNew"),
+                    CloseButtonText = Res.GetString("ButtonCancel"),
+                    XamlRoot = Content.XamlRoot,
+                    DefaultButton = ContentDialogButton.Secondary
+                };
+                var choice = await insertDialog.ShowAsync();
+                if (choice == ContentDialogResult.None)
+                {
+                    ViewModel.UpdateStatus(Res.GetString("StatusDrawingCancelled"));
+                    return;
                 }
-                ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
 
-                try { File.Delete(imagePath); } catch { /* best-effort */ }
+                using var ms = new MemoryStream(png);
+                using var raStream = new InMemoryRandomAccessStream();
+                await raStream.WriteAsync(ms.GetBuffer().AsBuffer(0, png.Length));
+                raStream.Seek(0);
+
+                if (choice == ContentDialogResult.Primary)
+                {
+                    // Replace selection in place when possible (falls back to cursor insert).
+                    Editor.Document.Selection.Delete(TextRangeUnit.Character, 0);
+                }
+
+                Editor.Document.Selection.InsertImage(
+                    0, 0, 0, VerticalCharacterAlignment.Baseline, "drawing.png", raStream);
+
+                ViewModel.UpdateStatus(Res.GetString("StatusDrawingInserted"));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
