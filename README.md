@@ -35,8 +35,10 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 - Fully opaque overlay that covers the tab strip and editor when open
 
 ### SmrtDoodle Integration
-- **SmrtDoodle** ribbon button launches the SmrtDoodle companion drawing app, awaits exit, and inserts the resulting image into the document
-- Pre-launch installation check; if not installed a dialog offers a **Get from Store** button that opens the Microsoft Store search for SmrtDoodle
+- **SmrtDoodle** ribbon button launches the SmrtDoodle companion drawing app via the `smrtdoodle://` protocol; the current selection (if any) is sent as the initial canvas image over a per-session named pipe
+- When SmrtDoodle closes, the rendered drawing is returned to SmrtPad via the same named pipe and the user is prompted to **Replace selection** or **Insert as new image**
+- Pre-launch installation check via `Launcher.QueryUriSupportAsync`; if SmrtDoodle is not installed a dialog offers a **Get from Store** button that opens the Microsoft Store search for SmrtDoodle
+- Shared bridge contract and frame serialization live in the `SmrtAI.Core` library, reused by both apps
 
 ### Smart Sidebar (on-device AI)
 - Collapsible AI panel that operates entirely on-device using Windows AI APIs (Phi Silica NPU) or ONNX Runtime GenAI (GPU/CPU)
@@ -177,6 +179,12 @@ The test suite covers:
 
 ```
 SmrtPad/
+├── SmrtAI.Core/             # Shared AI abstractions and IPC contract (net8.0 library)
+│   ├── IAIDispatcher.cs     # AI dispatcher interface (shared with SmrtPad.AI)
+│   ├── AIDispatcherAvailability.cs  # Backend availability DTOs
+│   ├── SemanticSearchModels.cs      # Semantic search records
+│   ├── SmrtDoodleIpcContract.cs     # Protocol URI builder and pipe-name helpers
+│   └── SmrtDoodleFrame.cs           # Length-prefixed JSON frame serializer
 ├── SmrtPad/
 │   ├── Assets/              # App icon (SmrtPad.ico/.png), SmrtDoodle icons
 │   ├── Controls/            # SmartSidebar, SidebarChatEntry, SidebarChatTemplateSelector
@@ -187,8 +195,7 @@ SmrtPad/
 │   │                        # ResponseCleaner, RtfHelper, RulerHelper
 │   ├── Models/              # DocumentTemplate
 │   ├── Services/            # AIDispatcherProxy, DialogService, FileService,
-│   │                        # IAIDispatcher, SettingsService,
-│   │                        # SmrtDoodleIpcService
+│   │                        # SettingsService, SmrtDoodleIpcService
 │   │                        # (+ IDialogService, IFileService, ISettingsService)
 │   ├── Strings/             # 9 locale .resw files (en-US, de-DE, es-ES, fr-FR,
 │   │                        # ja-JP, zh-Hans, ar-SA, ru-RU, ur-PK)

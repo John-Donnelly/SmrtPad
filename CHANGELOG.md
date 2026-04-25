@@ -4,8 +4,41 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+---
+
+## [0.9.5] - 2026-05-01
+
 ### Added
-- **`SkillContext` ambient carrier** — new `internal static class SkillContext` using `AsyncLocal<string?>` threads the active skill key from `AIDispatcher.StreamResponseAsync` through to `ConcreteLlamaSharpModelAdapter.BuildSamplingPipeline` without changing the `ILanguageModelAdapter` interface
+- **`SmrtAI.Core` shared library** — new standalone `net8.0` class library (`SmrtAI.Core.csproj`) that packages the AI dispatcher abstraction and SmrtDoodle IPC contract for reuse by SmrtPad, SmrtPad.AI, and SmrtDoodle
+- **`IAIDispatcher`** moved from `SmrtPad/Services` into `SmrtAI.Core`; includes new `SetPreferredReasoningMode(string)` / `PreferredReasoningMode` members to round-trip the reasoning mode key across the assembly boundary
+- **`AIDispatcherAvailability`** and **`SemanticSearchModels`** moved from `SmrtPad/Services` into `SmrtAI.Core`
+- **`SmrtDoodleIpcContract`** — shared constants and helpers for the SmrtPad ↔ SmrtDoodle protocol-activation bridge: `ProtocolScheme`, `StoreSearchUri`, `PipeQueryKey`, `SchemaQueryKey`, `CurrentSchemaVersion`, `PipeNamePrefix`, `BuildLaunchUri()`, and `NewPipeName()`
+- **`SmrtDoodleFrame`** — length-prefixed UTF-8 JSON frame serializer/deserializer used by both apps to exchange source and result PNG payloads over the named pipe
+- **`SmrtPad/GlobalUsings.cs`** — global `using` directives for `SmrtAI.Core` and `SmrtAI.Core.Ipc` namespaces
+- **SmrtDoodle integration via protocol + named-pipe bridge** — `SmrtDoodleIpcService` creates a per-session named-pipe server, launches `smrtdoodle://edit?pipe=…&v=1`, optionally sends the source PNG frame, waits for the result frame or a cancel signal, and returns the decoded PNG
+- **Store fallback** — if SmrtDoodle is not installed, `PaintDrawing_Click` opens `ms-windows-store://search/?query=SmrtDoodle` so users can install the companion app
+- **Return-image dialog** — after SmrtDoodle closes, users are prompted whether to **Replace selection** or **Insert as new image**; four new resource strings added (`SmrtDoodleReturnTitle`, `SmrtDoodleReturnPrompt`, `SmrtDoodleReturnReplace`, `SmrtDoodleReturnInsertNew`)
+
+### Changed
+- **`SmrtPad.csproj`** — added `<ProjectReference>` to `SmrtAI.Core`
+- **`SmrtPad.AI.csproj`** — added `<ProjectReference>` to `SmrtAI.Core`
+- **`SmrtPad.slnx`** — `SmrtAI.Core` project added to solution
+- **`SmrtDoodleIpcService`** — completely rewritten from a legacy temp-file/pipe approach to the new protocol + named-pipe bridge; the old AppServiceConnection design was not feasible with full-trust WinUI 3 packaged apps
+
+### Removed
+- **`SmrtPad/Services/IAIDispatcher.cs`** — moved to `SmrtAI.Core`
+- **`SmrtPad/Services/AIDispatcherAvailability.cs`** — moved to `SmrtAI.Core`
+- **`SmrtPad/Services/SemanticSearchModels.cs`** — moved to `SmrtAI.Core`
+
+### Packaging
+- Version bumped from `0.6.0.0` → `0.9.5.0` in `SmrtPad (Package)/Package.appxmanifest`
+
+---
+
+## [0.9.0] - 2026-04-24
+
+### Added
+- **`SkillContext` ambient carrier**
 - **Skill-aware sampling pipeline** — `BuildSamplingPipeline` now reads `SkillContext.Current` and applies precision settings (Temperature 0.3, TopP 0.85, Seed 42) for `autocomplete` and `ocr` skills to reduce stochastic variance in tag wrapping and content fidelity; all other skills use LLamaSharp library defaults
 - **`TargetedBenchmarkRun_Gemma4E2b_WithLiveDashboard` benchmark test** — single-model focused benchmark for Gemma 4 E2B GGUF with live dashboard, per-case JSONL response logging, and a 300-second per-case timeout; opens the dashboard in the browser automatically on first result
 - **`ModelPromptPolicyTests`** — xUnit unit tests covering `SupportsThinkingMode`, `GetModelDirective`, `NormalizeMode`, and `BuildSystemPrompt` for all model families
