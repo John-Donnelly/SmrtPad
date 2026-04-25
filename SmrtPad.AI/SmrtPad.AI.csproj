@@ -53,6 +53,10 @@
     <InternalsVisibleTo Include="SmrtPad.AI.Benchmarks" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SmrtAI.Core\SmrtAI.Core.csproj" />
+  </ItemGroup>
+
   <!--
     Copy CUDA 12 runtime DLLs (cudart64_12, cublas64_12, cublasLt64_12) from the Python
     NVIDIA packages into the cuda12 output subdirectory alongside ggml-cuda.dll.

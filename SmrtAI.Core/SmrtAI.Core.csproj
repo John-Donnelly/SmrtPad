@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>SmrtAI.Core</RootNamespace>
+    <AssemblyName>SmrtAI.Core</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>SmrtAI.Core</PackageId>
+    <Authors>JAD Apps</Authors>
+    <Company>JAD Apps</Company>
+    <Description>Shared AI dispatcher abstractions and SmrtSuite IPC contract used by SmrtPad and SmrtDoodle.</Description>
+    <PackageTags>smrtsuite;ai;ipc;abstractions</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+</Project>

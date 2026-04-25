@@ -5,6 +5,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="BenchmarkSuite1/BenchmarkSuite1.csproj" />
+  <Project Path="SmrtAI.Core/SmrtAI.Core.csproj" />
   <Project Path="SmrtPad (Package)/SmrtPad (Package).wapproj" Type="c7167f0d-bc9f-4e6e-afe1-012c56b48db5">
     <Deploy />
   </Project>
