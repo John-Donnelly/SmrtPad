@@ -478,6 +478,18 @@
   <data name="SmrtDoodleGetFromStore" xml:space="preserve">
     <value>الحصول من المتجر</value>
   </data>
+  <data name="SmrtDoodleReturnTitle" xml:space="preserve">
+    <value>Drawing Ready</value>
+  </data>
+  <data name="SmrtDoodleReturnPrompt" xml:space="preserve">
+    <value>Where should the drawing go?</value>
+  </data>
+  <data name="SmrtDoodleReturnReplace" xml:space="preserve">
+    <value>Replace selection</value>
+  </data>
+  <data name="SmrtDoodleReturnInsertNew" xml:space="preserve">
+    <value>Insert at cursor</value>
+  </data>
   <data name="HyperlinkTitle" xml:space="preserve">
     <value>إدراج ارتباط تشعبي</value>
   </data>
@@ -1259,6 +1271,15 @@
   </data>
   <data name="SmartSidebarThinkingDoneLabel" xml:space="preserve">
     <value>Thought process</value>
+  </data>
+  <data name="SmartSidebarReasoningMode" xml:space="preserve">
+    <value>Reasoning mode</value>
+  </data>
+  <data name="SmartSidebarReasoningModeNoThinking" xml:space="preserve">
+    <value>Fast (no thinking)</value>
+  </data>
+  <data name="SmartSidebarReasoningModeThinking" xml:space="preserve">
+    <value>Deliberate (thinking)</value>
   </data>
   <data name="SmartSidebarSelectionRequired" xml:space="preserve">
     <value>Select text or place the caret in text first.</value>
