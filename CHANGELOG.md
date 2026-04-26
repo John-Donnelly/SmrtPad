@@ -4,6 +4,21 @@ All notable changes to SmrtPad are documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Localization** — 7 missing resource keys added to all 8 satellite `.resw` locale files (`ar-SA`, `de-DE`, `es-ES`, `fr-FR`, `ja-JP`, `ru-RU`, `ur-PK`, `zh-Hans`): `SmrtDoodleReturnTitle`, `SmrtDoodleReturnPrompt`, `SmrtDoodleReturnReplace`, `SmrtDoodleReturnInsertNew`, `SmartSidebarReasoningMode`, `SmartSidebarReasoningModeNoThinking`, `SmartSidebarReasoningModeThinking`; fixes CI `SatelliteResw_HasAllEnUsKeys` test failures
+
+### Changed
+- **`GgufModelCatalog`** — Gemma 4 E2B model source switched from `bartowski/google_gemma-4-e2b-it-GGUF` (Q4_K_M, 3,302 MB) to `HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive` (Q4_K_P, 3,533 MB); `Gemma4E2BAlias` and `Gemma4E2BContextTokens` constants added
+- **`AIDispatcherFactory`** — ORT GenAI multi-alias fallback path removed; GPU/CPU path now always loads Gemma 4 E2B via `ConcreteLlamaSharpModelAdapter` using `Gemma4E2BAlias`
+- **`AIDispatcher`** — removed `SetPreferredModelAlias`, `GetEligibleModelAliases`, `GetEligibleCpuModelAliases` methods and `ActiveModelAlias` property; `_modelFactory` delegate signature simplified (removed `preferredAlias` and `reasoningMode` parameters); `ResetAsync` no longer clears `ActiveModelAlias`
+- **`IAIDispatcher`** — removed `SetPreferredModelAlias`, `PreferredModelAlias`, `ActiveModelAlias`, `GetEligibleModelAliases`, `GetEligibleCpuModelAliases`, `SetPreferredExecutionTarget`, `PreferredExecutionTarget`, `SetPreferredReasoningMode`, and `PreferredReasoningMode` members; `ResetAsync` doc comment simplified
+- **`AIDispatcherProxy`** — removed proxy implementations of the above deleted interface members; `ExecutionTargetDisplayName` simplified to a constant `"GPU"` string
+- **`SmartSidebar`** — removed `PopulateModelMenu`, `PopulateExecutionTargetMenu`, and `SupportsThinkingMode` methods; model/target/reasoning-mode flyout sub-menus removed from `UpdateOptionsFlyoutAccessibility`; `GetModelName()` simplified to return `"Gemma 4 E2B"` as a static constant
+- **`SmrtPad.csproj`** — added `<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>` so WAP packaging targets can locate `SmrtPad.exe` without a RID-qualified subdirectory; suppressed IL2026 and IL2072 trim warnings for known-safe reflection sites; enabled `JsonSerializerIsReflectionEnabledByDefault` in Release builds to preserve existing `JsonSerializer` usage without a source-generator refactor
+- **`LiveBenchmarkTests`** — replaced hardware-probe alias enumeration with `GetGgufTargets(gpuOnly: false)`; removed ORT GenAI multi-model/NPU proxy logic; benchmark targets now enumerate local GGUF files directly
+- **`LocalModelBenchmarkTests`** — removed `ModelReasoningMode` field from `LocalBenchmarkRun` record and all `SetPreferredReasoningMode` calls; `MockedBenchmarkContext` factory delegate updated to match the simplified three-parameter signature
+- **`MockedBenchmarkContext`** — `AIDispatcher` constructor call updated to the new three-parameter `_modelFactory` lambda signature
+
 ---
 
 ## [0.9.5] - 2026-05-01

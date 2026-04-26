@@ -48,10 +48,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 - **Skill dropdown** — one unified `ComboBox` selects the active skill (Summarize, Professional tone, Rewrite for clarity, Grammar fix, Shorten, Complete at cursor); single **Apply** button dispatches to the correct prompt template
 - **Tone toggle** shown only when the tone skill is active (professional / casual)
 - **Freeform chat** — open-ended writing questions answered in plain text; document-drafting requests (letter, email, report, essay, story, press release, etc.) produce a full draft inserted via the Insert button
-- **Hardware-adaptive model selection** (`ModelSizeSelector`) — probes GPU VRAM via DXGI (WMI fallback) and available system RAM; selects the largest model alias that fits within the hardware budget with headroom; scales the context-token window proportionally (512–16 384 tokens)
-- **Model selector** — options flyout lets the user override the automatically chosen model; lists all hardware-eligible aliases ordered best-first; selecting a model resets and re-initializes the dispatcher with the chosen alias
-- **Execution target selector** — same flyout offers NPU / GPU / CPU override; selecting a target resets and re-initializes the dispatcher; unavailable targets are hidden automatically
-- **Reasoning mode selector** — options flyout exposes a *Reasoning mode* sub-menu for models that support chain-of-thought: **Fast (no thinking)** suppresses the model's internal reasoning chain; **Deliberate (thinking)** enables it. The sub-menu is hidden automatically for models that do not support thinking. Switching mode resets and reinitializes the dispatcher in place
+- **Fixed model: Gemma 4 E2B** — always uses the HauhauCS Aggressive Q4_K_P GGUF (~3.5 GB); downloaded automatically from HuggingFace Hub on first use; context window set to 8 192 tokens
 - **Live initialization progress** — sidebar status text and app status bar both update in real time as the AI initializes: detecting hardware → selecting model → starting service → downloading `{model}` (`{n} MB`) at `{n}%` → loading into memory; download percentage is computed by polling the model cache directory every 800 ms
 - **ResponseCleaner** strips preamble lines, code-fence delimiters, closing remarks, and reasoning-leak fragments from model output before text is shown or inserted
 - Prompt templates hardened with explicit, model-neutral output instructions (no persona dependency; consistent `<insert>…</insert>` contract across all skills)
@@ -80,7 +77,7 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 - .NET 8 SDK
 - Windows App SDK 1.8+
 - (Optional) [SmrtDoodle](https://www.microsoft.com/store/apps) for in-document drawing
-- (Optional) A Copilot+ PC (NPU) for on-device AI features; GPU/CPU inference uses ONNX Runtime GenAI (ONNX models) or LLamaSharp / llama.cpp (GGUF models) with automatic model download
+- (Optional) A CUDA-capable GPU for on-device AI; CPU fallback is supported. The AI engine uses LLamaSharp / llama.cpp with Gemma 4 E2B GGUF (downloaded automatically from HuggingFace Hub)
 
 ## Building
 
