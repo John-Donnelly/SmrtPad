@@ -163,20 +163,14 @@ internal sealed class ConcreteExecutionProviderCatalogAdapter : IExecutionProvid
 /// </summary>
 public sealed class AIDispatcherFactory
 {
-    /// <summary>Creates a ready-to-use <see cref="AIDispatcher"/> with production hardware probing and model adapters.</summary>
+    /// <summary>Creates a ready-to-use <see cref="AIDispatcher"/> backed by Gemma 4 E2B.</summary>
     public AIDispatcher Create()
     {
         var catalog = new ConcreteExecutionProviderCatalogAdapter();
         var probe = new HardwareProbeService(catalog);
 
-        AIDispatcher? dispatcher = null;
-        dispatcher = new AIDispatcher(probe, async (target, probeResult, onProgress, ct) =>
-        {
-            if (target == AIExecutionTarget.PhiSilicaNpu)
-                return await CreatePhiSilicaModelAdapterAsync(ct).ConfigureAwait(false);
-
-            return await CreateOrtGenAiModelAdapterAsync(target, probeResult.Gpu, dispatcher!.PreferredAlias, dispatcher.PreferredReasoningMode, onProgress, ct).ConfigureAwait(false);
-        });
+        var dispatcher = new AIDispatcher(probe, async (probeResult, onProgress, ct) =>
+            await CreateGemma4E2BAdapterAsync(probeResult, onProgress, ct).ConfigureAwait(false));
         return dispatcher;
     }
 
@@ -192,11 +186,6 @@ public sealed class AIDispatcherFactory
     /// <param name="modelPath">
     /// Absolute path to either a <c>.gguf</c> file or a directory containing <c>genai_config.json</c> + <c>model.onnx</c>.
     /// </param>
-    /// <param name="maxContextTokens">Maximum context window size in tokens.</param>
-    /// <summary>
-    /// Creates an <see cref="AIDispatcher"/> for a local model path with optional llama.cpp runtime overrides.
-    /// </summary>
-    /// <param name="modelPath">Absolute path to a GGUF file or ORT model directory.</param>
     /// <param name="maxContextTokens">Maximum context window size in tokens.</param>
     /// <param name="forceCpuForGguf">When <c>true</c>, GGUF models run with CPU-only layer offload.</param>
     /// <param name="llamaBackendDirectoryOverride">Optional absolute directory containing llama.cpp backend DLLs (llama.dll + ggml*.dll).</param>
@@ -219,117 +208,36 @@ public sealed class AIDispatcherFactory
         var stubCatalog = new StubCatalogAdapter();
         var probe = new HardwareProbeService(stubCatalog);
 
-        AIDispatcher? dispatcher = null;
-
         if (isGguf)
         {
-            dispatcher = new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+            return new AIDispatcher(probe, async (_, onProgress, ct) =>
                 await ConcreteLlamaSharpModelAdapter
-                    .CreateAsync(modelPath, maxContextTokens, onProgress, forceCpuForGguf, llamaBackendDirectoryOverride, dispatcher!.PreferredReasoningMode, null, ct)
+                    .CreateAsync(modelPath, maxContextTokens, onProgress, forceCpuForGguf, backendDirectoryOverride: llamaBackendDirectoryOverride, ModelReasoningMode.Default, null, ct)
                     .ConfigureAwait(false));
-            return dispatcher;
         }
 
-        dispatcher = new AIDispatcher(probe, async (_, _, onProgress, ct) =>
+        return new AIDispatcher(probe, async (_, onProgress, ct) =>
             await ConcreteOrtGenAiModelAdapter
-                .CreateAsync(modelPath, maxContextTokens, onProgress, dispatcher!.PreferredReasoningMode, null, ct)
+                .CreateAsync(modelPath, maxContextTokens, onProgress, ModelReasoningMode.Default, null, ct)
                 .ConfigureAwait(false));
-        return dispatcher;
     }
 
-    private static async Task<ILanguageModelAdapter> CreatePhiSilicaModelAdapterAsync(CancellationToken ct)
-    {
-        return await ConcretePhiSilicaModelAdapter.CreateAsync(ct).ConfigureAwait(false);
-    }
-
-    private static async Task<ILanguageModelAdapter> CreateOrtGenAiModelAdapterAsync(
-        AIExecutionTarget target,
-        AIBackendCapability gpuCapability,
-        string? preferredAlias,
-        ModelReasoningMode reasoningMode,
+    private static async Task<ILanguageModelAdapter> CreateGemma4E2BAdapterAsync(
+        HardwareProbeResult probeResult,
         Action<string>? onProgress,
         CancellationToken ct)
     {
-        bool isGpu = target == AIExecutionTarget.OnnxRuntimeGpu;
+        const string alias = GgufModelCatalog.Gemma4E2BAlias;
+        bool isGpu = probeResult.SelectedTarget == AIExecutionTarget.OnnxRuntimeGpu;
+        int maxContextTokens = GgufModelCatalog.Gemma4E2BContextTokens;
 
-        // Build the ordered list of aliases to try.
-        IReadOnlyList<string> aliases;
-        if (preferredAlias is not null && ModelSizeSelector.TryGetAlias(preferredAlias, out _, out _))
-        {
-            aliases = [preferredAlias];
-        }
-        else
-        {
-            // When the CPU target is forced, evaluate model sizes against system RAM, not VRAM.
-            var capabilityForSelection = isGpu ? gpuCapability : gpuCapability with { GpuVramMb = 0 };
-            aliases = ModelSizeSelector.GetEligibleAliases(capabilityForSelection);
-            if (aliases.Count == 0)
-                aliases = [ModelSizeSelector.FallbackAlias];
-        }
-
-        // Try GPU first; if loading fails for every alias fall through to CPU.
-        if (isGpu)
-        {
-            var gpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: true, reasoningMode, onProgress, ct)
-                .ConfigureAwait(false);
-            if (gpuAdapter is not null)
-                return gpuAdapter;
-
-            // GPU variants unavailable — fall back to CPU.
-        }
-
-        var cpuAdapter = await TryLoadAliasesAsync(aliases, isGpu: false, reasoningMode, onProgress, ct)
+        var modelPath = await ModelDownloadService
+            .EnsureModelAsync(alias, isGpu: false, onProgress, ct)
             .ConfigureAwait(false);
-        if (cpuAdapter is not null)
-            return cpuAdapter;
 
-        throw new InvalidOperationException(
-            "No eligible ORT GenAI model could be loaded for the current hardware configuration. " +
-            "Ensure model files are present in the SmrtPad local model cache or have a registered HuggingFace source.");
-    }
-
-    private static async Task<ILanguageModelAdapter?> TryLoadAliasesAsync(
-        IReadOnlyList<string> aliases,
-        bool isGpu,
-        ModelReasoningMode reasoningMode,
-        Action<string>? onProgress,
-        CancellationToken ct)
-    {
-        foreach (var alias in aliases)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            try
-            {
-                if (!ModelSizeSelector.TryGetAlias(alias, out var gpuMb, out var cpuMb))
-                    continue;
-
-                // Skip if this execution path has no variant for the alias.
-                long footprintMb = isGpu ? gpuMb : cpuMb;
-                if (footprintMb == ModelSizeSelector.CpuOnly || footprintMb == ModelSizeSelector.GpuOnly)
-                    continue;
-
-                int maxContextTokens = ModelSizeSelector.PickContextTokens(footprintMb);
-
-                var modelDir = await ModelDownloadService
-                    .EnsureModelAsync(alias, isGpu, onProgress, ct)
-                    .ConfigureAwait(false);
-
-                return await ConcreteOrtGenAiModelAdapter
-                    .CreateAsync(modelDir, maxContextTokens, onProgress, reasoningMode, alias, ct)
-                    .ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch
-            {
-                // This alias/variant failed — try the next one.
-            }
-        }
-
-        return null;
+        return await ConcreteLlamaSharpModelAdapter
+            .CreateAsync(modelPath, maxContextTokens, onProgress, forceCpu: !isGpu, backendDirectoryOverride: null, ModelReasoningMode.Default, alias, ct)
+            .ConfigureAwait(false);
     }
 
     /// <summary>

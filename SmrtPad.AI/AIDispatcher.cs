@@ -30,19 +30,16 @@ internal static class SkillContext
 }
 
 /// <summary>
-/// Orchestrates hardware detection and language model initialization,
+/// Orchestrates hardware detection and Gemma 4 E2B model initialization,
 /// then dispatches streaming inference and embedding requests.
 /// </summary>
 public sealed class AIDispatcher : IAsyncDisposable
 {
     private readonly HardwareProbeService _hardwareProbe;
-    private readonly Func<AIExecutionTarget, HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
+    private readonly Func<HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>> _modelFactory;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private ILanguageModelAdapter? _model;
     private SemanticSearchService? _semanticSearchService;
-
-    /// <summary>The execution target selected after initialization.</summary>
-    public AIExecutionTarget ExecutionTarget { get; private set; }
 
     /// <summary>The latest hardware probe result captured by the dispatcher.</summary>
     public HardwareProbeResult ProbeResult { get; private set; } = HardwareProbeResult.Uninitialized;
@@ -50,40 +47,9 @@ public sealed class AIDispatcher : IAsyncDisposable
     /// <summary>Whether <see cref="InitializeAsync"/> has completed successfully.</summary>
     public bool IsInitialized { get; private set; }
 
-    /// <summary>
-    /// User-selected model alias override. When set, overrides automatic hardware-based model selection.
-    /// </summary>
-    public string? PreferredAlias { get; private set; }
-
-    /// <summary>
-    /// The alias of the model that was actually loaded during the last successful initialization.
-    /// </summary>
-    public string? ActiveModelAlias { get; private set; }
-
-    /// <summary>
-    /// User-selected execution target override. When set, overrides automatic hardware-based target selection.
-    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"OnnxRuntimeGpu"</c>, <c>"OnnxRuntimeCpu"</c>.
-    /// </summary>
-    public string? PreferredExecutionTarget { get; private set; }
-
-    /// <summary>
-    /// User-selected reasoning mode override for models that support both thinking and non-thinking behavior.
-    /// </summary>
-    public ModelReasoningMode PreferredReasoningMode { get; private set; } = ModelReasoningMode.Default;
-
-    public void SetPreferredExecutionTarget(string? target)
-    {
-        PreferredExecutionTarget = target;
-    }
-
-    public void SetPreferredReasoningMode(ModelReasoningMode mode)
-    {
-        PreferredReasoningMode = mode;
-    }
-
     public AIDispatcher(
         HardwareProbeService hardwareProbe,
-        Func<AIExecutionTarget, HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
+        Func<HardwareProbeResult, Action<string>?, CancellationToken, Task<ILanguageModelAdapter>> modelFactory)
     {
         ArgumentNullException.ThrowIfNull(hardwareProbe);
         ArgumentNullException.ThrowIfNull(modelFactory);
@@ -92,7 +58,7 @@ public sealed class AIDispatcher : IAsyncDisposable
     }
 
     /// <summary>
-    /// Detects hardware and creates the language model adapter. Idempotent — second calls are no-ops.
+    /// Detects hardware and loads Gemma 4 E2B. Idempotent — second calls are no-ops.
     /// </summary>
     public Task InitializeAsync(CancellationToken ct = default) =>
         InitializeCoreAsync(onProgress: null, ct);
@@ -118,25 +84,8 @@ public sealed class AIDispatcher : IAsyncDisposable
             onProgress?.Invoke("AI_STAGE_PROBING");
             ProbeResult = await _hardwareProbe.DetectAsync(ct).ConfigureAwait(false);
 
-            // Apply user execution target override if set and valid
-            ExecutionTarget = PreferredExecutionTarget switch
-            {
-                "PhiSilicaNpu" when ProbeResult.PhiSilica.IsUsable => AIExecutionTarget.PhiSilicaNpu,
-                "OnnxRuntimeGpu" when ProbeResult.Gpu.IsUsable => AIExecutionTarget.OnnxRuntimeGpu,
-                "OnnxRuntimeCpu" => AIExecutionTarget.OnnxRuntimeCpu,
-                _ => ProbeResult.SelectedTarget,
-            };
-
             onProgress?.Invoke("AI_STAGE_SELECTING");
-            _model = await _modelFactory(ExecutionTarget, ProbeResult, onProgress, ct).ConfigureAwait(false);
-
-            // Capture the alias that was actually loaded for display purposes
-            ActiveModelAlias = ExecutionTarget == AIExecutionTarget.PhiSilicaNpu
-                ? "Phi Silica"
-                : PreferredAlias ?? ModelSizeSelector.GetBestAliasForCapability(
-                    ExecutionTarget == AIExecutionTarget.OnnxRuntimeCpu
-                        ? ProbeResult.Gpu with { GpuVramMb = 0 }
-                        : ProbeResult.Gpu);
+            _model = await _modelFactory(ProbeResult, onProgress, ct).ConfigureAwait(false);
 
             IsInitialized = true;
         }
@@ -164,18 +113,18 @@ public sealed class AIDispatcher : IAsyncDisposable
 
         var builtPrompt = skillKey switch
         {
-            "summarize"    => PromptTemplates.Summarize(prompt),
+            "summarize"         => PromptTemplates.Summarize(prompt),
             "tone-professional" => PromptTemplates.ToneProfessional(prompt),
-            "tone-casual"  => PromptTemplates.ToneCasual(prompt),
-            "rewrite"      => PromptTemplates.Rewrite(prompt),
-            "grammar"      => PromptTemplates.GrammarFix(prompt),
-            "shorten"      => PromptTemplates.Shorten(prompt),
-            "autocomplete" => PromptTemplates.AutoComplete(prompt),
-            "semantic"     => PromptTemplates.SemanticQuery(prompt),
-            "ocr"          => PromptTemplates.OcrFallback(prompt),
-            "freeform"     => PromptTemplates.FreeformChat(prompt),
-            "grade"        => prompt, // GradeResponse builds the full prompt externally
-            _              => prompt,
+            "tone-casual"       => PromptTemplates.ToneCasual(prompt),
+            "rewrite"           => PromptTemplates.Rewrite(prompt),
+            "grammar"           => PromptTemplates.GrammarFix(prompt),
+            "shorten"           => PromptTemplates.Shorten(prompt),
+            "autocomplete"      => PromptTemplates.AutoComplete(prompt),
+            "semantic"          => PromptTemplates.SemanticQuery(prompt),
+            "ocr"               => PromptTemplates.OcrFallback(prompt),
+            "freeform"          => PromptTemplates.FreeformChat(prompt),
+            "grade"             => prompt, // GradeResponse builds the full prompt externally
+            _                   => prompt,
         };
 
         SkillContext.Current = skillKey;
@@ -243,31 +192,8 @@ public sealed class AIDispatcher : IAsyncDisposable
     }
 
     /// <summary>
-    /// Stores the user's preferred model alias for use on the next <see cref="InitializeAsync"/> call.
-    /// Pass <c>null</c> to revert to automatic hardware-based selection.
-    /// </summary>
-    public void SetPreferredModelAlias(string? alias)
-    {
-        PreferredAlias = alias;
-    }
-
-    /// <summary>
-    /// Returns the model aliases that fit within the detected hardware budget, ordered best-first.
-    /// Returns all known aliases when called before initialization.
-    /// </summary>
-    public IReadOnlyList<string> GetEligibleModelAliases() =>
-        ModelSizeSelector.GetEligibleAliases(ProbeResult.Gpu);
-
-    /// <summary>
-    /// Returns model aliases that fit within the CPU RAM budget (GPU VRAM ignored), ordered best-first.
-    /// Used to enumerate models for CPU-path benchmarking.
-    /// </summary>
-    public IReadOnlyList<string> GetEligibleCpuModelAliases() =>
-        ModelSizeSelector.GetEligibleAliases(ProbeResult.Gpu with { GpuVramMb = 0 });
-
-    /// <summary>
     /// Disposes the current model and resets initialization state so the dispatcher can be
-    /// re-initialized (e.g. after the user selects a different model alias).
+    /// re-initialized (e.g. after a download completes).
     /// Unlike <see cref="DisposeAsync"/>, the lock and hardware probe are kept alive.
     /// </summary>
     public async Task ResetAsync()
@@ -288,7 +214,6 @@ public sealed class AIDispatcher : IAsyncDisposable
             }
 
             IsInitialized = false;
-            ActiveModelAlias = null;
         }
         finally
         {

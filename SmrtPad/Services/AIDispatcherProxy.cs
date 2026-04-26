@@ -80,21 +80,7 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
     public AIDispatcherAvailability Availability => MapAvailability(_dispatcher.ProbeResult);
 
     /// <inheritdoc/>
-    public string ExecutionTargetDisplayName
-    {
-        get
-        {
-            // AIExecutionTarget is an enum in SmrtPad.AI; map to a display string.
-            object target = _dispatcher.ExecutionTarget;
-            return target.ToString() switch
-            {
-                "PhiSilicaNpu" => "⚡ NPU",
-                "OnnxRuntimeGpu" => "🖥️ GPU",
-                "OnnxRuntimeCpu" => "🐢 CPU",
-                _ => target.ToString()!,
-            };
-        }
-    }
+    public string ExecutionTargetDisplayName => "GPU";  // Gemma 4 E2B always runs on GPU (CPU fallback handled internally)
 
     /// <inheritdoc/>
     public Task InitializeAsync(CancellationToken ct = default) =>
@@ -138,53 +124,6 @@ internal sealed class AIDispatcherProxy : IAIDispatcher, IAsyncDisposable
     /// <inheritdoc/>
     public void RemoveIndexedTab(int tabId) =>
         _dispatcher.RemoveIndexedTab(tabId);
-
-    /// <inheritdoc/>
-    public void SetPreferredModelAlias(string? alias) =>
-        _dispatcher.SetPreferredModelAlias(alias);
-
-    /// <inheritdoc/>
-    public string? PreferredModelAlias => (string?)_dispatcher.PreferredAlias;
-
-    /// <inheritdoc/>
-    public string? ActiveModelAlias => (string?)_dispatcher.ActiveModelAlias;
-
-    /// <inheritdoc/>
-    public void SetPreferredExecutionTarget(string? target) =>
-        _dispatcher.SetPreferredExecutionTarget(target);
-
-    /// <inheritdoc/>
-    public string? PreferredExecutionTarget => (string?)_dispatcher.PreferredExecutionTarget;
-
-    /// <inheritdoc/>
-    public void SetPreferredReasoningMode(string mode)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(mode);
-        _dispatcher.SetPreferredReasoningMode(Enum.Parse(_dispatcher.PreferredReasoningMode.GetType(), mode, ignoreCase: true));
-    }
-
-    /// <inheritdoc/>
-    public string PreferredReasoningMode => _dispatcher.PreferredReasoningMode.ToString();
-
-    /// <inheritdoc/>
-    public IReadOnlyList<string> GetEligibleModelAliases()
-    {
-        dynamic results = _dispatcher.GetEligibleModelAliases();
-        var list = new List<string>();
-        foreach (var item in results)
-            list.Add((string)item);
-        return list;
-    }
-
-    /// <inheritdoc/>
-    public IReadOnlyList<string> GetEligibleCpuModelAliases()
-    {
-        dynamic results = _dispatcher.GetEligibleCpuModelAliases();
-        var list = new List<string>();
-        foreach (var item in results)
-            list.Add((string)item);
-        return list;
-    }
 
     /// <inheritdoc/>
     public Task ResetAsync() =>

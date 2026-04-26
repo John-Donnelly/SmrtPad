@@ -46,54 +46,8 @@ public interface IAIDispatcher
     void RemoveIndexedTab(int tabId);
 
     /// <summary>
-    /// Sets the preferred model alias for the next initialization.
-    /// Pass <c>null</c> to revert to automatic hardware-based selection.
-    /// Has no effect once the dispatcher is initialized; call after reset.
-    /// </summary>
-    void SetPreferredModelAlias(string? alias);
-
-    /// <summary>The currently preferred model alias, or <c>null</c> if using automatic selection.</summary>
-    string? PreferredModelAlias { get; }
-
-    /// <summary>
-    /// The alias of the model that was actually loaded during the last successful initialization,
-    /// or <c>null</c> if the dispatcher has not yet been initialized.
-    /// </summary>
-    string? ActiveModelAlias { get; }
-
-    /// <summary>
-    /// Returns the model aliases that fit within the detected hardware budget, ordered best-first.
-    /// Returns all known aliases when called before initialization.
-    /// </summary>
-    IReadOnlyList<string> GetEligibleModelAliases();
-
-    /// <summary>
-    /// Returns model aliases that fit within the CPU RAM budget (GPU VRAM ignored), ordered best-first.
-    /// </summary>
-    IReadOnlyList<string> GetEligibleCpuModelAliases();
-
-    /// <summary>
-    /// Sets the preferred execution target for the next initialization.
-    /// Pass <c>null</c> to revert to automatic hardware-based selection.
-    /// Accepted values: <c>"PhiSilicaNpu"</c>, <c>"OnnxRuntimeGpu"</c>, <c>"OnnxRuntimeCpu"</c>.
-    /// </summary>
-    void SetPreferredExecutionTarget(string? target);
-
-    /// <summary>The preferred execution target key, or <c>null</c> if using automatic selection.</summary>
-    string? PreferredExecutionTarget { get; }
-
-    /// <summary>
-    /// Sets the preferred reasoning mode for the next initialization.
-    /// Supported values: <c>"Default"</c>, <c>"NoThinking"</c>, <c>"Thinking"</c>.
-    /// </summary>
-    void SetPreferredReasoningMode(string mode);
-
-    /// <summary>The preferred reasoning mode key for the next initialization.</summary>
-    string PreferredReasoningMode { get; }
-
-    /// <summary>
     /// Disposes the current model and resets the initialized state so the dispatcher can be
-    /// re-initialized with a different model alias or execution target.
+    /// re-initialized.
     /// </summary>
     Task ResetAsync();
 }
