@@ -3,7 +3,7 @@ namespace SmrtPad.AI;
 /// <summary>
 /// Describes a single GGUF model file hosted on HuggingFace Hub.
 /// </summary>
-/// <param name="Repo">HuggingFace repository ID (e.g. <c>bartowski/google_gemma-4-e2b-it-GGUF</c>).</param>
+/// <param name="Repo">HuggingFace repository ID (e.g. <c>HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive</c>).</param>
 /// <param name="Filename">Filename of the GGUF file inside the repo root.</param>
 /// <param name="GpuMb">Approximate file size in MB when offloading to GPU.</param>
 /// <param name="ChatFamily">Chat template family key (gemma4, gemma3, llama, qwen, phi, deepseek).</param>
@@ -17,14 +17,20 @@ internal record GgufModelEntry(string Repo, string Filename, long GpuMb, string 
 /// </summary>
 internal static class GgufModelCatalog
 {
+    /// <summary>Alias for the production single model — Gemma 4 E2B (HauhauCS Q4_K_P uncensored).</summary>
+    internal const string Gemma4E2BAlias = "gemma-4-e2b";
+
+    /// <summary>Context window (tokens) for Gemma 4 E2B — balances quality and VRAM headroom.</summary>
+    internal const int Gemma4E2BContextTokens = 8192;
+
     private static readonly IReadOnlyDictionary<string, GgufModelEntry> Entries =
         new Dictionary<string, GgufModelEntry>(StringComparer.OrdinalIgnoreCase)
         {
-            // ── Gemma 4 (GGUF only — ORT GenAI has no Gemma4ForConditionalGeneration support) ──
+            // ── Gemma 4 E2B — production single model (HauhauCS Q4_K_P, ~3.45 GB) ──
             ["gemma-4-e2b"] = new(
-                Repo:       "bartowski/google_gemma-4-e2b-it-GGUF",
-                Filename:   "google_gemma-4-E2B-it-Q4_K_M.gguf",
-                GpuMb:      3_302,
+                Repo:       "HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive",
+                Filename:   "Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf",
+                GpuMb:      3_533,
                 ChatFamily: "gemma4"),
 
             // E4B Q3_K_S chosen: fits in 8 GB VRAM (4,274 MB vs 8,188 MB available).
