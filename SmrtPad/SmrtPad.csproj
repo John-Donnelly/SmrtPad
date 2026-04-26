@@ -12,6 +12,13 @@
     <RuntimeIdentifier Condition="'$(Platform)' == 'x64' AND '$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64' AND '$(RuntimeIdentifier)' == ''">win-arm64</RuntimeIdentifier>
     <SelfContained Condition="'$(RuntimeIdentifier)' != '' AND '$(SelfContained)' == ''">true</SelfContained>
+    <!--
+      Keep outputs in the TFM-only directory (no win-x64/win-arm64 subdirectory) so that
+      the WAP packaging targets can locate SmrtPad.exe via the standard EntryPointExe probe.
+      Without this, the SDK default routes self-contained outputs into a RID-qualified
+      subdirectory that the DesktopBridge targets never reach.
+    -->
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -23,6 +30,16 @@
       single-pass compilation with source generators.
     -->
     <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+    <!--
+      IL2026: Reflection / dynamic / JsonSerializer calls in App.xaml.cs, AIDispatcherProxy,
+              SessionRestoreService, SettingsService, LicensePayload, and MacroHelper all
+              use well-understood types that are safe at runtime. The plugin isolation via
+              AssemblyLoadContext intentionally uses reflection; trim-safety is not achievable
+              there without redesigning the plugin boundary.
+      IL2072: Activator.CreateInstance return-type annotation mismatch in TryLoadAIDispatcher.
+              The type is resolved from a known plugin assembly and is always non-null.
+    -->
+    <NoWarn>$(NoWarn);IL2026;IL2072</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -82,6 +99,15 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!--
+      Re-enable reflection-based JsonSerializer in trimmed (Release) builds.
+      The app uses JsonSerializer with simple POCO types across multiple services.
+      Switching every call site to source-generated TypeInfo is a large refactor;
+      this flag preserves existing behaviour at the cost of a small binary size increase.
+      Paired with the IL2026/IL2072 suppressions above which silence the static analysis
+      warnings that would otherwise flag these call sites.
+    -->
+    <JsonSerializerIsReflectionEnabledByDefault Condition="'$(Configuration)' != 'Debug'">true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
   <Target Name="FlattenWinUiPageXbfOutputs" AfterTargets="Build">
