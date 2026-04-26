@@ -31,7 +31,7 @@ internal sealed class MockedBenchmarkContext : IAsyncDisposable
 
         Dispatcher = new AIDispatcher(
             new HardwareProbeService(catalog.Object),
-            (_, _, _, _) => Task.FromResult(Model.Object));
+            (_, _, _) => Task.FromResult(Model.Object));
     }
 
     /// <summary>

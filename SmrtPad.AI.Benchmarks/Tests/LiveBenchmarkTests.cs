@@ -5,7 +5,7 @@ using SmrtPad.AI.Benchmarks.Reporting;
 namespace SmrtPad.AI.Benchmarks.Tests;
 
 /// <summary>
-/// Full end-to-end benchmark run that iterates ALL hardware-eligible models on both GPU and CPU
+/// Full end-to-end benchmark run that iterates ALL GGUF catalog models on both GPU and CPU
 /// paths, accumulating results into a single combined live dashboard with CPU/GPU filter support.
 /// Run with: dotnet test --filter "Category=LiveBenchmark"
 /// GPU-only: dotnet test --filter "Category=GpuBenchmark"
@@ -25,6 +25,23 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         await _probeDispatcher.DisposeAsync();
     }
 
+    /// <summary>Enumerate GGUF aliases available on disk together with their local path and target.</summary>
+    private static IReadOnlyList<(string Alias, string Target)> GetGgufTargets(bool gpuOnly = false)
+    {
+        var targets = new List<(string Alias, string Target)>();
+        foreach (var alias in GgufModelCatalog.AllAliases)
+        {
+            var localPath = GgufModelCatalog.GetLocalGgufPath(alias);
+            if (!File.Exists(localPath))
+                continue;
+
+            targets.Add((alias, "GgufGpu"));
+            if (!gpuOnly)
+                targets.Add((alias, "GgufCpu"));
+        }
+        return targets;
+    }
+
     [Fact(Timeout = 43_200_000)] // 12-hour ceiling for multi-model run
     [Trait("Category", "LiveBenchmark")]
     public async Task FullBenchmarkRun_AllModels_CpuAndGpu_WithLiveDashboard()
@@ -33,54 +50,22 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "BenchmarkResults"));
         Directory.CreateDirectory(outputDir);
 
-        // Probe hardware once to determine available budgets
         await _probeDispatcher.InitializeAsync(msg => Console.WriteLine($"[probe] {msg}"));
 
-        var gpuAliases = _probeDispatcher.GetEligibleModelAliases();       // VRAM-eligible
-        var cpuAliases = _probeDispatcher.GetEligibleCpuModelAliases();    // RAM-eligible
-
-        // Filter to models ≤10B params (parse from alias, e.g. "deepseek-r1-7b" → 7)
-        static double ParseBillionParams(string alias)
-        {
-            var m = Regex.Match(alias, @"(\d+(?:\.\d+)?)b", RegexOptions.IgnoreCase);
-            if (m.Success) return double.Parse(m.Groups[1].Value);
-            if (alias.StartsWith("phi-4-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
-            if (alias.StartsWith("phi-3.5-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
-            if (alias.StartsWith("phi-3-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
-            if (alias.StartsWith("phi-4", StringComparison.OrdinalIgnoreCase)) return 14;
-            if (alias.StartsWith("qwen3", StringComparison.OrdinalIgnoreCase)) return 0.6;
-            return 0; // unknown — include by default
-        }
-        bool IsWithinParamLimit(string alias) => ParseBillionParams(alias) is 0 or <= 10;
-
-        // Run GPU-eligible models on GPU AND CPU-eligible models on CPU (full cross-platform coverage).
-        // Models that are eligible on both platforms are benchmarked on both.
-        var targets = new List<(string Alias, string Target)>();
-        foreach (var a in gpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "OnnxRuntimeGpu"));
-        foreach (var a in cpuAliases.Where(IsWithinParamLimit))  targets.Add((a, "OnnxRuntimeCpu"));
-
-        // NPU proxy tier: run phi-3.5-mini on GPU to simulate what NPU would produce
-        // (phi-silica / phi-3.5-mini is the NPU target model on qualifying hardware)
-        foreach (var a in new[] { "phi-3.5-mini" })
-        {
-            if (gpuAliases.Any(g => g.Equals(a, StringComparison.OrdinalIgnoreCase)))
-                targets.Add((a, "NpuProxy (GPU)"));
-        }
+        var targets = GetGgufTargets(gpuOnly: false);
 
         if (targets.Count == 0)
         {
-            Assert.Fail("No eligible models found. Ensure ORT GenAI models are downloaded.");
+            Assert.Fail("No eligible GGUF models found on disk. Ensure model files are downloaded.");
             return;
         }
 
         var cases = BenchmarkPromptCatalog.All;
         int currentGrandTotal = targets.Count * cases.Count;
 
-        Console.WriteLine($"GPU-eligible models : {gpuAliases.Count}");
-        Console.WriteLine($"CPU-eligible models : {cpuAliases.Count}");
-        Console.WriteLine($"Total evaluations   : {targets.Count} models \u00d7 {cases.Count} cases = {currentGrandTotal}");
+        Console.WriteLine($"GGUF models on disk : {targets.Count / 2}");
+        Console.WriteLine($"Total evaluations   : {targets.Count} targets \u00d7 {cases.Count} cases = {currentGrandTotal}");
 
-        // Shared combined-dashboard state
         var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-multimodel";
         var startedAt = DateTimeOffset.UtcNow;
         var allResults = new List<BenchmarkResult>(currentGrandTotal);
@@ -92,11 +77,13 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         {
             Console.WriteLine($"\n=== {alias} ({target}) ===");
 
-            await using var dispatcher = new AIDispatcherFactory().Create();
-            dispatcher.SetPreferredModelAlias(alias);
-            // NpuProxy runs on GPU; all other targets map directly
-            var execTarget = target == "NpuProxy (GPU)" ? "OnnxRuntimeGpu" : target;
-            dispatcher.SetPreferredExecutionTarget(execTarget);
+            var localPath = GgufModelCatalog.GetLocalGgufPath(alias);
+            bool forceCpu = target == "GgufCpu";
+
+            await using var dispatcher = AIDispatcherFactory.CreateFromLocalPath(
+                localPath,
+                maxContextTokens: GgufModelCatalog.Gemma4E2BContextTokens,
+                forceCpuForGguf: forceCpu);
 
             try
             {
@@ -109,12 +96,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
                 continue;
             }
 
-            var activeAlias  = dispatcher.ActiveModelAlias ?? alias;
-            // Use the display target (NpuProxy label preserved) for dashboard tagging
-            var activeTarget = target;
-
-            // LLM grading disabled for multi-model run speed; re-enable for single-model deep analysis
-            var runner = new BenchmarkRunner(dispatcher, activeAlias, activeTarget, enableLlmGrading: false);
+            var runner = new BenchmarkRunner(dispatcher, alias, target, enableLlmGrading: false);
 
             await runner.RunAsync(
                 cases,
@@ -126,7 +108,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
                 onResultAdded: result =>
                 {
                     allResults.Add(result);
-                    var snap = new BenchmarkRun(combinedRunId, activeAlias, activeTarget, startedAt, allResults);
+                    var snap = new BenchmarkRun(combinedRunId, alias, target, startedAt, allResults);
                     var path = BenchmarkDashboardGenerator.Generate(snap, currentGrandTotal, outputDir, currentStatus: currentStatus);
                     if (dashPath is null)
                     {
@@ -171,43 +153,19 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
         await _probeDispatcher.InitializeAsync(msg => Console.WriteLine($"[probe] {msg}"));
 
-        var gpuAliases = _probeDispatcher.GetEligibleModelAliases();
-
-        static double ParseBillionParams(string alias)
-        {
-            var m = Regex.Match(alias, @"(\d+(?:\.\d+)?)b", RegexOptions.IgnoreCase);
-            if (m.Success) return double.Parse(m.Groups[1].Value);
-            if (alias.StartsWith("phi-4-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
-            if (alias.StartsWith("phi-3.5-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
-            if (alias.StartsWith("phi-3-mini", StringComparison.OrdinalIgnoreCase)) return 3.8;
-            if (alias.StartsWith("phi-4", StringComparison.OrdinalIgnoreCase)) return 14;
-            if (alias.StartsWith("qwen3", StringComparison.OrdinalIgnoreCase)) return 0.6;
-            return 0;
-        }
-        bool IsWithinParamLimit(string alias) => ParseBillionParams(alias) is 0 or <= 10;
-
-        var targets = new List<(string Alias, string Target)>();
-        foreach (var a in gpuAliases.Where(IsWithinParamLimit))
-            targets.Add((a, "OnnxRuntimeGpu"));
-
-        // NPU proxy tier
-        foreach (var a in new[] { "phi-3.5-mini" })
-        {
-            if (gpuAliases.Any(g => g.Equals(a, StringComparison.OrdinalIgnoreCase)))
-                targets.Add((a, "NpuProxy (GPU)"));
-        }
+        var targets = GetGgufTargets(gpuOnly: true);
 
         if (targets.Count == 0)
         {
-            Assert.Fail("No GPU-eligible models found. Ensure ORT GenAI models are downloaded.");
+            Assert.Fail("No GGUF models found on disk. Ensure model files are downloaded.");
             return;
         }
 
         var cases = BenchmarkPromptCatalog.All;
         int totalEvals = targets.Count * cases.Count;
 
-        Console.WriteLine($"GPU-eligible models : {gpuAliases.Count}");
-        Console.WriteLine($"Total evaluations   : {targets.Count} models × {cases.Count} cases = {totalEvals}");
+        Console.WriteLine($"GGUF models on disk : {targets.Count}");
+        Console.WriteLine($"Total evaluations   : {targets.Count} models \u00d7 {cases.Count} cases = {totalEvals}");
 
         var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-gpu-only";
         var startedAt = DateTimeOffset.UtcNow;
@@ -220,10 +178,12 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         {
             Console.WriteLine($"\n=== {alias} ({target}) ===");
 
-            await using var dispatcher = new AIDispatcherFactory().Create();
-            dispatcher.SetPreferredModelAlias(alias);
-            var execTarget = target == "NpuProxy (GPU)" ? "OnnxRuntimeGpu" : target;
-            dispatcher.SetPreferredExecutionTarget(execTarget);
+            var localPath = GgufModelCatalog.GetLocalGgufPath(alias);
+
+            await using var dispatcher = AIDispatcherFactory.CreateFromLocalPath(
+                localPath,
+                maxContextTokens: GgufModelCatalog.Gemma4E2BContextTokens,
+                forceCpuForGguf: false);
 
             try
             {
@@ -231,15 +191,12 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"  ⚠️  Skipped — init failed: {ex.Message}");
+                Console.WriteLine($"  \u26a0\ufe0f  Skipped \u2014 init failed: {ex.Message}");
                 totalEvals -= cases.Count;
                 continue;
             }
 
-            var activeAlias  = dispatcher.ActiveModelAlias ?? alias;
-            var activeTarget = target;
-
-            var runner = new BenchmarkRunner(dispatcher, activeAlias, activeTarget, enableLlmGrading: false);
+            var runner = new BenchmarkRunner(dispatcher, alias, target, enableLlmGrading: false);
 
             await runner.RunAsync(
                 cases,
@@ -251,7 +208,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
                 onResultAdded: result =>
                 {
                     allResults.Add(result);
-                    var snap = new BenchmarkRun(combinedRunId, activeAlias, activeTarget, startedAt, allResults);
+                    var snap = new BenchmarkRun(combinedRunId, alias, target, startedAt, allResults);
                     var path = BenchmarkDashboardGenerator.Generate(snap, totalEvals, outputDir, currentStatus: currentStatus);
                     if (dashPath is null)
                     {
@@ -282,13 +239,12 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
     }
 
     /// <summary>
-    /// Targeted benchmark: runs only qwen2.5-7b and ernie-4.5-0.3b on both GPU and CPU paths.
-    /// ernie-4.5-0.3b is loaded via the ORT GenAI model cache (direct path).
+    /// Targeted benchmark: runs gemma-4-e2b on both GPU and CPU paths.
     /// Run with: dotnet test --filter "Category=TargetedBenchmark"
     /// </summary>
     [Fact(Timeout = 7_200_000)] // 2-hour ceiling
     [Trait("Category", "TargetedBenchmark")]
-    public async Task TargetedBenchmarkRun_Qwen25_7b_And_Ernie_0_3b_WithLiveDashboard()
+    public async Task TargetedBenchmarkRun_Gemma4E2B_WithLiveDashboard()
     {
         var outputDir = Path.GetFullPath(
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "BenchmarkResults"));
@@ -296,51 +252,39 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
         await _probeDispatcher.InitializeAsync(msg => Console.WriteLine($"[probe] {msg}"));
 
-        var gpuAliases = _probeDispatcher.GetEligibleModelAliases();
-        var cpuAliases = _probeDispatcher.GetEligibleCpuModelAliases();
+        const string alias = GgufModelCatalog.Gemma4E2BAlias;
+        var localPath = GgufModelCatalog.GetLocalGgufPath(alias);
 
-        var targetedAliases = new[] { "qwen2.5-7b", "ernie-4.5-0.3b" };
-
-        var targets = new List<(string Alias, string Target)>();
-        foreach (var a in targetedAliases)
+        if (!File.Exists(localPath))
         {
-            if (gpuAliases.Any(g => g.Equals(a, StringComparison.OrdinalIgnoreCase)))
-                targets.Add((a, "OnnxRuntimeGpu"));
-            else
-                targets.Add((a, "OnnxRuntimeGpu")); // ernie loads via direct cache path; attempt GPU
-        }
-        foreach (var a in targetedAliases)
-        {
-            if (cpuAliases.Any(c => c.Equals(a, StringComparison.OrdinalIgnoreCase)))
-                targets.Add((a, "OnnxRuntimeCpu"));
-        }
-
-        if (targets.Count == 0)
-        {
-            Assert.Fail("No targeted models found. Ensure ORT GenAI has qwen2.5-7b and ernie-4.5-0.3b downloaded.");
+            Assert.Fail($"Gemma 4 E2B GGUF not found at: {localPath}. Run ModelDownloadService first.");
             return;
         }
 
+        var targets = new[] { (alias, "GgufGpu"), (alias, "GgufCpu") };
+
         var cases = BenchmarkPromptCatalog.All;
-        int totalEvals = targets.Count * cases.Count;
+        int totalEvals = targets.Length * cases.Count;
 
-        Console.WriteLine($"Targeted models : {string.Join(", ", targetedAliases)}");
-        Console.WriteLine($"Total evaluations: {targets.Count} targets × {cases.Count} cases = {totalEvals}");
+        Console.WriteLine($"Model: {alias}");
+        Console.WriteLine($"Total evaluations: {targets.Length} targets \u00d7 {cases.Count} cases = {totalEvals}");
 
-        var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-targeted-qwen-ernie";
+        var combinedRunId = $"bench-{DateTime.UtcNow:yyyyMMdd-HHmmss}-gemma4-e2b";
         var startedAt = DateTimeOffset.UtcNow;
         var allResults = new List<BenchmarkResult>(totalEvals);
         string? dashPath = null;
         string currentStatus = string.Empty;
         var responseLogPath = Path.Combine(outputDir, combinedRunId + "-responses.jsonl");
 
-        foreach (var (alias, target) in targets)
+        foreach (var (a, target) in targets)
         {
-            Console.WriteLine($"\n=== {alias} ({target}) ===");
+            Console.WriteLine($"\n=== {a} ({target}) ===");
 
-            await using var dispatcher = new AIDispatcherFactory().Create();
-            dispatcher.SetPreferredModelAlias(alias);
-            dispatcher.SetPreferredExecutionTarget(target);
+            bool forceCpu = target == "GgufCpu";
+            await using var dispatcher = AIDispatcherFactory.CreateFromLocalPath(
+                localPath,
+                maxContextTokens: GgufModelCatalog.Gemma4E2BContextTokens,
+                forceCpuForGguf: forceCpu);
 
             try
             {
@@ -348,15 +292,12 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"  ⚠️  Skipped — init failed: {ex.Message}");
+                Console.WriteLine($"  \u26a0\ufe0f  Skipped \u2014 init failed: {ex.Message}");
                 totalEvals -= cases.Count;
                 continue;
             }
 
-            var activeAlias  = dispatcher.ActiveModelAlias ?? alias;
-            var activeTarget = target;
-
-            var runner = new BenchmarkRunner(dispatcher, activeAlias, activeTarget, enableLlmGrading: false);
+            var runner = new BenchmarkRunner(dispatcher, a, target, enableLlmGrading: false);
 
             await runner.RunAsync(
                 cases,
@@ -368,7 +309,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
                 onResultAdded: result =>
                 {
                     allResults.Add(result);
-                    var snap = new BenchmarkRun(combinedRunId, activeAlias, activeTarget, startedAt, allResults);
+                    var snap = new BenchmarkRun(combinedRunId, a, target, startedAt, allResults);
                     var path = BenchmarkDashboardGenerator.Generate(snap, totalEvals, outputDir, currentStatus: currentStatus);
                     if (dashPath is null)
                     {
@@ -389,7 +330,7 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
 
         Console.WriteLine();
         Console.WriteLine($"=== TARGETED BENCHMARK COMPLETE ===");
-        Console.WriteLine($"  Models tested : {targets.Count}");
+        Console.WriteLine($"  Models tested : {targets.Length}");
         Console.WriteLine($"  Results       : {finalRun.Results.Count}/{totalEvals}");
         Console.WriteLine($"  Passed        : {passed}");
         Console.WriteLine($"  Avg score     : {avg:F1}/100");
@@ -398,4 +339,3 @@ public sealed class LiveBenchmarkTests : IAsyncDisposable
         Assert.True(finalRun.Results.Count > 0, "Expected at least one result from the targeted benchmark run.");
     }
 }
-

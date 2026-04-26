@@ -101,7 +101,6 @@ public sealed class LocalModelBenchmarkTests
                     MaxContextTokens,
                     benchmarkRun.ForceCpu,
                     backendOverride);
-                dispatcher.SetPreferredReasoningMode(benchmarkRun.ReasoningMode);
                 await dispatcher.InitializeAsync(msg => Console.WriteLine($"  [init] {msg}"));
             }
             catch (Exception ex)
@@ -173,7 +172,6 @@ public sealed class LocalModelBenchmarkTests
         string ModelPath,
         string BackendLabel,
         bool ForceCpu,
-        ModelReasoningMode ReasoningMode,
         string ReasoningTag,
         string DisplayName);
 
@@ -230,7 +228,6 @@ public sealed class LocalModelBenchmarkTests
                     path,
                     backendLabel,
                     forceCpu,
-                    ModelReasoningMode.NoThinking,
                     "NoThink",
                     $"{name} - {backendLabel} - NoThink"));
 
@@ -241,7 +238,6 @@ public sealed class LocalModelBenchmarkTests
                         path,
                         backendLabel,
                         forceCpu,
-                        ModelReasoningMode.Thinking,
                         "Think",
                         $"{name} - {backendLabel} - Think"));
                 }
@@ -379,7 +375,6 @@ public sealed class LocalModelBenchmarkTests
                 MaxContextTokens,
                 forceCpuForGguf: false,
                 backendOverride);
-            dispatcher.SetPreferredReasoningMode(ModelReasoningMode.NoThinking);
             await dispatcher.InitializeAsync(msg => Console.WriteLine($"  [init] {msg}"));
         }
         catch (Exception ex)
