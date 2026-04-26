@@ -201,9 +201,6 @@ public sealed partial class SmartSidebar : UserControl
 
         ct.ThrowIfCancellationRequested();
         ApplyDispatcherReadyState();
-        PopulateModelMenu();
-        PopulateExecutionTargetMenu();
-        PopulateReasoningModeMenu();
     }
 
     /// <summary>Converts an internal stage token into a localized, user-facing progress string.</summary>
@@ -239,305 +236,6 @@ public sealed partial class SmartSidebar : UserControl
     {
         CancelActive();
         _chatEntries.Clear();
-    }
-
-    private async void ModelMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not RadioMenuFlyoutItem { Tag: string alias })
-            return;
-
-        _dispatcher.SetPreferredModelAlias(alias);
-        CancelActive();
-
-        // Drain any in-flight stream before disposing the model to prevent crashes
-        if (_activeStreamTask is not null)
-        {
-            try { await _activeStreamTask; } catch { }
-            _activeStreamTask = null;
-        }
-
-        _chatEntries.Clear();
-
-        // Cancel any in-flight initialization and drain it (stay on UI thread so continuations are safe)
-        if (_initializationCts is not null)
-        {
-            _initializationCts.Cancel();
-            _initializationCts.Dispose();
-            _initializationCts = null;
-        }
-        if (_initializationTask is not null)
-        {
-            try { await _initializationTask; } catch { }
-            _initializationTask = null;
-        }
-
-        // Reset dispatcher state on a background thread, then resume on the UI thread
-        await Task.Run(() => _dispatcher.ResetAsync());
-
-        _initializationCts = new CancellationTokenSource();
-        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
-        try
-        {
-            await _initializationTask;
-        }
-        catch (OperationCanceledException) { }
-        catch (InvalidOperationException ex)
-        {
-            ApplyDispatcherUnavailableState(ex.Message);
-        }
-        catch (COMException ex)
-        {
-            ApplyDispatcherUnavailableState(ex.Message);
-        }
-    }
-
-    private void PopulateModelMenu()
-    {
-        // Choose the eligible model list based on the current execution target:
-        //   CPU target → RAM-eligible models (CPU footprints)
-        //   NPU target → phi-silica is auto-selected by the runtime; no user-picker needed
-        //   GPU / auto → VRAM-eligible models (GPU footprints, default)
-        var target = _dispatcher.PreferredExecutionTarget
-            ?? _dispatcher.Availability.SelectedTarget;
-
-        IReadOnlyList<string> aliases;
-        if (string.Equals(target, "OnnxRuntimeCpu", StringComparison.Ordinal))
-        {
-            aliases = _dispatcher.GetEligibleCpuModelAliases();
-        }
-        else if (string.Equals(target, "PhiSilicaNpu", StringComparison.Ordinal))
-        {
-            // NPU uses Phi Silica which is auto-selected; hide the model sub-menu entirely.
-            var npuSubMenu = (MenuFlyoutSubItem)OptionsFlyout.Items
-                .OfType<MenuFlyoutSubItem>().First();
-            npuSubMenu.Items.Clear();
-            npuSubMenu.Visibility = Visibility.Collapsed;
-            OptionsFlyout.Items.OfType<MenuFlyoutSeparator>().First().Visibility = Visibility.Collapsed;
-            return;
-        }
-        else
-        {
-            aliases = _dispatcher.GetEligibleModelAliases();
-        }
-
-        if (aliases.Count == 0)
-            return;
-
-        var modelSubMenu = (MenuFlyoutSubItem)OptionsFlyout.Items
-            .OfType<MenuFlyoutSubItem>().First();
-        var separator = OptionsFlyout.Items
-            .OfType<MenuFlyoutSeparator>().First();
-
-        modelSubMenu.Items.Clear();
-
-        var currentAlias = _dispatcher.PreferredModelAlias;
-
-        foreach (var alias in aliases)
-        {
-            var item = new RadioMenuFlyoutItem
-            {
-                Text = alias,
-                Tag = alias,
-                GroupName = "ModelSelection",
-                IsChecked = string.Equals(alias, currentAlias, StringComparison.OrdinalIgnoreCase),
-            };
-            item.Click += ModelMenuItem_Click;
-            modelSubMenu.Items.Add(item);
-        }
-
-        separator.Visibility = Visibility.Visible;
-        modelSubMenu.Visibility = Visibility.Visible;
-    }
-
-    private void PopulateExecutionTargetMenu()
-    {
-        var availability = _dispatcher.Availability;
-
-        var targetSubMenu = OptionsFlyout.Items
-            .OfType<MenuFlyoutSubItem>()
-            .Skip(1)
-            .FirstOrDefault();
-        var targetSeparator = OptionsFlyout.Items
-            .OfType<MenuFlyoutSeparator>()
-            .Skip(1)
-            .FirstOrDefault();
-
-        if (targetSubMenu is null || targetSeparator is null)
-            return;
-
-        targetSubMenu.Items.Clear();
-
-        var currentTarget = _dispatcher.PreferredExecutionTarget
-            ?? _dispatcher.Availability.SelectedTarget;
-
-        (string Key, string Label, bool IsEnabled)[] targets =
-        [
-            ("PhiSilicaNpu",    ResourceHelper.GetString("SmartSidebarNpu"), availability.PhiSilica.IsUsable),
-            ("OnnxRuntimeGpu", ResourceHelper.GetString("SmartSidebarGpu"), availability.Gpu.IsUsable),
-            ("OnnxRuntimeCpu", ResourceHelper.GetString("SmartSidebarCpu"), true),
-        ];
-
-        foreach (var (key, label, isEnabled) in targets)
-        {
-            var item = new RadioMenuFlyoutItem
-            {
-                Text = label,
-                Tag = key,
-                GroupName = "ExecutionTarget",
-                IsEnabled = isEnabled,
-                IsChecked = string.Equals(key, currentTarget, StringComparison.Ordinal),
-            };
-            item.Click += ExecutionTargetMenuItem_Click;
-            targetSubMenu.Items.Add(item);
-        }
-
-        targetSeparator.Visibility = Visibility.Visible;
-        targetSubMenu.Visibility = Visibility.Visible;
-    }
-
-    private void PopulateReasoningModeMenu()
-    {
-        var reasoningSubMenu = OptionsFlyout.Items
-            .OfType<MenuFlyoutSubItem>()
-            .Skip(2)
-            .FirstOrDefault();
-        var reasoningSeparator = OptionsFlyout.Items
-            .OfType<MenuFlyoutSeparator>()
-            .Skip(2)
-            .FirstOrDefault();
-
-        if (reasoningSubMenu is null || reasoningSeparator is null)
-            return;
-
-        var currentModel = _dispatcher.PreferredModelAlias ?? _dispatcher.ActiveModelAlias;
-        if (!string.IsNullOrWhiteSpace(currentModel) && !SupportsThinkingMode(currentModel))
-        {
-            reasoningSubMenu.Items.Clear();
-            reasoningSubMenu.Visibility = Visibility.Collapsed;
-            reasoningSeparator.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        reasoningSubMenu.Items.Clear();
-
-        var currentMode = _dispatcher.PreferredReasoningMode;
-        (string Key, string Label)[] modes =
-        [
-            ("NoThinking", ResourceHelper.GetString("SmartSidebarReasoningModeNoThinking")),
-            ("Thinking", ResourceHelper.GetString("SmartSidebarReasoningModeThinking")),
-        ];
-
-        foreach (var (key, label) in modes)
-        {
-            var item = new RadioMenuFlyoutItem
-            {
-                Text = label,
-                Tag = key,
-                GroupName = "ReasoningMode",
-                IsChecked = string.Equals(key, currentMode, StringComparison.OrdinalIgnoreCase),
-            };
-            item.Click += ReasoningModeMenuItem_Click;
-            reasoningSubMenu.Items.Add(item);
-        }
-
-        reasoningSeparator.Visibility = Visibility.Visible;
-        reasoningSubMenu.Visibility = Visibility.Visible;
-    }
-
-    private async void ExecutionTargetMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not RadioMenuFlyoutItem { Tag: string targetKey })
-            return;
-
-        _dispatcher.SetPreferredExecutionTarget(targetKey);
-        _dispatcher.SetPreferredModelAlias(null); // reset model so target is auto-selected
-        CancelActive();
-
-        // Drain any in-flight stream before disposing the model to prevent crashes
-        if (_activeStreamTask is not null)
-        {
-            try { await _activeStreamTask; } catch { }
-            _activeStreamTask = null;
-        }
-
-        _chatEntries.Clear();
-
-        if (_initializationCts is not null)
-        {
-            _initializationCts.Cancel();
-            _initializationCts.Dispose();
-            _initializationCts = null;
-        }
-        if (_initializationTask is not null)
-        {
-            try { await _initializationTask; } catch { }
-            _initializationTask = null;
-        }
-
-        await Task.Run(() => _dispatcher.ResetAsync());
-
-        _initializationCts = new CancellationTokenSource();
-        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
-        try
-        {
-            await _initializationTask;
-        }
-        catch (OperationCanceledException) { }
-        catch (InvalidOperationException ex)
-        {
-            ApplyDispatcherUnavailableState(ex.Message);
-        }
-        catch (COMException ex)
-        {
-            ApplyDispatcherUnavailableState(ex.Message);
-        }
-    }
-
-    private async void ReasoningModeMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not RadioMenuFlyoutItem { Tag: string modeKey })
-            return;
-
-        _dispatcher.SetPreferredReasoningMode(modeKey);
-        CancelActive();
-
-        if (_activeStreamTask is not null)
-        {
-            try { await _activeStreamTask; } catch { }
-            _activeStreamTask = null;
-        }
-
-        _chatEntries.Clear();
-
-        if (_initializationCts is not null)
-        {
-            _initializationCts.Cancel();
-            _initializationCts.Dispose();
-            _initializationCts = null;
-        }
-        if (_initializationTask is not null)
-        {
-            try { await _initializationTask; } catch { }
-            _initializationTask = null;
-        }
-
-        await Task.Run(() => _dispatcher.ResetAsync());
-
-        _initializationCts = new CancellationTokenSource();
-        _initializationTask = InitializeDispatcherAsync(_initializationCts.Token);
-        try
-        {
-            await _initializationTask;
-        }
-        catch (OperationCanceledException) { }
-        catch (InvalidOperationException ex)
-        {
-            ApplyDispatcherUnavailableState(ex.Message);
-        }
-        catch (COMException ex)
-        {
-            ApplyDispatcherUnavailableState(ex.Message);
-        }
     }
 
     // ── Skill dropdown ──
@@ -1053,8 +751,6 @@ public sealed partial class SmartSidebar : UserControl
         _hardwareModelValueText.Text = GetModelName();
         _hardwareTokensValueText.Text = GetPendingMetricsText();
         ToolTipService.SetToolTip(HardwareBadge, GetHardwareTooltip());
-        PopulateModelMenu();
-        PopulateExecutionTargetMenu();
         // Clear the status bar now that AI is ready
         ReportStatus?.Invoke(string.Empty);
     }
@@ -1175,29 +871,11 @@ public sealed partial class SmartSidebar : UserControl
         var newSessionItem = OptionsFlyout.Items.OfType<MenuFlyoutItem>().First();
         newSessionItem.Text = ResourceHelper.GetString("SmartSidebarNewSession");
         AutomationProperties.SetAutomationId(newSessionItem, "NewSessionMenuItem");
-        var modelSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().First();
-        modelSubMenu.Text = ResourceHelper.GetString("SmartSidebarModelSelector");
-        AutomationProperties.SetAutomationId(modelSubMenu, "ModelSubMenu");
-        var executionTargetSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().Skip(1).FirstOrDefault();
-        if (executionTargetSubMenu is not null)
-        {
-            executionTargetSubMenu.Text = ResourceHelper.GetString("SmartSidebarExecutionTarget");
-            AutomationProperties.SetAutomationId(executionTargetSubMenu, "ExecutionTargetSubMenu");
-        }
-        var reasoningModeSubMenu = OptionsFlyout.Items.OfType<MenuFlyoutSubItem>().Skip(2).FirstOrDefault();
-        if (reasoningModeSubMenu is not null)
-        {
-            reasoningModeSubMenu.Text = ResourceHelper.GetString("SmartSidebarReasoningMode");
-            AutomationProperties.SetAutomationId(reasoningModeSubMenu, "ReasoningModeSubMenu");
-        }
         ToolTipService.SetToolTip(OptionsButton, ResourceHelper.GetString("SmartSidebarOptions"));
         ToolTipService.SetToolTip(ApplySkillButton, ResourceHelper.GetString("SmartSidebarApplySkill"));
     }
 
-    private static bool SupportsThinkingMode(string modelAlias)
-        => modelAlias.Contains("qwen3", StringComparison.OrdinalIgnoreCase)
-        || modelAlias.StartsWith("phi-", StringComparison.OrdinalIgnoreCase)
-        || modelAlias.Contains("deepseek-r1", StringComparison.OrdinalIgnoreCase);
+    // Gemma 4 E2B does not support thinking mode — method removed.
 
     private static int EstimateTokenCount(string chunk)
     {
@@ -1225,22 +903,7 @@ public sealed partial class SmartSidebar : UserControl
         return $"{_dispatcher.ExecutionTargetDisplayName} • {GetModelName()} • {speedText}";
     }
 
-    private string GetModelName()
-    {
-        // Prefer the alias that was actually loaded; fall back to the preferred alias
-        // that will be used on the next init, then to a display label from the target name.
-        if (!string.IsNullOrEmpty(_dispatcher.ActiveModelAlias))
-            return _dispatcher.ActiveModelAlias;
-
-        if (!string.IsNullOrEmpty(_dispatcher.PreferredModelAlias))
-            return _dispatcher.PreferredModelAlias;
-
-        return _dispatcher.ExecutionTargetDisplayName switch
-        {
-            "⚡ NPU" => "Phi Silica",
-            _ => _dispatcher.ExecutionTargetDisplayName,
-        };
-    }
+    private static string GetModelName() => "Gemma 4 E2B";
 
     private string GetPendingMetricsText() =>
         string.IsNullOrEmpty(_lastTokensPerSecond)
