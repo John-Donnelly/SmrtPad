@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <!-- Enable RID-specific restore targets so this shared library can be bundled into
+         SmrtDoodle's self-contained MSIX publish (win-x64/win-x86/win-arm64). Without this,
+         a RID-less restore (left by any plain build/test) makes the packaging build fail
+         with NETSDK1047. RuntimeIdentifiers (plural) only adds restore targets; it does not
+         make the library itself build self-contained. -->
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
     <RootNamespace>SmrtAI.Core</RootNamespace>
     <AssemblyName>SmrtAI.Core</AssemblyName>
     <Nullable>enable</Nullable>
