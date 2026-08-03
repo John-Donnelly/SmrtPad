@@ -9,6 +9,13 @@
 
 A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by ONNX Runtime GenAI (CUDA/CPU) / Windows AI APIs.
 
+## Download
+
+Grab the latest portable build from [Releases](https://github.com/John-Donnelly/SmrtPad/releases/latest) — unzip and run `SmrtPad.exe`. Self-contained, so no .NET runtime is needed.
+
+> Builds are currently unsigned; Windows SmartScreen will warn on first run.
+> Choose **More info** → **Run anyway** if you trust the source.
+
 ## Features
 
 ### Ribbon Toolbar
@@ -77,13 +84,6 @@ A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featur
 
 ### Options
 - Font, size, word wrap, save format, theme, auto-save interval, language, ruler units, and spell check — all persisted via `SettingsService` (JSON at `%LOCALAPPDATA%\SmrtPad\settings.json`)
-
-## Download
-
-Grab the latest portable build from [Releases](https://github.com/John-Donnelly/SmrtPad/releases/latest) — unzip and run `SmrtPad.exe`. Self-contained, so no .NET runtime is needed.
-
-> Builds are currently unsigned; Windows SmartScreen will warn on first run.
-> Choose **More info** → **Run anyway** if you trust the source.
 
 ## Requirements
 
