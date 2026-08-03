@@ -373,3 +373,6 @@ FodyWeavers.xsd
 # CUDA runtime DLLs pre-loaded by ConcreteLlamaSharpModelAdapter — large binaries, not source
 SmrtPad.AI/runtimes/
 
+
+# Editor/assistant instruction files
+.github/copilot-instructions.md

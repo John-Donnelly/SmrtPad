@@ -92,7 +92,6 @@ All notable changes to SmrtPad are documented in this file.
 - **Prompt templates** — all skill templates rewritten to be model-neutral: no persona preamble, explicit `<think>` tag suppression, and a consistent `output exactly one <insert>…</insert> block and nothing else` contract; `FreeformChat` template restructured with clearer document-vs-question branching
 - **Solution file (`SmrtPad.slnx`)** — `BenchmarkSuite1` project added; `SmrtPad.Tests` and `SmrtPad.UITests` platform entries simplified to `<Platform Project="x64" />`
 - **`Directory.Packages.props`** — `BenchmarkDotNet 0.15.2` and `Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers 18.3.36812.1` added as test-tier packages
-- **Copilot instructions** — benchmark policy documented: prefer LLamaSharp runner for live runs; run GPU (both modes) before CPU (both modes) for thinking-capable models
 
 ### Fixed
 - **`GgufGpuDiagnosticTests`** trimmed of stale ORT/GenAI diagnostic paths that are no longer applicable

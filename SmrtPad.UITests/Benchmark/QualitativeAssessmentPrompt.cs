@@ -9,7 +9,7 @@ namespace SmrtPad.UITests.Benchmark;
 
 /// <summary>
 /// Generates a Markdown prompt with sampled benchmark results that can be
-/// pasted into a chat session (e.g., Copilot Chat) for qualitative "LLM-as-judge"
+/// pasted into any chat-capable model for qualitative "LLM-as-judge"
 /// assessment of model output quality.
 /// </summary>
 public static class QualitativeAssessmentPrompt
