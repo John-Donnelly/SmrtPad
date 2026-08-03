@@ -11,6 +11,8 @@
 <img src="docs/media/smrtpad-ribbon.png" alt="SmrtPad main window with the Home ribbon expanded over a tabbed document, showing a formatted report in page view with a heading, body text, a bulleted list and a table" width="900">
 </p>
 
+**Status:** released and actively developed · **Latest:** v0.9.6 · **Requires:** Windows 10 1809 (build 17763) or later
+
 A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by ONNX Runtime GenAI (CUDA/CPU) / Windows AI APIs.
 
 ## Download
