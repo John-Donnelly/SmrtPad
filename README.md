@@ -7,6 +7,10 @@
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/JAD-Apps/SmrtPad?label=download&logo=github)](https://github.com/JAD-Apps/SmrtPad/releases/latest)
 
+<p align="center">
+<img src="docs/media/smrtpad-ribbon.png" alt="SmrtPad main window with the Home ribbon expanded over a tabbed document, showing a formatted report in page view with a heading, body text, a bulleted list and a table" width="900">
+</p>
+
 A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by ONNX Runtime GenAI (CUDA/CPU) / Windows AI APIs.
 
 ## Download
@@ -69,6 +73,9 @@ Grab the latest portable build from [Releases](https://github.com/JAD-Apps/SmrtP
 - New-session button clears chat history
 
 ### Macros
+
+![The Macro menu open during a recording, with Record Macro greyed out and Stop Recording available, the status bar reading "Recording macro...", and the bold, italic and centre commands already captured showing in the ribbon and applied to the selected paragraph](docs/media/smrtpad-macros.png)
+
 - Macro recording and playback — record a sequence of typing and formatting actions, then replay them; persisted in settings
 
 ### Multi-Window
