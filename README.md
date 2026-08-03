@@ -1,17 +1,17 @@
 # SmrtPad
 
-[![CI](https://github.com/John-Donnelly/SmrtPad/actions/workflows/ci.yml/badge.svg)](https://github.com/John-Donnelly/SmrtPad/actions/workflows/ci.yml)
+[![CI](https://github.com/JAD-Apps/SmrtPad/actions/workflows/ci.yml/badge.svg)](https://github.com/JAD-Apps/SmrtPad/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4?logo=windows&logoColor=white)
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![WinUI 3](https://img.shields.io/badge/WinUI-3-0078D4)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/John-Donnelly/SmrtPad?label=download&logo=github)](https://github.com/John-Donnelly/SmrtPad/releases/latest)
+[![Release](https://img.shields.io/github/v/release/JAD-Apps/SmrtPad?label=download&logo=github)](https://github.com/JAD-Apps/SmrtPad/releases/latest)
 
 A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by ONNX Runtime GenAI (CUDA/CPU) / Windows AI APIs.
 
 ## Download
 
-Grab the latest portable build from [Releases](https://github.com/John-Donnelly/SmrtPad/releases/latest) — unzip and run `SmrtPad.exe`. Self-contained, so no .NET runtime is needed.
+Grab the latest portable build from [Releases](https://github.com/JAD-Apps/SmrtPad/releases/latest) — unzip and run `SmrtPad.exe`. Self-contained, so no .NET runtime is needed.
 
 > Builds are currently unsigned; Windows SmartScreen will warn on first run.
 > Choose **More info** → **Run anyway** if you trust the source.
@@ -97,7 +97,7 @@ Grab the latest portable build from [Releases](https://github.com/John-Donnelly/
 
 1. Clone the repository:
    ```
-   git clone https://github.com/John-Donnelly/SmrtPad.git
+   git clone https://github.com/JAD-Apps/SmrtPad.git
    ```
 2. Open `SmrtPad.slnx` in Visual Studio 2022 or later.
 3. Set the platform to **x64** (or ARM64).
