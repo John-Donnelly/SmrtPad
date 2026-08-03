@@ -1,5 +1,10 @@
 # SmrtPad
 
+[![CI](https://github.com/John-Donnelly/SmrtPad/actions/workflows/ci.yml/badge.svg)](https://github.com/John-Donnelly/SmrtPad/actions/workflows/ci.yml)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4?logo=windows&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
+![WinUI 3](https://img.shields.io/badge/WinUI-3-0078D4)
+
 A modern WordPad-inspired rich text editor built with WinUI 3 and .NET 8, featuring a Microsoft WordPad-style ribbon interface, tabbed documents, macro recording, a full suite of export options, and an on-device AI writing assistant powered by ONNX Runtime GenAI (CUDA/CPU) / Windows AI APIs.
 
 ## Features
