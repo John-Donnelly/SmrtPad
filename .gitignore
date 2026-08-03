@@ -376,3 +376,6 @@ SmrtPad.AI/runtimes/
 
 # Editor/assistant instruction files
 .github/copilot-instructions.md
+
+# Local build/test settings — see .env.example
+.env

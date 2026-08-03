@@ -110,6 +110,10 @@ Grab the latest portable build from [Releases](https://github.com/JAD-Apps/SmrtP
 3. Set the platform to **x64** (or ARM64).
 4. Build and run the **SmrtPad (Package)** project for a fully packaged experience, or the **SmrtPad** project for unpackaged debug.
 
+No configuration is required to build. `.env.example` documents optional local
+toggles for the UI-test deploy script and the AI benchmark suite — copy it to
+`.env` (gitignored) only if you need to change them.
+
 ## Running Tests
 
 ```
