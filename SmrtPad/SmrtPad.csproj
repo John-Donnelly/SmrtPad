@@ -100,8 +100,12 @@
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- PublishTrimmed is intentionally disabled for all configurations, matching
+         Inklet and MarkUp. WinUI 3 / Windows App SDK do not support IL trimming:
+         the trimmer strips ComInterfaceEntry, which CsWinRT needs at runtime for
+         vtable registration, and Release publishes fail outright with IL2059 on
+         the generated XamlTypeInfo. ReadyToRun is kept for Release. -->
+    <PublishTrimmed>False</PublishTrimmed>
     <!--
       Re-enable reflection-based JsonSerializer in trimmed (Release) builds.
       The app uses JsonSerializer with simple POCO types across multiple services.
