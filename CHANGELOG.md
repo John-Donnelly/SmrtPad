@@ -2,7 +2,7 @@
 
 All notable changes to SmrtPad are documented in this file.
 
-## [Unreleased]
+## [0.9.6] - 2026-08-04
 
 ### Added
 - **Localization** — 7 missing resource keys added to all 8 satellite `.resw` locale files (`ar-SA`, `de-DE`, `es-ES`, `fr-FR`, `ja-JP`, `ru-RU`, `ur-PK`, `zh-Hans`): `SmrtDoodleReturnTitle`, `SmrtDoodleReturnPrompt`, `SmrtDoodleReturnReplace`, `SmrtDoodleReturnInsertNew`, `SmartSidebarReasoningMode`, `SmartSidebarReasoningModeNoThinking`, `SmartSidebarReasoningModeThinking`; fixes CI `SatelliteResw_HasAllEnUsKeys` test failures
